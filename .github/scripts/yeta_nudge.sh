@@ -46,7 +46,19 @@ if _md:   # 유저 사망 중(운영자 260725) — 읽씹 재촉은 금지(죽�
     #   유저가 죽으면 챗 파이프가 안 돈다(입력 자체가 없다) = 캐릭터가 먼저 움직이는 이 크론이 유일한 부활 경로다.
     #   사망 30분 경과부터 시도(즉답은 부자연) · 이미 빌어준 사람이 있으면 끝(1회) · 일 상한·연속 재촉 가드는 미적용(사망은 특수 사건).
     _el = (time.time()*1000 - (_md.get("d") or 0)) / 60000
-    if _md.get("pray") or _el < 30 or _el > 60*24*3: print(json.dumps(no)); sys.exit()
+    if _md.get("pray") or _el > 60*24*3: print(json.dumps(no)); sys.exit()
+    # 두 잡을 순서로 나눈다(운영자 260725) — ① 20분 후 '성향 퀴즈'(부활 시간을 스스로 줄이는 수단) ② 60분 후 '신당 기도'(즉시 부활).
+    #   기도가 먼저 오면 퀴즈가 무의미해지므로 퀴즈가 반드시 앞선다. 퀴즈 대상 = 만난 사람만(threads에 유저 턴이 있는 캐릭터 · 운영자 "만난사람만").
+    if not _md.get("quiz"):
+        if _el < 20: print(json.dumps(no)); sys.exit()
+        _met = [p for p, t in (S_ROOT.get("threads") or {}).items()
+                if not p.startswith("g") and any(x.get("role") == "user" for x in (t.get("turns") or []))]
+        if not _met: print(json.dumps(no)); sys.exit()
+        print(json.dumps({"go": 1, "mode": "quiz", "persona": persona, "hours": round(_el/60, 1), "today": today, "count": 0,
+                          "me_call": me_call, "me_about": me_about, "dead_why": (_md.get("why") or "")[:120],
+                          "met": _met, "tunes": {p: (S_ROOT.get("tunes") or {}).get(p) for p in _met}}, ensure_ascii=False))
+        sys.exit()
+    if _el < 60: print(json.dumps(no)); sys.exit()
     print(json.dumps({"go": 1, "mode": "pray", "persona": persona, "hours": round(_el/60, 1), "today": today, "count": 0,
                       "me_call": me_call, "me_about": me_about, "dead_why": (_md.get("why") or "")[:120],
                       "note_pub": s.get("note_pub") or s.get("note") or "", "note_me": ((s.get("notes") or {}).get(persona)) or "",
@@ -76,12 +88,57 @@ gv() { printf '%s' "$GATE" | python3 -c "import json,sys;print(json.load(sys.std
 PERSONA="$(gv persona)"; HOURS="$(gv hours)"; TODAY="$(gv today)"; COUNT="$(gv count)"
 NOTE_PUB="$(gv note_pub)"; NOTE_ME="$(gv note_me)"; HIST="$(gv hist)"
 ME_CALL="$(gv me_call)"; ME_ABOUT="$(gv me_about)"   # 유저 프로필(호칭+소개 · 260708)
-MODE="$(gv mode)"; DEAD_WHY="$(gv dead_why)"   # 'pray' = 유저 사망 신당 기도 모드(운영자 260725) · 빈값 = 종전 읽씹 재촉
+MODE="$(gv mode)"; DEAD_WHY="$(gv dead_why)"   # 'pray' = 신당 기도 · 'quiz' = 성향 퀴즈 출제(운영자 260725) · 빈값 = 종전 읽씹 재촉
+MET="$(printf '%s' "$GATE" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin).get("met") or [], ensure_ascii=False))')"
+TUNES="$(printf '%s' "$GATE" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin).get("tunes") or {}, ensure_ascii=False))')"
 
-CBLOCK="$(character_block "$PERSONA")" || { echo "::warning::지침 주입 실패 — 생략"; exit 0; }
+if [ "$MODE" = "quiz" ]; then   # 성향 퀴즈(운영자 260725) — 한 명 카드가 아니라 '만난 사람들' 요약이 재료다(카드 전문 = 10명이면 컨텍스트 폭발)
+  CBLOCK="$(python3 - "$MET" "$TUNES" <<'PY'
+import json, os, re, sys
+met = json.loads(sys.argv[1]); tunes = json.loads(sys.argv[2])
+AX = ["말수","장난기","어투 강도","답장 길이","친절도","온기(다정함)","인내심","삐짐·질투","츤데레 낙차(겉과 속 차이)","초기 친밀도","친밀해지는 속도","경계심(비밀 방어)","플러팅 수위","신비 노출(판타지 누설)","이중성 스위치 빈도","위험한 분위기(밤 모드)"]   # 축 순서 = yeta_chat.sh AX·뷰어 TUNE_AX와 짝(정본 3점 동기)
+try: roster = {c.get("id"): c for c in json.load(open("apps/yeta/characters/roster.json", encoding="utf-8"))}
+except Exception: roster = {}
+L = ["[출제 대상 — 유저가 실제로 만난 사람들. 이 밖의 인물을 지어내지 마라]"]
+for p in met[:10]:
+    c = roster.get(p) or {}
+    nm = c.get("name") or p
+    head = ""
+    try:   # 카드 §성격 첫 두 줄 = 그 인물을 한눈에 잡는 최소 재료(지문·예시대사는 뺀다 = 정답을 흘리지 않기 위해)
+        raw = open(f"apps/yeta/characters/{p}.md", encoding="utf-8").read()
+        m = re.search(r'^## 성격\s*$(.*?)(?=^## )', raw, flags=re.M | re.S)
+        if m:
+            bl = [re.sub(r'[*_`]', '', x).strip("- ").strip() for x in m.group(1).strip().splitlines() if x.strip().startswith("-")]
+            head = " / ".join(b[:90] for b in bl[:2])
+    except Exception: pass
+    tn = tunes.get(p)
+    ax_hi = ""
+    if isinstance(tn, list) and len(tn) == 16:
+        top = sorted(range(16), key=lambda i: -(tn[i] or 0))[:3]
+        ax_hi = " · 지금 높은 축: " + ", ".join(f"{AX[i]}({tn[i]})" for i in top)
+    L.append(f"- {nm}({p}) — {c.get('tagline') or ''}{(' · ' + head) if head else ''}{ax_hi}")
+L.append("")
+L.append("[성향 16축 — 선택지가 가리킬 번호]")
+L.append(" · ".join(f"{i} {a}" for i, a in enumerate(AX)))
+print("\n".join(L))
+PY
+)"
+else
+  CBLOCK="$(character_block "$PERSONA")" || { echo "::warning::지침 주입 실패 — 생략"; exit 0; }
+fi
 ME_BLOCK="$(me_block)"   # 유저 프로필 블록(shared/inject_character.sh 정본) — 넛지 호격에 유저 이름 반영(비신뢰 격리 · 260708)
 
-if [ "$MODE" = "pray" ]; then   # 유저 사망 → 신당 기도(운영자 260725 "나랑 대화할 수 있는 상태의 누군가가 간절하게 신당에 가서 빌어야")
+if [ "$MODE" = "quiz" ]; then   # 유저 사망 → 성향 퀴즈 출제(운영자 260725 "각 캐릭터의 성향 만들기 느낌 · 내가 고르면 누적시켜서 캐릭터 성격 일원화")
+  SITU="[할 일 — 유저는 지금 죽어 있다]
+죽은 사람이 할 수 있는 건 기억을 더듬는 것뿐이다. 유저가 그 사람들을 얼마나 아는지 되짚는 문항 **10개**를 만들어라.
+문항 하나 = ⓐ 위 사람 중 한 명 ⓑ 그 사람의 성격을 한 줄로 짚은 말(trait) ⓒ 그 사람이 놓인 상황 한 줄(q) ⓓ 그 상황에서 그 사람이 했을 법한 말 **4개**(o).
+중요 — 4개 중 '정답' 하나와 들러리 셋이 아니다. **넷 다 그 사람이 할 법한 말**이되 결이 서로 달라야 한다(다정/장난/서늘/회피처럼). 유저가 고른 결이 그 사람의 성향을 실제로 조금씩 움직인다.
+선택지는 미연시 선택지처럼 **그 사람의 대사 그대로**(따옴표·이름표 없이). 각 선택지에 그 결이 가리키는 축 번호 ax(0~15)와 방향 d(1 또는 -1)를 붙여라.
+한 사람에게 몰지 말고 위 사람들에게 고루 배분해라. 유저(사용자)의 말·행동은 지어내지 마라.
+
+출력 = **JSON 배열 하나만**(설명·코드펜스·인사 금지):
+[{\"p\":\"캐릭터id\",\"trait\":\"성격 한 줄\",\"q\":\"상황 한 줄\",\"o\":[{\"t\":\"대사\",\"ax\":5,\"d\":1},{\"t\":\"대사\",\"ax\":1,\"d\":1},{\"t\":\"대사\",\"ax\":11,\"d\":1},{\"t\":\"대사\",\"ax\":0,\"d\":-1}]}, … 총 10개]"
+elif [ "$MODE" = "pray" ]; then   # 유저 사망 → 신당 기도(운영자 260725 "나랑 대화할 수 있는 상태의 누군가가 간절하게 신당에 가서 빌어야")
   SITU="[지금 상황 — 중요]
 유저가 죽었다.${DEAD_WHY:+ 그 순간의 상황: ${DEAD_WHY}} 비유도 기절도 장난도 아니다 — 정말로 죽었고, 지금 이 순간에도 돌아오지 못하고 있다.
 무음동의 규칙은 하나다: 살아 있는 누군가가 북동쪽 언덕 위 신당(성당)까지 직접 찾아가 간절히 빌어야만 죽은 사람이 눈을 뜬다. 아무도 빌지 않으면 아주 오랜 시간이 지나서야 겨우 스스로 깨어난다.
@@ -109,7 +166,11 @@ ${HIST}
 
 ${SITU}"
 
-[ "$MODE" = "pray" ] && echo "yeta-nudge: ${PERSONA} · 유저 사망 ${HOURS}h · 신당 기도" || echo "yeta-nudge: ${PERSONA} · ${HOURS}h 읽씹 · 오늘 ${COUNT}회째"
+case "$MODE" in
+  quiz) echo "yeta-nudge: 유저 사망 ${HOURS}h · 성향 퀴즈 출제" ;;
+  pray) echo "yeta-nudge: ${PERSONA} · 유저 사망 ${HOURS}h · 신당 기도" ;;
+  *)    echo "yeta-nudge: ${PERSONA} · ${HOURS}h 읽씹 · 오늘 ${COUNT}회째" ;;
+esac
 rc=1; out=""
 for attempt in 1 2; do
   out="$(printf '%s' "$prompt" | METER_SRC=yeta-nudge METER_REF="$PERSONA" claude_meter 180 \
@@ -121,21 +182,46 @@ for attempt in 1 2; do
   is_transient "$out$(cat /tmp/yeta_nudge.err 2>/dev/null)" && { sleep 20; continue; }
   break
 done
-out="$(printf '%s' "$out" | sed -e 's/<<[^>]*>>//g' | awk 'NF' | head -4)"   # 태그 잔재 제거 + 과출력 캡
-[ -n "${out// }" ] || { echo "::warning::빈 대사 — 생략(다음 주기에 재판정)"; exit 0; }
+if [ "$MODE" = "quiz" ]; then   # JSON 배열 = 대사 캡(sed·head -4)을 태우면 깨진다 → 관대 파싱 + 구조 검증을 거친 정규화 JSON만 통과
+  out="$(printf '%s' "$out" | python3 - "$MET" <<'PYQ'
+import json, re, sys
+met = set(json.loads(sys.argv[1]))
+raw = re.sub(r'^\s*```(?:json)?|```\s*$', '', sys.stdin.read().strip(), flags=re.M)   # 코드펜스 방어
+i, j = raw.find('['), raw.rfind(']')
+try: arr = json.loads(raw[i:j+1]) if i >= 0 and j > i else []
+except Exception: arr = []
+ok = []
+for it in arr if isinstance(arr, list) else []:
+    if not isinstance(it, dict): continue
+    p, q, o = it.get("p"), (it.get("q") or "").strip(), it.get("o")
+    if p not in met or not q or not isinstance(o, list) or len(o) < 4: continue   # 만난 사람 밖 = 폐기(운영자 "만난사람만")
+    opts = []
+    for x in o[:4]:
+        if not isinstance(x, dict): continue
+        t = (x.get("t") or "").strip()
+        try: ax = int(x.get("ax")); d = 1 if int(x.get("d", 1)) >= 0 else -1
+        except Exception: continue
+        if not t or not (0 <= ax <= 15): continue
+        opts.append({"t": t[:120], "ax": ax, "d": d})
+    if len(opts) == 4: ok.append({"p": p, "trait": (it.get("trait") or "").strip()[:80], "q": q[:160], "o": opts})
+print(json.dumps(ok[:10], ensure_ascii=False) if len(ok) >= 4 else "")   # 4문항도 못 건지면 폐기(다음 주기 재시도 = 반쪽 퀴즈 방지)
+PYQ
+)"
+  [ -n "${out// }" ] || { echo "::warning::퀴즈 파싱 실패 — 생략(다음 주기에 재판정)"; exit 0; }
+else
+  out="$(printf '%s' "$out" | sed -e 's/<<[^>]*>>//g' | awk 'NF' | head -4)"   # 태그 잔재 제거 + 과출력 캡
+  [ -n "${out// }" ] || { echo "::warning::빈 대사 — 생략(다음 주기에 재판정)"; exit 0; }
+fi
 
 # ── 반영(fresh 재확인 — 그새 유저가 답했으면 폐기) ──
 aws s3 cp "s3://${YETA_R2_BUCKET}/${KEY}" "$SESS" --endpoint-url "$EP" --only-show-errors || { echo "::warning::fresh 재로드 실패 — 폐기"; exit 0; }
-APPLIED="$(python3 - "$SESS" "$PERSONA" "$TODAY" "${MODE:-}" <<PY
+APPLIED="$(python3 - "$SESS" "$PERSONA" "$TODAY" "${MODE:-}" "$out" <<PY
 import json, sys, time
 sys.path.insert(0, ".github/scripts")
 from yeta_v3 import migrate_v3
 S = migrate_v3(json.load(open(sys.argv[1], encoding="utf-8")))
 persona, today, mode = sys.argv[2], sys.argv[3], (sys.argv[4] if len(sys.argv) > 4 else "")
-s = (S.get("threads") or {}).get(persona)
-if s is None: print("0"); sys.exit()
-turns = s.get("turns") or []
-name = next((c.get("name") for c in json.load(open("apps/yeta/characters/roster.json", encoding="utf-8")) if c.get("id") == persona), persona)
+raw_out = sys.argv[5] if len(sys.argv) > 5 else ""   # 생성 원문 = argv 전달(퀴즈 JSON의 따옴표·역슬래시가 heredoc 삽입에서 깨지는 것 차단)
 if mode == "pray":   # 신당 기도 반영(운영자 260725) — me_dead.pray 박제 = 뷰어 부활 팝업이 "○○가 이렇게 빌었다"로 열리고 즉시 부활이 열린다(op revive 가드의 통과 조건)
     md = S.get("me_dead")
     if not isinstance(md, dict) or md.get("pray"): print("0"); sys.exit()   # 그새 부활했거나 이미 누가 빌었음 = 폐기
@@ -168,7 +254,12 @@ print(next((c.get('name') or sys.argv[1] for c in r if c.get('id')==sys.argv[1])
 import sys,re
 t=re.sub(r'\*[^*]*\*','',sys.stdin.read()); t=re.sub(r'\s+',' ',t).strip()
 print((t[:70]+'…') if len(t)>70 else t)")"
-  if [ "$MODE" = "pray" ]; then NM="${NM} — 신당에서 빌고 있어"; fi   # 사망 중 = 알림 제목으로 상황을 먼저 알린다(대화 재촉이 아니라 부활 신호) · set -e 안전형 if(단축 && 는 조건 false에서 스크립트를 죽인다)
+  if [ "$MODE" = "pray" ]; then NM="${NM} — 신당에서 빌고 있어"; fi
+  if [ "$MODE" = "quiz" ]; then NM="기억이 떠오른다"; PREV="죽어 있는 동안 떠올릴 수 있는 게 생겼어 — 부활 시간을 줄일 수 있다"; fi   # 사망 중 = 알림 제목으로 상황을 먼저 알린다(대화 재촉이 아니라 부활 신호) · set -e 안전형 if(단축 && 는 조건 false에서 스크립트를 죽인다)
   python3 .github/scripts/push_send.py --notify "$NM" "$PREV" --url "/?yeta=${PERSONA}" --tag "nomute-yeta-${PERSONA}" >/dev/null 2>&1 || true
 fi
-[ "$MODE" = "pray" ] && echo "yeta-nudge: 신당 기도 발신 완료(${#out}자) — 유저 즉시 부활 가능" || echo "yeta-nudge: 발신 완료(${#out}자)"
+case "$MODE" in
+  quiz) echo "yeta-nudge: 성향 퀴즈 박제 완료(${#out}바이트)" ;;
+  pray) echo "yeta-nudge: 신당 기도 발신 완료(${#out}자) — 유저 즉시 부활 가능" ;;
+  *)    echo "yeta-nudge: 발신 완료(${#out}자)" ;;
+esac
