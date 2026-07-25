@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SEASON_DIR = ROOT / "viewer" / "characters" / "season"
-IMG_EXT = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"}
+IMG_EXT = {".jpg", ".jpeg", ".jfif", ".png", ".webp", ".gif", ".avif"}   # .jfif(260726) = 브라우저 저장 JPEG 변종 — 운영자 업로드에 그대로 섞여 들어온다. ⚠ 서빙 MIME이 호스트에 따라 octet-stream이 될 수 있어 **가능하면 .jpg로 개명해 두는 게 안전**(바이트 동일 = 무손실). 여기 등재는 누락 방지용 안전망.
 CLIP_EXT = {".mp4", ".webm"}
 EMOS = ["base", "warm", "joy", "love", "shy", "blue", "tense", "mad"]  # viewer Y_MOODS(+base)·러너 화이트리스트와 짝
 
@@ -204,6 +204,8 @@ def build_flat(cid: str, cfg: dict) -> dict:
         raise SystemExit(f"평면 폴더 없음: {fdir}")
     buckets = {e: [] for e in EMOS}
     rules = cfg["rules"]
+    # 클립(mp4/webm) = base 선두 계약 — build_one과 동형(260726 실측: 이 처리가 빠져 있어 운영자가 넣은 영상 3개가 통째로 무시됐다).
+    buckets["base"].extend(sorted(p for p in fdir.iterdir() if p.is_file() and p.suffix.lower() in CLIP_EXT))
     for p in sorted(fdir.iterdir()):
         if not p.is_file() or p.suffix.lower() not in IMG_EXT:
             continue

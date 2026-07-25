@@ -834,6 +834,12 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ycrow.locked .ynm-t { opacity:.5; }   /* 이름 옅게(실루엣 결) */
   .yqm, .ynm-t.qm { color:var(--accent); }   /* 미대면 ??? = 강조색(운영자 260709) — 리스트·디테일·픽커 공용 */
   .ycrow.locked .ynm-t.qm { opacity:1; }   /* ??? 는 옅김 해제(강조 유지) */
+  /* 난입 전용 인물(운영자 260726 "아예 불투명은 아니고 반투명 정도로 · 사망보다는 대화선택지에서 잘 보이게") —
+     .locked 실루엣(.66 + grayscale1 brightness.5 = 정체 은폐)은 이 인물에게 과하다. 얘는 숨은 게 아니라 **못 여는** 것뿐.
+     값은 .ycrow.estr("만났지만 대화는 어려움") 선언 100% 계승 = 신규 값 0. 이름 옅김도 해제(존재는 또렷하게). */
+  .ycrow.locked.barge { opacity:.8; }
+  .ycrow.locked.barge .yava { filter:grayscale(.7) brightness(.55); }
+  .ycrow.locked.barge .ynm-t { opacity:1; }
   .ycrow.estr { opacity:.8; }   /* 소원(만났지만 대화는 어려움 · 운영자 260709) — 이름은 보임 · 전체 살짝 가라앉힘 */
   .ycrow.estr .yava { filter:grayscale(.7) brightness(.55); }   /* 식은 사이 = 반실루엣(미대면 .3보다 밝음 = 아는 얼굴) */
   .ylock-avawrap { position:relative; flex:none; display:grid; }   /* 아바타 위 자물쇠 오버레이 컨텍스트 */
@@ -1196,10 +1202,12 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ygrade svg { width:10px; height:10px; fill:currentColor; filter:drop-shadow(0 1px 0 rgba(0,0,0,.35)); }   /* 젬 = 미세 드롭섀도 양각(box-shadow 계보 raw 예외축) */
   .ygrade.season { background:rgba(var(--season-rgb),.12); border:1px solid rgba(var(--season-rgb),.4); color:var(--season); }   /* 시즌 = 시즌 주인공(진한 보라 --season · 운영자 260708 레드→보라) */
   .ygrade.idol { background:rgba(var(--fg-rgb),.10); border:1px solid rgba(var(--fg-rgb),.45); color:var(--fg); }   /* IDOL = 흰·실버 플레이트+테두리(운영자 260708 "테두리 들어가야" · rgba(--fg-rgb) = 시즌/보이스 .4 테두리 패턴 통일 · 뉴트럴 흰 = 신규 색 0) */
+  .ygrade.barge { background:rgba(var(--danger-rgb),.12); border:1px solid rgba(var(--danger-rgb),.4); color:var(--danger); }   /* 난입 = 자몽 플레이트(--danger · 운영자 260726 "붉은 자몽및") — .ygrade.season 선언 100% 계승, 색축만 교체 · 신규 값 0 */
   /* 프로필 링(운영자 260708 "특별한 애들 프로필 링 · 대화목록 안읽음 링") — 아바타 둘레 링 · box-shadow(토큰없는 축 raw 예외) + 색=토큰 · --bg 갭으로 분리(인스타 결) */
   .ycrow .yava.yring-voice,  .ycd-card .yintro-ava.yring-voice  { box-shadow:0 0 0 2px var(--bg), 0 0 0 3.5px var(--accent), 0 0 7px rgba(var(--accent-rgb),.32); }   /* 보이스 = 라임 */
   .ycrow .yava.yring-season, .ycd-card .yintro-ava.yring-season { box-shadow:0 0 0 2px var(--bg), 0 0 0 3.5px var(--season), 0 0 7px rgba(var(--season-rgb),.32); }   /* 시즌 = 보라 */
   .ycrow .yava.yring-idol,   .ycd-card .yintro-ava.yring-idol   { box-shadow:0 0 0 2px var(--bg), 0 0 0 3px var(--fg-2); }   /* IDOL = 실버(--fg-2) */
+  .ycrow .yava.yring-barge,  .ycd-card .yintro-ava.yring-barge  { box-shadow:0 0 0 2px var(--bg), 0 0 0 3.5px var(--danger), 0 0 7px rgba(var(--danger-rgb),.32); }   /* 난입 = 자몽(--danger · 260726) — .yring-season 선언 100% 계승, 색축만 교체 */
   .ylist-ava { position:relative; overflow:visible; }   /* 안읽음 앱 배지 앵커(우상단 · 운영자 260709) — 구 라임 링 폐지(배지가 대체) */
   .yme-sub { font-size:var(--fs-meta); font-weight:400; color:var(--fg-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }   /* 내 위치 행 = 메타 토큰(운영자 260709 "볼드 풀고 75%") */
   .yme-sub b { font-weight:400; color:var(--mut); }   /* 장소 기본 = 흐림(알 수 없음 · 항목21 색 위계) · 볼드 해제(운영자 260709) */
@@ -2541,7 +2549,7 @@ async function yCharRender() {   // 메뉴1 = 시즌 세계관 헤더 + 캐릭�
     const meta = dd ? `<span class="ylock-pill">${YLOCK_SVG}사망</span>` : lk ? `<span class="ylock-pill">${YLOCK_SVG}${esc(lk)}</span>` : um ? `<span class="ylock-pill">${YLOCK_SVG}아직 못 만남</span>` : es ? `<span class="ylock-pill">${YLOCK_SVG}만났지만 대화는 어려움</span>` : (act.has(c.id) ? '<span class="ycrow-on">대화 중</span>' : '');
     const desc = dd ? '죽음 — 누가 신당에서 빌어주면 그 자리에서, 아무도 안 빌면 무음동 이틀 뒤에 돌아온다' : um ? '아직 만나지 못한 상대 — 어디선가 스쳐 지나갔을지도' : lk ? '만났지만, 아직 대화할 수 없는 상대' : es ? '한동안 뜸했더니 서먹해졌다 — 골목에서 다시 마주치면 풀릴지도' : (c.desc || c.tagline || '');   // 잠긴·소원·사망 = 캐릭터 설명 대신 내 상황 서술(운영자 260709·260714)
     const quote = (lk || um || es || dd) ? '' : (c.quote || '');
-    return `<button type="button" class="ycrow${(lk || um || dd) ? ' locked' : es ? ' estr' : (act.has(c.id) ? ' talking' : '')}" data-id="${esc(c.id)}">${ava}`
+    return `<button type="button" class="ycrow${(lk || um || dd) ? ' locked' : es ? ' estr' : (act.has(c.id) ? ' talking' : '')}${c.grade === 'barge' && !dd ? ' barge' : ''}" data-id="${esc(c.id)}">${ava}`   // 난입 등급(260726) = .locked 위에 얹는 완화 클래스 — 사망(dd)일 땐 안 붙인다(사망 표기가 이겨야 함)
     + `<span class="ycrow-mid"><span class="ycrow-nm"><i class="ynm-t${um ? ' qm' : ''}">${esc(um ? YUNMET_NM : c.name)}</i>${(lk || um || dd) ? '' : yJobBadge(c)}${yGradeBadge(c)}${window.yPremBadge ? yPremBadge(c) : ''}${meta}</span><span class="ycrow-desc">${esc(desc)}</span>${quote ? `<span class="ycrow-quote">“${esc(quote)}”</span>` : ''}</span>`
     + `<span class="ycrow-sep"></span>${yHexSvg(c.stats, 0, yStatBoost(c))}</button>`;
   }).join('');
@@ -2559,7 +2567,7 @@ function yShowDetail(id) {   // 캐릭터 세부 디테일 — 대형 아바타�
     + yDeadInfo(c.id)   // 죽음 프로세스 줄(운영자 260725) — 죽음/부활 대기/귀환 3상태 공용 · 해당 없으면 빈 문자열 · 육각 위 = 부활 조건 CTA 바로 앞
     + yHexSvg(c.stats, true, yStatBoost(c))
     + (yLockLabel(c) || um || yEstranged(c) || yDead(c)
-        ? `<button type="button" class="ycd-cta locked" disabled>${yDead(c) ? '죽음 — 누가 신당에서 빌어주면 바로, 아니면 시간이 다 흘러야 돌아와' : um ? '아직 만나지 못했어 — 골목 어딘가에서 마주치면 열려' : yEstranged(c) ? '한동안 뜸했어 — 다시 마주치면 이어져' : yLockLabel(c) === '아직 모르는 인물' ? '아직 대화할 수 없어' : '아직 열리지 않은 인물'}</button>`
+        ? `<button type="button" class="ycd-cta locked" disabled>${yDead(c) ? '죽음 — 누가 신당에서 빌어주면 바로, 아니면 시간이 다 흘러야 돌아와' : c.grade === 'barge' ? '부를 수 없는 사람 — 저녁이 오면 저쪽이 먼저 찾아온다' : um ? '아직 만나지 못했어 — 골목 어딘가에서 마주치면 열려' : yEstranged(c) ? '한동안 뜸했어 — 다시 마주치면 이어져' : yLockLabel(c) === '아직 모르는 인물' ? '아직 대화할 수 없어' : '아직 열리지 않은 인물'}</button>`
         : `<button type="button" class="ycd-cta" data-id="${esc(c.id)}">대화 시작</button>`)
     + (c.phone ? `<button type="button" class="ycd-sub" data-vcf="${esc(c.id)}" aria-label="연락처 등록" title="연락처 등록 — 전화 올 때 사진·이름이 뜨게"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg></button>` : '');   // 글자 → 픽토그램-온리(운영자 260709 — 헤더서 옮겨온 그 자리 픽토 재사용 · 라벨 = aria/title)
   $('#ycdCard').classList.toggle('ydead', !!yDead(c));   // 사망 = 카드 프사도 채색 소거(목록 행·캐릭터 탭과 같은 톤 · 260725)
@@ -3191,7 +3199,7 @@ async function yDraw() {   // 랜덤 뽑기/재뽑기 — 맥락 유지·화자 
   YSESS = r.sess; yApply(c); yRender();
 }
 // ── 시즌 등급(운영자 260707) — 배지 + 감정 미디어 배경(답장 무드 따라 캐릭터 이미지 로테이션 · 클립 = muted) ──
-const YGRADE = { season: '시즌', idol: 'IDOL' };   // 스페셜 등급(훈장 · 운영자 260707) — 시즌 특전 · 동렬(높낮이 없음)·상호배타(grade 슬롯 1개) · 보이스 = 별개 기능 아이콘(.yprem)
+const YGRADE = { season: '시즌', idol: 'IDOL', barge: '난입' };   // 스페셜 등급(훈장 · 운영자 260707) — 시즌 특전 · 동렬(높낮이 없음)·상호배타(grade 슬롯 1개) · 보이스 = 별개 기능 아이콘(.yprem) · barge(260726) = 대화를 열 수 없고 저쪽이 찾아오는 인물(운영자 "아이돌 표식 같은거 · 대화는 불가능한데 리스트에는 있어야하니까")
 // 자물쇠 SVG = 기존 YLOCK_SVG(성향잠금 공용 · 위쪽 선언) 계승 — 중복 선언 금지(병합 260707 교훈)
 function yLockLabel(c) {   // 잠금 캐릭터(카드 없는 스페셜 = roster locked:true) 상태 라벨 — 만난 적 有(met:true)=아직 모르는 인물 / 안 만남=미대면과 동일 문구(운영자 260709 "특수캐릭터도 동일하게 안 만난 거로" — 옛 LOCKED 별도 표기 폐지 · 정렬 최하단은 유지) · 미잠금=''(일반)
   if (!c || !c.locked) return '';
@@ -3373,9 +3381,11 @@ setInterval(() => { try {   // 분침 타이머(분신술 260709 3건 일괄): �
   else if (document.getElementById('ymain').classList.contains('unlocked') && document.querySelector('#ynav button.on[data-tab="list"]')) yListRender();
 } catch (x) {} }, 60000);
 const YGEM_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14l3 5.5L12 21 2 8.5z"/><path d="M5 3 8.2 8.5 12 21 15.8 8.5 19 3M2 8.5h20" fill="none" stroke="#000" stroke-opacity=".22" stroke-width="1"/><path d="M9 3h6l-3 5.5z" fill="#fff" fill-opacity=".33"/><path d="M5 3 8.2 8.5H2z" fill="#fff" fill-opacity=".16"/></svg>';   // 보석 젬(브릴리언트 파셋 컷 = 음각 결 + 테이블 set 광 · 운영자 260707 "더 보석같이 박게")
-function yGradeBadge(c) { const g = c && YGRADE[c.grade]; return g ? `<span class="ygrade ${esc(c.grade)}" title="스페셜 등급 — ${g}">${YGEM_SVG}${g}</span>` : ''; }   // grade 미정·미등록 값 = 일반(옵트인 가드)
-function yGradeRing(c) { return (c && c.voice) ? ' yring-voice' : c && c.grade === 'season' ? ' yring-season' : c && c.grade === 'idol' ? ' yring-idol' : ''; }   // 특별 등급 프로필 링 클래스(운영자 260708) — 보이스→라임·시즌→보라·IDOL→실버 · yGradeBadge와 짝(픽커·상세카드 아바타)
-function yCharRank(c) { return (c && c.voice) ? 0 : c && c.grade === 'season' ? 1 : c && c.grade === 'idol' ? 2 : 3; }   // 고르는 창 정렬 우선순위(운영자 260707): 보이스 → 시즌(시즌 주인공) → IDOL → 나머지
+const YSKULL_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6c-4.3 0-7.8 3.4-7.8 7.5 0 2.3 1.1 4.4 2.8 5.8.26.2.4.52.4.85v1.2c0 .6.5 1.05 1.1 1.05h7c.6 0 1.1-.45 1.1-1.05v-1.2c0-.33.14-.65.4-.85 1.7-1.4 2.8-3.5 2.8-5.8 0-4.1-3.5-7.5-7.8-7.5Z"/><ellipse cx="9.1" cy="10.2" rx="2.1" ry="2.45" fill="#000" fill-opacity=".55"/><ellipse cx="14.9" cy="10.2" rx="2.1" ry="2.45" fill="#000" fill-opacity=".55"/><path d="M12 12.7c.42 0 .8.42.8.94s-.38.94-.8.94-.8-.42-.8-.94.38-.94.8-.94Z" fill="#000" fill-opacity=".55"/></svg>';   // 해골(난입 등급 전용 · 운영자 260726 "해골 모양") — YGEM_SVG와 같은 인라인 상수 결(nm-svg.js 공유 아이콘 아님 = SSOT 게이트 무저촉) · 눈·코 구멍 = currentColor 위 검정 저투명(배지 색 자동 추종)
+const YGRADE_SVG = { barge: YSKULL_SVG };   // 등급별 아이콘 오버라이드 — 미지정 = 젬(기존 전부)
+function yGradeBadge(c) { const g = c && YGRADE[c.grade]; return g ? `<span class="ygrade ${esc(c.grade)}" title="스페셜 등급 — ${g}">${YGRADE_SVG[c.grade] || YGEM_SVG}${g}</span>` : ''; }   // grade 미정·미등록 값 = 일반(옵트인 가드)
+function yGradeRing(c) { return (c && c.voice) ? ' yring-voice' : c && c.grade === 'season' ? ' yring-season' : c && c.grade === 'idol' ? ' yring-idol' : c && c.grade === 'barge' ? ' yring-barge' : ''; }   // 특별 등급 프로필 링 클래스(운영자 260708) — 보이스→라임·시즌→보라·IDOL→실버·난입→자몽(260726) · yGradeBadge와 짝(픽커·상세카드 아바타)
+function yCharRank(c) { return (c && c.voice) ? 0 : c && c.grade === 'season' ? 1 : (c && (c.grade === 'idol' || c.grade === 'barge')) ? 2 : 3; }   // 고르는 창 정렬 우선순위(운영자 260707): 보이스 → 시즌(시즌 주인공) → IDOL·난입 → 나머지
 function ySortChars(list) { return (list || []).map((c, i) => [c, i]).sort((a, b) => yCharRank(a[0]) - yCharRank(b[0]) || a[1] - b[1]).map(x => x[0]); }   // 안정 정렬 = 동급은 로스터 순서 유지(index 타이브레이커)
 function yActiveIds() { const t = (YSESS || {}).threads || {}; return new Set(Object.keys(t).filter(id => (t[id].turns || []).length || (t[id].state === 'awaiting' && t[id].opening))); }   // 이미 대화 중(진행 스레드) — 고르는 창에서 흐림 구분(운영자 260707 "대화 안 하는 애를 고르게" · 클릭 = 재진입 가능)
 function yAgo(ts) {   // 상대시간(운영자 260707) — <1분 = 방금 · 1~9 = N분 전 · 10~59 = N0분 전(십분 내림) · 1~6시간 = N시간 전 · 초과 = 미표시 · 흰색(.ylist-ago)
