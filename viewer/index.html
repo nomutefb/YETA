@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="icon" href="favicon.ico" sizes="32x32"><!-- PC 브라우저 탭 파비콘(운영자 260706 · 데스크톱 누락 보강) -->
 <link rel="icon" type="image/png" href="assets/brand/yeta-face-icon-192.png" sizes="192x192"><!-- PC 파비콘 = 영상 캐릭터 얼굴(운영자 260706) -->
-<link rel="apple-touch-icon" href="assets/brand/yeta-splash-192.png">
+<link rel="apple-touch-icon" href="assets/brand/yeta-face-icon-192.png"><!-- iOS 홈화면 아이콘(운영자 260725 "탭에 뜨는 저게 뜨면 됨") — 종전 yeta-splash-192.png는 **실존하지 않는 파일**이라 404 = 아이콘 없음이었다(실측). PC 파비콘·manifest와 같은 얼굴로 통일 -->
 <link rel="manifest" href="manifest.json">
 <!-- PWA 웹앱(홈화면 설치·전체화면) — 안드로이드=manifest, iOS=아래 apple 메타(운영자 260704 "웹앱 형태로 여는것") -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -3993,21 +3993,44 @@ function yReconcile(root, html) {   // 증분 렌더(운영자 260717 근본) �
 }
 let _yOpenGate = false;   // 진입 1회 게이트 — openYeta가 세우고 첫 렌더가 소진(사망 상대 방 복원 차단용 · 대화 중 사망은 종전 두절 연출 유지)
 let _yMeDeadSeq = false;   // 유저 사망 연출 진행 중 래치(중복 발화 0) — 팝업이 뜨면 풀린다(다음 진입 시도 = 다시 물음)
-function yMeDeadCheck() {   // 유저 사망(운영자 260725 "타의든 자의든") — 러너 <<MEDEAD: 맥락>> → sess.me_dead 박제 · 대화창 암전 → 이탈 → 대화 목록 → "당신은 죽었습니다. 부활하시겠습니까?"
+// 유저 부활 하한(운영자 260725 "누가 기도 안해주면 48시간 대기 — 게임 내 시간 · 접속 안 해도 흘러감")
+//   무음동은 현실의 6배속이라 무음동 48h = 현실 8h. 저장은 현실 ts(md.d)로 하고 비교만 환산 = 접속 여부와 무관하게 흐른다(뷰어 yWorldMin·러너 wmin과 같은 축).
+const YMEREV_WORLD_H = 48;
+const YMEREV_MS = YMEREV_WORLD_H / 6 * 3600e3;
+const yMeRevAt = md => (md.d || 0) + YMEREV_MS;                                   // 기도가 없을 때 스스로 눈을 뜨는 시각
+const yMeRevOK = md => !!(md && md.pray) || Date.now() >= yMeRevAt(md || {});      // 기도 = 즉시 · 아니면 하한 경과
+const yJosa = (w, withJong, noJong) => { const s = String(w || ''), c = s.charCodeAt(s.length - 1); return (c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28) ? withJong : noJong; };   // 받침 조사(이름 뒤 "이(가)" 병기가 렌더에서 튀어서 · 렌더 실측 260725) — 한글 아님·받침 없음 = 뒤 값
+function yMeDeadCheck() {   // 유저 사망(운영자 260725 "타의든 자의든") — 러너 <<MEDEAD: 맥락>> → sess.me_dead 박제 · 대화창 암전 → 이탈 → 대화 목록 → 상태별 팝업
   const md = (YSESS || {}).me_dead;
   if (!md) { _yMeDeadSeq = false; return false; }
   if (_yMeDeadSeq) return true;
   _yMeDeadSeq = true; yStopPoll();   // 죽은 채로 폴 돌 이유 없음(부활 = op revive가 세션을 되돌림)
-  const ask = () => { _yMeDeadSeq = false; yConfirm({ title: '당신은 죽었습니다', body: `${md.why ? md.why + '\n\n' : ''}부활하시겠습니까?`, okLabel: '부활한다', noLabel: '아니오', onOk: yRevive }); };   // 팝업 = 범용 확인 정본(yexit 골격 계승 · 새 팝업 창작 0)
+  const ask = () => {   // 팝업 = 범용 확인 정본(yexit 골격 계승 · 새 팝업 창작 0) — 세 상태를 같은 골격의 문구·라벨로만 분기
+    _yMeDeadSeq = false;
+    const why = md.why ? md.why + '\n\n' : '';
+    const pr = md.pray;
+    if (pr) {   // 누군가 신당에서 빌어줬다(운영자 260725 "해당 내용이 전달되면서 회신 문자 · 즉시 부활 활성화")
+      const nm = pr.by || (yPersona(pr.id) || {}).name || '누군가';
+      yConfirm({ title: '누군가 당신을 위해 빌었습니다', body: `${why}${nm}${yJosa(nm, '이', '가')} 신당까지 찾아가 빌었다.\n\n“${pr.txt || '…돌아와 줘.'}”\n\n돌아가서 답할까?`,
+        okLabel: '돌아가서 답한다', noLabel: '조금 더 있는다', onOk: () => yRevive(pr.id) });
+      return;
+    }
+    if (yMeRevOK(md)) { yConfirm({ title: '당신은 죽었습니다', body: `${why}아무도 당신을 위해 빌지 않았지만, 무음동의 밤이 충분히 흘렀다.\n\n다시 눈을 뜰까?`, okLabel: '눈을 뜬다', noLabel: '아니오', onOk: () => yRevive() }); return; }
+    const leftH = Math.max(1, Math.ceil((yMeRevAt(md) - Date.now()) / 3600e3 * 6));   // 남은 시간 = 무음동 시각으로 표기(앱 안 시계와 같은 축)
+    yConfirm({ title: '당신은 죽었습니다', body: `${why}살아 있는 누군가가 신당에서 빌어주면 그 순간 돌아올 수 있다.\n아무도 빌지 않으면 무음동 시간으로 약 ${leftH}시간 뒤에 스스로 눈을 뜬다.`, okLabel: '기다린다', noLabel: '닫기', onOk: yConfirmClose });
+  };
   if (yetadlg.open) { yetadlg.classList.add('ydlg-dead'); setTimeout(() => { yetadlg.classList.remove('ydlg-dead'); navBack('ydlg'); setTimeout(() => { if (yetadlg.open) yDlgClose(); ask(); }, 260); }, 900); }   // 암전(.9s) → 이탈 = 대화 목록 복귀(닫힘 핸들러가 yTab('list')) → 팝업 · 백스택 미등재 경로(레이어 없이 열린 챗)에선 navBack이 헛발이라 직접 닫기로 받침(실측 260725 — 죽은 채 대화창에 갇히는 경로 봉인)
   else ask();
   return true;
 }
-async function yRevive() {   // 부활 = 서버 me_dead 해제 단일 경로(op revive) · 실패해도 로컬 해제 후 다음 폴이 서버 진실로 재동기(죽은 채 갇힘 차단)
+async function yRevive(replyTo) {   // 부활 = 서버 me_dead 해제 단일 경로(op revive) · 실패해도 로컬 해제 후 다음 폴이 서버 진실로 재동기(죽은 채 갇힘 차단)
   yConfirmClose();
   const r = await yApi('revive').catch(() => null);
-  if (r && r.ok && r.sess) YSESS = r.sess; else if (YSESS) delete YSESS.me_dead;
-  _yMeDeadSeq = false; miniToast('다시 눈을 떴어.');
+  if (r && r.ok && r.sess) YSESS = r.sess; else if (r && r.error) { miniToast(r.error); _yMeDeadSeq = false; return; } else if (YSESS) delete YSESS.me_dead;   // 서버 거부(하한 미도래·기도 없음) = 죽은 상태 유지 · 사유 그대로 표시
+  _yMeDeadSeq = false; yStartPoll();
+  const c = replyTo && yPersona(replyTo);
+  if (c) { miniToast(`${c.name}에게 답장할 수 있어.`); yEnterChat(c); return; }   // 회신 문자(운영자 260725) = 빌어준 그 사람 방으로 직행 — 부활 첫 마디를 유저가 먼저 건다
+  miniToast('다시 눈을 떴어.');
 }
 function yRender() {
   const _ct = (YSESS || {}).cur || '';
