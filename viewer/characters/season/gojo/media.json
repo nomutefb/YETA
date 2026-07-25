@@ -1,0 +1,39 @@
+{
+ "_comment": "시즌 감정 미디어 manifest(고죠) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음(mode_dir 없음 = 시간대 필터 비활성). 정본=viewer/characters/season/gojo/main/<감정>/.",
+ "base": [
+  "characters/season/gojo/main/base/gojo_02.jpg",
+  "characters/season/gojo/main/base/gojo_04.jpg",
+  "characters/season/gojo/main/base/gojo_06.jpg",
+  "characters/season/gojo/main/base/gojo_17.jpg",
+  "characters/season/gojo/main/base/gojo_20.jpg"
+ ],
+ "warm": [
+  "characters/season/gojo/main/warm/gojo_03.jpg",
+  "characters/season/gojo/main/warm/gojo_09.jpg"
+ ],
+ "joy": [
+  "characters/season/gojo/main/joy/gojo_05.jpg",
+  "characters/season/gojo/main/joy/gojo_13.jpg"
+ ],
+ "love": [
+  "characters/season/gojo/main/love/gojo_14.jpg",
+  "characters/season/gojo/main/love/gojo_15.jpg"
+ ],
+ "shy": [
+  "characters/season/gojo/main/shy/gojo_08.jpg"
+ ],
+ "blue": [
+  "characters/season/gojo/main/blue/gojo_16.jpg",
+  "characters/season/gojo/main/blue/gojo_18.jpg",
+  "characters/season/gojo/main/blue/gojo_19.jpg"
+ ],
+ "tense": [
+  "characters/season/gojo/main/tense/gojo_01.jpg",
+  "characters/season/gojo/main/tense/gojo_07.jpg"
+ ],
+ "mad": [
+  "characters/season/gojo/main/mad/gojo_10.jpg",
+  "characters/season/gojo/main/mad/gojo_11.jpg",
+  "characters/season/gojo/main/mad/gojo_12.jpg"
+ ]
+}
