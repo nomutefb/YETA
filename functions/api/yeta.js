@@ -511,10 +511,14 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: true, pin: !!(TH(sess, t) || {}).pin });
   }
 
-  if (op === 'revive') {   // 유저 부활(운영자 260725 "당신은 죽었습니다. 부활하시겠습니까?") — sess.me_dead 해제 단일 경로. 유저 사망 박제 = 러너 <<MEDEAD: 맥락>>(타의·자의 공통) · 캐릭터 dead(24h 대기)와 달리 유저는 즉시 부활(대기 없음 = 놀이 흐름 유지)
+  if (op === 'revive') {   // 유저 부활(운영자 260725) — sess.me_dead 해제 단일 경로. 유저 사망 박제 = 러너 <<MEDEAD: 맥락>>(타의·자의 공통).
+    // 조건(운영자 260725 개정) = ⓐ 누군가 신당에서 빌어줬거나(me_dead.pray · 러너 <<PRAYME>>) ⓑ 무음동 48시간 경과. 둘 다 아니면 거부 = 뷰어 버튼 우회로도 못 돌아온다(뷰어 yMeRevOK와 같은 식).
+    const MEREV_MS = 48 / 6 * 3600e3;   // 무음동 48h = 현실 8h(6배속 · 접속 무관 실시간 축)
     const { sess, abort } = await casPut(s => {
       if (!s.me_dead) return { abort: { noop: 1 } };   // 이미 살아있음 = 무변경(중복 탭·재진입 멱등)
-      s.me_revived = { d: (s.me_dead || {}).d || 0, why: (s.me_dead || {}).why || '', at: Date.now() };   // 직전 죽음 = 부활 맥락으로 1세대 보존(러너가 다음 턴에 "돌아왔네" 결로 쓸 재료)
+      const md = s.me_dead;
+      if (!md.pray && Date.now() < (md.d || 0) + MEREV_MS) return { abort: { error: '아직 돌아갈 수 없어 — 누가 신당에서 빌어주거나, 무음동의 밤이 더 흘러야 해' } };
+      s.me_revived = { d: md.d || 0, why: md.why || '', at: Date.now(), pray: md.pray || null };   // 직전 죽음 + 그 기도 = 부활 맥락으로 1세대 보존(러너가 다음 턴에 "돌아왔네" 결로 쓸 재료)
       delete s.me_dead;
     });
     if (abort && abort.error) return json(abort, 409);
