@@ -1065,9 +1065,9 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ydepth-effs i.on { color:var(--fg); }
   /* 대화 깊이 안내(운영자 260712 "경고 감 X · 토글 아래 중앙정렬 · 작은 블러 글래스") — Sonnet 구간(data-model=s)일 때만 촤르륵 노출 · 경고 톤(danger) 아님 = 뉴트럴 정보 */
   .ydepth-note { max-height:0; opacity:0; overflow:hidden; margin-top:0; text-align:center; transition:max-height .3s var(--ease), opacity .3s var(--ease), margin .3s var(--ease); }
-  .ydepth-wrap[data-model="s"] .ydepth-note, .ydepth-wrap[data-model="k"] .ydepth-note { max-height:44px; opacity:1; margin-top:11px; }
-  .ydepth-note .nns, .ydepth-note .nnk { display:none; }   /* 모델별 안내 1장만(s=소넷 품질 · k=키미 과금 · 260719) */
-  .ydepth-wrap[data-model="s"] .ydepth-note .nns, .ydepth-wrap[data-model="k"] .ydepth-note .nnk { display:inline-block; }
+  .ydepth-wrap[data-model="k"] .ydepth-note { max-height:44px; opacity:1; margin-top:11px; }   /* 소넷 구간 제외(운영자 260725 안내 폐지) — s에서 열면 빈 글래스 알약이 뜬다 */
+  .ydepth-note .nnk { display:none; }   /* 안내 = 키미 과금 1장만(소넷 품질 안내 폐지 260725) */
+  .ydepth-wrap[data-model="k"] .ydepth-note .nnk { display:inline-block; }
   .ydepth-note span { display:inline-block; padding:6px 12px; border-radius:var(--r-pill); background:var(--glass); backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); border:1px solid var(--glass-line); color:var(--fg-2); font-size:var(--fs-xs); font-weight:var(--fw-b); line-height:1.4; }
   .ydepth-mn { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.08em; text-align:center; opacity:.5; transition:opacity .18s var(--ease); }
   .ydepth-half.hs .ydepth-mn { color:var(--cobalt); } .ydepth-half.ho .ydepth-mn { color:var(--accent); } .ydepth-half.hk .ydepth-mn { color:var(--think); }
@@ -2648,7 +2648,23 @@ const ySetVt = k => { const [t, d] = ySetVal(k); return `<span class="si-vt${d ?
 // 「대화 깊이」 통합 게이지(운영자 260710) — 대화모델 행+생각깊이 행 통합 · 9단 선형(0-2 Sonnet·3-5 Opus·6-8 Kimi × 빠름/중간/깊게 · 260719 3열)
 function yDepthIdx() { const b = YDIAL.model === 'claude-sonnet-5' ? 0 : YDIAL.model === 'kimi-k3' ? 6 : 3, e = YDIAL.effort === 'low' ? 0 : YDIAL.effort === '' ? 1 : 2; return b + e; }   // 현 model×effort → 0-8
 const yDepthSec = i => i < 3 ? 's' : i < 6 ? 'o' : 'k';   // 게이지 인덱스 → 모델 구간 키(s=Sonnet·o=Opus·k=Kimi · 3모델 260719)
-function yDepthChips() { const i = yDepthIdx(), c = yDepthSec(i); return `<span class="ychip ychip-m${c === 's' ? ' s' : c === 'k' ? ' k' : ''}">${c === 's' ? 'SONNET' : c === 'k' ? 'KIMI-K3' : 'OPUS'}</span><span class="ychip ychip-e">${YDEPTH_EFF[i % 3]}</span>`; }   // 헤더 [모델][노력] 칩
+const YSEC_KEY = { s: 'sonnet', o: 'opus', k: 'kimi' };   // 게이지 구간 키 → YDIAL_MODELS 키(표시명 SSOT 진입점 · 260725)
+const yDepthMN = c => YDIAL_MODELS[YSEC_KEY[c]][1].toUpperCase();   // 구간 라벨 = YDIAL_MODELS 표시명 대문자(운영자 260725 "소넷하고 오퍼스는 버전명이 없어") — 하드코딩 폐지 = 모델 승격 시 자동 추종
+function yDepthChips() { const i = yDepthIdx(), c = yDepthSec(i); return `<span class="ychip ychip-m${c === 's' ? ' s' : c === 'k' ? ' k' : ''}">${yDepthMN(c)}</span><span class="ychip ychip-e">${YDEPTH_EFF[i % 3]}</span>`; }   // 헤더 [모델][노력] 칩
+function yDialSet(mKey, effort) {   // 다이얼 단일 라이터(운영자 260725 "대화에서 모델 변경하면 시스템에 같이 동기화") — 설정 게이지·대화 미터가 같은 문을 쓴다. 종전엔 미터가 range 값만 되쏴 칩·범례·구간색이 안 따라왔다.
+  try { localStorage.setItem('yeta_dial_model', mKey); localStorage.setItem('yeta_dial_effort', effort); localStorage.removeItem('yeta_dial_vfast'); } catch (x) {}
+  yDialLoad(); yMeter(); yDepthSync();
+}
+function yDepthSync() {   // 설정 「대화 깊이」 표면 재동기 — 카드가 안 떠 있으면 no-op(다음 yShowSettings가 yDepthIdx()로 새로 그린다 = 스테일 0)
+  const i = yDepthIdx(), sec = yDepthSec(i), si = i % 3;
+  const rg = document.getElementById('ydepthRange'); if (rg) rg.value = i;
+  const wrap = document.getElementById('ydepthWrap'); if (wrap) wrap.dataset.model = sec;
+  const chips = document.getElementById('ydepthChips'); if (chips) chips.innerHTML = yDepthChips() + YICO.chev;
+  document.querySelectorAll('#ydepthRow .ydepth-half').forEach((h, hi) => {
+    const c = ['s', 'o', 'k'][hi]; h.classList.toggle('act', c === sec);   // 구간 3열(260719) — 마크업 순서 hs·ho·hk와 짝
+    h.querySelectorAll('.ydepth-effs i').forEach((t, ti) => t.classList.toggle('on', c === sec && ti === si));
+  });
+}
 function yDepthRow() {
   const i = yDepthIdx(), sec = yDepthSec(i), si = i % 3;
   const effs = c => YDEPTH_EFF.map((l, ei) => `<i class="${c === sec && ei === si ? 'on' : ''}">${l}</i>`).join('');
@@ -2660,10 +2676,10 @@ function yDepthRow() {
     + `<div class="ydepth-track"><div class="ydepth-line"></div>`
     + `<input type="range" class="ydepth-range" id="ydepthRange" min="0" max="8" step="1" value="${i}" aria-label="대화 깊이"></div>`
     + `<div class="ydepth-legend">`
-    + `<div class="ydepth-half hs${sec === 's' ? ' act' : ''}"><div class="ydepth-effs">${effs('s')}</div><div class="ydepth-mn">SONNET</div></div>`
-    + `<div class="ydepth-half ho${sec === 'o' ? ' act' : ''}"><div class="ydepth-effs">${effs('o')}</div><div class="ydepth-mn">OPUS</div></div>`
-    + `<div class="ydepth-half hk${sec === 'k' ? ' act' : ''}"><div class="ydepth-effs">${effs('k')}</div><div class="ydepth-mn">KIMI-K3</div></div>`
-    + `</div><div class="ydepth-note"><span class="nns">소넷 모델은 빠르지만 품질은 낮을 수 있어</span><span class="nnk">KIMI-K3는 문샷 종량제 키로 과금돼</span></div></div></div></div>`;
+    + `<div class="ydepth-half hs${sec === 's' ? ' act' : ''}"><div class="ydepth-effs">${effs('s')}</div><div class="ydepth-mn">${yDepthMN('s')}</div></div>`
+    + `<div class="ydepth-half ho${sec === 'o' ? ' act' : ''}"><div class="ydepth-effs">${effs('o')}</div><div class="ydepth-mn">${yDepthMN('o')}</div></div>`
+    + `<div class="ydepth-half hk${sec === 'k' ? ' act' : ''}"><div class="ydepth-effs">${effs('k')}</div><div class="ydepth-mn">${yDepthMN('k')}</div></div>`
+    + `</div><div class="ydepth-note"><span class="nnk">${yDepthMN('k')}는 문샷 종량제 키로 과금돼</span></div></div></div></div>`;   // 소넷 품질 안내 폐지(운영자 260725 "빠르지만 어쩌고~ 설명은 없어도됨") · 키미 = 실과금 경고라 존치
 }
 const yKimiCostOf = u => Object.keys(u || {}).filter(m => YCOST[m]).reduce((s, m) => s + ((u[m].i || 0) * YCOST[m][0] + (u[m].cr || 0) * YCOST[m][1] + (u[m].o || 0) * YCOST[m][2]) / 1e6, 0);   // 키미 계열 실비 USD(Q.37/38 공용 계산기) — 모델별 각자 요율 · 캐시 히트 1/10가 분리
 function yKimiCost() { return yKimiCostOf((YSESS && YSESS.usage) || {}); }   // 전체 누계판(좌상단 미터 병기)
@@ -2907,17 +2923,8 @@ $('#ycsettingsCard').addEventListener('click', e => {
 });
 $('#ycsettingsCard').addEventListener('input', e => {   // 「대화 깊이」 통합 게이지 드래그 = model×effort 저장 + 헤더 칩·썸·범례 실시간 갱신(운영자 260710)
   const r = e.target.closest('.ydepth-range'); if (!r) return;
-  const i = Math.max(0, Math.min(8, parseInt(r.value, 10) || 0)), sec = yDepthSec(i), si = i % 3;
-  const d = YDIAL_DEPTH[i];
-  try { localStorage.setItem('yeta_dial_model', d[0]); localStorage.setItem('yeta_dial_effort', d[1]); localStorage.removeItem('yeta_dial_vfast'); } catch (x) {}
-  yDialLoad(); yMeter();
-  const wrap = document.getElementById('ydepthWrap'); if (wrap) wrap.dataset.model = sec;
-  const chips = document.getElementById('ydepthChips'); if (chips) chips.innerHTML = yDepthChips() + YICO.chev;
-  document.querySelectorAll('#ydepthRow .ydepth-half').forEach((h, hi) => {
-    const c = ['s', 'o', 'k'][hi]; h.classList.toggle('act', c === sec);   // 구간 3열(260719) — 마크업 순서 hs·ho·hk와 짝
-    h.querySelectorAll('.ydepth-effs i').forEach((t, ti) => t.classList.toggle('on', c === sec && ti === si));
-  });
-  // Sonnet 안내 = 하단 경고 토스트 폐지 → 게이지 안 .ydepth-note(글래스·중앙·data-model=s CSS 자동표시)로 대체(운영자 260712)
+  const i = Math.max(0, Math.min(8, parseInt(r.value, 10) || 0));
+  yDialSet(YDIAL_DEPTH[i][0], YDIAL_DEPTH[i][1]);   // 저장·미터·게이지 표면 = 단일 라이터가 전담(260725 — 미터 탭과 같은 문)
 });
 let _ydepthCloseT;
 $('#ycsettingsCard').addEventListener('change', e => {   // 「대화 깊이」 선택 완료(드래그 놓기 = change) = 여닫이 자동 닫힘 + 다음 옵션으로 카메라 이동(운영자 "고르고 나면 닫고 다음거 고르기 편하게")
@@ -3777,11 +3784,9 @@ $('#yetaInvBtn').addEventListener('click', e => { e.stopPropagation();
 $('#yetaMeter').addEventListener('click', e => {   // 미터 탭 = 모델 순환(Sonnet→Opus→Kimi · 260719) / 노력 순환(빠름→깊게→최대→빠름) — 운영자 260712 · 9단 슬라이더와 별개 직접 전환
   const seg = e.target.closest('.ym-seg'); if (!seg) return; e.stopPropagation();
   if (seg.classList.contains('ym-stat')) { _ymView = (_ymView + 1) % 3; yMeter(); return; }   // 계기판 순환(토큰→속도→길이) — 다이얼 무변경(운영자 260714)
-  if (seg.classList.contains('ym-model')) { const mo = ['sonnet', 'opus', 'kimi'], cur = YDIAL.model === 'claude-sonnet-5' ? 'sonnet' : YDIAL.model === 'kimi-k3' ? 'kimi' : 'opus'; try { localStorage.setItem('yeta_dial_model', mo[(mo.indexOf(cur) + 1) % 3]); } catch (x) {} }   // 3모델 순환(운영자 260719 순서 SONNET→OPUS→KIMI)
-  else { const order = ['low', '', 'max']; try { localStorage.setItem('yeta_dial_effort', order[(order.indexOf(YDIAL.effort) + 1) % 3]); } catch (x) {} }   // 노력만 순환(모델과 독립) · 최대→다시 빠름
-  try { localStorage.removeItem('yeta_dial_vfast'); } catch (x) {}
-  yDialLoad(); yMeter();
-  const rg = document.getElementById('ydepthRange'); if (rg) { try { rg.value = yDepthIdx(); rg.dispatchEvent(new Event('input', { bubbles: true })); } catch (x) {} }   // 설정 게이지 열려있으면 동기(배타 화면이라 보통 no-op)
+  const [mk, ef] = YDIAL_DEPTH[yDepthIdx()];   // 현 다이얼 → [모델 키, 노력](YDIAL_DEPTH ↔ yDepthIdx 왕복) · ID→키 재매핑 폐지
+  if (seg.classList.contains('ym-model')) { const mo = ['sonnet', 'opus', 'kimi']; yDialSet(mo[(mo.indexOf(mk) + 1) % 3], ef); }   // 3모델 순환(운영자 260719 순서 SONNET→OPUS→KIMI)
+  else { const order = ['low', '', 'max']; yDialSet(mk, order[(order.indexOf(YDIAL.effort) + 1) % 3]); }   // 노력만 순환(모델과 독립) · 최대→다시 빠름
 });
 async function yImgB64(f) {   // 사진 캔버스 축소(장변 1280 · JPEG .82) — 업로드 페이로드·비전 토큰 절제(운영자 260717 '+' 사진 첨부)
   const url = URL.createObjectURL(f);
