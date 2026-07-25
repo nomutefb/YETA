@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="icon" href="favicon.ico" sizes="32x32"><!-- PC 브라우저 탭 파비콘(운영자 260706 · 데스크톱 누락 보강) -->
 <link rel="icon" type="image/png" href="assets/brand/yeta-face-icon-192.png" sizes="192x192"><!-- PC 파비콘 = 영상 캐릭터 얼굴(운영자 260706) -->
-<link rel="apple-touch-icon" href="assets/brand/yeta-face-icon-192.png"><!-- iOS 홈화면 아이콘(운영자 260725 "탭에 뜨는 저게 뜨면 됨") — 종전 yeta-splash-192.png는 **실존하지 않는 파일**이라 404 = 아이콘 없음이었다(실측). PC 파비콘·manifest와 같은 얼굴로 통일 -->
+<link rel="apple-touch-icon" href="assets/brand/yeta-splash-192.png">
 <link rel="manifest" href="manifest.json">
 <!-- PWA 웹앱(홈화면 설치·전체화면) — 안드로이드=manifest, iOS=아래 apple 메타(운영자 260704 "웹앱 형태로 여는것") -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -94,9 +94,6 @@ html,body { margin:0; height:100%; }
 ::-webkit-scrollbar-button:single-button:vertical:increment { -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 6'%3E%3Cpath d='M4 6 0 0h8z'/%3E%3C/svg%3E") center/8px 6px no-repeat; }
 .sc-top::-webkit-scrollbar-button:single-button:vertical:decrement { background-color:rgba(var(--accent-rgb),.2); }   /* 맨 위 도달 = ▲ */
 .sc-bot::-webkit-scrollbar-button:single-button:vertical:increment { background-color:rgba(var(--accent-rgb),.2); }   /* 맨 아래 도달 = ▼ */
-/* 탭 패널 4종만 스크롤바 숨김(운영자 260725) — 이 넷은 inset:0 = 프레임 전폭·전높이라 트랙이 고정 헤더(로고·세계시계·아바타·시즌 띠)를 관통해 맨 위까지 올라오던 축. 방식 = .yside/.ypb-rail 전례 100% 계승(새 값 창작 0) · 챗 로그·상세시트 등 나머지 스크롤 표면은 위 글래스 스크롤바 유지 */
-.ychar, .ylist, .ymapp, .ysetting { scrollbar-width:none; }
-.ychar::-webkit-scrollbar, .ylist::-webkit-scrollbar, .ymapp::-webkit-scrollbar, .ysetting::-webkit-scrollbar { display:none; }
 body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app-font, Pretendard,-apple-system,system-ui,sans-serif); -webkit-font-smoothing:antialiased; overscroll-behavior:none; }   /* --app-font = 설정 폰트 선택(영문/한글 · yFontApply가 html에 주입 · 기본 = Pretendard 스택 · 운영자 260707) */
 ::selection { background:var(--cobalt); color:var(--fg); }   /* 2차 강조 코발트 — 텍스트 선택(브랜드 통일 260704) */
 /* ── 공통 컴포넌트(계승): nm-toast · msgUnfold · dialog · tool-x · gdots ── */
@@ -344,14 +341,10 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   #yetaProfPop { display:flex; flex-direction:column; align-items:center; text-align:center; gap:7px; padding:var(--sp-3) var(--sp-2); }
   #yetaProfPop[hidden] { display:none; }
   #yetaProfPop .ypp-think, #yetaPdc .ypp-think { font-size:var(--fs-sm); color:var(--think); font-style:italic; line-height:1.5; max-width:30ch; text-wrap:pretty; }   /* 지금 생각 = 터콰이즈(--think 생각줄 공용) · 풀다운 공용(260712) */
-  #yetaProfPop .ypp-meta, #yetaPdc .ypp-meta, #ycdCard .ypp-meta { display:flex; align-items:center; gap:8px; font-size:var(--fs-xs); color:var(--mut); }   /* #ycdCard = 사망 정보 줄(260725) — 같은 메타 컴포넌트 계승(재설계 0) */
-  #yetaProfPop .ypp-meta b, #yetaPdc .ypp-meta b, #ycdCard .ypp-meta b { color:var(--fg); font-weight:var(--fw-b); }
-  #yetaProfPop .ypp-meta .sep, #yetaPdc .ypp-meta .sep, #ycdCard .ypp-meta .sep { width:1px; height:9px; background:var(--glass-line); opacity:.55; }   /* .ylr-meta .sep 결(opacity 포함 완전 계승 — 평의회4) */
-  .ypp-meta.ydead-l { flex-wrap:wrap; justify-content:center; row-gap:4px; }   /* 사망 정보 = 좁은 폭에서 칸이 접히게(기하 축 = raw 예외 · 색·크기는 위 정본 그대로) */
-  #ycdCard.ydead .yintro-ava, #yetaProfPop.ydead .yintro-ava { filter:grayscale(1) brightness(.5); }   /* 사망 = 프사 채색 소거(.ycrow.locked .yava 결 100% 계승 — 목록·캐릭터 탭·카드 3면 동일 톤) */
-  #ycdCard.ydead .yhex { filter:grayscale(1); }   /* 육각도 무채(죽은 사람 카드에 라임 폴리곤만 살아 반짝이던 것 — 목록 글자축 채색 소거와 같은 결) */
-  #ycdCard.ydead .ycd-tag, #ycdCard.ydead .ycd-quote, #yetaProfPop.ydead .ycd-tag, #yetaProfPop.ydead .ycd-quote, #yetaProfPop.ydead .ypp-think { filter:grayscale(1); }   /* 프로필 글자축도 채색 소거(라임 직업·터콰이즈 생각만 살아 튀던 것) — 밝기·크기는 그대로 = 목록 .ylist-mid와 동일 처방 */
-  #yetaProfPop .ypp-desc, #yetaPdc .ypp-desc, #ycdCard .ypp-desc { font-size:var(--fs-xs); color:var(--fg-2); line-height:var(--lh-base); max-width:32ch; text-wrap:pretty; }   /* #ycdCard·#yetaPdc = 사망 각주(260725) — 같은 부속설명 컴포넌트 계승 */
+  #yetaProfPop .ypp-meta, #yetaPdc .ypp-meta { display:flex; align-items:center; gap:8px; font-size:var(--fs-xs); color:var(--mut); }
+  #yetaProfPop .ypp-meta b, #yetaPdc .ypp-meta b { color:var(--fg); font-weight:var(--fw-b); }
+  #yetaProfPop .ypp-meta .sep, #yetaPdc .ypp-meta .sep { width:1px; height:9px; background:var(--glass-line); opacity:.55; }   /* .ylr-meta .sep 결(opacity 포함 완전 계승 — 평의회4) */
+  #yetaProfPop .ypp-desc { font-size:var(--fs-xs); color:var(--fg-2); line-height:var(--lh-base); max-width:32ch; text-wrap:pretty; }
   #yetaProfPop .ycd-quote { max-width:30ch; }
   /* ── 챗 액티브 v2(운영자 260712 전후비교 확정 · 시안 = docs/reports/260712_프로필뱃지챗_전후비교_플레이그라운드.html) — 이름부 풀다운 시트 · 근처 인물 스택 · 초대 2차 팝업 ── */
   .yeta-who { touch-action:none; user-select:none; -webkit-user-select:none; cursor:pointer; }   /* 풀다운 드래그 축 캡처(헤더 = 비스크롤 면 · 트리거 = 드래그+탭 선택값) */
@@ -362,8 +355,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     background:linear-gradient(var(--glass),var(--glass)),rgba(18,18,18,.75); backdrop-filter:blur(var(--blur-l)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-l)) saturate(1); border:1px solid var(--glass-line); box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card); }   /* 글래스 = 헤더 .yeta-h 정본 계승(운영자 260712 "기틀 배껴서" — .yeta-pick 불투명 rgba(.94) override) · 크롬 계승 · 헤더 알약 바로 아래 · 등장 .44s */
   #yetaPdc:not(.on):not(.drag) { pointer-events:none; }
   #yetaPdc.drag { transition:none; opacity:1; transform:none; }   /* 드래그 추종 = 손 따라 즉시 */
-  #yetaPdc.on { height:285px; opacity:1; transform:none; }   /* 285 = JS 미동작 폴백 — 실제 열림 높이는 yPdH() 내용 실측이 인라인으로 덮는다(운영자 260725 "잘리는 부분": 고정 285 + overflow:hidden에서 생각 2줄 = 306px → 액션 라벨 하단 21.6px 절단 실측) */
-  #yetaPdc.ypd-fit { overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }   /* 내용이 화면 잔여를 넘는 극단(가로모드·초소형)만 = 자르지 말고 안에서 스크롤 */
+  #yetaPdc.on { height:285px; opacity:1; transform:none; }   /* 카드 높이 285(선택값) */
   #yetaPdc .pin { display:flex; flex-direction:column; align-items:center; text-align:center; gap:7px; padding:var(--sp-3) var(--sp-2); }
   #yetaPdc .pin > * { opacity:0; transform:translateY(6px); }
   #yetaPdc.on .pin > * { opacity:1; transform:none; transition:opacity .3s var(--ease), transform .3s var(--ease); }
@@ -670,10 +662,6 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yexit-x:active { transform:scale(var(--press-m,.9)); }
   .yexit-t { text-align:center; font-size:var(--fs-h3); font-weight:var(--fw-x); color:var(--fg); margin:6px 0 16px; }
   .yexit-btns { display:flex; gap:8px; }
-  .yexit-btns.ymd-col, .yexit-btns.ymq-opts { flex-direction:column; }   /* 사망 상주 창·성향 퀴즈 = 선택지 세로 스택(운영자 260725) — 가로 2분할 기본형에 방향만 뒤집는다(새 값 0 · gap·버튼 스타일 전부 계승) */
-  .ymq-opts .yexit-btn { text-align:left; line-height:1.5; }   /* 미연시 선택지 = 문장이라 좌측 정렬(가운데 정렬은 두 줄에서 계단처럼 어긋난다) */
-  .ymd-timer { font-size:var(--fs-h3); font-weight:var(--fw-x); color:var(--accent); text-align:center; font-variant-numeric:tabular-nums; margin:-2px 0 12px; }   /* 부활 카운트다운 — tabular = 숫자 폭 고정(1초마다 흔들리지 않게 · yeta-design 표 정렬 원칙) */
-  .ymd-timer.done { color:var(--fg); }
   .yexit-btn { flex:1; padding:11px; border-radius:var(--r-pill); font:inherit; font-size:var(--fs-sm); font-weight:var(--fw-b); cursor:pointer; touch-action:manipulation; }
   .yexit-btn:active { transform:scale(var(--press-m,.9)); }
   .yexit-btn.yes { background:var(--glass-2); border:1px solid var(--glass-line); color:var(--fg); }   /* 예 = 뉴트럴 글래스 + 흰(운영자 "너무 안 보여도 안 됨") */
@@ -737,7 +725,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yworldclock { flex-direction:row; justify-content:flex-end; align-items:center; gap:var(--lgap); }   /* 단일 행 [낮밤 픽토][무음동 시각](운영자 260725) · 픽토↔글자 중앙(높이) 정렬 = align-items:center · 우측 프로필 기준 우정렬 유지 */
   .yworldclock .ywc-ic { flex:none; display:flex; align-items:center; }   /* 픽토 박스 = 라인박스 편차 제거(광학 중앙) · 크기·색 = SVG 인라인 13px·currentColor(밤 = .night 터콰이즈 동행) */
   .yworldclock.night { color:var(--think); opacity:.82; }   /* 밤 = 터콰이즈 디밍(낮/밤 결 구분) */
-  @media (max-width:399px) { .yworldclock { font-size:10px; letter-spacing:0; } }   /* 좁은 폰 = 풀포맷(Q.26)이 로고와 겹치던 26px 침범 해소(Q.27 실측) — 10px = 구 .yssn-date(현실 날짜) 전례 계승 · 그 요소 자체는 260725 폐지 */
+  @media (max-width:399px) { .yworldclock { font-size:10px; letter-spacing:0; } }   /* 좁은 폰 = 풀포맷(Q.26)이 로고와 겹치던 26px 침범 해소(Q.27 실측) — 10px = .yssn-date 전례 계승 */
   .yprof:active { transform:scale(var(--press-s)); }
   .yprof svg { width:17px; height:17px; }   /* 픽토 = has-img 아닐 때만 보이는 폴백 */
   .yprof.has-img svg { display:none; }
@@ -1073,9 +1061,9 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ydepth-effs i.on { color:var(--fg); }
   /* 대화 깊이 안내(운영자 260712 "경고 감 X · 토글 아래 중앙정렬 · 작은 블러 글래스") — Sonnet 구간(data-model=s)일 때만 촤르륵 노출 · 경고 톤(danger) 아님 = 뉴트럴 정보 */
   .ydepth-note { max-height:0; opacity:0; overflow:hidden; margin-top:0; text-align:center; transition:max-height .3s var(--ease), opacity .3s var(--ease), margin .3s var(--ease); }
-  .ydepth-wrap[data-model="k"] .ydepth-note { max-height:44px; opacity:1; margin-top:11px; }   /* 소넷 구간 제외(운영자 260725 안내 폐지) — s에서 열면 빈 글래스 알약이 뜬다 */
-  .ydepth-note .nnk { display:none; }   /* 안내 = 키미 과금 1장만(소넷 품질 안내 폐지 260725) */
-  .ydepth-wrap[data-model="k"] .ydepth-note .nnk { display:inline-block; }
+  .ydepth-wrap[data-model="s"] .ydepth-note, .ydepth-wrap[data-model="k"] .ydepth-note { max-height:44px; opacity:1; margin-top:11px; }
+  .ydepth-note .nns, .ydepth-note .nnk { display:none; }   /* 모델별 안내 1장만(s=소넷 품질 · k=키미 과금 · 260719) */
+  .ydepth-wrap[data-model="s"] .ydepth-note .nns, .ydepth-wrap[data-model="k"] .ydepth-note .nnk { display:inline-block; }
   .ydepth-note span { display:inline-block; padding:6px 12px; border-radius:var(--r-pill); background:var(--glass); backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); border:1px solid var(--glass-line); color:var(--fg-2); font-size:var(--fs-xs); font-weight:var(--fw-b); line-height:1.4; }
   .ydepth-mn { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.08em; text-align:center; opacity:.5; transition:opacity .18s var(--ease); }
   .ydepth-half.hs .ydepth-mn { color:var(--cobalt); } .ydepth-half.ho .ydepth-mn { color:var(--accent); } .ydepth-half.hk .ydepth-mn { color:var(--think); }
@@ -1141,17 +1129,10 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ylist-row:active { transform:scale(var(--press-l,.95)); }
   .ylist-row.estr { opacity:.85; }   /* 소원 = 목록에서도 가라앉힘(.ycrow.estr 결 계승 · 분신술 260709) */
   .ylist-row.estr .ylist-ava { filter:grayscale(.7) brightness(.55); }   /* 반실루엣 = 아는 얼굴이 식은 톤(아바타축 raw 예외) */
-  /* 사망(운영자 260725 "죽으면 프로필에 채색이 빠지면서 · 글자도 채색이 좀 빠져야 · 사망한 느낌") — 캐릭터 탭 사망 행(.ycrow.locked) 결 100% 계승: 행 가라앉힘 .66 · 아바타 grayscale(1) brightness(.5) · 이름 opacity .5. 목록 전용 추가 = 글자축 채색 소거(생각줄 터콰이즈·직업/등급 배지 라임이 목록에만 있어 캐릭터 탭엔 선례가 없던 축 — 밝기 위계[흰 최근말 > 회색 메타]는 그대로 두고 '색'만 뺀다 = 운영자 "좀 빠져야"). filter는 .ylist-mid에만(행에 걸면 안읽음 배지 backdrop-filter가 부모 필터 컨텍스트에 갇혀 글래스가 깨진다) */
-  .ylist-row.ydead { opacity:.85; }   /* 행 가라앉힘 = 목록 선례값(.ylist-row.estr .85) 계승 — 캐릭터 탭 잠금 .66을 그대로 쓰면 배경 그림 위라 유언 줄이 묻힌다(목록축은 이미 소원 .8→.85로 완화 계승한 관례) · 사망>소원 위계는 아래 아바타·이름 축이 담당 */
-  .ylist-row.ydead .ylist-ava { filter:grayscale(1) brightness(.5); }
-  .ylist-row.ydead .ylist-mid { filter:grayscale(1); }
-  .ylist-row.ydead .ynm-t { opacity:.5; }
   .ylist-ava { flex:none; width:50px; height:50px; border-radius:50%; display:grid; place-items:center; font-size:var(--fs-body); font-weight:var(--fw-x);
     background:rgba(255,255,255,.06); border:1px solid var(--glass-line); color:var(--yeta-ac); background-size:cover; background-position:center;
     box-shadow:0 0 6px rgba(var(--accent-rgb),.21); }   /* 아바타 라임 글로우 = 갤러리 동결 */
   .ylist-ava.has-img { color:transparent; }
-  .ylist-avastk { flex:none; display:flex; align-items:center; }   /* 단톡 아바타 스택 래퍼(운영자 260725 "단톡환경에서도 프로필이 겹치게") — 행 gap:12 밖에서 겹침 자립 · 레퍼런스 = 챗 헤더 스택(#yetaAva2) 그대로 */
-  .ylist-avastk .ylist-ava + .ylist-ava { margin-left:-18px; box-shadow:0 0 0 2px var(--yeta-bg), 0 0 6px rgba(var(--accent-rgb),.21); }   /* 겹침 = 헤더 비율 계승(34px:-12 = 35.3% → 50px:-17.6 ≈ -18 · 스택 겹침 = 기하 raw 예외축) · 분리 링 = #yetaAva2 그대로 + 기존 라임 글로우 유지(box-shadow = 토큰 없는 축) */
   .ylist-mid { flex:1; min-width:0; display:flex; flex-direction:column; }   /* 4줄 고정 슬롯(운영자 260707) — 등급줄 → 이름줄 → 생각줄 → 최근말 · 간격 = --lgap 비율 5:5:3.5 */
   .ylist-nm .ygrade, .ylist-nm .yprem { flex:none; }   /* 등급·보이스 배지 = 이름줄 직업 우측 나란히(운영자 260708) — 이름만 shrink·배지 유지 */
   .ylist-nm { display:flex; align-items:center; min-width:0; font-weight:var(--fw-x); font-size:var(--fs-h3); margin-bottom:calc(var(--lgap)*.55); }   /* ② 이름 줄 — flex 중앙축 = 우측 메타와 수직 중앙 자동 정렬 · 이름→상황 간격 축소(운영자 260708 · 전 목록 동일) */
@@ -1226,12 +1207,13 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yssn { display:block; padding:0; margin-bottom:var(--sp-3); animation:ypickIn .42s cubic-bezier(.22,.61,.36,1) both; }   /* 시즌 = 박스 폐지(운영자 260709 "둥그렇게 넣지 마") · 가독 = #ytopfade 담당 · 패딩 0 = 좌단 로고 24px 세로선(Q.26)·우단 프로필 24px 세로선(Q.27 대칭) 픽셀 정렬(구 2px = 박스 시절 잔재 제거) */
   .yssn:empty { display:none; }   /* YWORLD 미로드 = 빈 박스 숨김(로드 전 플래시 포함 · 운영자 260707) */
   .yssn-hd { display:flex; align-items:center; gap:14px; }   /* 배지↔제목 간격 충분(운영자 ②) */
-  .yssn-tag, .yssn-nm { line-height:1; }   /* 수직 중앙 통일(운영자 260709 "중앙 높이 정렬") — 폰트별(레몬밀크 이탤릭·한글) 라인박스 편차 제거 = flex center 광학 일치 */
+  .yssn-tag, .yssn-nm, .yssn-date { line-height:1; }   /* 수직 중앙 통일(운영자 260709 "중앙 높이 정렬 + 날짜 높이 이어줘") — 폰트별(레몬밀크 이탤릭·한글·숫자) 라인박스 편차 제거 = flex center 광학 일치 */
   .yssn-tag { flex:none; display:inline-flex; align-items:center; color:var(--accent);
     font-family:'LEMONMILK',Pretendard,sans-serif; font-style:italic; font-weight:700; font-size:13.5px; letter-spacing:.01em;
     text-shadow:0 0 5px rgba(var(--accent-rgb),.9), 0 0 16px rgba(var(--accent-rgb),.55); }   /* SEASON 01 = 라임 워드마크 · 형광 2중 글로우(운영자 260709 "형광색으로 — 지금 묻히네" · 근접 .9 코어 + 확산 .55 헤일로 · text-shadow = 토큰 없는 축) */
-  .yssn-nm { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; font-size:var(--fs-body); font-weight:var(--fw-x); white-space:nowrap; }   /* shrink 허용 + … (Q.27 방어 — 긴 시즌명이 우단 밖으로 넘치던 축 봉인 · 현 '무음동'은 무영향) */
+  .yssn-nm { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; font-size:var(--fs-body); font-weight:var(--fw-x); white-space:nowrap; }   /* shrink 허용 + … (Q.27 방어 — 긴 시즌명이 날짜를 24px 우단 밖으로 밀던 축 봉인 · 현 '무음동'은 무영향) */
   .yssn-nm small { font-weight:var(--fw-b); color:var(--fg-2); font-size:var(--fs-sm); }   /* 한자 부기 */
+  .yssn-date { margin-left:auto; flex:none; font-family:'LEMONMILK',Pretendard,sans-serif; font-weight:400; font-style:normal; font-size:10px; color:var(--fg); letter-spacing:.04em; font-variant-numeric:tabular-nums; }   /* 날짜 = 흰색(운영자 260707 항목4 — mut 폐지) */
   .yssn-tl { margin-top:9px; text-align:left; font-size:11.5px; color:var(--fg-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }   /* 설명 = 살짝 옅은 흰(fg-2) · 좌측 정렬 = SEASON 01과 같은 좌측선(운영자 260709 "설명 기준 좌측정렬" — 구 가운데 고정 폐지) · 1줄 초과 = … */
   .ylr-wrap { position:relative; margin-bottom:10px; border-radius:var(--r-l); overflow:hidden; }   /* 행 래퍼(분할 리스트 획 셀렉터 앵커) · overflow = 스와이프 액션 트레이 감춤(운영자 260712) */
   .ylr-wrap .ylist-row { margin-bottom:0; position:relative; z-index:1; -webkit-touch-callout:none; user-select:none; transition:padding-right .3s var(--ease); }   /* 스와이프 = 텍스트 선택/콜아웃 차단(.ypick-row 관례 계승 · UX감사①c) */
@@ -1396,21 +1378,6 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     <div class="yexit-btns" id="yconfirmBtns"><button type="button" class="yexit-btn no" id="yconfirmOk">확인</button><button type="button" class="yexit-btn yes" id="yconfirmNo">취소</button></div>
   </div>
 </div>
-<div class="yexit" id="ymedead" hidden>   <!-- 유저 사망 상주 창(운영자 260725 "사망 시 메인 대화창에 항시 팝업이 떠있게 · 시간 타이머로 줄어들게 · 그 아래 버튼 부활 시간 줄이기") — 골격·클래스 = #yconfirm 정본 100% 계승(새 스타일 0) · 닫기 X 없음 = 상주 -->
-  <div class="yexit-card" role="alertdialog" aria-labelledby="ymdT">
-    <div class="yexit-t" id="ymdT">당신은 죽었습니다</div>
-    <div class="ycf-body" id="ymdB" hidden></div>
-    <div class="yexit-btns" id="ymdBtns"></div>
-  </div>
-</div>
-<div class="yexit" id="ymdquiz" hidden>   <!-- 성향 퀴즈(운영자 260725 "각 캐릭터의 성향 만들기 느낌 · 4개 미연시 항목 · 누적해서 성격 일원화") — 같은 카드 골격 계승 -->
-  <div class="yexit-card" role="dialog" aria-labelledby="ymqT">
-    <button type="button" class="yexit-x" id="ymqX" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-    <div class="yexit-t" id="ymqT"></div>
-    <div class="ycf-body" id="ymqB" hidden></div>
-    <div class="yexit-btns ymq-opts" id="ymqOpts"></div>
-  </div>
-</div>
 <dialog id="yedit">   <!-- 범용 편집 시트(이름·상태 메시지 · 운영자 260707 프로필 편집) — 입력칸 자동완성 4종 off = §🎨 게이트 -->
   <div class="yedit-card">
     <div class="yedit-h" id="yeditH">편집</div>
@@ -1464,8 +1431,7 @@ const yMeName = () => yMeGet('name') || '무음동 방문자';
 try { if (!localStorage.getItem('yeta_set_v2')) { Object.keys(localStorage).filter(k => k.indexOf('yeta_pref_') === 0 || ['yeta_dial_model', 'yeta_dial_effort', 'yeta_dial_vfast', 'yeta_fs', 'yeta_font_latin', 'yeta_font_hangul'].includes(k)).forEach(k => localStorage.removeItem(k)); localStorage.setItem('yeta_set_v2', '1'); } } catch {}   // 설정 전체 1회 기본값 복원(운영자 260709 · 새 기본 = 소리진동 ON 포함) — me 프로필·튠·읽음캐시는 보존
 const yPrefOn = (k, def) => { try { const v = localStorage.getItem('yeta_pref_' + k); return v === null ? !!def : v === '1'; } catch { return !!def; } };
 const yPrefSet = (k, on) => { try { localStorage.setItem('yeta_pref_' + k, on ? '1' : '0'); } catch {} };
-const yMeAva = () => { let sv = ''; try { if ((YSESS || {}).me_dead) return ''; sv = ((YSESS || {}).me || {}).avatar || ''; } catch (e) {} return yMeGet('avatar') || sv; };   // 내 아바타 해석 SSOT(운영자 260710) — 기기 사진 > 서버 생성분(me.avatar · meface 파이프) > 없음 · try = YSESS(let·1381)가 이 섹션보다 뒤 선언이라 초기 yMeApply(1264) 시점 TDZ 흡수(typeof 가드는 TDZ에 무력)
-// ↑ 사망 중 = 빈 문자열(운영자 260725 "내가 죽었을때는 프사도 안뜨게") — 해석 SSOT 한 곳만 막으면 우상단 프로필·내 상태 행·설정 프사가 **전부** 실루엣으로 떨어진다(표면마다 가드 = 드리프트 씨앗). 저장값은 그대로라 부활 즉시 복귀.
+const yMeAva = () => { let sv = ''; try { sv = ((YSESS || {}).me || {}).avatar || ''; } catch (e) {} return yMeGet('avatar') || sv; };   // 내 아바타 해석 SSOT(운영자 260710) — 기기 사진 > 서버 생성분(me.avatar · meface 파이프) > 없음 · try = YSESS(let·1381)가 이 섹션보다 뒤 선언이라 초기 yMeApply(1264) 시점 TDZ 흡수(typeof 가드는 TDZ에 무력)
 function yMeApply() {   // 내 프로필 → 라이브 표면(우상단 프로필 버튼·내 버블 강조색) · 미로우 아바타는 yMeRow가 직접 반영
   const av = yMeAva(), prof = document.getElementById('yprof');
   if (prof) { prof.style.backgroundImage = av ? `url("${av}")` : ''; prof.classList.toggle('has-img', true); }
@@ -1601,21 +1567,6 @@ document.addEventListener('DOMContentLoaded', () => {   // 팝업 바인딩 — 
   document.getElementById('yconfirmNo').addEventListener('click', yConfirmClose);
   document.getElementById('yconfirmChk').addEventListener('change', e => { document.getElementById('yconfirmOk').disabled = !e.target.checked; });   // 체크해야 진행(운영자 260709 캐시 "체크 따로")
   document.getElementById('yconfirmOk').addEventListener('click', () => { const f = _ycfOk; if (f) f(); });
-  const dd = document.getElementById('ymedead');   // 사망 상주 창(운영자 260725) — 바깥클릭·X 없음(상주) · 버튼만 동작
-  if (dd) dd.addEventListener('click', e => {
-    const b = e.target.closest('[data-md]'); if (!b) return;
-    const k = b.dataset.md;
-    if (k === 'quiz') yMdQuizOpen();
-    else if (k === 'rev') yRevive();
-    else if (k === 'reply') yRevive((((YSESS || {}).me_dead || {}).pray || {}).id);
-  });
-  const mq = document.getElementById('ymdquiz');
-  if (mq) {
-    mq.addEventListener('click', e => {
-      if (e.target.closest('#ymqX') || !e.target.closest('.yexit-card')) { mq.hidden = true; return; }   // 닫기 = 퀴즈만 접음(사망 창은 상주)
-      const b = e.target.closest('[data-mq]'); if (b) yMdQuizPick(+b.dataset.mq);
-    });
-  }
 });
 // ── 좌우 스와이프 내비(운영자 260709 "좌우 스크롤 = 그 방향 메뉴 · 대화창 = 이전 메뉴") — 가로 우세(1.6배)+64px 임계 · 입력칸·슬라이더·패턴패드 제외 ──
 function ySwipeBind(el, fn) {
@@ -2209,10 +2160,11 @@ const YTH = t => (((YSESS || {}).threads) || {})[t || (YSESS || {}).cur] || null
 const yReadTs = t => { try { return +localStorage.getItem('yeta_read_' + t) || 0; } catch { return 0; } };   // unread = 스레드별 "마지막 읽은 턴 ts"(카운트 폐지 = 200캡 트리밍 내성 · UX감사④1)
 const yMarkRead = (t, ts) => { try { if (t && ts) localStorage.setItem('yeta_read_' + t, String(ts)); } catch {} };
 function ySnip(t, n) { return (t || '').replace(/\*[^*]*\*/g, '').replace(/\s+/g, ' ').trim().slice(0, n); }   // 스니펫 = *지문* 제거 + n자
-function ySsnHtml() {   // 시즌 표기 정본(대화·캐릭터 탭 공용 — 운영자 통일 지시): [SEASON 01 필배지][이름(한자)] / 태그라인
+function ySsnHtml() {   // 시즌 표기 정본(대화·캐릭터 탭 공용 — 운영자 통일 지시): [SEASON 01 필배지][이름(한자)][우측 날짜] / 태그라인
   if (!YWORLD) return '';
-  // 우측 현실 KST 날짜(.yssn-date) 폐지 — 운영자 260725 "흰색 날짜 없애 = 현실시간 없애". 앱 안 시간축은 무음동 세계시각(#yworldclock) 하나로 단일화(1318행 "다른 시간은 앱 안에 필요없음"과 동일 축).
-  return `<div class="yssn-hd"><span class="yssn-tag">SEASON ${String(YWORLD.n || 1).padStart(2, '0')}</span><span class="yssn-nm">${esc(YWORLD.name || '')}${YWORLD.hanja ? `<small>(${esc(YWORLD.hanja)})</small>` : ''}</span></div><div class="yssn-tl">${esc(YWORLD.tagline || '')}</div>`;
+  const k = new Date(Date.now() + 9 * 3600e3);   // KST 고정(§표기표준)
+  const dt = `${String(k.getUTCFullYear()).slice(2)}. ${String(k.getUTCMonth() + 1).padStart(2, '0')}. ${String(k.getUTCDate()).padStart(2, '0')}`;
+  return `<div class="yssn-hd"><span class="yssn-tag">SEASON ${String(YWORLD.n || 1).padStart(2, '0')}</span><span class="yssn-nm">${esc(YWORLD.name || '')}${YWORLD.hanja ? `<small>(${esc(YWORLD.hanja)})</small>` : ''}</span><span class="yssn-date">${dt}</span></div><div class="yssn-tl">${esc(YWORLD.tagline || '')}</div>`;
 }
 // ── 내 상태 행(운영자 260707 항목22·23) — 위치·감정 = 클라 로컬 전용(localStorage yeta_me_place/yeta_me_mood · 게이트웨이 미전송 = 무인증 공개 주입면 0) ──
 const YME_MOODS = { warm: '따뜻함', tense: '긴장', blue: '가라앉음', joy: '신남', love: '설렘', shy: '수줍음', mad: '짜증' };   // 무대 무드(러너 <<MOOD>> 배경 축 · Y_MOODS와 짝 — 8감정 확장 Q.29)
@@ -2328,7 +2280,7 @@ async function yListRender() {
   if (!rows.length) { _ylSig = ''; _ylPainted = false; $('#ylist').classList.add('list-empty'); box.innerHTML = '<div class="yeta-setup yempty">진행 중인 대화가 없어 — 캐릭터 탭에서 말을 걸어봐.</div>'; return; }   // 빈 = 중앙+흰색(운영자) · 다음 비어있지 않은 렌더 = 진짜 첫 stagger
   $('#ylist').classList.remove('list-empty');   // 대화 有 = 일반 스크롤 복귀
   yLocsSync(rows.map(r => r.id));   // 최근 장소 일괄 해석(항목18 · 슬롯 키 가드 = 시간당 1회 · 완료 시 재렌더)
-  const sig = rows.map(r => `${r.id}:${r.pin ? 1 : 0}:${r.updated || 0}:${(r.turns || []).length}:${r.state}:${yReadTs(r.id)}:${yDead({ id: r.id }) ? 'D' : ''}`).join('|') + `#${rows.length}@${Math.floor(Date.now() / 60000)}`;   // 행 수(dormant 전환·항목17) + 분 버킷(상대시간 매분 노화) — 병합 260707 · D = 사망 전환(260725 — 죽음·부활이 분 버킷을 안 기다리고 그 폴에서 바로 도색)
+  const sig = rows.map(r => `${r.id}:${r.pin ? 1 : 0}:${r.updated || 0}:${(r.turns || []).length}:${r.state}:${yReadTs(r.id)}`).join('|') + `#${rows.length}@${Math.floor(Date.now() / 60000)}`;   // 행 수(dormant 전환·항목17) + 분 버킷(상대시간 매분 노화) — 병합 260707
   if (sig === _ylSig) return;   // 렌더 시그니처 가드 — 무변경 재호출 = no-op(전행 stagger 재트리거·리스트 튐 차단 · UX감사③A)
   const firstPaint = !_ylPainted; _ylSig = sig; _ylPainted = true;   // QA13: firstPaint = 전용 래치(구 !_ylSig는 loc-sync/pin/leave의 _ylSig='' 리셋에 오염돼 재렌더마다 전행 stagger 플래시) — sig 리셋은 가드 우회로만 유지
   yLrClose(true);   // 재렌더 = 앵커 행 파괴 → 스와이프 트레이 강제 회수(UX감사⑤)
@@ -2346,7 +2298,6 @@ async function yListRender() {
     // 4줄 고정 슬롯(운영자 260707): ①등급줄(있을 때만·이름 위 = 항목란 확보) ②이름줄+우측 메타(시간·상대시간 = 라인 중앙정렬) ③생각줄(불멸 — 못 읽으면 플레이스홀더) ④최근말(흰)
     const badges = `${yGradeBadge(p)}${window.yPremBadge ? yPremBadge(p) : ''}`;   // 등급·보이스 = 이름줄 직업 우측(운영자 260708 · 옛 등급 전용줄 폐지 = 3줄로 절약)
     const es = yEstranged(p);   // 소원(분신술 260709 — 목록 행이 정상처럼 보이다 탭에서만 막히던 표면 불일치 보강)
-    const dd = yDead({ id: r.id });   // 사망(운영자 260725 "이렇게 죽으면 프로필에 채색이 빠지면서 사망한 느낌이 나야되는데 그게 없네") — 캐릭터 탭은 이미 무채(.ycrow.locked)인데 목록만 살아있는 사람과 똑같이 보이던 표면 불일치 · 단톡(g id) = dead 키 아님 = 자동 false
     const thtT = (prev && prev.role !== 'user') ? ySnip(prev.text, 40) : '';   // 생각 = 직전 캐릭터 결(유저 턴 = 생각 아님) · 향후 러너 think 필드로 승격 축
     const thtFresh = last && ((Date.now() - (last.ts || 0) < 3600e3) || last.role === 'user' || !!unTxt);   // 심리 유효 = 1h 내 · 내 답 대기 · 안 읽음(운영자 260709 "읽고 이어가지 않고 1시간 지나면 알 수 없음")
     const tht = es ? `<span class="ylist-tht off">(한동안 뜸했다 — 골목에서 마주치면 풀릴지도)</span>`
@@ -2355,11 +2306,8 @@ async function yListRender() {
       : `<span class="ylist-tht off">(심리 상태 알 수 없음)</span>`;
     const lastLn = opPend ? `<span class="ylist-last on">곧 말을 걸어와…</span>` : (last ? `<span class="ylist-last${(unTxt && last.role !== 'user') ? ' on' : ''}">${last.role === 'user' ? '나 · ' : ''}${esc(ySnip(last.text, 40) || '…')}</span>` : '');   // #186 안읽음 조건부 on 유지
     const meta = last ? `<span class="ylist-meta">${yAgo(last.ts)}${(() => { try { const L = yLocOf(r); return L && L.nm ? `<span class="ylist-loc${L.on ? ' on' : ''}">${esc(L.nm)}</span>` : ''; } catch (e) { return ''; } })()}</span>` : '';   // 항목1(260708): 절대시각(ylist-t) 폐지 → 상대시간(mut) → 최근 장소
-    // 아바타 = 단톡이면 2겹 스택(운영자 260725 "단톡환경에서도 프로필이 겹치게") — 레퍼런스 = 챗 헤더 yHeadRoom 그대로: room 앞 2명 · 사망 멤버 제외(260714) · 배지는 위에 얹힌 둘째에
-    const mem = grp ? (r.room || []).map(yPersona).filter(Boolean).filter(c => !yDead(c)).slice(0, 2) : [];
-    const avaOf = (c, badge) => (pav => `<span class="ylist-ava${pav ? ' has-img' : ''}"${pav ? ` style="background-image:url('${esc(pav)}')"` : ''}>${pav ? '' : esc(c.initial || (c.name || '?')[0])}${badge ? `<span class="ylist-badge">${badge}</span>` : ''}</span>`)(yCAva(c));
-    return `<div class="ylr-wrap"><button type="button" class="ylist-row${dd ? ' ydead' : es ? ' estr' : ''}" data-t="${esc(r.id)}">`
-      + (mem.length >= 2 ? `<span class="ylist-avastk">${avaOf(mem[0], '')}${avaOf(mem[1], unTxt)}</span>` : avaOf(p, unTxt))
+    return `<div class="ylr-wrap"><button type="button" class="ylist-row${es ? ' estr' : ''}" data-t="${esc(r.id)}">`
+      + (pav => `<span class="ylist-ava${pav ? ' has-img' : ''}"${pav ? ` style="background-image:url('${esc(pav)}')"` : ''}>${pav ? '' : esc(p.initial || p.name[0])}${unTxt ? `<span class="ylist-badge">${unTxt}</span>` : ''}</span>`)(yCAva(p))
       + `<span class="ylist-mid"><span class="ylist-nm">${r.pin ? '<svg class="ylist-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-label="고정됨"><path d="M12 17v5"/><path d="M15 9.34V5a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1v4.34a2 2 0 0 1-.59 1.42L5.7 14.87A1 1 0 0 0 6.41 17h11.18a1 1 0 0 0 .71-1.71l-2.71-2.7A2 2 0 0 1 15 9.34"/></svg>' : ''}<i class="ynm-t">${esc(dispName)}</i>${grp ? '<span class="yjob">단톡</span>' : yJobBadge(p) + badges}${meta}</span>`
       + tht + lastLn + `</span></button>`
       + `<div class="ylr-tray" role="group" aria-label="대화 관리" aria-hidden="true">`   // 좌로 밀면 나오는 우측 2칸(운영자 260712) — 우클릭 팝업 대체
@@ -2451,7 +2399,6 @@ async function yLrAct(b) {   // 트레이 픽토 = 고정/나가기(구 .ylmenu 
 })();
 async function yOpenThread(t) {   // 행 탭 = 그 방으로(스레드 전환 후 챗)
   const c = yHost(t); if (!c) return;   // 단톡 = 호스트 기준(openYeta가 페르소나/단톡 분기 · 운영자 260712)
-  if (yDead(c) && yPersona(t)) { yShowDetail(c.id); return; }   // 사망 = 방 대신 인물 카드(운영자 260725 "프로필 클릭하면 몇시에 죽었고 · 몇시간 부활 남았는지") — 종전엔 챗을 연 뒤 첫 렌더 게이트가 토스트+캐릭터 리스트로 튕겨 "왜 안 열려"만 남았다 · yEnterChat 사망 가드와 동형 · 단톡(g id) = 죽은 멤버가 이미 room에서 빠지므로 정상 진입
   navOpen('ydlg', yDlgClose);
   await openYeta(t, true);
 }
@@ -2547,13 +2494,11 @@ function yShowDetail(id) {   // 캐릭터 세부 디테일 — 대형 아바타�
     + (c.quote ? `<span class="ycd-quote">“${esc(c.quote)}”</span>` : '')
     + (c.intro ? `<span class="ycd-desc">${esc(c.intro)}</span>` : '')
     + (c.video ? `<video class="ycd-video" src="${esc(c.video)}"${c.video_poster ? ` poster="${esc(c.video_poster)}"` : ''} muted loop playsinline autoplay preload="metadata"></video>` : '')
-    + (yDead(c) ? yDeadInfo(c.id) : '')   // 사망 정보(운영자 260725 "프로필 클릭하면 몇시에 죽었고 · 몇시간 부활 남았는지") — 육각 위 = 부활 조건 CTA 바로 앞
     + yHexSvg(c.stats, true, yStatBoost(c))
     + (yLockLabel(c) || um || yEstranged(c) || yDead(c)
         ? `<button type="button" class="ycd-cta locked" disabled>${yDead(c) ? '죽음 — 살아 있는 누군가가 신당에서 빌어줘야 돌아와' : um ? '아직 만나지 못했어 — 골목 어딘가에서 마주치면 열려' : yEstranged(c) ? '한동안 뜸했어 — 다시 마주치면 이어져' : yLockLabel(c) === '아직 모르는 인물' ? '아직 대화할 수 없어' : '아직 열리지 않은 인물'}</button>`
         : `<button type="button" class="ycd-cta" data-id="${esc(c.id)}">대화 시작</button>`)
     + (c.phone ? `<button type="button" class="ycd-sub" data-vcf="${esc(c.id)}" aria-label="연락처 등록" title="연락처 등록 — 전화 올 때 사진·이름이 뜨게"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg></button>` : '');   // 글자 → 픽토그램-온리(운영자 260709 — 헤더서 옮겨온 그 자리 픽토 재사용 · 라벨 = aria/title)
-  $('#ycdCard').classList.toggle('ydead', !!yDead(c));   // 사망 = 카드 프사도 채색 소거(목록 행·캐릭터 탭과 같은 톤 · 260725)
   $('#ycdGear').dataset.set = c.id;   // ⚙ = 헤더 행 상주 버튼(카드 재주입 아님) — 대상 캐릭터만 갱신
   const d = $('#ycdetail'); d.classList.remove('out'); d.classList.add('on'); d.scrollTop = 0;
   document.getElementById('ymain').classList.add('cd-open');
@@ -2696,23 +2641,7 @@ const ySetVt = k => { const [t, d] = ySetVal(k); return `<span class="si-vt${d ?
 // 「대화 깊이」 통합 게이지(운영자 260710) — 대화모델 행+생각깊이 행 통합 · 9단 선형(0-2 Sonnet·3-5 Opus·6-8 Kimi × 빠름/중간/깊게 · 260719 3열)
 function yDepthIdx() { const b = YDIAL.model === 'claude-sonnet-5' ? 0 : YDIAL.model === 'kimi-k3' ? 6 : 3, e = YDIAL.effort === 'low' ? 0 : YDIAL.effort === '' ? 1 : 2; return b + e; }   // 현 model×effort → 0-8
 const yDepthSec = i => i < 3 ? 's' : i < 6 ? 'o' : 'k';   // 게이지 인덱스 → 모델 구간 키(s=Sonnet·o=Opus·k=Kimi · 3모델 260719)
-const YSEC_KEY = { s: 'sonnet', o: 'opus', k: 'kimi' };   // 게이지 구간 키 → YDIAL_MODELS 키(표시명 SSOT 진입점 · 260725)
-const yDepthMN = c => YDIAL_MODELS[YSEC_KEY[c]][1].toUpperCase();   // 구간 라벨 = YDIAL_MODELS 표시명 대문자(운영자 260725 "소넷하고 오퍼스는 버전명이 없어") — 하드코딩 폐지 = 모델 승격 시 자동 추종
-function yDepthChips() { const i = yDepthIdx(), c = yDepthSec(i); return `<span class="ychip ychip-m${c === 's' ? ' s' : c === 'k' ? ' k' : ''}">${yDepthMN(c)}</span><span class="ychip ychip-e">${YDEPTH_EFF[i % 3]}</span>`; }   // 헤더 [모델][노력] 칩
-function yDialSet(mKey, effort) {   // 다이얼 단일 라이터(운영자 260725 "대화에서 모델 변경하면 시스템에 같이 동기화") — 설정 게이지·대화 미터가 같은 문을 쓴다. 종전엔 미터가 range 값만 되쏴 칩·범례·구간색이 안 따라왔다.
-  try { localStorage.setItem('yeta_dial_model', mKey); localStorage.setItem('yeta_dial_effort', effort); localStorage.removeItem('yeta_dial_vfast'); } catch (x) {}
-  yDialLoad(); yMeter(); yDepthSync();
-}
-function yDepthSync() {   // 설정 「대화 깊이」 표면 재동기 — 카드가 안 떠 있으면 no-op(다음 yShowSettings가 yDepthIdx()로 새로 그린다 = 스테일 0)
-  const i = yDepthIdx(), sec = yDepthSec(i), si = i % 3;
-  const rg = document.getElementById('ydepthRange'); if (rg) rg.value = i;
-  const wrap = document.getElementById('ydepthWrap'); if (wrap) wrap.dataset.model = sec;
-  const chips = document.getElementById('ydepthChips'); if (chips) chips.innerHTML = yDepthChips() + YICO.chev;
-  document.querySelectorAll('#ydepthRow .ydepth-half').forEach((h, hi) => {
-    const c = ['s', 'o', 'k'][hi]; h.classList.toggle('act', c === sec);   // 구간 3열(260719) — 마크업 순서 hs·ho·hk와 짝
-    h.querySelectorAll('.ydepth-effs i').forEach((t, ti) => t.classList.toggle('on', c === sec && ti === si));
-  });
-}
+function yDepthChips() { const i = yDepthIdx(), c = yDepthSec(i); return `<span class="ychip ychip-m${c === 's' ? ' s' : c === 'k' ? ' k' : ''}">${c === 's' ? 'SONNET' : c === 'k' ? 'KIMI-K3' : 'OPUS'}</span><span class="ychip ychip-e">${YDEPTH_EFF[i % 3]}</span>`; }   // 헤더 [모델][노력] 칩
 function yDepthRow() {
   const i = yDepthIdx(), sec = yDepthSec(i), si = i % 3;
   const effs = c => YDEPTH_EFF.map((l, ei) => `<i class="${c === sec && ei === si ? 'on' : ''}">${l}</i>`).join('');
@@ -2724,10 +2653,10 @@ function yDepthRow() {
     + `<div class="ydepth-track"><div class="ydepth-line"></div>`
     + `<input type="range" class="ydepth-range" id="ydepthRange" min="0" max="8" step="1" value="${i}" aria-label="대화 깊이"></div>`
     + `<div class="ydepth-legend">`
-    + `<div class="ydepth-half hs${sec === 's' ? ' act' : ''}"><div class="ydepth-effs">${effs('s')}</div><div class="ydepth-mn">${yDepthMN('s')}</div></div>`
-    + `<div class="ydepth-half ho${sec === 'o' ? ' act' : ''}"><div class="ydepth-effs">${effs('o')}</div><div class="ydepth-mn">${yDepthMN('o')}</div></div>`
-    + `<div class="ydepth-half hk${sec === 'k' ? ' act' : ''}"><div class="ydepth-effs">${effs('k')}</div><div class="ydepth-mn">${yDepthMN('k')}</div></div>`
-    + `</div><div class="ydepth-note"><span class="nnk">${yDepthMN('k')}는 문샷 종량제 키로 과금돼</span></div></div></div></div>`;   // 소넷 품질 안내 폐지(운영자 260725 "빠르지만 어쩌고~ 설명은 없어도됨") · 키미 = 실과금 경고라 존치
+    + `<div class="ydepth-half hs${sec === 's' ? ' act' : ''}"><div class="ydepth-effs">${effs('s')}</div><div class="ydepth-mn">SONNET</div></div>`
+    + `<div class="ydepth-half ho${sec === 'o' ? ' act' : ''}"><div class="ydepth-effs">${effs('o')}</div><div class="ydepth-mn">OPUS</div></div>`
+    + `<div class="ydepth-half hk${sec === 'k' ? ' act' : ''}"><div class="ydepth-effs">${effs('k')}</div><div class="ydepth-mn">KIMI-K3</div></div>`
+    + `</div><div class="ydepth-note"><span class="nns">소넷 모델은 빠르지만 품질은 낮을 수 있어</span><span class="nnk">KIMI-K3는 문샷 종량제 키로 과금돼</span></div></div></div></div>`;
 }
 const yKimiCostOf = u => Object.keys(u || {}).filter(m => YCOST[m]).reduce((s, m) => s + ((u[m].i || 0) * YCOST[m][0] + (u[m].cr || 0) * YCOST[m][1] + (u[m].o || 0) * YCOST[m][2]) / 1e6, 0);   // 키미 계열 실비 USD(Q.37/38 공용 계산기) — 모델별 각자 요율 · 캐시 히트 1/10가 분리
 function yKimiCost() { return yKimiCostOf((YSESS && YSESS.usage) || {}); }   // 전체 누계판(좌상단 미터 병기)
@@ -2971,8 +2900,17 @@ $('#ycsettingsCard').addEventListener('click', e => {
 });
 $('#ycsettingsCard').addEventListener('input', e => {   // 「대화 깊이」 통합 게이지 드래그 = model×effort 저장 + 헤더 칩·썸·범례 실시간 갱신(운영자 260710)
   const r = e.target.closest('.ydepth-range'); if (!r) return;
-  const i = Math.max(0, Math.min(8, parseInt(r.value, 10) || 0));
-  yDialSet(YDIAL_DEPTH[i][0], YDIAL_DEPTH[i][1]);   // 저장·미터·게이지 표면 = 단일 라이터가 전담(260725 — 미터 탭과 같은 문)
+  const i = Math.max(0, Math.min(8, parseInt(r.value, 10) || 0)), sec = yDepthSec(i), si = i % 3;
+  const d = YDIAL_DEPTH[i];
+  try { localStorage.setItem('yeta_dial_model', d[0]); localStorage.setItem('yeta_dial_effort', d[1]); localStorage.removeItem('yeta_dial_vfast'); } catch (x) {}
+  yDialLoad(); yMeter();
+  const wrap = document.getElementById('ydepthWrap'); if (wrap) wrap.dataset.model = sec;
+  const chips = document.getElementById('ydepthChips'); if (chips) chips.innerHTML = yDepthChips() + YICO.chev;
+  document.querySelectorAll('#ydepthRow .ydepth-half').forEach((h, hi) => {
+    const c = ['s', 'o', 'k'][hi]; h.classList.toggle('act', c === sec);   // 구간 3열(260719) — 마크업 순서 hs·ho·hk와 짝
+    h.querySelectorAll('.ydepth-effs i').forEach((t, ti) => t.classList.toggle('on', c === sec && ti === si));
+  });
+  // Sonnet 안내 = 하단 경고 토스트 폐지 → 게이지 안 .ydepth-note(글래스·중앙·data-model=s CSS 자동표시)로 대체(운영자 260712)
 });
 let _ydepthCloseT;
 $('#ycsettingsCard').addEventListener('change', e => {   // 「대화 깊이」 선택 완료(드래그 놓기 = change) = 여닫이 자동 닫힘 + 다음 옵션으로 카메라 이동(운영자 "고르고 나면 닫고 다음거 고르기 편하게")
@@ -3257,23 +3195,6 @@ function yDead(c) {   // 사망 락(운영자 260714 "락보다 한단계 위 ·
   return yPray(c && c.id) || yDeadT(c && c.id) > Date.now();
 }
 function yRevPend(id) { const t = yDeadT(id); return !t ? false : !yPray(id) && t <= Date.now(); }   // 부활 미답(기도로 풀렸지만 첫 답 전 = 엔트리 잔존) — 서먹·원거리 유예 + 성당 표시 재료
-function yWDur(ms) {   // 현실 경과(ms) → 무음동 경과 문구 — 배율 = yWorldStart의 YWORLD_RATE 단일 정의(window 노출분 참조 = 드리프트 0 · 폴백 6)
-  const m = Math.max(0, Math.floor(ms / 60000 * (window.YWORLD_RATE || 6)));
-  const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60);
-  return d ? `${d}일 ${h}시간` : h ? `${h}시간 ${m % 60}분` : `${m % 60}분`;
-}
-function yDeadInfo(id) {   // 사망 정보 줄(운영자 260725 "프로필 클릭하면 몇시에 죽었고, 게임 시간에서 지금 몇시간 부활 남았는지") — 시각축 = 무음동 세계시계 단독(Q.50 "여기 시간만 · 다른 시간은 앱 안에 필요없음" 계승 · 현실시각 병기 안 함)
-  const v = ((YSESS || {}).dead || {})[id];
-  if (!v) return '';
-  const dts = (typeof v === 'object' && v.d) || 0;   // 사망 실시각 — 구형 숫자 엔트리엔 없다(그 칸만 생략)
-  const died = dts && typeof yWorldClock === 'function' ? yWorldClock(dts).txt : '';
-  // 부활 남은 시간 = 기도 게이트(Q.51 260725) 이후 '시간으로는 안 풀린다' — 없는 잔여시간을 지어내지 않고 조건을 그대로 적는다. 구형·이탈(flee) 엔트리만 실제 잔여가 존재.
-  const t = yDeadT(id), left = t - Date.now();
-  const rev = yPray(id) ? '<b>기도 대기</b>' : left > 0 ? `<b>${esc(yWDur(left))}</b>` : '<b>곧 돌아온다</b>';
-  return (dts ? `<span class="ypp-meta ydead-l"><span>죽은 시각 · <b>무음동 ${esc(died)}</b></span><span class="sep"></span><span>그 뒤로 · <b>${esc(yWDur(Date.now() - dts))}</b></span></span>` : '')   // 2줄 분리 = 3칸 한 줄이 접히면 sep가 줄 끝에 매달린다(실측 260725)
-    + `<span class="ypp-meta ydead-l"><span>${yPray(id) || left > 0 ? '부활까지' : '부활'} · ${rev}</span></span>`
-    + (yPray(id) ? `<span class="ypp-desc">시간이 지난다고 돌아오지 않아 — 살아 있는 누군가가 신당에 가서 빌어줘야 해</span>` : '');
-}
 let _yNearC = null, _yNear = [], _yNearGen = 0;   // 공간 초대 후보(pill) + 근처 목록(스택·팝업) · gen = 세대 토큰(평의회A — await 중 방 전환 시 교차 방 오염 차단)
 async function yNearCalc() {   // 현재 방 상대와 같은 장소(동선 판정)의 다른 캐릭터들 — 잠금·미대면·소원·방 멤버 제외 · 로컬 누적 → 원자 커밋(낡은 세대·타 방 결과 = 폐기)
   const gen = ++_yNearGen, _prev = _yNearC && _yNearC.id, th0 = YTH();
@@ -3668,12 +3589,11 @@ function yProfPop(force, pid) {
   const plId = _yPlace.val || yPlaceSync();   // 장소 = 챗 무대와 동일 캐시(미해석 = 알 수 없음 · 해석되면 다음 열기에 채워짐)
   const plInfo = (plId && YMAPD && YMAPD.places[plId]) || null;
   const plNm = plInfo && !plInfo.private && !plInfo.offlimits ? (plInfo.name || '') : '';
-  pk.classList.toggle('ydead', !!yDead(c));   // 사망 = 프사 채색 소거(목록·카드와 같은 톤 · 260725)
   pk.innerHTML = yAva(c, 'yintro-ava' + yGradeRing(c))
     + `<span class="ycd-nm">${esc(c.name)}${yGradeBadge(c)}${window.yPremBadge ? yPremBadge(c) : ''}</span>`
     + `<span class="ycd-tag">${esc(c.tagline || '')}</span>`
     + `<span class="ypp-think">${tht ? `“${esc(tht)}…”` : '(무슨 생각을 하는진 모르겠다)'}</span>`
-    + (yDead(c) ? yDeadInfo(c.id) : `<span class="ypp-meta"><span>위치 · <b>${plNm ? esc(plNm) : '알 수 없음'}</b></span><span class="sep"></span><span>공기 · <b>${esc(mood)}</b></span></span>`)   // 사망 = 위치·공기 대신 사망 정보(죽은 사람의 '지금 위치·기분'은 없다 · 260725)
+    + `<span class="ypp-meta"><span>위치 · <b>${plNm ? esc(plNm) : '알 수 없음'}</b></span><span class="sep"></span><span>공기 · <b>${esc(mood)}</b></span></span>`
     + (c.intro || c.desc ? `<span class="ypp-desc">${esc(c.intro || c.desc)}</span>` : '')
     + (c.quote ? `<span class="ycd-quote">“${esc(c.quote)}”</span>` : '');
   pk.hidden = false;
@@ -3708,7 +3628,7 @@ function yPdRender() {   // 카드 내용 = 프사 팝오버 파생 축 동일(�
     + `<span class="ycd-nm">${esc(c.name)}${yGradeBadge(c)}${window.yPremBadge ? yPremBadge(c) : ''}</span>`
     + `<span class="ypd-mood"><em role="img" aria-label="지금 기분 ${esc(mood)}">${emo}</em><span>${esc(mood)}</span></span>`
     + `<span class="ypp-think">${tht ? `“${esc(tht)}…”` : '(무슨 생각을 하는진 모르겠다)'}</span>`
-    + (yDead(c) ? yDeadInfo(c.id) : `<span class="ypp-meta"><span>위치 · <b>${plNm ? esc(plNm) : '알 수 없음'}</b></span><span class="sep"></span><span>공기 · <b>${esc(mood)}</b></span></span>`)   // 사망 = 위치·공기 대신 사망 정보(죽은 사람의 '지금 위치·기분'은 없다 · 260725)
+    + `<span class="ypp-meta"><span>위치 · <b>${plNm ? esc(plNm) : '알 수 없음'}</b></span><span class="sep"></span><span>공기 · <b>${esc(mood)}</b></span></span>`
     + `<span class="ypd-acts">`
     + (hasCall ? `<button type="button" class="ypd-act" data-pda="call"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6 6l1.1-1.1a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7A2 2 0 0 1 22 16.9z"/></svg></i><span>통화</span></button>` : '')
     + `<button type="button" class="ypd-act" data-pda="inv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="7" r="4"/><path d="M1 21v-1a6 6 0 0 1 12 0v1M19 8v6M22 11h-6"/></svg></i><span>초대</span></button>`
@@ -3716,22 +3636,14 @@ function yPdRender() {   // 카드 내용 = 프사 팝오버 파생 축 동일(�
     + `<button type="button" class="ypd-act" data-pda="prof"><i>${YICO.user}</i><span>프로필</span></button></span>`;
   return true;
 }
-function yPdH() {   // 열림 높이 = 내용 실측(운영자 260725 "잘리는 부분" — 고정 285는 생각 2줄·긴 이름·큰 글꼴에서 하단 액션 라벨을 잘랐다)
-  const pdc = $('#yetaPdc'), pin = $('#yetaPdcIn'); if (!pdc || !pin) return 285;
-  const op = pdc.offsetParent, top = pdc.offsetTop + (op ? op.getBoundingClientRect().top : 0);   // 레이아웃 기준 위치 = 등장 transform(-8px) 이동 중에도 불변(rect.top은 애니메이션 중간값이 섞여 상한을 부풀린다)
-  const cap = Math.max(160, innerHeight - top - 12);   // 상한 = 화면 잔여(하단 여백 12 = --sp-2 · 기하 계산축)
-  const h = pin.scrollHeight + 2;   // +2 = 상하 테두리 1px(box-sizing:border-box 전역)
-  pdc.classList.toggle('ypd-fit', h > cap);   // 상한 초과 = 절단 대신 내부 스크롤
-  return Math.min(h, cap);
-}
 function yPdOpen() {
   if (!yPdRender()) return;
   yProfPop(false); yPickToggle(false); yInvToggle(false);   // 팝오버 상호배타
-  const pdc = $('#yetaPdc'); pdc.classList.remove('drag'); pdc.style.height = yPdH() + 'px'; pdc.classList.add('on'); pdc.inert = false;   // 열림 = inert 해제(키보드·SR 진입 가능 — 평의회D) · 높이 = 실측(고정 285 폐지)
+  const pdc = $('#yetaPdc'); pdc.classList.remove('drag'); pdc.style.height = ''; pdc.classList.add('on'); pdc.inert = false;   // 열림 = inert 해제(키보드·SR 진입 가능 — 평의회D)
   yetadlg.classList.add('ypd-on');
   if (!YMAPD) yMeMap();   // 장소 SSOT 지연 로드(다음 열기에 장소명 채움 — 프사 팝오버 동일)
 }
-function yPdClose() { const pdc = $('#yetaPdc'); if (!pdc) return; pdc.classList.remove('on', 'drag', 'ypd-fit'); pdc.style.height = ''; pdc.inert = true; yetadlg.classList.remove('ypd-on'); }   // 접힘 = inert(보이지 않는 4버튼이 탭 순서·SR에 잔존하던 것 차단 — 평의회D WCAG 2.4.3)
+function yPdClose() { const pdc = $('#yetaPdc'); if (!pdc) return; pdc.classList.remove('on', 'drag'); pdc.style.height = ''; pdc.inert = true; yetadlg.classList.remove('ypd-on'); }   // 접힘 = inert(보이지 않는 4버튼이 탭 순서·SR에 잔존하던 것 차단 — 평의회D WCAG 2.4.3)
 (() => {   // 드래그 추종(높이 = 손 위치) + 임계 40 판정 + 탭(<6px) 토글 — 포인터 캡처 · 마우스/터치 공용
   const who = $('#yetaWho'), pdc = $('#yetaPdc'); if (!who || !pdc) return;
   let dr = null;
@@ -3740,8 +3652,8 @@ function yPdClose() { const pdc = $('#yetaPdc'); if (!pdc) return; pdc.classList
     if (!dr) return;
     const dy = Math.max(0, e.clientY - dr.y0); dr.m = Math.max(dr.m, dy); dr.mx = Math.max(dr.mx, Math.abs(e.clientX - dr.x0));
     if (dy > 4 && !pdc.classList.contains('on')) {
-      if (!dr.on) { if (!yPdRender()) { dr = null; return; } yProfPop(false); yPickToggle(false); yInvToggle(false); dr.on = 1; dr.h = yPdH(); }   // 상한 = 그 인물 카드 실측(드래그 중 1회 = 리플로우 억제)
-      pdc.classList.add('drag'); pdc.style.height = Math.min(dy, dr.h) + 'px';
+      if (!dr.on) { if (!yPdRender()) { dr = null; return; } yProfPop(false); yPickToggle(false); yInvToggle(false); dr.on = 1; }
+      pdc.classList.add('drag'); pdc.style.height = Math.min(dy, 285) + 'px';
     }
   });
   who.addEventListener('pointerup', () => {
@@ -3752,8 +3664,6 @@ function yPdClose() { const pdc = $('#yetaPdc'); if (!pdc) return; pdc.classList
   });
   who.addEventListener('pointercancel', () => { if (dr) { dr = null; pdc.classList.remove('drag'); pdc.style.height = ''; } });
   who.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pdc.classList.contains('on') ? yPdClose() : yPdOpen(); } });   // 키보드(role=button · WCAG 2.1.1)
-  const pin = $('#yetaPdcIn');   // 열린 뒤 내용 높이가 변해도 추종(웹폰트 도착·아바타 로드·회전·글꼴 크기 변경) — 재계산 없이 두면 그때부터 다시 잘린다
-  if (pin && window.ResizeObserver) new ResizeObserver(() => { if (pdc.classList.contains('on')) pdc.style.height = yPdH() + 'px'; }).observe(pin);
 })();
 $('#yetaPdc').addEventListener('click', e => {   // 액션 4 = 통화(유료 2탭 가드 보존)·초대(2차 팝업)·성향·프로필(시트 = dialog 아래층이라 챗 회수 후 개방 = ydock 결)
   const b = e.target.closest('.ypd-act[data-pda]'); if (!b) return;
@@ -3850,9 +3760,11 @@ $('#yetaInvBtn').addEventListener('click', e => { e.stopPropagation();
 $('#yetaMeter').addEventListener('click', e => {   // 미터 탭 = 모델 순환(Sonnet→Opus→Kimi · 260719) / 노력 순환(빠름→깊게→최대→빠름) — 운영자 260712 · 9단 슬라이더와 별개 직접 전환
   const seg = e.target.closest('.ym-seg'); if (!seg) return; e.stopPropagation();
   if (seg.classList.contains('ym-stat')) { _ymView = (_ymView + 1) % 3; yMeter(); return; }   // 계기판 순환(토큰→속도→길이) — 다이얼 무변경(운영자 260714)
-  const [mk, ef] = YDIAL_DEPTH[yDepthIdx()];   // 현 다이얼 → [모델 키, 노력](YDIAL_DEPTH ↔ yDepthIdx 왕복) · ID→키 재매핑 폐지
-  if (seg.classList.contains('ym-model')) { const mo = ['sonnet', 'opus', 'kimi']; yDialSet(mo[(mo.indexOf(mk) + 1) % 3], ef); }   // 3모델 순환(운영자 260719 순서 SONNET→OPUS→KIMI)
-  else { const order = ['low', '', 'max']; yDialSet(mk, order[(order.indexOf(YDIAL.effort) + 1) % 3]); }   // 노력만 순환(모델과 독립) · 최대→다시 빠름
+  if (seg.classList.contains('ym-model')) { const mo = ['sonnet', 'opus', 'kimi'], cur = YDIAL.model === 'claude-sonnet-5' ? 'sonnet' : YDIAL.model === 'kimi-k3' ? 'kimi' : 'opus'; try { localStorage.setItem('yeta_dial_model', mo[(mo.indexOf(cur) + 1) % 3]); } catch (x) {} }   // 3모델 순환(운영자 260719 순서 SONNET→OPUS→KIMI)
+  else { const order = ['low', '', 'max']; try { localStorage.setItem('yeta_dial_effort', order[(order.indexOf(YDIAL.effort) + 1) % 3]); } catch (x) {} }   // 노력만 순환(모델과 독립) · 최대→다시 빠름
+  try { localStorage.removeItem('yeta_dial_vfast'); } catch (x) {}
+  yDialLoad(); yMeter();
+  const rg = document.getElementById('ydepthRange'); if (rg) { try { rg.value = yDepthIdx(); rg.dispatchEvent(new Event('input', { bubbles: true })); } catch (x) {} }   // 설정 게이지 열려있으면 동기(배타 화면이라 보통 no-op)
 });
 async function yImgB64(f) {   // 사진 캔버스 축소(장변 1280 · JPEG .82) — 업로드 페이로드·비전 토큰 절제(운영자 260717 '+' 사진 첨부)
   const url = URL.createObjectURL(f);
@@ -4006,7 +3918,7 @@ function yTime(ts) {   // 메시지 시각 = 무음동 세계 시각 "오전/오
 function yAiMsg(t, fresh, cont) {   // 캐릭터 메시지 = 아바타 + 이름 + [버블|시각](버블 밖 우하단 = 카톡 결) · fresh=신규만 촤르륵 · cont=직전과 같은 화자(아바타·이름 생략 = 톡방 그룹핑)
   const p = yPersona(t.persona) || YCUR || {};
   const tm = yTime(t.ts);
-  return `<div class="ymsg${fresh ? ' in' : ''}${cont ? ' cont' : ''}" data-k="a|${esc(t.persona || '')}|${cont ? 1 : 0}|${t.ov ? 1 : 0}|${yModeOn(p) ? 1 : 0}|${esc(t.text || '')}">${yAva(p)}<span class="ycol"><span class="yname">${esc(p.name || '')}</span><span class="ybrow"><div class="yb ai${t.ov ? ' ov' : ''}">${yFmt(t.text)}</div>${tm ? `<time class="ytime">${tm}</time>` : ''}</span></span></div>`;   // data-k = 번호표(persona·그룹핑·ov·**모드**·텍스트) — time 제외 = 낙관/확정 재사용(분경계 무관) · 모드 자리(운영자 260725 "도깨비 모드면 도깨비 프사") = 변신 경계에서 번호표가 달라져야 이미 그린 말풍선의 프사가 교체된다(없으면 yReconcile이 옛 노드를 영구 재사용 = 프사 고착)
+  return `<div class="ymsg${fresh ? ' in' : ''}${cont ? ' cont' : ''}" data-k="a|${esc(t.persona || '')}|${cont ? 1 : 0}|${t.ov ? 1 : 0}|${esc(t.text || '')}">${yAva(p)}<span class="ycol"><span class="yname">${esc(p.name || '')}</span><span class="ybrow"><div class="yb ai${t.ov ? ' ov' : ''}">${yFmt(t.text)}</div>${tm ? `<time class="ytime">${tm}</time>` : ''}</span></span></div>`;   // data-k = 번호표(persona·그룹핑·ov·텍스트) — time 제외 = 낙관/확정 재사용(분경계 무관)
 }
 let _yLastN = -1, _yTypOn = false, _yFailOn = false, _yTypHold = 0, _yTypT = null;   // 촤르륵 키드 + 타이핑 지연 홀드(읽는 시간 · 운영자 260707)
 let _yCurT = '';   // 마지막 렌더한 방 id — 서버발 cur 이동(단톡 재합류·휘발 소멸 · Q.06) 감지용(yThreadSwitch 미경유 전환도 방 경계로 취급)
@@ -4081,83 +3993,21 @@ function yReconcile(root, html) {   // 증분 렌더(운영자 260717 근본) �
 }
 let _yOpenGate = false;   // 진입 1회 게이트 — openYeta가 세우고 첫 렌더가 소진(사망 상대 방 복원 차단용 · 대화 중 사망은 종전 두절 연출 유지)
 let _yMeDeadSeq = false;   // 유저 사망 연출 진행 중 래치(중복 발화 0) — 팝업이 뜨면 풀린다(다음 진입 시도 = 다시 물음)
-// 유저 부활 하한(운영자 260725 "누가 기도 안해주면 48시간 대기 — 게임 내 시간 · 접속 안 해도 흘러감")
-//   무음동은 현실의 6배속이라 무음동 48h = 현실 8h. 저장은 현실 ts(md.d)로 하고 비교만 환산 = 접속 여부와 무관하게 흐른다(뷰어 yWorldMin·러너 wmin과 같은 축).
-const YMEREV_WORLD_H = 48;
-const YMEREV_MS = YMEREV_WORLD_H / 6 * 3600e3;
-const YMQ_CUT_MS = 2 / 6 * 3600e3;   // 성향 퀴즈 1문항 = 무음동 2시간 단축(운영자 260725 "문제당 2시간") = 현실 20분 · 10문항 = 무음동 20시간
-const yMeRevAt = md => (md.d || 0) + YMEREV_MS - (md.cut || 0);                   // 기도가 없을 때 스스로 눈을 뜨는 시각 — cut = 퀴즈로 당긴 만큼
-const yMeRevOK = md => !!(md && md.pray) || Date.now() >= yMeRevAt(md || {});      // 기도 = 즉시 · 아니면 하한 경과
-const yJosa = (w, withJong, noJong) => { const s = String(w || ''), c = s.charCodeAt(s.length - 1); return (c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28) ? withJong : noJong; };   // 받침 조사(이름 뒤 "이(가)" 병기가 렌더에서 튀어서 · 렌더 실측 260725) — 한글 아님·받침 없음 = 뒤 값
-const yMdQuizLeft = md => Math.max(0, ((md && md.quiz) || []).length - (((md && md.done) || []).length));   // 남은 문항
-function yMdClock(ms) {   // 남은 시간 = 무음동 시각(현실 ms × 6) — 현실 1초에 무음동 6초가 줄어 눈에 보이게 흐른다(운영자 260725 "빠르게 줄어들거임")
-  const w = Math.max(0, Math.round(ms * 6 / 1000));
-  return `${String(Math.floor(w / 3600)).padStart(2, '0')}:${String(Math.floor(w / 60) % 60).padStart(2, '0')}:${String(w % 60).padStart(2, '0')}`;
-}
-let _ymdTick = 0;
-function yMeDeadClose() { clearInterval(_ymdTick); _ymdTick = 0; const b = document.getElementById('ymedead'); if (b) b.hidden = true; const q = document.getElementById('ymdquiz'); if (q) q.hidden = true; }
-function yMeDeadPaint() {   // 사망 상주 창(운영자 260725 "메인 대화창에 항시 팝업 · 시간 타이머로 줄어들게 · 그 아래 버튼") — 1초 틱으로 카운트다운만 다시 그린다
+function yMeDeadCheck() {   // 유저 사망(운영자 260725 "타의든 자의든") — 러너 <<MEDEAD: 맥락>> → sess.me_dead 박제 · 대화창 암전 → 이탈 → 대화 목록 → "당신은 죽었습니다. 부활하시겠습니까?"
   const md = (YSESS || {}).me_dead;
-  if (!md) { yMeDeadClose(); return; }
-  const box = document.getElementById('ymedead'), T = document.getElementById('ymdT'), B = document.getElementById('ymdB'), BT = document.getElementById('ymdBtns');
-  if (!box || !T || !B || !BT) return;
-  box.hidden = false;
-  const pr = md.pray, left = yMeRevAt(md) - Date.now(), ok = yMeRevOK(md);
-  T.textContent = pr ? '누군가 당신을 위해 빌었습니다' : '당신은 죽었습니다';
-  const nm = pr ? (pr.by || (yPersona(pr.id) || {}).name || '누군가') : '';
-  const why = md.why ? md.why + '\n\n' : '';
-  B.textContent = pr ? `${why}${nm}${yJosa(nm, '이', '가')} 신당까지 찾아가 빌었다.\n\n“${pr.txt || '…돌아와 줘.'}”`
-    : ok ? `${why}무음동의 밤이 충분히 흘렀다.`
-    : `${why}살아 있는 누군가가 신당에서 빌어주면 그 순간 돌아올 수 있다.`;
-  B.hidden = false;
-  const tm = `<div class="ymd-timer${ok ? ' done' : ''}" id="ymdTimer">${ok ? '지금 돌아갈 수 있다' : yMdClock(left)}</div>`;
-  const btn = [];
-  if (pr) btn.push(`<button type="button" class="yexit-btn no" data-md="reply">돌아가서 답한다</button>`);
-  else if (ok) btn.push(`<button type="button" class="yexit-btn no" data-md="rev">눈을 뜬다</button>`);
-  const qleft = yMdQuizLeft(md);
-  if (!ok && qleft) btn.push(`<button type="button" class="yexit-btn yes" data-md="quiz">부활 시간 줄이기 (${qleft})</button>`);
-  else if (!ok && !((md.quiz || []).length)) btn.push(`<button type="button" class="yexit-btn yes" disabled>기억이 아직 흐릿하다…</button>`);
-  else if (!ok) btn.push(`<button type="button" class="yexit-btn yes" disabled>더 떠올릴 게 없다</button>`);
-  const html = tm + btn.join('');
-  if (BT._h !== html) { BT.innerHTML = html; BT._h = html; BT.className = 'yexit-btns ymd-col'; }   // 버튼 구성이 그대로면 타이머만 갱신(1초마다 DOM 통짜 교체 = 눌림 씹힘)
-  else { const el = document.getElementById('ymdTimer'); if (el) { el.textContent = ok ? '지금 돌아갈 수 있다' : yMdClock(left); el.classList.toggle('done', ok); } }
-}
-function yMeDeadCheck() {   // 유저 사망(운영자 260725 "타의든 자의든") — 러너 <<MEDEAD: 맥락>> → sess.me_dead 박제 · 대화창 암전 → 이탈 → 대화 목록 → 상주 창
-  const md = (YSESS || {}).me_dead;
-  if (!md) { _yMeDeadSeq = false; yMeDeadClose(); return false; }
-  if (_yMeDeadSeq || _ymdTick) { yMeDeadPaint(); return true; }   // 이미 상주 중 = 다시 열지 않고 갱신만
+  if (!md) { _yMeDeadSeq = false; return false; }
+  if (_yMeDeadSeq) return true;
   _yMeDeadSeq = true; yStopPoll();   // 죽은 채로 폴 돌 이유 없음(부활 = op revive가 세션을 되돌림)
-  const ask = () => { _yMeDeadSeq = false; yMeDeadPaint(); clearInterval(_ymdTick); _ymdTick = setInterval(yMeDeadPaint, 1000); };
-  if (yetadlg.open) { yetadlg.classList.add('ydlg-dead'); setTimeout(() => { yetadlg.classList.remove('ydlg-dead'); navBack('ydlg'); setTimeout(() => { if (yetadlg.open) yDlgClose(); ask(); }, 260); }, 900); }   // 암전(.9s) → 이탈 = 대화 목록 복귀(닫힘 핸들러가 yTab('list')) → 상주 창 · 백스택 미등재 경로(레이어 없이 열린 챗)에선 navBack이 헛발이라 직접 닫기로 받침(실측 260725 — 죽은 채 대화창에 갇히는 경로 봉인)
+  const ask = () => { _yMeDeadSeq = false; yConfirm({ title: '당신은 죽었습니다', body: `${md.why ? md.why + '\n\n' : ''}부활하시겠습니까?`, okLabel: '부활한다', noLabel: '아니오', onOk: yRevive }); };   // 팝업 = 범용 확인 정본(yexit 골격 계승 · 새 팝업 창작 0)
+  if (yetadlg.open) { yetadlg.classList.add('ydlg-dead'); setTimeout(() => { yetadlg.classList.remove('ydlg-dead'); navBack('ydlg'); setTimeout(() => { if (yetadlg.open) yDlgClose(); ask(); }, 260); }, 900); }   // 암전(.9s) → 이탈 = 대화 목록 복귀(닫힘 핸들러가 yTab('list')) → 팝업 · 백스택 미등재 경로(레이어 없이 열린 챗)에선 navBack이 헛발이라 직접 닫기로 받침(실측 260725 — 죽은 채 대화창에 갇히는 경로 봉인)
   else ask();
   return true;
 }
-// ── 성향 퀴즈(운영자 260725) — 만난 사람만 대상 10문항(러너 넛지가 출제·me_dead.quiz 박제) · 한 문항 = 4개 미연시 선택지 · 고른 결이 누적돼 그 사람의 성향 축을 움직인다 ──
-function yMdQuizOpen() {
-  const md = (YSESS || {}).me_dead, q = ((md || {}).quiz || [])[(((md || {}).done) || []).length];
-  if (!q) return;
-  const c = yPersona(q.p) || {}, box = document.getElementById('ymdquiz');
-  document.getElementById('ymqT').textContent = `${c.name || q.p}${q.trait ? ` — ${q.trait}` : ''}`;
-  const B = document.getElementById('ymqB'); B.textContent = q.q; B.hidden = false;
-  document.getElementById('ymqOpts').innerHTML = (q.o || []).map((o, i) => `<button type="button" class="yexit-btn yes" data-mq="${i}">${esc(o.t)}</button>`).join('');
-  box.hidden = false;
-}
-async function yMdQuizPick(i) {
-  const md = (YSESS || {}).me_dead; if (!md) return;
-  document.getElementById('ymdquiz').hidden = true;
-  const r = await yApi('quizpick', { i: ((md.done || []).length), o: i }).catch(() => null);   // 서버가 단축·누적·성향 반영까지 원자 처리(클라 계산 신뢰 0)
-  if (r && r.ok && r.sess) YSESS = r.sess;
-  yMeDeadPaint();
-  if (yMdQuizLeft((YSESS || {}).me_dead || {})) setTimeout(yMdQuizOpen, 220);   // 남았으면 다음 문항으로 이어진다(연속 풀이)
-}
-async function yRevive(replyTo) {   // 부활 = 서버 me_dead 해제 단일 경로(op revive) · 실패해도 로컬 해제 후 다음 폴이 서버 진실로 재동기(죽은 채 갇힘 차단)
-  yConfirmClose(); yMeDeadClose();
+async function yRevive() {   // 부활 = 서버 me_dead 해제 단일 경로(op revive) · 실패해도 로컬 해제 후 다음 폴이 서버 진실로 재동기(죽은 채 갇힘 차단)
+  yConfirmClose();
   const r = await yApi('revive').catch(() => null);
-  if (r && r.ok && r.sess) YSESS = r.sess; else if (r && r.error) { miniToast(r.error); _yMeDeadSeq = false; return; } else if (YSESS) delete YSESS.me_dead;   // 서버 거부(하한 미도래·기도 없음) = 죽은 상태 유지 · 사유 그대로 표시
-  _yMeDeadSeq = false; yStartPoll();
-  const c = replyTo && yPersona(replyTo);
-  if (c) { miniToast(`${c.name}에게 답장할 수 있어.`); yEnterChat(c); return; }   // 회신 문자(운영자 260725) = 빌어준 그 사람 방으로 직행 — 부활 첫 마디를 유저가 먼저 건다
-  miniToast('다시 눈을 떴어.');
+  if (r && r.ok && r.sess) YSESS = r.sess; else if (YSESS) delete YSESS.me_dead;
+  _yMeDeadSeq = false; miniToast('다시 눈을 떴어.');
 }
 function yRender() {
   const _ct = (YSESS || {}).cur || '';
@@ -4178,7 +4028,7 @@ function yRender() {
   const log = $('#yetaLog'), s = YTH() || {}, all = s.turns || [];   // v3 = 현재 방 스코프(state/opening/err/room/invite/barged 전부)
   const deadNow = !!(YCUR && (YSESS || {}).cur === YCUR.id && yDead(YCUR));   // 사망 두절(운영자 260714) — 1:1 방만 잠금(단톡 = 러너가 이탈 처리·생존자와 계속) · 만료 = 자연 해제
   if (deadNow && _yOpenGate) {   // 진입 차단(운영자 260725 "사망했으면 아예 대화창 안들어가져야 · 대화창 누르면 가장 최근 게 뜨거든?") — 마지막 방 복원 경로엔 yEnterChat 가드가 없어 죽은 상대의 방이 그대로 열리던 것
-    _yOpenGate = false; miniToast(`${(YCUR || {}).name || '상대'}은(는) 사망했어 — 살아 있는 누군가가 신당에 가서 빌어줘야 돌아와`); yShowList(); return;   // 문구 = 기도 게이트(Q.51 260725)와 동기 — 구 "현실 24시간" 표기는 시간 만료 시절 잔류(드리프트 정정)
+    _yOpenGate = false; miniToast(`${(YCUR || {}).name || '상대'}은(는) 사망했어 — 현실 24시간 동안 대화할 수 없어`); yShowList(); return;
   }
   _yOpenGate = false;   // 정상 진입 = 게이트 소진(이후 폴 렌더는 통과 — 대화 중 사망은 종전 두절 연출 유지 · 운영자 260714)
   yHeadSync();   // 헤더 4픽토 상태 동기(대화 가능·문자·연락처 · 운영자 260725)
@@ -4243,7 +4093,6 @@ function yRender() {
   _yKickOn = kickOn;
   if (_yNearC && !kickOn && ((s.room || []).length < 2)) h += `<button type="button" class="yb sys ykick ynear in" data-near="${esc(_yNearC.id)}">${esc(_yNearC.pl)} — ${esc(_yNearC.name)}도 여기 있다 · 불러볼까</button>`;   // 공간 초대(운영자 260709 메타버스 결) — 같은 장소 감지 시에만 · 탭 = 부르기(수락은 걔 마음)
   const invP = s.invite && Date.now() - (s.invite.ts || 0) < 600000 ? yPersona(s.invite.to) : null;   // 초대 판정 대기(단톡 260707)
-  const gbP = s.gb && s.gb.p && (s.room || []).length >= 2 && Date.now() - (s.gb.ts || 0) < 120000 ? yPersona(s.gb.p) : null;   // 단톡 자율 비트 예약(운영자 260725 "자기들끼리 얘기를 이어나가야") — 러너가 답장과 같은 write에 심는다 · state 비점유 = 초대 판정(invP) 결 계승(좀비 리퍼·자동재시도 축과 무관 = 러너 사망 시 TTL 120s로 조용히 소멸 · 짝 = yeta_chat.sh GB_TTL_MS·yeta_v3 GB_TTL_MS)
   const typing = yPrefOn('typing', true) && !deadNow && !gaveUp && !openingStuck && (awaiting || staged || failNow) && !!YCUR && Date.now() >= _yTypHold;   // 타이핑 표시(설정) 끄면 "입력 중" 숨김 · staged = 답장 페이스 홀드 · failNow = 자동 재시도 중에도 점 유지(실패 무노출) · _yTypHold = 읽는 시간 경과 후에만(운영자 260707)
   if (!awaiting && !staged && _yDraft) { _yDraft = null; _yDrKeep = false; }   // 확정 반영·대기 종료 = 잔여 draft 폐기(다음 턴 유령 버블 차단)
   const dr = _yDraft && awaiting && !deadNow && !gaveUp && (_yDrKeep || Date.now() >= _yTypHold) && _yDraft.t === ((YSESS || {}).cur || '') && (_yDrKeep || (_yDraft.ts || 0) >= ((s.awaiting_since || 0) - 5000)) && _yDraft.text ? _yDraft : null;   // 문장 스트리밍(한수2) — 현재 방 · 이번 대기분만(스테일 가드) · 사망/이탈 연출 우선 · 읽는시간(_yTypHold) 게이트 = 타이핑과 동일 · _yDrKeep = 겹침 중 예외 2종(260717 ⑨ — 홀드 게이트 + ts 가드: 내 발송이 awaiting_since를 당겨 유지 버블이 증발하던 것 봉합 · 평의회 MED)
@@ -4255,8 +4104,7 @@ function yRender() {
     yBubbles(dr.text).forEach((bt, bi) => { h += yAiMsg({ text: bt, persona: pid, ov: _yDrKeep ? 1 : 0 }, !_yDraftOn && bi === 0, bi > 0 || pcont); }); }   // 생성 중 부분 답장 — 확정과 같은 버블 분할로 미리 그림 · 등장만 촤르륵 · 겹침 중(_yDrKeep) = mut 톤(260717 ⑨)
   else if (typing) h += yTypingHtml(!_yTypOn);
   else if (invP) h += yTypingHtml(!_yTypOn, invP, '올지 생각 중');   // 초대받은 캐릭터의 고민 = 타이핑 변형(시안 A)
-  else if (gbP && yPrefOn('typing', true) && !deadNow) h += yTypingHtml(!_yTypOn, gbP);   // 자율 비트 생성 중 = 그 사람 이름으로 "입력 중"(정본 컴포넌트 계승 · 타이핑 설정 OFF면 숨김만 = 턴은 폴로 그대로 들어온다)
-  _yFailOn = gaveUp; _yTypOn = !dr && (typing || (!deadNow && !gaveUp && !typing && (!!invP || !!gbP))); _yDraftOn = !!dr;
+  _yFailOn = gaveUp; _yTypOn = !dr && (typing || (!deadNow && !gaveUp && !typing && !!invP)); _yDraftOn = !!dr;
   yHeadRoom();   // 단톡 헤더 동기화(스택/단일 멱등)
   yStackSync();   // 근처 인물 스택 동기(만석 전환·후보 소진 반영 — 시그니처 가드 = 무변경 no-op · 260712)
   yStage(yLastMood());   // 새 답장의 공기 → 배경 배리언트 크로스페이드(키 가드 = 같으면 no-op)
@@ -4269,7 +4117,7 @@ function yRender() {
     _yNoAnim = false;   // 스왑 무애니 = 1회성(다음 렌더부터 정상 촤르륵)
     if (atBottom) log.scrollTop = log.scrollHeight;
   }
-  if (((awaiting && waitMs <= zlim) || invP || gbP || staged) && !deadNow) yStartPoll(); else yStopPoll();   // 초대 판정·자율 비트도 폴로 픽업(state 비점유) · staged = 페이스 공개 중엔 감시 유지(그 사이 도착하는 교대 턴 즉시 픽업) · 사망 방 = 폴 정지(운영자 260714 — 두절 연출)
+  if (((awaiting && waitMs <= zlim) || invP) && !deadNow) yStartPoll(); else yStopPoll();   // 초대 판정도 폴로 픽업(state 비점유) · 사망 방 = 폴 정지(운영자 260714 — 두절 연출)
 }
 let _yWatchTk = null, _yEtag = '', _yDEtag = '';   // watch 롱폴 토큰 + 세션/draft etag 기준선(watch 응답만 갱신 — get 무관)
 function yStartPoll() {   // 대기 감시 1선 = watch 롱폴(대화 속도 260714 한수 · 서버가 R2 etag 1s 감시 → 변경 즉시 응답 = 픽업 ~0s) · 실패·구게이트웨이 = 4s 타이머 폴 강등(종전 결) — 대기 중에만 돎
@@ -4359,12 +4207,7 @@ async function ySend() {
   yStartPoll();
 }
 $('#yetaSend').addEventListener('click', ySend);
-// Enter = 전송(PC 한정 · 운영자 260725 "엔터는 보내기 · 쉬프트 엔터가 줄바꿈 · 근데 키보드 보내기는 줄바꿈"). 모바일 = 종전 그대로 네이티브 줄바꿈(가로채기 0 · enterkeyhint='enter' 글리프와 동행) — 화면 키보드 액션키가 곧 Enter라 여기서 보내면 260725 오전 지시("키보드 보내기 누르면 엔터가 되어버린다")로 되돌아간다. 기기 판정 = 매 타건 실측(하이브리드·외장키보드 연결 후 변동 추종) · 전송 본체는 종이비행기 버튼과 동일 경로(ySend 단일).
-$('#yetaText').addEventListener('keydown', e => {
-  if (e.key !== 'Enter' || e.shiftKey || e.isComposing || e.keyCode === 229) return;   // 쉬프트 = 줄바꿈 · 한글 조합 중(IME · keyCode 229 폴백) = 조합 확정용 Enter라 가로채면 글자가 날아간다
-  if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;   // 모바일·터치(coarse) = 네이티브 줄바꿈 유지
-  e.preventDefault(); ySend();
-});
+// Enter 전송 폐지(운영자 260725 "키보드에 보내기를 누르면 엔터가 되어버리거든? 줄바꿈이 되게 해줘") — 키보드 액션키·Enter = 항상 줄바꿈(네이티브 그대로 · keydown 가로채기 0) · 전송 = 입력행 종이비행기 버튼 단일 경로. textarea enterkeyhint도 'enter'(줄바꿈 글리프)로 동행.
 $('#yetaText').addEventListener('input', e => { const t = e.target;
   const hk = yScKeyAt(t.value, _ySegPrev);   // 타이핑된 '#'·'*' 회수 → 버튼과 동일 토글(beforeinput 취소 불가 IME 폴백 · 텍스트에는 그 글자를 남기지 않는다)
   if (hk) { t.value = t.value.slice(0, hk.i) + t.value.slice(hk.i + 1); yScSync(); yScToggle(t, hk.m); return; }
@@ -4427,7 +4270,6 @@ try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(fun
   const outLeft = () => { try { const u = +localStorage.getItem('yeta_pin_until') || 0; return Math.max(0, u - Date.now()); } catch { return 0; } };
   // ── 무음동 세계 시계(운영자 260715) — 실제 시각과 분리, 6배 가속(실제 4h = 무음동 하루 · 자는 새벽도 겪게). 러너 state_block wmin과 동일 공식(epoch분×6 mod 1440) = 저장 없이 동기. ──
   const YWORLD_RATE = 6;   // 6배(1배=현실, 24배=1시간 하루) — 조정 노브
-  window.YWORLD_RATE = YWORLD_RATE;   // 배율 노출(260725) — 사망 경과·잔여를 무음동 단위로 적는 yWDur이 참조 · 노브 SSOT 유지(밖에서 재선언 금지)
   window.yWorldMin = ts => Math.floor((ts || Date.now()) / 60000 * YWORLD_RATE) % 1440;   // 무음동 분(0~1439) · ts = 그 시각의 무음동 분(메시지 시각 환산 — 순수 함수라 저장·마이그레이션 0 · 운영자 260725)
   window.yWorldDH = () => { const wt = Date.now() / 60000 * YWORLD_RATE; return { d: 'w' + Math.floor(wt / 1440), h: Math.floor(wt % 1440 / 60) }; };   // 무음동 (날짜열, 시각) — 동선·지도 시간축 SSOT(운영자 260716 지도 싱크: 지도·동선·근처·원거리 전부 세계 시각으로 통일 · 러너 yeta_place.world_dh와 동일 공식 = 드리프트 금지)
   window.yWorldClock = ts => { const m = yWorldMin(ts), h = (m / 60) | 0, mm = m % 60, ap = h < 12 ? 'AM' : 'PM'; let hh = h % 12; if (!hh) hh = 12; return { h, txt: String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ' ' + ap, night: !ymIsDay(h) }; };   // night = ymIsDay 단일 정의 계승(Q.18 — 지도 배경·시계 픽토가 같은 경계)
@@ -4447,7 +4289,7 @@ try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(fun
         if (!first) {   // 첫 틱 = 서명 씨앗만(렌더는 각 진입 경로가 이미 함)
           yCharRender(); yListRender();   // 내부 sig 가드가 중복 도장 흡수
           if (YCUR && YCUR.mode && !document.getElementById('yetaAva2')) yAvaSet($('#yetaAva'), YCUR);   // 챗 헤더(단톡 스택 중엔 방 이벤트가 재도장)
-          if (yetadlg.open && _yView === 'chat') { _yNoAnim = true; yRender(); }   // 열린 대화 로그 통째 재도장(운영자 260725 "도깨비 모드면 도깨비 프사") — 종전엔 목록·헤더만 도장하고 로그가 빠져 이미 그린 말풍선 프사가 옛 폼으로 고착 · 무애니 1회 = 읽은 말풍선 re-whoosh 차단 · 배경 재스테이지(yStage · 평의회 260717 bg-mode MED)는 yRender가 겸한다
+          if (yetadlg.open && YCUR && YCUR.mode && _yView === 'chat') yStage(yLastMood());   // 배경도 같은 경계에 재스테이지(평의회 260717 bg-mode MED — 프사만 바뀌고 배경 잔류하던 desync 봉합 · ekey 모드 포함 = 중복 호출 키 가드 흡수)
           const pf = document.getElementById('ycprofile'); if (pf && pf.classList.contains('on') && typeof yProfileRender === 'function') yProfileRender();   // 열린 프로필의 히어로 디스크
         }
       }

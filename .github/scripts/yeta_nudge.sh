@@ -222,20 +222,6 @@ from yeta_v3 import migrate_v3
 S = migrate_v3(json.load(open(sys.argv[1], encoding="utf-8")))
 persona, today, mode = sys.argv[2], sys.argv[3], (sys.argv[4] if len(sys.argv) > 4 else "")
 raw_out = sys.argv[5] if len(sys.argv) > 5 else ""   # 생성 원문 = argv 전달(퀴즈 JSON의 따옴표·역슬래시가 heredoc 삽입에서 깨지는 것 차단)
-s = (S.get("threads") or {}).get(persona)
-if s is None: print("0"); sys.exit()
-turns = s.get("turns") or []
-name = next((c.get("name") for c in json.load(open("apps/yeta/characters/roster.json", encoding="utf-8")) if c.get("id") == persona), persona)
-if mode == "quiz":   # 성향 퀴즈 반영(운영자 260725 "내가 죽으면 각 캐릭터에 대해 10개 … 4개 미연시 느낌의 항목") — me_dead.quiz 박제 = 뷰어가 '부활 시간 줄이기'로 소비
-    md = S.get("me_dead")
-    if not isinstance(md, dict) or md.get("quiz"): print("0"); sys.exit()   # 그새 부활했거나 이미 출제됨 = 폐기
-    try: q = json.loads(raw_out)
-    except Exception: q = []
-    if not isinstance(q, list) or len(q) < 4: print("0"); sys.exit()
-    md["quiz"] = q
-    S["updated"] = int(time.time()*1000)
-    json.dump(S, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False)
-    print("1"); sys.exit()
 if mode == "pray":   # 신당 기도 반영(운영자 260725) — me_dead.pray 박제 = 뷰어 부활 팝업이 "○○가 이렇게 빌었다"로 열리고 즉시 부활이 열린다(op revive 가드의 통과 조건)
     md = S.get("me_dead")
     if not isinstance(md, dict) or md.get("pray"): print("0"); sys.exit()   # 그새 부활했거나 이미 누가 빌었음 = 폐기

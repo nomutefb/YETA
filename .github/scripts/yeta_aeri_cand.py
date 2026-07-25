@@ -6,8 +6,11 @@ Gemini 월 지출 한도 429(260721 실측)로 OpenAI(gpt-image = yeta_char_art.
   ① 초상 1장(2:3) → viewer/assets/yeta_char/aeri.png(+webp 768w) + 상단 정사각 512² 크롭 av/aeri.webp + roster avatar 자동 주입(= 일반 주민 탑재 규약 · yeta_char_art 동형)
   ② 지도 워커 스프라이트 → viewer/assets/yeta_map/char_aeri.png(그린스크린 → 크로마키 → 트림 → 320px = yeta_map_char.py 동형)
   ③ 표정 갤러리 8장(평범한 사무실 배경 · 표정이 분위기 전달 · 클로즈업/상반신/전신 카메라 각도 변주) → viewer/characters/aeri/<표정>_01.webp(용량 = webp만 보존)
-수동 dispatch 전용(⚠️ OpenAI 유료 종량제 · 자동 트리거 금지 = 이미지 파이프 공통 규약).
-멱등: 있으면 skip(FORCE=1 재생성). 게이트 = OPENAI_API_KEY(없으면 no-op).
+  ④ 지브리 얼빡 프사(운영자 260725 "애리쌤만 제미나이에서 지브리스타일로 하나 뽑아서 올드함을 강조") — `AERI_GHIBLI=1` 단독 축:
+     Gemini 1:1 극단 클로즈업 → viewer/assets/yeta_char/aeri_ghibli.png(편집 베이스) + av/aeri.webp 교체 + roster 배선(값 동일·그림만 갈림).
+     이 축은 ①②③을 건너뛴다(다른 산출물 불변) · 게이트 = GEMINI_API_KEY.
+수동 dispatch 전용(⚠️ OpenAI·Gemini 유료 종량제 · 자동 트리거 금지 = 이미지 파이프 공통 규약).
+멱등: 있으면 skip(FORCE=1 재생성). 게이트 = OPENAI_API_KEY(없으면 no-op · ④는 GEMINI_API_KEY).
 """
 import base64, io, json, os, re, shutil, subprocess, sys, time, urllib.request
 
@@ -15,6 +18,11 @@ KEY = os.environ.get("OPENAI_API_KEY", "") or os.environ.get("OPENAI_API_KEY_nom
 MODEL = (os.environ.get("OPENAI_IMAGE_MODEL") or "gpt-image-2").strip()
 API = "https://api.openai.com/v1/images/generations"
 FORCE = os.environ.get("FORCE", "") == "1"
+# ── 지브리 얼빡 프사 축(운영자 260725 "애리쌤만 제미나이에서 지브리스타일로 하나 뽑아서 올드함을 강조") ──
+GHIBLI = os.environ.get("AERI_GHIBLI", "") == "1"   # 1 = 이 축만 돌린다(①②③ 건너뜀 · 다른 산출물 불변)
+GEM_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
+GEM_MODEL = "gemini-3.1-flash-image-preview"        # 모델 ID SSOT = shared/models.json gemini_image(게이트 check_model_ids)
+GEM_API = "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent".format(GEM_MODEL)
 CHAR_DIR = "viewer/assets/yeta_char"
 AVDIR = os.path.join(CHAR_DIR, "av")
 MAP_DIR = "viewer/assets/yeta_map"
@@ -161,7 +169,93 @@ def chroma_cut(png_bytes, size=320):
         return png_bytes
 
 
+# 지브리 얼빡 프사(운영자 260725) — 프레이밍 어휘 = yeta_char_art.AV_BASE 계승(얼굴이 프레임을 꽉 채움 · 새 결 창작 0), 화풍만 지브리.
+# "올드함"은 두 겹으로 = ⓐ인물(50대 주름·피로·유행 지난 차림 = WHO 정본 계승) ⓑ화풍(80~90년대 손그림 셀 애니·바랜 필름색).
+GHIBLI_AV = ("Extreme close-up face shot — the face fills the entire square frame edge to edge with no margin, "
+             "cropped just above the eyebrows and just below the lower lip, no shoulders, no neck, no scenery, "
+             "perfectly square 1:1, one single original fictional character, "
+             "hand-painted Studio-Ghibli-style 1980s-90s cel animation look — soft gouache watercolor rendering, "
+             "warm rounded features drawn with a thin gentle ink line, flat honest shading, "
+             "NO digital gloss, NO airbrush, NO manhwa key-art sheen, "
+             "age worn openly and warmly: fine wrinkles at the eyes and mouth, laugh lines, a faint tiredness under the eyes, "
+             "faded vintage film color grade with gentle grain as if scanned from an old animated feature, "
+             "a modest self-effacing smile, looking straight at the viewer, "
+             "no text, no caption, no watermark, no logo, no border. Character — " + WHO)
+
+
+def gemini_image(prompt, aspect="1:1"):
+    """Gemini 이미지 1장 → PNG bytes(실패 시 None · fail-soft). yeta_bg.py gemini_image 동형(imageSize 1K)."""
+    payload = {"contents": [{"parts": [{"text": prompt}]}],
+               "generationConfig": {"responseModalities": ["IMAGE"],
+                                    "imageConfig": {"aspectRatio": aspect, "imageSize": "1K"}}}
+    req = urllib.request.Request(GEM_API + "?key=" + GEM_KEY, data=json.dumps(payload).encode(),
+                                 headers={"Content-Type": "application/json"})
+    for attempt in range(2):
+        try:
+            with urllib.request.urlopen(req, timeout=180) as r:
+                j = json.loads(r.read().decode())
+            for cand in j.get("candidates", []):
+                for p in cand.get("content", {}).get("parts", []):
+                    inl = p.get("inlineData") or p.get("inline_data")
+                    if inl and inl.get("data"):
+                        return base64.b64decode(inl["data"])
+            print("  ⚠️ 이미지 파트 없음(inlineData 부재)", flush=True); return None
+        except Exception as e:
+            code = getattr(e, "code", 0)
+            body = ""
+            try: body = e.read().decode()[:200]
+            except Exception: pass
+            print(f"  ⚠️ 제미나이 실패 {code} {body or e}", flush=True)
+            if attempt == 0 and code in (429, 500, 503):
+                time.sleep(4); continue
+            return None
+    return None
+
+
+def av_square(png_path):
+    """1:1 원본 → 512² webp = av/aeri.webp(크롭 없이 축소 · 얼빡은 이미 얼굴이 꽉 참). ffmpeg 없으면 None."""
+    if not shutil.which("ffmpeg"):
+        print("  ⚠️ ffmpeg 없음 — av 변환 생략", flush=True); return None
+    os.makedirs(AVDIR, exist_ok=True)
+    out = os.path.join(AVDIR, "aeri.webp")
+    try:
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", png_path,
+                        "-vf", "scale=512:512", "-quality", "86", out], check=True, timeout=120)
+        return out
+    except Exception as e:
+        print(f"  ⚠️ av 변환 실패(비치명): {e}", flush=True); return None
+
+
+def run_ghibli():
+    """애리쌤 지브리 얼빡 1장(제미나이) → aeri_ghibli.png(원본·편집 베이스) + av/aeri.webp + roster 배선.
+    다른 산출물(초상·스프라이트·표정 8장)은 손대지 않는다 — 이 축만 단독 실행."""
+    if not GEM_KEY:
+        print("GEMINI_API_KEY 없음 — 지브리 얼빡 생략(no-op)"); return 0
+    os.makedirs(CHAR_DIR, exist_ok=True)
+    src = os.path.join(CHAR_DIR, "aeri_ghibli.png")
+    if os.path.exists(src) and not FORCE:
+        print("skip 지브리 얼빡(기존 · FORCE=1로 재생성)")
+    else:
+        print("생성 지브리 얼빡(제미나이) …", flush=True)
+        png = gemini_image(GHIBLI_AV)
+        if not png:
+            print("::warning::지브리 얼빡 생성 실패 — 산출물 무변경"); return 0
+        open(src, "wb").write(png)
+        print(f"  ✓ {src} ({len(png)//1024}KB)", flush=True)
+    if av_square(src) and os.path.exists(ROSTER):
+        roster = open(ROSTER, encoding="utf-8").read()
+        roster, ok = set_avatar(roster, "aeri", AV_URL)   # 값은 종전과 동일(멱등) — 그림만 갈린다
+        if ok:
+            open(ROSTER, "w", encoding="utf-8").write(roster)
+            print("  ✓ roster avatar 배선(값 동일·그림 교체)", flush=True)
+    return 1
+
+
 def main():
+    if GHIBLI:   # 애리쌤 지브리 얼빡 단독 축(운영자 260725) — OPENAI 키 없어도 돈다(게이트 = GEMINI_API_KEY)
+        n = run_ghibli()
+        print(f"완료 — 지브리 얼빡 {n}장")
+        return 0
     if not KEY:
         print("OPENAI_API_KEY 없음 — 애리 이미지 생성 생략(no-op)"); return 0
     made = 0

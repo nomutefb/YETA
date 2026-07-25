@@ -7,7 +7,10 @@
 OpenAI Images API(gpt-image) → `viewer/assets/yeta_char/<id>.png`(+webp 768w) 커밋 = git 정본(큰 그림 = 운영자 편집 베이스).
 + 작은 얼굴 자동화(운영자 260713 "완전 자동 ㄱㄱ"): 큰 그림 상단·가로중앙 정사각을 512² webp `av/<id>.webp`로 떼고 roster avatar 슬롯에 자동 주입.
   = 〔큰 그림 → 작은 얼굴 크롭 → roster 배선〕 한 dispatch로 hands-off. 큰 그림 편집 베이스 성격은 유지(원하면 운영자가 png 손보고 재크롭).
-멱등: 이미 있는 id는 skip(FORCE=1 재생성). 게이트 = OPENAI_API_KEY(없으면 no-op).
++ 얼빡 프사 축(운영자 260725 "프로필 영역이 작아서 가슴 위를 쓰면 실제로는 안 보인다 · 몸은 더더욱 필요 없다"):
+  `YETA_AV_MODE=1` → 큰 초상은 건드리지 않고 **얼굴이 프레임을 꽉 채우는 1:1 극단 클로즈업**만 새로 뽑아
+  `<id>_face.png`(1024² 편집 베이스) + `av/<id>.webp`(512²) + roster 배선. 크롭 축(avatar_crop)과 배타 — 이 모드에선 크롭 안 씀.
+멱등: 이미 있는 id는 skip(FORCE=1 재생성 · 얼빡 모드 기준 = `<id>_face.png`). 게이트 = OPENAI_API_KEY(없으면 no-op).
 """
 import base64, json, os, re, shutil, subprocess, sys, time, urllib.request
 
@@ -16,6 +19,7 @@ MODEL = (os.environ.get("OPENAI_IMAGE_MODEL") or "gpt-image-2").strip()
 API = "https://api.openai.com/v1/images/generations"
 FORCE = os.environ.get("FORCE", "") == "1"
 ONLY = os.environ.get("YETA_CHAR_ONLY", "").strip()   # 특정 id 하나만(비용 절감 테스트)
+AV_MODE = os.environ.get("YETA_AV_MODE", "") == "1"   # 얼빡 프사 전용 모드(운영자 260725) — 큰 초상 무시, av/<id>.webp만 새로 뽑는다
 OUT = "viewer/assets/yeta_char"
 AVDIR = os.path.join(OUT, "av")                       # 작은 얼굴(아바타) 512²
 ROSTER = "apps/yeta/characters/roster.json"
@@ -29,6 +33,18 @@ BASE = ("Fantasy character portrait, polished Korean manhwa / webtoon key-art il
         "cinematic rim light against deep spotify-black shadows, a restrained neon-lime and cobalt palette with the character's own aura color, "
         "delicate floating light particles and a dreamlike magical atmosphere, dynamic yet grounded, "
         "no text, no caption, no watermark, no logo, no border. Character — ")
+
+# 얼빡 프사(운영자 260725 "프로필 영역이 작아서 가슴 위를 쓰면 실제로는 안 보인다 · 몸은 더더욱 필요 없다").
+# 얼빡 = 얼굴이 여백 없이 화면을 빡빡하게 채우는 극단 클로즈업(K팝 얼빡직캠 어원) — 정본 견본 = 루시 lucy_face.webp.
+# 스타일 어휘는 위 BASE 그대로 계승(붓결·아우라·입자 = 같은 축), 바뀐 건 프레이밍 하나뿐(새 결 창작 0).
+AV_BASE = ("Extreme close-up face shot — the face fills the entire square frame edge to edge with no margin, "
+           "cropped just above the eyebrows and just below the lower lip, no shoulders, no neck, no scenery, "
+           "perfectly square 1:1, one single original fictional character, "
+           "polished Korean manhwa / webtoon key-art illustration, painterly semi-realistic, glossy rendering with soft painterly shading, "
+           "looking straight at the viewer, large expressive highly-detailed eyes, flawless luminous skin, "
+           "shallow depth of field, cinematic rim light against deep spotify-black shadows, "
+           "a restrained neon-lime and cobalt palette with the character's own aura color, delicate floating light particles, "
+           "no text, no caption, no watermark, no logo, no border. Character — ")
 
 # 10인 판타지 초상(카드 서사 각색 · 포인트색 아우라 = roster color) — grounded 인물도 '낮게 새는 판타지'로 승격
 CHARS = [
@@ -87,8 +103,25 @@ def set_avatar(text, pid, url):
     return text[:m.end()] + seg + text[end:], True
 
 
-def openai_image(prompt):
-    payload = {"model": MODEL, "prompt": prompt, "size": "1024x1536", "n": 1}   # 세로 2:3(반신 초상)
+def av_write(png_bytes, cid):
+    """얼빡 원본(1024²) 저장 + 512² webp = av/<id>.webp(뷰어 아바타 규격 · 크롭 없이 그대로 축소).
+    원본 png = 편집 베이스 관례 계승(같은 폴더 <id>_face.png · 새 디렉터리 0). ffmpeg 없으면 None(주입 생략 = avatar_crop 결)."""
+    os.makedirs(AVDIR, exist_ok=True)
+    src = os.path.join(OUT, f"{cid}_face.png")
+    open(src, "wb").write(png_bytes)
+    if not shutil.which("ffmpeg"):
+        print("  ⚠️ ffmpeg 없음 — av webp 변환 생략", flush=True); return None
+    out = os.path.join(AVDIR, f"{cid}.webp")
+    try:
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", src,
+                        "-vf", "scale=512:512", "-quality", "86", out], check=True, timeout=120)
+        return out
+    except Exception as e:
+        print(f"  ⚠️ av webp 실패(비치명): {e}", flush=True); return None
+
+
+def openai_image(prompt, size="1024x1536"):
+    payload = {"model": MODEL, "prompt": prompt, "size": size, "n": 1}   # 기본 = 세로 2:3(반신 초상) · 얼빡 모드 = 1024x1024
     req = urllib.request.Request(API, data=json.dumps(payload).encode(),
                                  headers={"Authorization": f"Bearer {KEY}", "Content-Type": "application/json"})
     for attempt in range(2):
@@ -118,7 +151,26 @@ def main():
     chars = [c for c in CHARS if not ONLY or c[0] == ONLY]
     made = 0
     wired = []                        # av 크롭까지 있는 id = roster 주입 대상
-    for cid, desc in chars:
+    for cid, desc in (chars if AV_MODE else []):   # 얼빡 축(운영자 260725) — 큰 초상은 손대지 않는다(편집 베이스 보존) · 아래 초상 루프와 배타
+        av = os.path.join(AVDIR, f"{cid}.webp")
+        src = os.path.join(OUT, f"{cid}_face.png")
+        if os.path.exists(src) and not FORCE:
+            print(f"skip {cid}(기존 얼빡)")
+            if os.path.exists(av):
+                wired.append(cid)     # 기존분도 roster 정합만 보장(값 동일=멱등)
+            elif av_write(open(src, "rb").read(), cid):
+                wired.append(cid)     # 원본은 있는데 webp만 없다(그 런에 ffmpeg 부재) = API 재호출 없이 변환·배선만 복구
+            continue
+        print(f"얼빡 {cid} …", flush=True)
+        png = openai_image(AV_BASE + desc, size="1024x1024")
+        if not png:
+            continue
+        if av_write(png, cid):
+            wired.append(cid)
+        made += 1
+        print(f"  ✓ {av} ({len(png)//1024}KB 원본)", flush=True)
+        time.sleep(2)
+    for cid, desc in ([] if AV_MODE else chars):
         path = os.path.join(OUT, f"{cid}.png")
         if os.path.exists(path) and not FORCE:
             print(f"skip {cid}(기존)")
