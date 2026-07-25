@@ -235,6 +235,14 @@ def main():
         roster = open(ROSTER, encoding="utf-8").read()
         hits = 0
         for cid in wired:
+            # ⚠ 여벌 픽 보호(260726 실측): 운영자가 테이크 중 하나(av/<id>_v4.webp)를 골라 배선해둔 상태에서
+            #   같은 인물을 재생성하면 여기서 기본 경로(av/<id>.webp)로 **말없이 되돌아간다**(홍석천 = v4 픽 → v1 회귀).
+            #   yeta_face.py의 av_owned 가드와 같은 결 — 이미 여벌을 가리키고 있으면 건드리지 않는다.
+            if re.search(r'"id"\s*:\s*"%s".*?"avatar"\s*:\s*"assets/yeta_char/av/%s_v\d+\.webp"'
+                         % (re.escape(cid), re.escape(cid)), roster, re.S):
+                print(f"  ↷ {cid}: roster가 여벌 테이크를 가리키는 중 — 주입 생략(운영자 픽 보호)", flush=True)
+                hits += 1
+                continue
             roster, ok = set_avatar(roster, cid, AV_URL % cid)
             if ok:
                 hits += 1
