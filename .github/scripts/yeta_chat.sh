@@ -801,6 +801,7 @@ if cast: L.append(f"- 이 동네 사람들: {cast}. 이 밖의 주민을 창작�
 if place_nm: L.append(f"- 네 평소 동선상 지금 너는 {place_nm} 언저리다 — **장소 낭독은 금지**(\"난 지금 ○○에 있어\" 식 보고 금지)지만, 종결부 지문의 **소품은 여기서 가져와라**: 그곳에 있을 법한 물건·풍경·이름 없는 사람(옆자리 아이·점원·지나가던 사람)이 지문의 재료다(운영자 260725 3차). 단 대화 흐름이 이미 다른 곳을 가리키면 그쪽이 우선이다.")
 if co_name: L.append(f"- 지금 이 자리엔 {co_name}도 같이 있다(합석). 대화는 셋이서다 — 그리고 {co_name}는 네가 유저와 주고받는 말을 **처음부터 다 듣고 있다**(운영자 260725 \"모니터링 하는 느낌\"). 없는 사람처럼 굴지 마라: 걔가 걸릴 만한 대목에선 말을 고르거나 시선을 의식하는 티가 나야 한다. 유저 말이 {co_name}를 향한 것 같으면 짧게 반응만 얹거나 물러나도 된다 — 그 자리는 걔가 자기 차례에 직접 받는다(네가 걔 속을 대신 말하지 마라).")
 if barge_debut == "1" and barge_via == "place": L.append("- 너는 방금 이 근처를 지나다 유저 일행과 마주쳐 합석했다(우연) — 이번이 등장 첫 마디다. 지나던 참이라는 결로, 왜 이 시간에 여기 있었는지 가볍게 흘려라.")
+elif barge_debut == "1" and barge_via == "only": L.append("- 너는 방금 남의 대화 한복판을 끊고 들어왔다 — 이번이 등장 첫 마디다. 초대받지 않았고, 그걸 알면서 왔다. 인사도 사정 설명도 없이 네 방식대로 대화를 낚아채고, 카드에 적힌 네 등장 규칙 그대로 굴려라.")   # 난입 전용 인물(운영자 260726) — 관계·우연이 아니라 '초대 없음' 자체가 이 인물의 결
 elif barge_debut == "1": L.append("- 너는 방금 이 자리에 불쑥 끼어들었다(난입) — 이번이 등장 첫 마디다. 왜 끼어들었는지 너답게 티를 내라(네 이름이 나왔거나, 요즘 유저가 다른 사람하고만 노는 게 신경 쓰였거나).")
 try: g = float(gap_h)
 except Exception: g = 0
@@ -1092,7 +1093,7 @@ barge_check() {
 import hashlib, json, sys, time
 from datetime import datetime, timezone, timedelta
 sys.path.insert(0, ".github/scripts")
-from yeta_place import load_places, place_of, place_name, world_dh
+from yeta_place import load_places, place_of, place_name, world_dh, slot_of
 PL = load_places()
 from yeta_v3 import migrate_v3
 import os as _os
@@ -1101,8 +1102,10 @@ s = (S_ROOT.get("threads") or {}).get(_os.environ.get("THREAD", ""))
 if s is None: sys.exit(1)                          # 스레드 소멸 = 난입 없음
 try: roster = json.load(open(sys.argv[2], encoding="utf-8"))
 except Exception: sys.exit(1)
-names = {c["id"]: (c.get("name") or c["id"]) for c in roster if isinstance(c, dict) and c.get("id") and not c.get("locked")}   # LOCKED(스페셜) = 난입 후보 제외(분신술 260709 — "특정 조건을 깨야" 축이 우연 난입으로 뚫리던 구멍 · 미대면은 유지 = 난입이 해금 경로)
-enters = {c["id"]: (c.get("enter_line") or "") for c in roster if isinstance(c, dict) and c.get("id") and not c.get("locked")}
+BARGE = {c["id"]: c["barge"] for c in roster if isinstance(c, dict) and c.get("id") and isinstance(c.get("barge"), dict)}   # 난입 전용 인물(운영자 260726 드루실라 "일방적 대화 열기 불가 · 가끔 대화에 난입") — locked로 목록 진입은 막고, 이 축으로만 등장시킨다
+_ok = lambda c: (not c.get("locked")) or c["id"] in BARGE   # LOCKED(스페셜) = 난입 후보 제외(분신술 260709 — "특정 조건을 깨야" 축이 우연 난입으로 뚫리던 구멍 · 미대면은 유지 = 난입이 해금 경로) · 단 barge{} 보유자는 예외(난입이 유일한 등장 경로라 제외하면 영영 안 나온다)
+names = {c["id"]: (c.get("name") or c["id"]) for c in roster if isinstance(c, dict) and c.get("id") and _ok(c)}
+enters = {c["id"]: (c.get("enter_line") or "") for c in roster if isinstance(c, dict) and c.get("id") and _ok(c)}
 for _k in [k for k, u in (S_ROOT.get("dead") or {}).items() if (((u.get("t") if isinstance(u, dict) else u) or 0)) > time.time() * 1000]:   # 사망 = 난입 후보 제외(운영자 260714 — 죽은 애가 지나가다 합석하는 모순 차단)
     names.pop(_k, None); enters.pop(_k, None)
 now = datetime.now(timezone(timedelta(hours=9)))
@@ -1118,8 +1121,21 @@ _wd, _wh = world_dh()                              # 무음동 세계 시각(운
 if 3 <= _wh < 8: sys.exit(1)                       # 깊은 새벽(세계 시각) = 난입 없음(주민 수면 — 대화 속 시간과 정합)
 if len(turns) < 8: sys.exit(1)                     # 초반 대화 보호(관계 전 난입 = 소음)
 cand = ""
+via, meet_pl = "", ""
+# ── 난입 전용 인물 축(운영자 260726 드루실라) — 목록에서 못 여는 대신 '오직 난입'으로만 등장. 관계·언급·장소 축보다 먼저 = 특수 이벤트가 일반 난입에 굶지 않게.
+#    barge{slot:[세계시각 슬롯], gate:N(1/N 확률), boost:[동석 시 가중될 id], boost_gate:M} — 전부 roster 데이터, 러너는 인물명을 모른다(하드코딩 0).
+for _cid in sorted(BARGE):
+    if _cid in room: continue
+    _cfg = BARGE[_cid] or {}
+    _sl = _cfg.get("slot") or []
+    if _sl and slot_of(_wh) not in _sl: continue           # 시간대 게이트(드루실라 = 저녁~밤)
+    _g = int(_cfg.get("gate") or 6)
+    if set(_cfg.get("boost") or []) & set(room): _g = int(_cfg.get("boost_gate") or 2)   # 동석 가중(고죠와 있는 자리 = 흉내 모드 난입이 잦아진다)
+    if int(hashlib.sha256(f"{today}:{_cid}:only".encode()).hexdigest(), 16) % _g: continue   # 결정적 시드(재현 가능 · 하루 1회 전역 상한과 곱해짐)
+    cand, via = _cid, "only"
+    break
 d = s.get("declined") or {}
-if d.get("id") and d["id"] in names and d["id"] not in room and time.time() * 1000 - (d.get("ts") or 0) < 172800000:
+if not cand and d.get("id") and d["id"] in names and d["id"] not in room and time.time() * 1000 - (d.get("ts") or 0) < 172800000:
     cand = d["id"]                                  # 거절 회수 — "아까는 미안" 서사
 if not cand:
     freq = {}
@@ -1141,8 +1157,9 @@ if not cand:
                 cand = cid; break
             i = utx.find(nm, i + 1)
         if cand: break
-via, meet_pl = "", ""
-if cand:
+if via == "only":
+    pass                                            # 난입 전용 축은 자기 시드로 이미 통과(공통 관계 게이트 재적용 = 이중 감쇠 → 영영 안 나옴)
+elif cand:
     if int(hashlib.sha256(f"{today}:{cand}:barge".encode()).hexdigest(), 16) % 3: sys.exit(1)   # 관계 축 = 자격 있는 날의 ~1/3만(결정적)
 else:
     # 위치 마주침 축(운영자 260707) — 화자의 지금 장소에 있거나(1/2) 인접(1/3)인 주민이 지나가다 끼어든다. 자체 시드 = 공통 게이트 대체.

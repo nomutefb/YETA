@@ -66,6 +66,11 @@ SCENES = [
     ("persona_desk",   "a third-floor newsroom at deep night, no people, rows of dim monitors, a corkboard layered with pinned notes and clippings faintly lit, a cold coffee cup, cool-blue glow, faint luminous lines of hovering text — the keeper of the town's true records"),
     ("persona_kopi",   "a cozy corner nook of a teahouse at night, no people, an open laptop and a teacup under a warm desk lamp, a single glowing punch-line phrase drifting in the air as light-letters, warm-orange bokeh, scattered notebooks"),
     ("persona_von",    "a boxing gym at 5am, no people, a worn ring under a single hanging lamp, heavy punching bags, hand-wrap tape and a towel on a bench, cool blue pre-dawn light with faint drifting embers of strength"),
+    # ── 홍석천 개편 배경 3장(운영자 260726 "게이 + 근육질 · 종종 동물로 변신해 대화 중 도망 · 배경도 3장 정도 더") ──
+    # no people 규약 유지 = 변신·도주는 '흔적과 여운'으로만(핵심룰② "판타지는 낮게 샌다").
+    ("mudi_backdoor",  "the back door of a centuries-old teahouse flung open onto a dark alley, no people, a stool knocked over and a still-spinning teacup on the floor, an apron slipped off its hook, wet animal pawprints leading away into the dark and fading, warm amber light spilling from inside into the cold night, faint mint-green glow"),
+    ("mudi_kitchen",   "the back kitchen of an old teahouse at night, no people, a heavy cast-iron kettle over a low fire, split firewood stacked shoulder-high, a worn leather apron with rolled-up sleeves hanging on a nail, a whetstone and thick rope, steam and warm amber light, a quietly powerful working space, faint mint-green glow"),
+    ("mudi_roofdawn",  "the tiled roof of a low teahouse at first light, no people, a single line of animal pawprints crossing the frost-damp tiles and disappearing over the ridge, the alley below still dark, pale blue dawn breaking behind the chimneys, faint mint-green shimmer in the air"),
 ]
 
 

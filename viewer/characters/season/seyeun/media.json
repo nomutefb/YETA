@@ -1,0 +1,24 @@
+{
+ "_comment": "시즌 감정 미디어 manifest(서예은) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음(mode_dir 없음 = 시간대 필터 비활성). 정본=viewer/characters/season/seyeun/main/<감정>/.",
+ "base": [
+  "characters/season/seyeun/main/base/seyeun_01.jpg",
+  "characters/season/seyeun/main/base/seyeun_02.jpg"
+ ],
+ "warm": [
+  "characters/season/seyeun/main/warm/seyeun_03.jpg"
+ ],
+ "joy": [
+  "characters/season/seyeun/main/joy/seyeun_04.jpg"
+ ],
+ "blue": [
+  "characters/season/seyeun/main/blue/seyeun_05.jpg",
+  "characters/season/seyeun/main/blue/seyeun_06.jpg"
+ ],
+ "tense": [
+  "characters/season/seyeun/main/tense/seyeun_07.jpg",
+  "characters/season/seyeun/main/tense/seyeun_08.jpg"
+ ],
+ "mad": [
+  "characters/season/seyeun/main/mad/seyeun_09.jpg"
+ ]
+}
