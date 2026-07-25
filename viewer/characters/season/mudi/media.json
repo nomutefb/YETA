@@ -3,10 +3,14 @@
  "base": [
   "characters/season/mudi/main/base/mudi_01.webp"
  ],
+ "warm": [
+  "characters/season/mudi/main/warm/mudi_n01.jpg"
+ ],
  "blue": [
   "characters/season/mudi/main/blue/mudi_03.webp"
  ],
  "tense": [
-  "characters/season/mudi/main/tense/mudi_02.webp"
+  "characters/season/mudi/main/tense/mudi_02.webp",
+  "characters/season/mudi/main/tense/mudi_n02.jpg"
  ]
 }
