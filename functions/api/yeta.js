@@ -156,7 +156,9 @@ export async function onRequestPost({ request, env }) {
     const host = room[0];
     const tgt = s.threads[host];
     if (!tgt) {   // 남은 캐릭터의 1:1이 없으면(1:1 리셋됨·비호스트 잔류) g방이 그대로 그 캐릭터의 1:1로 승격 — 신설 아님(멤버 = invite/draw에서 이미 로스터 검증된 id)
-      s.threads[host] = { ...g, room: [host], invite: null, barged: 0, last_sp: host };
+      const prom = { ...g, room: [host], invite: null, barged: 0, last_sp: host };
+      delete prom.gb;   // 자율 비트 예약(260725) = 단톡 전용 축 — 1:1 승격분엔 무의미(소비처가 room 2명 가드라 무해하나 스테일 필드 잔존 금지 · 멤버 제거 계약 결)
+      s.threads[host] = prom;
     } else {   // 합류 = ts 순 병합 · 분기 시드 복사분(직전 3주고받기)은 role|ts|text 키로 중복 제거
       const cut = Date.now() - EXPIRE_MS;
       const seen = new Set((tgt.turns || []).map(x => `${x.role}|${x.ts}|${x.text}`));
@@ -805,6 +807,7 @@ export async function onRequestPost({ request, env }) {
     th.turns.push(turn);
     if (th.turns.length > 200) th.turns = th.turns.slice(-200);   // 스레드 캡(보안 감사⑤)
     th.state = 'awaiting'; th.awaiting_since = Date.now(); th.err = ''; delete th.retry_n;   // 새 유저 턴 = 재시도 사다리 리셋(뉘앙스 블록 잔류 차단 · 260714)
+    delete th.gb;   // 단톡 자율 비트 예약 취소(260725) — 내가 끼어들면 너희끼리 하던 차례는 끝(러너도 pending 우선이라 안 태우지만, 여기서 지워야 뷰어 타이핑 점이 '내 답장 대기'로 즉시 정정된다)
     th.updated = Date.now();
     s.cur = t;   // 발신 = 현재 방 확정(푸시 딥링크·phone 발신자 정본 · 러너 감사⑤B)
     s.pref = { model, effort };

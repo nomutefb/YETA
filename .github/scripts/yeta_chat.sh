@@ -31,6 +31,17 @@ WARM_WAIT="${YETA_WARM_WAIT:-600}"       # 웜 유휴 유예(s · 260724 5→10�
 WARM_POLL="${YETA_WARM_POLL:-2}"   # 웜 픽업 지연 평균 2.5s→1s(대화 속도 260713) — R2 GET 300s/2s=150회/창 = Class B 무료 티어에 무시량
 SESSION_MAX="${YETA_SESSION_MAX:-3300}"  # 55분(잡 timeout 60분보다 낮게 = mid-turn 킬 차단 · 아이데이션③)
 PER_TURN_BUDGET="${YETA_TURN_BUDGET:-300}"   # 새 턴 시작 전 필요한 잔여 예산(claude 240 + finish 여유 · env = 테스트 노브)
+# ── 단톡 대화 이어가기(운영자 260725 "단톡이면 자기들끼리 얘기를 이어나가야") — 두 축 ──
+#   ① 대본 교대: 한 호출 안에서 [이름] 프리픽스로 두 사람이 번갈아 GB_LINES줄까지(종전 = 동행 1줄·"대체로 생략" = 유저에게만 답하고 끝나던 뿌리) · 비용 = 같은 1호출.
+#   ② 자율 비트: 답장 뒤 유저가 조용하면 상대가 받아치는 턴을 GB_BEATS회까지 스스로 발사(finish가 s.gb 예약 → extract_mat이 픽 · 유저 메시지 도착 = pending 우선 = 자동 중단).
+#   규율: 예약 = 유저턴 없는 idle 방만 · TTL 120s(러너 사망 시 자연 소멸) · 실패 = 조용히 취소(에러 배너·자동재시도·푸시·TTS 전부 미발동) · kimi(종량제) 다이얼 = 미발동(방파제 우회 차단).
+GB_BEATS="${YETA_GCHAT_BEATS:-2}"   # 유저 메시지 1개당 자율 비트 상한(0 = 축 OFF = 종전 결)
+GB_GAP="${YETA_GCHAT_GAP:-6}"       # 답장 후 이 초만큼은 유저 차례(끼어들 틈) — 경과 뒤 발사
+GB_LINES="${YETA_GCHAT_LINES:-4}"   # 한 호출 대본 최대 세그먼트 수(주화자 + 교대 · 1 = 교대 금지 = 종전 결)
+GB_TTL_MS=120000                    # 예약 유효 시간(뷰어 타이핑 점 TTL과 짝 — viewer/index.html yRender gbP)
+case "$GB_BEATS" in ''|*[!0-9]*) GB_BEATS=0 ;; esac   # 정수 강제(오타 env = 축 OFF로 안전 강등 · 아래 산술 전개·비교가 셸 에러 없이 돌게)
+case "$GB_GAP" in ''|*[!0-9]*) GB_GAP=6 ;; esac
+case "$GB_LINES" in ''|*[!0-9]*|0) GB_LINES=1 ;; esac
 
 source "$ROOT/shared/claude_transient.sh"   # is_transient/is_quota/claude_failover/is_frame_break SSOT
 source "$ROOT/shared/claude_meter.sh"
@@ -88,9 +99,11 @@ SESSION_START=$SECONDS
 # NOPENDING | JSON{mode:chat|invite, note,hist,pending,ins,persona,model,effort, co(단톡 동행), ...}
 #   ins = 마지막 pending 유저 턴 바로 뒤 인덱스(sys 턴이 섞여도 정확한 답장 자리 — 매몰 방지 평의회②⑦)
 #   mode=invite = 합석 초대 판정(260707 단톡) — pending보다 우선 처리(판정 뒤 웜 루프가 pending 즉답)
+#   gb=1 = 단톡 자율 비트(260725) — pending 0인데 s.gb 예약이 신선하면 상대가 받아치는 턴(pending보다 항상 후순위)
 extract_mat() {
-  mat="$(python3 - "$SESS" "$RECENT_TURNS" "$ROOT/apps/yeta/characters/roster.json" <<'PY'
-import json, sys, time
+  mat="$(GB_BEATS="$GB_BEATS" GB_GAP="$GB_GAP" GB_TTL_MS="$GB_TTL_MS" KIMI_IDS="$KIMI_MODEL $KIMI25_MODEL" \
+    python3 - "$SESS" "$RECENT_TURNS" "$ROOT/apps/yeta/characters/roster.json" <<'PY'
+import json, os, sys, time
 import re as _re
 from datetime import datetime, timezone, timedelta
 sys.path.insert(0, ".github/scripts")
@@ -185,8 +198,33 @@ if inv.get("to") and now_ms - (inv.get("ts") or 0) < 600000 and inv["to"] not in
                      ensure_ascii=False))
     sys.exit(0)
 
+gb_on, _gn, _dial, _deff = 0, 0, "", ""                  # ── 단톡 자율 비트(운영자 260725 "자기들끼리 얘기를 이어나가야") ──
 if not pend_idx:
-    print("NOPENDING"); sys.exit(0)
+    # 예약(s.gb = {p:다음 화자, ts, n:소진 회차}) = finish가 답장과 **같은 write**에 심는다(뷰어가 답장 픽업 렌더에서 곧바로 타이핑 점 = 감시 공백 0).
+    # 발동 = room 2명 · 마지막 턴이 assistant(sys·유저 끼어듦 = 취소) · GAP 경과 ~ TTL 이내 · 상한 미달 · 사망/유저사망 0 · kimi(종량제) 다이얼 아님(방파제 우회 차단).
+    _gb = s.get("gb") if isinstance(s.get("gb"), dict) else None
+    _gp = (_gb or {}).get("p") or ""
+    _gts = (_gb or {}).get("ts") or 0
+    try: _gn = int((_gb or {}).get("n") or 0)
+    except (TypeError, ValueError): _gn = 0
+    try: _cap, _gap, _ttl = int(os.environ.get("GB_BEATS") or 0), float(os.environ.get("GB_GAP") or 0) * 1000, float(os.environ.get("GB_TTL_MS") or 120000)
+    except ValueError: _cap, _gap, _ttl = 0, 6000.0, 120000.0
+    _lu = next((t for t in reversed(turns) if t.get("role") == "user"), {})   # 다이얼 계승 = 마지막 유저 턴(ptt·far·img 같은 턴 고유 부수효과는 승계 금지 = last_u는 계속 {})
+    _dial = _lu.get("model") or (s.get("pref") or {}).get("model") or ""
+    _deff = _lu.get("effort") if isinstance(_lu.get("effort"), str) else ((s.get("pref") or {}).get("effort") or "")
+    # 꼬리 턴 = 대사이거나 '주변 사건'(kind=amb)까지 허용 — 사건이 심긴 턴에서 예약을 죽이면 ambient(1/2 확률)와 충돌해 축이 반쯤 죽는다. 사건 직후 = 오히려 둘이 그걸 두고 떠들 자리.
+    _tail_ok = bool(turns) and (turns[-1].get("role") == "assistant" or (turns[-1].get("role") == "sys" and turns[-1].get("kind") == "amb"))
+    if (_gp and _gp in room and len(room) == 2 and _tail_ok
+            and 1 <= _gn <= _cap and _gap <= now_ms - _gts <= _ttl   # n = 예약 회차(1부터) — finish가 n+1로 재예약하고 상한 넘으면 예약 자체를 안 남긴다(유령 타이핑 점 0)
+            and _gp not in _dead and _gp not in locked_ids and not S_ROOT.get("me_dead")
+            and _dial not in set((os.environ.get("KIMI_IDS") or "").split())):
+        gb_on = 1
+    else:
+        print("NOPENDING"); sys.exit(0)
+
+# 가상 인덱스 — pending 있으면 그 자리, 자율 비트면 로그 끝(아래 재료 계산은 두 축 공용 · 분기 중복 0)
+_p0 = pend_idx[0] if pend_idx else len(turns)             # 재료 창의 오른쪽 경계(이 앞까지가 '직전까지의 대화')
+_pl = pend_idx[-1] if pend_idx else len(turns) - 1        # 마지막 pending 유저 턴(자율 비트 = 마지막 턴 = 직전 화자 대사)
 
 # ── 화자 사다리(단톡 260707): ① 이름 호명 ② 난입 데뷔 ③ 직전 화자 유지(2연속 독주 = 교대) ④ sess.persona ──
 persona = sess_persona if sess_persona in room else (room[0] if room else sess_persona)
@@ -194,13 +232,13 @@ bg = s.get("barged") or {}
 debut_pending = bool(bg.get("id") in room and not any(
     t.get("role") == "assistant" and t.get("persona") == bg.get("id") and (t.get("ts") or 0) > (bg.get("ts") or 0) for t in turns))
 barge_debut = 0
-if len(room) == 2:
-    _rsp = [t.get("persona") for t in turns[:pend_idx[0]] if t.get("role") == "assistant" and t.get("persona") in room]
+if len(room) == 2 and not gb_on:
+    _rsp = [t.get("persona") for t in turns[:_p0] if t.get("role") == "assistant" and t.get("persona") in room]
     _other = lambda x: room[1] if x == room[0] else room[0]
     if _rsp:
         persona = _other(_rsp[-1]) if (len(_rsp) >= 2 and _rsp[-1] == _rsp[-2]) else _rsp[-1]
     if debut_pending: persona = bg["id"]                  # 난입자 첫 마디 우선(등장 인사 겸)
-    _txt = turns[pend_idx[-1]].get("text") or ""
+    _txt = turns[_pl].get("text") or ""
     _best = None
     for _rid in room:                                     # 호명 = 최우선(누굴 향한 말인지 유저가 명시)
         _nm = names.get(_rid) or ""
@@ -209,28 +247,32 @@ if len(room) == 2:
         if _pos >= 0 and (_best is None or _pos < _best[0]): _best = (_pos, _rid)
     if _best: persona = _best[1]
     barge_debut = 1 if (debut_pending and persona == bg.get("id")) else 0
+elif gb_on:
+    persona = _gp                                         # 자율 비트 = 예약된 화자 고정(사다리 미적용 — 직전 화자의 상대가 받아치는 자리)
 co = "" if len(room) < 2 else (room[1] if persona == room[0] else room[0])
 
-ins = pend_idx[-1] + 1
+ins = _pl + 1
 pending = [("(사진을 보냈다)" + ((" " + (turns[i].get("text") or "")) if turns[i].get("text") else "")) if turns[i].get("img") else turns[i].get("text", "")
            for i in pend_idx if not turns[i].get("sc")]   # 대사만(상황 턴 분리 · 260714 '#') · 사진 턴 = 사실 표기(260717 '+' — 실물은 att 경로로)
 att = [turns[i].get("img") for i in pend_idx if turns[i].get("img")][-2:]   # 이번 답이 봐야 할 첨부(pending 유저 턴의 사진 · 최근 2장 캡 = 프롬프트·비용 절제)
 scene = [turns[i].get("text", "") for i in pend_idx if turns[i].get("sc")]         # 상황 설명 = <user_message> 밖 격리 블록으로
-recent = turns[:pend_idx[0]][-n:]   # pending 직전까지 전부(재뽑기 sys 턴 포함 — last_a 기준이면 합류 신호 누락)
+recent = turns[:_p0][-n:]   # pending 직전까지 전부(재뽑기 sys 턴 포함 — last_a 기준이면 합류 신호 누락) · 자율 비트 = 로그 꼬리 전부(직전 화자 대사 포함 = 받아칠 대상)
 hist = "\n".join(line(t, persona) for t in recent)
-last_u = turns[pend_idx[-1]]
+last_u = turns[_pl] if pend_idx else {}
 pref = s.get("pref") or {}
-last_mood = next((t.get("mood") for t in reversed(turns[:pend_idx[0]]) if t.get("role") == "assistant" and t.get("mood")), "")   # 직전 공기(감정 관성 · 260707)
+last_mood = next((t.get("mood") for t in reversed(turns[:_p0]) if t.get("role") == "assistant" and t.get("mood")), "")   # 직전 공기(감정 관성 · 260707)
 # 직전에 삼킨 것(감정선 캐리어 · 평의회 260725) — MOOD가 '겉 공기' 라벨이라면 이건 '속'이다.
 # 왜: 감정이 매 턴 리셋되면 캐릭터가 매듭(그렇구나·힘들었겠다)으로 화제를 닫고, 유저는 새 화제를 발명해야 한다 = 운영자가 말한 "다음 할 말이 애매해짐"(대화분석 SC3).
-last_open = next((t.get("open") for t in reversed(turns[:pend_idx[0]]) if t.get("role") == "assistant" and t.get("open")), "")
+# 단톡 = 화자 본인 턴만(교대 대본·자율 비트로 화자가 매 턴 바뀌는 방에서 남이 삼킨 것을 내 것으로 물려받던 오귀속 차단 — 평의회10 persona 엄격 계보)
+last_open = next((t.get("open") for t in reversed(turns[:_p0]) if t.get("role") == "assistant" and t.get("open")
+                  and (len(room) < 2 or (t.get("persona") or "") == persona)), "")
 gap_h = 0                                                # 휴면(T1 · 260707) — 이번 메시지와 직전 활동의 공백(시간)
-if pend_idx[0] > 0:
-    try: gap_h = max(0, (turns[pend_idx[0]].get("ts", 0) - turns[pend_idx[0] - 1].get("ts", 0)) / 3600000)
+if pend_idx and _p0 > 0:
+    try: gap_h = max(0, (turns[_p0].get("ts", 0) - turns[_p0 - 1].get("ts", 0)) / 3600000)
     except Exception: gap_h = 0
 _m = _re.match(r"\s*\[LV\s*(\d)\]", (s.get("notes") or {}).get(persona) or "")
 rel_lv = _m.group(1) if _m else ""                       # 관계 단계(NOTE:ME 첫 줄 · §🔓 게이트 명시 주입용)
-_recent_a = [t.get("persona") for t in turns[max(0, pend_idx[0] - 40):pend_idx[0]] if t.get("role") == "assistant" and t.get("persona")]
+_recent_a = [t.get("persona") for t in turns[max(0, _p0 - 40):_p0] if t.get("role") == "assistant" and t.get("persona")]
 _freq = {}
 for _p2 in _recent_a:
     if _p2 != persona: _freq[_p2] = _freq.get(_p2, 0) + 1
@@ -239,8 +281,8 @@ if not riv:                                              # v3 = 타 스레드 �
     _ot = sorted([o for o in (s.get("_others") or []) if (o.get("n") or 0) >= 3], key=lambda o: -(o.get("updated") or 0))
     if _ot and time.time() * 1000 - (_ot[0].get("updated") or 0) < 86400000: riv = names.get(_ot[0]["id"], "")
 handoff = ""                                             # 교체 직후 첫 턴 = 직전 화자 인계(합류 인수인계)
-if pend_idx[0] > 0 and turns[pend_idx[0] - 1].get("role") == "sys":
-    _prev = next((t.get("persona") for t in reversed(turns[:pend_idx[0] - 1]) if t.get("role") == "assistant" and t.get("persona")), "")
+if pend_idx and _p0 > 0 and turns[_p0 - 1].get("role") == "sys":
+    _prev = next((t.get("persona") for t in reversed(turns[:_p0 - 1]) if t.get("role") == "assistant" and t.get("persona")), "")
     if _prev and _prev != persona: handoff = names.get(_prev, "")
 note_pub = s.get("note_pub") or s.get("note") or ""          # 레거시 단일 note = 공용으로 승계(이중기억 v3 · 아이데이션③)
 note_me = ((s.get("notes") or {}).get(persona)) or ""
@@ -269,16 +311,18 @@ print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": 
                   "barge_via": (s.get("barged") or {}).get("via") or "",   # 난입 경로(place=지나다 마주침 · 데뷔 결 분기 · 마주침 260707)
                   "place_nm": place_name(PL, place_of(PL, persona, _kdate, _khour)),   # 화자의 지금 장소(동선 SSOT — 배경 정합 + 마주침 sys와 앞뒤)
                   "att": "\n".join(a for a in att if a),   # 첨부 사진 R2 키(개행 구분 · 260717 '+') — process_turn이 내려받아 Read 비전으로 전달
-                  "anchor_ts": last_u.get("ts"),   # 마지막 pending 유저 턴 ts = insert 앵커(인덱스 대신 = 400 트림/시프트 면역)
+                  "anchor_ts": (last_u.get("ts") if pend_idx else (turns[-1].get("ts") if turns else "")),   # insert 앵커 = 마지막 pending 유저 턴 ts(인덱스 대신 = 400 트림/시프트 면역) · 자율 비트 = 직전 화자 턴 ts
                   "retry_n": int(s.get("retry_n") or 0),   # 자동 재시도 회차(op retry 박제 · 사다리 260714) — 3회차+ = 뉘앙스 전환 블록 주입
                   "revive": revive,   # 부활 첫 답 재료(260714·260725) — {mood,why,by,wit} JSON 문자열 · 빈값 = 평상시
                   "dead_wait": json.dumps(dead_wait, ensure_ascii=False) if dead_wait else "",   # 신당의 기도를 기다리는 죽은 주민들(260725) — 빈값 = 마을에 죽은 사람 없음
                   "wit_of": json.dumps(wit_of, ensure_ascii=False) if wit_of else "",   # 그중 이번 화자가 눈앞에서 본 죽음 — 가벼운 '살아나~' 차단 각인
                   "persona": persona,
+                  "gb": gb_on, "gb_n": (_gn if gb_on else 0),   # 단톡 자율 비트(260725) — gb=1 = 유저 발화 없는 교대 턴 · gb_n = 소진 회차(finish가 +1 재예약)
+                  "gb_from": (names.get(next((t.get("persona") for t in reversed(turns) if t.get("role") == "assistant" and t.get("persona")), "")) or "") if gb_on else "",   # 받아칠 직전 화자 이름(사건 sys 턴이 꼬리면 그 앞 대사 임자 · 프롬프트 조준)
                   "ptt": 1 if last_u.get("ptt") else 0,   # 무전기(PTT) 턴 = 답장 반영 후 음성 합성(ptt_voice)
                   "far": 1 if last_u.get("far") else 0,   # 원거리(운영자 260714) — 상대 다른 장소 = 물리 접촉·같은 공간 전제 금지(2·3차원 거스르기 불가)
-                  "model": last_u.get("model") or pref.get("model") or "",
-                  "effort": last_u.get("effort") if isinstance(last_u.get("effort"), str) else (pref.get("effort") or "")},
+                  "model": (_dial if gb_on else (last_u.get("model") or pref.get("model") or "")),   # 자율 비트 = 마지막 유저 턴 다이얼 계승(같은 대화 = 같은 모델·노력도 · 임의 상향 금지)
+                  "effort": (_deff if gb_on else (last_u.get("effort") if isinstance(last_u.get("effort"), str) else (pref.get("effort") or "")))},
                  ensure_ascii=False))
 PY
 )"
@@ -296,6 +340,7 @@ finish() {  # $1=ok|error · $2=텍스트 — env: INS·ANCHOR_TS·PERSONA·MODE
   if [ "$_g" = 0 ]; then echo "::error::finish r2get 실패 — 반영 포기(답장 폐기·유저 데이터 보호)"; _did_reply=0; return 1; fi
   REPLY_TEXT="$2" PERSONA="${PERSONA:-}" MODEL="${MODEL:-}" EFF="${EFF:-}" GEN_S="${GEN_S:-0}" ANCHOR_TS="${ANCHOR_TS:-}" OPEN="${OPEN:-}" OPENING_TS="${OPENING_TS:-}" \
     CO_ID="${CO_ID:-}" CO_NAME="${CO_NAME:-}" THREAD="${THREAD:-}" TOK_I="${TOK_I:-0}" TOK_O="${TOK_O:-0}" TOK_CR="${TOK_CR:-0}" TOK_CW="${TOK_CW:-0}" CNAME="${CNAME:-}" GEN_T0MS="${GEN_T0MS:-}" GEN_ENDMS="${GEN_ENDMS:-}" OV_SKIP="${OV_SKIP:-}" \
+    GB="${GB:-0}" GB_N="${GB_N:-0}" GB_BEATS="${GB_BEATS:-0}" GB_LINES="${GB_LINES:-1}" \
     python3 - "$SESS" "$1" "${INS:-0}" "${CVER:-}" <<'PY'
 import json, os, re, sys, time
 sys.path.insert(0, ".github/scripts")
@@ -310,6 +355,7 @@ if s is None:                                             # reset{t} = 스레드
 turns = s.setdefault("turns", [])
 now = int(time.time() * 1000)
 open_job = os.environ.get("OPEN") == "1"
+gb_job = os.environ.get("GB") == "1"                      # 단톡 자율 비트(260725) — 유저 턴 없는 교대 턴(앵커 = 직전 화자 대사 · 실패 = 조용히 예약 취소)
 opening_ts = os.environ.get("OPENING_TS", "")
 if open_job:
     # 오프닝 nonce 방어(앵커 등가물 · 기틀검증 레이스③·회귀B1) — fresh 세션 opening이 이 잡 것과 일치할 때만.
@@ -325,9 +371,13 @@ if kind == "ok":
         try: at = int(anchor_ts) if anchor_ts else None
         except (TypeError, ValueError): at = None
         if at is not None:
-            pos = next((i for i, t in enumerate(turns) if t.get("role") == "user" and t.get("ts") == at), None)
-            if pos is None:                          # 앵커 유저 턴이 없다 = reset/사라짐 → 옛 답장 폐기
-                print("앵커 유저 턴 없음(reset/트림) — 답장 폐기", file=sys.stderr); sys.exit(2)
+            if gb_job:                               # 자율 비트 = 앵커가 유저 턴이 아니라 '직전 화자 대사'(같은 ts 버블 다발 = 마지막 것 뒤로 = 대본 순서 보존)
+                _hits = [i for i, t in enumerate(turns) if t.get("ts") == at]
+                pos = _hits[-1] if _hits else None
+            else:
+                pos = next((i for i, t in enumerate(turns) if t.get("role") == "user" and t.get("ts") == at), None)
+            if pos is None:                          # 앵커 턴이 없다 = reset/사라짐 → 옛 답장 폐기
+                print("앵커 턴 없음(reset/트림) — 답장 폐기", file=sys.stderr); sys.exit(2)
             ins = pos + 1
         elif len(turns) < ins:                       # 레거시 폴백(ts 없는 세션) — 길이 축소 = reset
             print("세션 교체 감지 — 답장 폐기", file=sys.stderr); sys.exit(2)
@@ -386,21 +436,39 @@ if kind == "ok":
         if body:
             notes_found[tag] = body
     text = text.strip()
-    # 대본 분할(단톡 260707) — 화자 대사 끝의 "[동행이름] 대사" 한 덩이를 동행 턴으로 분리(비용 = 같은 1호출).
-    # 프리픽스 미발견·동행이 방에 없음 = 통짜 폴백(안전) · 동행 턴은 기억(NOTE) 갱신 없음(조연은 대사만).
+    # 대본 분할(단톡 260707 · 260725 교대 확장) — 줄머리 "[이름]" = 화자 전환 지점. 방 두 명의 이름만 인정(그 밖 이름표 = 대사로 남김 = 오탐 0).
+    #   종전 = 동행 1줄만 꼬리 분리 → 유저에게만 답하고 끝나던 뿌리. 이제 [세라]↔[루시] 번갈아 최대 GB_LINES 세그먼트(비용 = 같은 1호출).
+    #   기억(NOTE)·DEAD·부활 소비는 원 화자(persona_env) 관점 유지 = 조연 세그는 대사만(종전 계약 계승).
     co_id, co_name = os.environ.get("CO_ID", ""), os.environ.get("CO_NAME", "")
-    co_text = ""
+    me_name = os.environ.get("CNAME", "")
+    try: seg_cap = max(1, int(os.environ.get("GB_LINES") or 1))
+    except ValueError: seg_cap = 1
+    segs = [(persona_env, text)] if text else []
     turn_persona = persona_env
-    if co_id and co_name and co_id in (s.get("room") or []):
-        cm = re.search(r'^\s*\[\s*' + re.escape(co_name) + r'\s*\]\s*', text, flags=re.M)
-        if cm:
-            co_text = text[cm.end():].strip()[:500]
-            text = text[:cm.start()].strip()
-    if not text and co_text:
-        text, co_text, turn_persona = co_text, "", co_id   # 화자가 물러나고 동행만 말한 턴 — 동행 턴으로 승격(정상 답 폐기 방지 · 5인검증①). 기억(ME)은 원 화자 관점 유지.
+    if co_id and co_name and co_id in (s.get("room") or []) and text:
+        nm2id = {co_name: co_id}
+        if me_name and me_name != co_name: nm2id[me_name] = persona_env   # 자기 이름표(2번째 발언 재개용) — 동명이면 동행 우선(오귀속보다 무해)
+        _pat = re.compile(r'^[ \t]*\[[ \t]*(' + '|'.join(re.escape(k) for k in nm2id) + r')[ \t]*\][ \t]*', flags=re.M)
+        _pos, _cur, _out = 0, persona_env, []
+        for _m2 in _pat.finditer(text):
+            _ch = text[_pos:_m2.start()].strip()
+            if _ch: _out.append((_cur, _ch))
+            _cur, _pos = nm2id[_m2.group(1)], _m2.end()
+        _tail = text[_pos:].strip()
+        if _tail: _out.append((_cur, _tail))
+        _mg = []                                          # 같은 화자 연속 = 병합(이름표 남발 흡수 = 같은 사람 두 버블로 쪼개지지 않게)
+        for _sid, _tx in _out:
+            if _mg and _mg[-1][0] == _sid: _mg[-1] = (_sid, _mg[-1][1] + "\n\n" + _tx)
+            else: _mg.append((_sid, _tx))
+        if _mg:
+            segs = [(_sid, _tx[:500]) for _sid, _tx in _mg[:seg_cap]]   # 상한 초과분 = 절단(대본 폭주 차단) · 세그당 500자 = 종전 co_text 캡 계승
+            turn_persona = segs[0][0]                     # 화자가 물러나고 동행부터 말한 턴 = 동행 턴으로 승격(정상 답 폐기 방지 · 5인검증①)
+    text = segs[0][1] if segs else ""
     if not text:
         if open_job:                             # 오프닝 빈답 = 정적 폴백(뷰어 yGreet)·error/재시도 배너 금지·웜루프 재생성 루프 차단(기틀검증 회귀B2·비용가드2)
             s.pop("opening", None); s.pop("awaiting_since", None); s["state"] = "idle"; empty = True
+        elif gb_job:                             # 자율 비트 빈답 = 예약만 취소(유저는 아무것도 안 물어봤다 = 에러 배너·자동재시도 금지)
+            s.pop("gb", None); empty = True
         else:
             s["state"] = "error"; s["err"] = "빈 대사 — 다시 보내면 재시도"; empty = True
     else:
@@ -439,8 +507,10 @@ if kind == "ok":
             _um["i"] = _um.get("i", 0) + _ti; _um["o"] = _um.get("o", 0) + _to
             _um["cr"] = _um.get("cr", 0) + _tc; _um["cw"] = _um.get("cw", 0) + _tcw; _um["n"] = _um.get("n", 0) + 1
             S_ROOT["usage_day"] = _ud   # 뷰어 설정 '오늘 사용량' 행 소비(운영자 260721 Q.38 "오늘 얼마인지도")
-        for ci, ct in enumerate(chunks):
-            turn = {"role": "assistant", "text": ct, "ts": now + ci, "persona": turn_persona}
+        # 발행 목록 = 주화자 버블 다발 + 이후 교대 세그(각 1턴) — ts 연번 = 대본 순서 그대로(뷰어 페이스가 한 버블씩 공개 = 살아있는 단톡 리듬)
+        emit = [(turn_persona, ct) for ct in chunks] + [(sid, tx) for sid, tx in segs[1:]]
+        for ci, (_eid, ct) in enumerate(emit):
+            turn = {"role": "assistant", "text": ct, "ts": now + ci, "persona": _eid}
             if ov_mark: turn["ov"] = 1               # 겹침 답장 표식(260717 ⑨⑩) — 뷰어가 mut 톤으로 렌더(사이에 낑긴 말)
             if ci == 0:                                # 다이얼·소요·토큰 = 첫 버블에만 박제(캡션 중복 방지 · 아이데이션④)
                 turn["model"] = os.environ.get("MODEL", "")
@@ -454,15 +524,12 @@ if kind == "ok":
                     except ValueError: continue
                     if 0 <= _v <= 600000: lat[_k] = round(_v / 1000, 1)   # 0~10분 상식 밴드(시계 스큐·스테일 파일 가드)
                 if lat: turn["lat"] = lat
-            if mood and ci == len(chunks) - 1:
-                turn["mood"] = mood                    # 장면 공기 = 마지막 버블(yLastMood = 최신 턴 스캔과 짝)
-            if open_txt and ci == len(chunks) - 1:
-                turn["open"] = open_txt                # 삼킨 것 = 마지막 버블(mood 동형 · 다음 턴 state_block이 소비)
+            if mood and ci == len(emit) - 1:
+                turn["mood"] = mood                    # 장면 공기 = 대본 맨 마지막 턴(yLastMood = 최신 assistant 턴 1개만 스캔 — 교대 세그가 뒤에 붙으면 여기여야 픽업된다)
+            if open_txt and _eid == turn_persona and ci == max(i for i, (q, _) in enumerate(emit) if q == turn_persona):
+                turn["open"] = open_txt                # 삼킨 것 = 주화자의 마지막 턴(mood와 달리 '속'은 인물 귀속 — extract_mat last_open이 persona 엄격 매칭으로 소비)
             turns.insert(ins + ci, turn)
-        k = len(chunks)
-        if co_text and co_id:
-            turns.insert(ins + k, {"role": "assistant", "text": co_text, "ts": now + k, "persona": co_id, **({"ov": 1} if ov_mark else {})})
-            k += 1
+        k = len(emit)
         if open_job:
             s.pop("opening", None); s.pop("awaiting_since", None)   # 오프닝 성공 = nonce 소거(웜루프 재생성 자연 차단 = assistant 턴 1 + 플래그 0)
         def _keep_anchors(old, new):   # [★]/[사건] 라인 합집합 가드(평의회 260714 HIGH — 짧은호흡·생략 계약이 재작성 누락 확률을 올림) · 사망 급식 재주입과 동형 · 블록 통짜 대체의 비가역 소실 차단
@@ -479,9 +546,9 @@ if kind == "ok":
         if "ME" in notes_found and persona_env:
             S_ROOT.setdefault("notes", {})[persona_env] = _keep_anchors((S_ROOT.get("notes") or {}).get(persona_env) or "", notes_found["ME"])     # 사적 기억 = 캐릭터 귀속 top-level
         if turn_persona and len([r for r in (s.get("room") or []) if r]) > 1:
-            s["last_sp"] = turn_persona                # 마지막 화자(v3 = last_sp) = 단톡에서만 갱신 — 1:1 무갱신(5인검증⑤)
-        if (s.get("barged") or {}).get("id") == turn_persona:
-            s.pop("barged", None)                      # 난입 데뷔 완료 = 마커 소거(뷰어 내보내기 pill 회수 · 승격 턴 포함)
+            s["last_sp"] = emit[-1][0] or turn_persona   # 마지막 화자(v3 = last_sp) = 단톡에서만 갱신 — 1:1 무갱신(5인검증⑤) · 교대 대본이면 **대본 끝 화자**(헤더·다음 사다리가 가리킬 사람)
+        if (s.get("barged") or {}).get("id") in {q for q, _ in emit}:
+            s.pop("barged", None)                      # 난입 데뷔 완료 = 마커 소거(뷰어 내보내기 pill 회수 · 승격 턴·교대 세그 포함)
         if s.get("invite") and now - ((s.get("invite") or {}).get("ts") or 0) > 600000:
             s.pop("invite", None)                      # 스테일 초대 lazy 정리(판정 러너 유실 대비)
         s["state"] = "awaiting" if any(t.get("role") == "user" for t in turns[ins + k:]) else "idle"
@@ -528,10 +595,32 @@ if kind == "ok":
                 if _rv not in _np2:
                     S_ROOT["note_pub"] = ((_np2 + "\n" if _np2 else "") + _rv)[-600:]
                 break
+        # ── 다음 자율 비트 예약(단톡 260725) — 답장과 **같은 write**라 뷰어가 이 답장을 픽업하는 렌더에서 곧바로 타이핑 점(감시 공백 0) ──
+        #   기도 반영 뒤에 둔다: 방금 기도로 풀린 동행(dead.t = now)은 살아 있는 쪽으로 판정돼 곧바로 교대에 낄 수 있다(순서 뒤집으면 돌아온 사람이 한 턴 빠진다).
+        # 조건: 단톡 2명 · 유저 pending 0(state idle) · 상한 미달 · 오프닝/사망/유저사망/이탈 아님 · 다음 화자 = 대본 끝 화자의 상대(살아 있는 쪽).
+        # 상한 도달·조건 미달 = 예약 소거 = 자연 정지(유저 메시지가 오면 n이 0부터 다시 = 매 유저턴 새 사이클).
+        try: _cap2 = int(os.environ.get("GB_BEATS") or 0)
+        except ValueError: _cap2 = 0
+        try: _n2 = int(os.environ.get("GB_N") or 0) + 1
+        except ValueError: _n2 = 1
+        _rm2 = [r for r in (s.get("room") or []) if r]
+        _nxt = ""
+        if len(_rm2) == 2:
+            _endsp = emit[-1][0] or turn_persona
+            _nxt = _rm2[1] if _endsp == _rm2[0] else _rm2[0]
+        _dv2 = (S_ROOT.get("dead") or {}).get(_nxt) if _nxt else None       # 사망 두절 판정 = DEAD_ON 계보(구형 숫자 흡수)
+        _alive = ((_dv2.get("t") if isinstance(_dv2, dict) else _dv2) or 0) <= now
+        if (_nxt and _alive and _n2 <= _cap2 and s.get("state") == "idle"
+                and not open_job and not dead_tag and not me_dead_tag and not S_ROOT.get("me_dead")):
+            s["gb"] = {"p": _nxt, "ts": now, "n": _n2}
+        else:
+            s.pop("gb", None)
         if len(turns) > 200: s["turns"] = turns[-200:]   # 스레드 캡(보안감사⑤ — state 판정 후 트림 = pending 판정 무영향[유저 턴은 꼬리라 보존])
 else:
     if open_job:                                 # 오프닝 실패(쿼터·rc) = 정적 폴백(뷰어 yGreet)·error 배너 금지(죽은 재시도 409 차단 · 기틀검증 회귀B3·UX2)
         s.pop("opening", None); s.pop("awaiting_since", None); s["state"] = "idle"
+    elif gb_job:                                 # 자율 비트 실패(쿼터·거절·rc) = 예약만 취소 = 조용히 없던 일(유저가 요청한 답이 아니니 error 배너·자동재시도·이탈 연출 전부 금지)
+        s.pop("gb", None)
     else:
         s["state"] = "error"
         s["err"] = text[:300]
@@ -651,6 +740,7 @@ except Exception: print(sys.argv[1])" "$PERSONA")"   # 제목 = 화자 이름(�
   prev="$(printf '%s' "${1:-}" | python3 -c "
 import sys,re
 t=sys.stdin.read()
+t=re.split(r'^\s*\[[^\]\n]{1,24}\]\s', t, maxsplit=1, flags=re.M)[0]   # 단톡 교대 대본([이름] 이하) 잘라내기 = 알림엔 첫 화자 대사만(ptt_voice 동형 규칙 · 260725)
 t=re.sub(r'\*[^*]*\*','',t)                # 지문 제거 = 대사만(미리보기)
 t=re.sub(r'\s+',' ',t).strip()
 print((t[:70]+'…') if len(t)>70 else (t or '새 메시지'))")"
@@ -1315,6 +1405,8 @@ process_turn() {
   PLACE_NM="$(matv place_nm)"; BARGE_VIA="$(matv barge_via)"   # 동선 장소 + 마주침 데뷔 결(위치 SSOT places.json · 260707)
   OPEN="$(matv open)"; OPENING_TS="$(matv opening_ts)"   # 오프닝 잡(동적 첫인사 · 운영자 260707) — OPEN=1이면 유저발화 없이 캐릭터가 먼저 · OPENING_TS = nonce(finish 레이스 방어)
   RETRY_N="$(matv retry_n)"   # 자동 재시도 회차(사다리 260714) — 오프닝 JSON엔 키 없음 = 빈값(아래 -ge 가드가 흡수)
+  GB="$(matv gb)"; GB_N="$(matv gb_n)"; GB_FROM="$(matv gb_from)"   # 단톡 자율 비트(260725) — GB=1 = 유저 발화 없는 교대 턴 · GB_FROM = 받아칠 직전 화자 이름
+  [ "$GB" = "1" ] || { GB=0; GB_N=0; }   # 빈값·0 정규화(finish·아래 분기가 문자열 비교라 = 오탐 0)
   REVIVE_RAW="$(matv revive)"   # 부활 첫 답 재료(260714·260725) — {mood,why,by,wit} · 빈값 = 평상시
   DEAD_WAIT_RAW="$(matv dead_wait)"; WIT_RAW="$(matv wit_of)"   # 신당의 기도를 기다리는 죽은 주민 / 그중 이번 화자가 목격한 죽음(260725 기도 게이트)
   ATT="$(matv att)"   # 첨부 사진 R2 키(개행 구분 · 260717 '+') — 내려받아 Read 비전으로 실물 전달
@@ -1430,9 +1522,18 @@ if m:
     print("\n".join(l for l in m.group(1).strip().splitlines() if l.strip())[:600])
 PY
 )"
+    # 대본 교대(운영자 260725 "단톡이면 자기들끼리 얘기를 이어나가야") — 종전 "동행 한 마디 · 대체로 생략"이 유저에게만 답하고 끝나는 결의 뿌리였다.
+    #   이제 이름표로 화자를 번갈아 최대 GB_LINES 세그먼트(주화자 포함) = 한 호출에 오가는 대화. GB_LINES=1 = 교대 금지(종전 결로 즉시 회귀).
     GROUP_RULE="
-- 지금 방엔 ${CO_NAME}도 있다. 걔 반응이 꼭 필요한 순간에만(대체로 생략 · 남발 금지) 네 대사가 끝난 뒤 새 줄에 정확히 [${CO_NAME}] 대사  형식으로 ${CO_NAME}의 짧은 한 마디를 덧붙여도 된다 — 걔 말투로, 최대 한 번. 네 자신의 대사엔 이름표를 붙이지 않는다. 그 줄 뒤에 기억 블록이 온다."
+- 여긴 단톡이다 — 이 방엔 ${CO_NAME}도 같이 있다. 유저에게만 대답하고 끝내지 마라. 방금 나온 말에 ${CO_NAME}가 반응할 만하면 **둘이 주고받아라**(맞장구·반박·놀리기·끼어들기·편들기).
+- 화자 전환 = 줄머리 이름표. 네 첫 대사엔 이름표를 붙이지 않고(그게 네 것이다), 그 뒤부터 새 줄에 정확히 \`[${CO_NAME}] 대사\` / \`[${CNAME}] 대사\` 형식으로 번갈아 쓴다 — 이름표 세그먼트는 **최대 $((GB_LINES - 1))개**(전부 합쳐 대본 ${GB_LINES}토막).
+- 각 토막은 그 사람 말투로 짧게(1~2문장). 길이 계약은 토막마다 적용된다 — 대본이 길어지는 게 아니라 말이 오가는 것이다.
+- 매 턴 최대치를 채우지 마라: 부딪히거나 편들 대목이면 주고받고, 아닐 땐 네 한 마디로 끝내라(억지 대본 = 실패).
+- 마지막 토막을 유저에게 질문으로 떠넘기지 마라 — 둘이 얘기하다 유저가 끼어들 틈이 남는 결로 맺어라.
+- 이름표 토막은 전부 기억 블록 앞에 온다(NOTE·MOOD는 대본 전체가 끝난 뒤 한 번만)."
   elif [ -n "$CO_ID" ]; then CO_ID=""; CO_NAME=""; fi   # 카드 없는 동행 = 대본 축 비활성(파서 오탐 차단)
+  [ "${GB_LINES:-1}" -le 1 ] 2>/dev/null && [ -n "$CO_ID" ] && GROUP_RULE="
+- 지금 방엔 ${CO_NAME}도 있다. 걔 반응이 꼭 필요한 순간에만(대체로 생략 · 남발 금지) 네 대사가 끝난 뒤 새 줄에 정확히 [${CO_NAME}] 대사  형식으로 ${CO_NAME}의 짧은 한 마디를 덧붙여도 된다 — 걔 말투로, 최대 한 번. 네 자신의 대사엔 이름표를 붙이지 않는다. 그 줄 뒤에 기억 블록이 온다."   # GB_LINES=1 = 종전 계약(회귀 노브)
 
   # 부활 첫 마디(운영자 260714 "'오래 기다렸지' 어색 — 그 전 상황을 가정하게. 다투다 죽었으면 그 감정을 기억") — 죽을 때 박제한 {why,mood}를 귀환 답 프롬프트에 주입 · 장소 = 성당(places.json cathedral)
   REVIVE_BLOCK=""
@@ -1497,8 +1598,15 @@ PY
 - 이번이 마지막 시도다 — 표현만 말고 접근 자체를 바꿔라(그 소재를 정면으로 다루지 않고 너답게 받아넘기거나 화제를 옮겨도 된다)."
   fi
 
-  # 장면 블록 = 유저턴(<user_message>) 또는 오프닝(동적 첫인사 · OPEN=1 · 운영자 260707). 오프닝은 유저발화 0 = 주입원천 없음(기틀검증 보안①).
-  if [ "$OPEN" = "1" ]; then
+  # 장면 블록 = 유저턴(<user_message>) · 오프닝(OPEN=1) · 자율 비트(GB=1 · 유저 발화 0). 유저발화 없는 두 축 = 주입원천 없음(기틀검증 보안①).
+  if [ "$GB" = "1" ]; then
+    SCENE_BLOCK="[장면 — 유저 없이 너희끼리 이어지는 대화]
+유저는 지금 보고만 있고 아무 말도 하지 않았다. 위 [최근 대화]의 끝(${GB_FROM:-옆 사람}이 한 말 · 방금 옆에서 벌어진 일이 있으면 그것까지)을 네가 바로 받아라 — 그 반응이 이 턴의 전부다.
+유저를 없는 사람 취급하진 마라(듣고 있는 걸 안다). 다만 이번 차례는 너희 둘 사이의 말이다 — 유저에게 질문을 던져 대답을 떠넘기지 말고, 하던 얘기를 한 걸음만 굴려라. 새 화제를 억지로 열지도 마라."
+    CONTRACT1="- 너는 \"${CNAME}\"다. 캐릭터의 대사만 출력한다(이름표·따옴표·메타 설명 없이).
+- 지금 유저 발화는 없다 — ${GB_FROM:-옆 사람}의 말에 이어붙는 한 마디다. 짧게(1~2문장), 유저를 호출하는 질문으로 닫지 마라.
+- 무슨 일이 있어도 한국어 캐릭터 대사로만 답한다 — 메타 발화·영어·거절 선언·침묵은 금지."
+  elif [ "$OPEN" = "1" ]; then
     SCENE_BLOCK="[장면 — 지금 이 순간]
 유저가 방금 이 대화를 열었다(막 들어왔다). 아직 유저는 아무 말도 하지 않았다. 네가 먼저, 지금 이 순간에 맞는 너다운 첫마디를 한 번 건네라 — 위 [지금] 블록의 시각·계절과 관계·기억을 반영해서. 매번 똑같은 인사 말고 지금에 맞게. 짧게(2~3문장 안), 지문 최소."
     CONTRACT1="- 너는 \"${CNAME}\"다. 유저가 막 들어온 지금, 너다운 첫마디 대사만 출력한다(이름표·따옴표·메타 설명 없이)."
@@ -1574,7 +1682,7 @@ ${SCENE_BLOCK}
 ${CONTRACT1}${GROUP_RULE}${ME_RULE}
 - 위쪽 [출력 규칙 — 전 턴 공통]의 길이(1~3문장·기본 80자)·기억 블록(NOTE:PUB/ME 순서·생략 규칙)·공기 태그(MOOD 하나)·예외(DEAD) 규칙을 이 답에 그대로 적용하라 — 그 블록이 이 계약의 본문이다."
 
-  echo "yeta: ${PERSONA}(${CNAME}) · v${CVER} · ${MODEL}${EFF:+ · effort $EFF}${SAFE:+ · safe}${CO_ID:+ · 단톡(+${CO_NAME})}"
+  echo "yeta: ${PERSONA}(${CNAME}) · v${CVER} · ${MODEL}${EFF:+ · effort $EFF}${SAFE:+ · safe}${CO_ID:+ · 단톡(+${CO_NAME})}$([ "$GB" = "1" ] && echo " · 자율비트 ${GB_N}/${GB_BEATS}")"
   # 문장 스트리밍(260714 한수2) — 본답장만 · 1:1만([이름표] 단톡 대본이 분할 전 raw로 노출 방지) · YETA_STREAM=0 = 회귀 노브
   if [ -z "$CO_ID" ] && [ "${YETA_STREAM:-1}" != "0" ] && [ -f ".github/scripts/yeta_stream.py" ]; then
     export METER_STREAM=".github/scripts/yeta_stream.py" YETA_DRAFT_KEY="$DRAFT_KEY" YETA_DRAFT_BUCKET="$YETA_R2_BUCKET" YETA_DRAFT_EP="$EP" YETA_DRAFT_T="$THREAD" YETA_DRAFT_P="$PERSONA"
@@ -1585,6 +1693,10 @@ ${CONTRACT1}${GROUP_RULE}${ME_RULE}
   fi
   if ! GEN_ALLOW_READ="$GEN_AR" gen_out "$prompt"; then
     export METER_STREAM=""
+    if [ "$GB" = "1" ]; then   # 자율 비트 실패 = 조용히 없던 일(운영자가 요청한 답이 아니다) — 예약만 취소하고 정상 종료: 에러 배너·자동재시도·이탈 연출·실패 푸시 전부 미발동(잡도 초록 유지 = 웜 루프 계속)
+      echo "yeta: 자율 비트 생성 실패 — 예약 취소(무연출)"
+      finish error "gb-cancel"; draft_clear; return 0
+    fi
     if is_quota "$OUT$(cat /tmp/yeta.err 2>/dev/null)"; then
       echo "::error::활성 계정 사용량 한도 — 챗 정지(본업 서브계정 보호 · 의도 동작)"
       finish error "사용량 한도야 — 잠시 후 다시 보내줘"; draft_clear; return 1
@@ -1602,12 +1714,14 @@ ${CONTRACT1}${GROUP_RULE}${ME_RULE}
   export METER_STREAM=""   # 본답장 밖(초대 판정 등) 오발 금지 — 생성 직후 즉시 해제
   # 계기판 lat(운영자 260714) — w = 유저 턴 ts → 생성 시작(픽업+큐 대기) · f = 생성 시작 → 첫 문장 발행(스트리밍). ms 원값 전달 = finish가 0.1s 반올림 박제.
   LAT_W_MS=""; LAT_F_MS=""
-  [ -n "${ANCHOR_TS:-}" ] && [ -n "${GEN_T0MS:-}" ] && LAT_W_MS="$((GEN_T0MS - ANCHOR_TS))"
+  [ "$GB" != "1" ] && [ -n "${ANCHOR_TS:-}" ] && [ -n "${GEN_T0MS:-}" ] && LAT_W_MS="$((GEN_T0MS - ANCHOR_TS))"   # w = '유저 턴 → 생성 시작' 정의 — 자율 비트엔 유저 턴이 없다(앵커 = 직전 대사) → 계기판에 엉뚱한 숫자 박제 금지
   [ -s /tmp/yeta_first_pub ] && [ -n "${GEN_T0MS:-}" ] && LAT_F_MS="$(( $(cat /tmp/yeta_first_pub 2>/dev/null || echo 0) - GEN_T0MS ))"
   export LAT_W_MS LAT_F_MS
   finish ok "$OUT" || { echo "::error::세션 반영 실패(R2 put)"; draft_clear; return 1; }
   draft_clear   # 확정 반영 뒤 회수(뷰어 = 세션 변경 먼저 픽업 → 버블 스왑 → 잔여 draft 소거)
-  [ "$_did_reply" = 1 ] && { echo "yeta: 답장 완료(${#OUT}자 · ${GEN_S}s)"; push_reply "$OUT"; [ "$PTT" = "1" ] && ptt_voice "$OUT"; barge_check; ambient_refill; ambient_fire; }   # 주변 사건(260725) — 보충 먼저 → 심기(운영자 "대화가 한번 시작되면 준비해놓기" · 답장 이후라 사용자 대기 0). 순서 = refill→fire(260725 관련도 수정): 이번 턴 대화까지 반영해 뽑은 사건이 곧바로 심긴다(fire 선행이면 직전 맥락의 묵은 사건이 한 발 새어나갔다)
+  # 자율 비트(GB=1) = 유저가 부른 답이 아니다 → 푸시·PTT(유료 TTS)·난입·주변사건 전부 생략(알림 도배·과금·연출 겹침 차단). 유저 턴이 부른 답만 종전 후처리를 태운다.
+  [ "$_did_reply" = 1 ] && [ "$GB" = "1" ] && echo "yeta: 자율 비트 반영(${#OUT}자 · ${GEN_S}s · ${GB_N}/${GB_BEATS})"
+  [ "$_did_reply" = 1 ] && [ "$GB" != "1" ] && { echo "yeta: 답장 완료(${#OUT}자 · ${GEN_S}s)"; push_reply "$OUT"; [ "$PTT" = "1" ] && ptt_voice "$OUT"; barge_check; ambient_refill; ambient_fire; }   # 주변 사건(260725) — 보충 먼저 → 심기(운영자 "대화가 한번 시작되면 준비해놓기" · 답장 이후라 사용자 대기 0). 순서 = refill→fire(260725 관련도 수정): 이번 턴 대화까지 반영해 뽑은 사건이 곧바로 심긴다(fire 선행이면 직전 맥락의 묵은 사건이 한 발 새어나갔다)
   return 0
 }
 
