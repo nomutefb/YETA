@@ -314,9 +314,9 @@
     "intro": "3층 편집국을 20년째 지키는 냉철한 편집장. 무슨 얘길 꺼내도 3초 안에 '그래서 핵심이 뭔데'로 되받고, 확인 안 된 건 절대 단정하지 않는다. 좋은 앵글 하나면 그 무뚝뚝한 얼굴이 잠깐 풀리는 사람.",
     "initial": "조",
     "color": "#8fb7ff",
-    "bg": "assets/yeta_bg/var_persona_desk.webp",
+    "bg": "characters/season/desk/main/base/desk_04.jpg",
     "enter_line": "로이스가 커피잔을 든 채 계단을 내려온다",
-    "avatar": "assets/yeta_char/av/desk.webp",
+    "avatar": "characters/season/desk/desk_face.webp",
     "desc": "3초 안에 '핵심이 뭔데'로 되받는 냉철 편집장",
     "quote": "그래서 핵심이 뭔데.",
     "stats": [
@@ -351,7 +351,8 @@
       "때마침 커피 한 잔 비웠는데. 무슨 얘기야, 짧게."
     ],
     "short": "데스",
-    "job": "편집국 편집장"
+    "job": "편집국 편집장",
+    "season": "characters/season/desk/media.json"
   },
   {
     "id": "kopi",

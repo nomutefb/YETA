@@ -36,6 +36,14 @@ SEASONS = {
                     "mode_dir=도깨비 폴더 — viewer 모드 게이트(yModeOn)가 활성 시 이 폴더만, 평시 제외로 필터(무드보다 우선). "
                     "정본=viewer/characters/season/lucy/{android,dokkaebi}/<감정>/."),
     },
+    "desk": {
+        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → 시간대 필터 비활성
+        "modes": {"main": ["base"]},
+        "comment": ("시즌 감정 미디어 manifest(조지 로이스) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
+                    "정본=viewer/characters/season/desk/main/<감정>/."),
+    },
     "gojo": {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
         "modes": {"main": ["base"]},
