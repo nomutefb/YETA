@@ -111,6 +111,20 @@ def openai_image(prompt):
     return None
 
 
+def av_owned(text, pid):
+    """이 캐릭터 프사를 다른 축이 이미 소유했나(운영자 260725 얼빡 개편 · 260703 이 파이프보다 나중 축이 정본).
+    소유 표식 = roster avatar 값이 `assets/yeta_char/`(얼빡·char-art) 또는 `characters/`(수제 배선 · 루시 lucy_face 등).
+    → FORCE=1이어도 덮어쓰지 않는다. 종전엔 FORCE 한 번이면 얼빡 11장·루시 프사가 통째로 R2 URL로 갈렸다."""
+    m = re.search(r'"id"\s*:\s*"%s"' % re.escape(pid), text)
+    if not m:
+        return False
+    nxt = re.search(r'"id"\s*:\s*"', text[m.end():])
+    seg = text[m.end(): m.end() + nxt.start()] if nxt else text[m.end():]
+    a = re.search(r'"avatar"\s*:\s*"([^"]*)"', seg)
+    v = a.group(1) if a else ""
+    return v.startswith("assets/yeta_char/") or v.startswith("characters/")
+
+
 def set_avatar(text, pid, url):
     """roster.json — "id":"<pid>" 객체 블록 안의 "avatar" 값 교체(멀티라인 pretty JSON 대응 · 260712 픽스).
     이전 '1줄=1명' 가정은 pretty JSON(id·avatar 다른 줄)에서 '라인 못 찾음'으로 주입 실패했다."""
@@ -140,6 +154,8 @@ def main():
         print("::warning::YETA_FACE_ONLY={} 가 FACES에 없음".format(only)); return 0
     made, skipped, failed = 0, 0, 0
     for pid, desc in faces:
+        if av_owned(roster, pid):   # 다른 축이 소유한 프사(운영자 260725 얼빡 개편) — FORCE라도 안 건드린다
+            print("· {} — 얼빡/수제 프사 소유 축(yeta_char/av · characters/), skip".format(pid)); skipped += 1; continue
         if not force and re.search(r'"id"\s*:\s*"%s"[^\n]*"avatar"\s*:\s*"[^"]+"' % re.escape(pid), roster):
             print("· {} — avatar 이미 있음, skip".format(pid)); skipped += 1; continue
         print("· {} 생성 — {}".format(pid, desc[:44]), flush=True)
