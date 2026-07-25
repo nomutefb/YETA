@@ -2116,7 +2116,9 @@ async function ySettingRender() {
     + `<details class="yset-grp" open><summary>L0 설정 <span class="ypol-ro">${YLOCK_SVG}</span></summary>${l0html}</details>`
     + `<details class="yset-grp"${admin ? ' open' : ''}><summary>L1 설정${admin ? '' : ' <span class="ypol-ro">' + YLOCK_SVG + '</span>'}</summary>${l1html}
       ${admin ? '<div class="yset-foot"><button type="button" class="yset-reset" id="ypolReset">기본값 복원</button><span class="yset-saved" id="ypolSaved">저장됨 ✓</span></div>' : ''}</details>`
-    + `<details class="yset-grp"><summary>L2 설정</summary>${l2html}</details>`;
+    + `<details class="yset-grp"><summary>L2 설정</summary>${l2html}</details>`
+    + `<details class="yset-grp"><summary>연결 기록</summary><div class="ypol-grp"><div class="ypol-gh"><b>끊긴 이력</b><i>최근 ${YDC_MAX}건 · 이 기기</i></div>${yDcRows()}</div>`
+    + `<div class="yset-foot"><button type="button" class="yset-reset" id="ydcClear">기록 비우기</button></div></details>`;   // 연결 기록(운영자 260725) — L0/L1/L2와 같은 .yset-grp 아코디언 + .ypol-grp/.ypol-gh/.ypol-lock 골격 계승(새 스타일 0) · 비우기 = L1 '기본값 복원'과 동일한 .yset-foot/.yset-reset
 }
 yApi('policy').then(r => { if (r && r.ok && r.def && !YPOLDEF) { YPOLDEF = r.def; _ypolCur = r.p || {}; } }).catch(() => {});   // 정책 프리페치(운영자 260709 "로딩 뜨니까 해괴" — 부팅 시 1회 선적재 = 설정 진입 즉시 렌더 · 실패 = 기존 진입 시 재시도 경로 그대로)
 function ySettingSave() {   // 디바운스 저장 — op policy에 admin PIN 동봉(서버 강제 = env YETA_PIN_ADMIN 대조 · 800ms · ySetSave 패턴 계승)
@@ -2949,6 +2951,7 @@ function yHideProfile() { yCdHide('#ycprofile'); }
 $('#ycsettingsBack').addEventListener('click', () => navBack('ycsettings'));
 $('#ycprofileBack').addEventListener('click', () => navBack('ycprofile'));
 $('#ycsettingsCard').addEventListener('click', e => {
+  if (e.target.closest('#ydcClear')) { try { localStorage.removeItem('yeta_discon'); } catch {} ySettingRender(); miniToast('연결 기록 비웠어'); return; }   // 두절 기록 비우기(260725) — #ypolBody 위임보다 먼저(그 안에 그려지므로 순서가 뒤면 yPolClick이 먹고 끝난다)
   if (e.target.closest('#ypolBody')) { yPolClick(e); return; }   // 시즌 정책(실동작 · 인수 계약 260707)
   const f = e.target.closest('.yset-item[data-font]');   // 글꼴(실동작 · 운영자 260707 "영문/한글 따로") — 탭 = 토글 · 즉시 적용+저장
   if (f) {
@@ -4037,6 +4040,32 @@ let _yDraft = null, _yDraftOn = false, _yNoAnim = false;   // 문장 스트리�
 let _yComposing = false, _yRenderPend = false;   // IME 조합(한글) 진행 여부 + 조합 중 밀린 렌더 플래그(운영자 260717) — 조합 중 로그 통짜 innerHTML 교체가 조합 중이던 글자를 날리는 모바일 IME 버그 차단
 let _yDrKeep = false;   // 겹침 draft 유지 래치(운영자 260717 ⑨⑩) — 생성 중 화면에 뜬 부분 답장 위로 내가 말을 보내도 숨기지 않고 mut로 계속 자라게(러너가 60% 미만이면 폐기·재생성 = 다음 확정이 자연 대체)
 let _lastUserI = -1, _meUnread = false;   // 인챗 '1' 읽음표시(항목14A) — 마지막 미읽음 내 턴 인덱스 + 미읽음 래치(_yTypHold 경과 = 읽음)
+// ── 두절 기록(운영자 260725 "끊길때마다 시간 이유 이런거로 분류되게 하고 로그에 따로 누적") — 감지는 렌더가 이미 하고 있다(failNow·gaveUp·deadNow) · 여기선 그 '전이 순간'만 집어 적립.
+//    저장 = yMoodLog(`yeta_me_moodlog`) 결 그대로 계승 = 로컬 전용(서버 미전송 = 무인증 주입면 0) · 링 상한 = yArtSet 결 계승(무한증식 차단) · 표시 = 설정 '연결 기록' 아코디언.
+//    ⚠️ 로컬 전용이라 캐시 비우기·기기 교체엔 사라진다(D3-1 계정 축 = 【바인딩】 미배선). R2로 옮길 땐 yDcPush 한 곳만 갈면 된다.
+const YDC_MAX = 50;   // 링 상한 — 넘으면 오래된 것부터 소거(두절은 드물어 50이면 충분히 길다)
+const YDC_WHY = {     // 사유 분류(운영자 "이유 이런거로 분류") — 라벨 자체가 설명이 되게(설정 행이 한 줄이라 별도 설명칸 없음)
+  gaveup: '연결 끊김 — 재시도 4번 다 실패',
+  stall:  '늦어짐 — 5분 넘게 답이 없어 재시도',
+  send:   '전송 실패 — 내 메시지가 안 나감',
+  flee:   '자리 이탈 — 시간 지나면 돌아와',
+  dead:   '사망 — 신당에서 빌어줘야 돌아와',
+};
+function yDcLog() { try { return JSON.parse(localStorage.getItem('yeta_discon') || '[]'); } catch { return []; } }   // 파싱 실패 = 빈 배열(yMoodLog 결)
+function yDcPush(why, key) {   // key = 사건 동일성 키 — 폴이 초당 도는 자리에서 부르므로 같은 사건 재렌더가 중복 적립하는 걸 막는 축(필수)
+  try {
+    const lg = yDcLog();
+    if (key && lg.some(x => x.k === key)) return;
+    lg.push({ ts: Date.now(), w: why, t: (YSESS || {}).cur || '', p: (YCUR || {}).name || '', k: key || '' });
+    localStorage.setItem('yeta_discon', JSON.stringify(lg.slice(-YDC_MAX)));
+  } catch {}
+}
+function yDcTime(ts) { const d = new Date((ts || 0) + 9 * 3600e3), p = n => String(n).padStart(2, '0'); return `${p(d.getUTCMonth() + 1)}.${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`; }   // 현실 KST(D4 · +9h 후 UTC getter = §표기표준) — yTime은 무음동 세계 시각이라 장애 추적엔 못 쓴다
+function yDcRows() {   // 설정 '연결 기록' 본문 — .ypol-lock 행 + <b> 계승(설정 잠금 항목·그룹 헤더와 동일 골격 = 새 스타일 창작 0)
+  const lg = yDcLog().slice().reverse();   // 최신이 위
+  if (!lg.length) return '<div class="ypol-lock"><span>아직 끊긴 적 없어</span></div>';
+  return lg.map(x => `<div class="ypol-lock"><span><b>${esc(yDcTime(x.ts))}</b> · ${esc(YDC_WHY[x.w] || x.w)}${x.p ? ` · ${esc(x.p)}` : ''}</span></div>`).join('');
+}
 // ── 자동 재시도(운영자 260714 "재시도로 묻지 말고 자체 재시도 · 4회 이상 안되면 그냥 대화 이탈") — 실패 배너·버튼 폐지: 실패 감지 = retry op 무알림 자동 재발사(지수 백오프) · 그동안 '입력 중'만 유지 · 4회 소진 = 지문 한 줄 조용한 이탈(배너·토스트 0 = 바이브 보존)
 const YAR_MAX = 4;   // 자동 재시도 상한 — 소진 후엔 새 메시지(새 에피소드)로만 재개(쿼터 보호)
 let _yArT = 0, _yArBusy = false;   // 백오프 타이머 + 인플라이트 래치(폴 재렌더 다발 = 중복 발사 차단)
@@ -4254,6 +4283,7 @@ function yRender() {
   const _ak = failNow ? yArKey(s) : '', _an = failNow ? yArtN(_ak) : 0;
   const gaveUp = failNow && _an >= YAR_MAX;   // 4회 소진 = 조용한 이탈(운영자 260714 "알림 떠서 바이브 깨는거보다 나으니")
   if (failNow && !gaveUp && !deadNow) yAutoRetry(_ak, _an);   // 사망 방 = 재시도 발사 금지(서버 가드 409 — 헛발 쿼터 차단)
+  if (failNow && !deadNow) yDcPush(gaveUp ? 'gaveup' : 'stall', `${gaveUp ? 'g' : 's'}:${_ak}`);   // 두절 적립(260725) — 에피소드 키(_ak) 앞에 종류 접두 = 한 에피소드에서 '늦어짐→끊김' 2단계가 각각 한 번씩만 남는다(재렌더 중복 0)
   // 난입 직후 원탭 내보내기 pill(단톡 260707) — 다음 내 메시지 전까지만 노출(소멸형 = 로그 청결) · 언제든 말로도 가능
   const bg = s.barged;
   const kickOn = !!(bg && ((s.room || []).includes(bg.id)) && !all.some(t => t.role === 'user' && (t.ts || 0) > (bg.ts || 0)));
@@ -4270,8 +4300,8 @@ function yRender() {
   const dr = _yDraft && awaiting && !deadNow && !gaveUp && (_yDrKeep || Date.now() >= _yTypHold) && _yDraft.t === ((YSESS || {}).cur || '') && (_yDrKeep || (_yDraft.ts || 0) >= ((s.awaiting_since || 0) - 5000)) && _yDraft.text ? _yDraft : null;   // 문장 스트리밍(한수2) — 현재 방 · 이번 대기분만(스테일 가드) · 사망/이탈 연출 우선 · 읽는시간(_yTypHold) 게이트 = 타이핑과 동일 · _yDrKeep = 겹침 중 예외 2종(260717 ⑨ — 홀드 게이트 + ts 가드: 내 발송이 awaiting_since를 당겨 유지 버블이 증발하던 것 봉합 · 평의회 MED)
   if (deadNow) { const _dv = ((YSESS || {}).dead || {})[YCUR && YCUR.id]; h += _dv && _dv.flee
       ? `<div class="ysit">…그 자리를 벗어났다. 지금은 연락이 닿지 않는다 — 시간이 지나면 다시.</div>`   // 위협 이탈(운영자 260714) — 콘텐츠 거절 시 인물이 상황에서 벗어남 + 일시 두절(사망과 별개 결)
-      : `<div class="ysit">…사망 — 그 시각부터 24시간, 어떤 연락도 닿지 않는다.</div>`; }   // 사망 지문(운영자 260714 "사망으로 표기" · .ysit 계승) — 입력도 함께 잠김 · 24h 후 자연 해제
-  else if (gaveUp) h += `<div class="ysit${_yFailOn ? '' : ' in'}">…답이 없다. 지금은 연락이 닿지 않는 모양이다.</div>`;   // 조용한 이탈 = 장면 지문(.ysit 계승 · 나레이션 결) — 새 메시지 보내면 새 에피소드로 재개
+      : `<div class="ysit">…사망 — 누가 신당에서 빌어주거나, 무음동의 밤이 더 흘러야 닿는다.</div>`; yDcPush(_dv && _dv.flee ? 'flee' : 'dead', `${(YCUR && YCUR.id) || ''}:${(_dv || {}).d || (_dv || {}).t || 0}`); }   // 사망 지문(운영자 260714 "사망으로 표기" · .ysit 계승) — 입력도 함께 잠김 · 해제 = 신당 기도 단일 경로. ⚠️ #396(260725 시간 만료 폐지)이 "24시간·하루쯤 뒤" 안내 10곳을 신당 서사로 옮길 때 이 지문만 누락 — pray:1 + t=365일이라 24h가 지나도 안 풀리는데 로그만 "24시간"이라 같은 화면에서 헤더(신당)와 반대말을 하던 것 봉합(260725 Q.53 실렌더에서 포착)
+  else if (gaveUp) h += `<div class="ysit${_yFailOn ? '' : ' in'}">…연결이 끊겼다. 한 번 더 말을 걸면 다시 이어진다.</div>`;   // 재시도 소진 = 세계관 사건이 아니라 '장애'다 — .ysit 결(바이브)은 유지하되 문구는 연결 축으로 갈라 flee("그 자리를 벗어났다")·사망과 구분(운영자 260725: 셋이 같은 얼굴이라 운영자조차 앱 장애인지 연출인지 못 가리던 것) · 새 메시지 = 새 에피소드로 재개
   else if (dr) { const lt = turns[turns.length - 1]; const pid = dr.p || (YCUR && YCUR.id) || ''; const pcont = !!(lt && lt.role === 'assistant' && (lt.persona || '') === pid);
     yBubbles(dr.text).forEach((bt, bi) => { h += yAiMsg({ text: bt, persona: pid, ov: _yDrKeep ? 1 : 0 }, !_yDraftOn && bi === 0, bi > 0 || pcont); }); }   // 생성 중 부분 답장 — 확정과 같은 버블 분할로 미리 그림 · 등장만 촤르륵 · 겹침 중(_yDrKeep) = mut 톤(260717 ⑨)
   else if (typing) h += yTypingHtml(!_yTypOn);
@@ -4291,7 +4321,7 @@ function yRender() {
     if (atBottom) log.scrollTop = log.scrollHeight;
   }
   yPickBar();   // 미연시 선택지(운영자 260725) — 렌더 꼬리에서 매번 재판정(답장 생성 시작·사망·방 전환에 자동 회수)
-  if (((awaiting && waitMs <= zlim) || invP || gbP || staged) && !deadNow) yStartPoll(); else yStopPoll();   // 초대 판정·자율 비트도 폴로 픽업(state 비점유) · staged = 페이스 공개 중엔 감시 유지(그 사이 도착하는 교대 턴 즉시 픽업) · 사망 방 = 폴 정지(운영자 260714 — 두절 연출)
+  if ((awaiting || invP || gbP || staged) && !deadNow) yStartPoll(); else yStopPoll();   // 초대 판정·자율 비트도 폴로 픽업(state 비점유) · staged = 페이스 공개 중엔 감시 유지(그 사이 도착하는 교대 턴 즉시 픽업) · 사망 방 = 폴 정지(운영자 260714 — 두절 연출) · ⚠️ awaiting의 zlim(5분) 컷 폐지(260725 사고) — 5분 넘게 늦은 답을 기다리는 **바로 그 순간** 감시가 꺼져, 답이 도착해도 화면에 영영 안 붙던 근인.
 }
 let _yWatchTk = null, _yEtag = '', _yDEtag = '';   // watch 롱폴 토큰 + 세션/draft etag 기준선(watch 응답만 갱신 — get 무관)
 function yStartPoll() {   // 대기 감시 1선 = watch 롱폴(대화 속도 260714 한수 · 서버가 R2 etag 1s 감시 → 변경 즉시 응답 = 픽업 ~0s) · 실패·구게이트웨이 = 4s 타이머 폴 강등(종전 결) — 대기 중에만 돎
@@ -4389,7 +4419,7 @@ async function ySend() {
     ta.value = rv; _ySegs = rs.length ? rs : [{ at: 0, sc: 0 }]; _ySegPrev = rv; ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px';
     yScSet(rs.length ? rs[rs.length - 1].sc : 0);   // 모드 래치 = 복원 타임라인과 동기(합성 실패 후 모드 표시·구간 불일치 봉합 · 평의회 260717) · 생각 구간은 이미 *…*로 봉해져 텍스트에 남는다
     if (!sent) _yDrKeep = false;   // 전송 전체 실패 = 겹침 draft 래치 롤백(서버에 겹침 턴 없음 → mut 오염 방지 · 평의회 260717)
-    log.insertAdjacentHTML('beforeend', `<div class="yb fail in">${esc(r.error || '전송 실패')}</div>`); _yFailOn = true; log.scrollTop = log.scrollHeight;
+    log.insertAdjacentHTML('beforeend', `<div class="yb fail in">${esc(r.error || '전송 실패')}</div>`); _yFailOn = true; log.scrollTop = log.scrollHeight; yDcPush('send', `s:${Date.now()}`);   // 전송 실패 적립(260725) — 발신 자체가 안 나간 축(답장 두절과 별개 원인이라 분류를 나눈다)
     if (sent) yStartPoll();   // 앞 파트는 커밋·dispatch 완료 — 그 답장 폴 기동(종전엔 미기동 = 답이 와도 안 보임 · 평의회 260715)
     return;
   }
@@ -4412,6 +4442,7 @@ $('#yetaText').addEventListener('input', e => { const t = e.target;
   // 상황문 자동 종결(구 260714) 폐지 — 운영자 260725 "#으로 닫을 때까지 그 #(상황 설명)이 유지되게". 문장부호·엔터로 저절로 꺼지던 축을 걷어내고 종료 = '#'(타이핑·버튼) 단일 트리거.
 });
 $('#yetaText').addEventListener('focus', yWarm);   // 쓰기 시작 = 러너 선부팅(콜드 부팅 30~40s를 타이핑 시간과 겹침 — 유휴 복귀 첫 답장 단축 · 4.5분 디바운스는 yWarm 내장)
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && yetadlg.open && !_yWatchTk && !_yPoll) yLoad(); });   // 최종 안전망(운영자 260725) — 폴이 꺼진 상태(게이트웨이 10분 리퍼가 state=error로 내린 뒤)에서 러너가 뒤늦게 답을 붙이면 종전엔 앱을 껐다 켜야만 보였다. 탭 복귀 시 1회 재조회로 픽업 · 폴이 살아있으면 watch가 이미 커버하므로 미발사(중복 0)
 $('#yetaText').addEventListener('compositionstart', () => { _yComposing = true; });   // 한글 조합 시작 = 로그 리페인트 유예 개시(입력 유실 차단 · 운영자 260717)
 $('#yetaText').addEventListener('compositionend', () => { _yComposing = false; if (_yRenderPend) { _yRenderPend = false; if (yetadlg.open) yRender(); } });   // 조합 완료 = 밀린 답장 즉시 반영(조합 끝났으니 교체 안전)
 $('#yetaText').addEventListener('blur', () => { _yComposing = false; if (_yRenderPend) { _yRenderPend = false; if (yetadlg.open) yRender(); } });   // compositionend 누락(안드로이드 IME quirk) 백스톱 — blur 시엔 조합 없으니 항상 안전 · 갇힌 _yComposing로 답장 동결되던 경로 차단(평의회 IME F1)
