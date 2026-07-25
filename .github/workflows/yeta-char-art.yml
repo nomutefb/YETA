@@ -18,6 +18,14 @@ on:
         description: '1 = 얼빡 프사만(큰 초상 무시 · 1:1 극단 클로즈업 → av/<id>.webp + roster 배선)'
         required: false
         default: ''
+      rebuild:
+        description: '1 = 생성 없이 기존 원본에서 확대 크롭만 다시(무과금 · avmode=1과 함께)'
+        required: false
+        default: ''
+      zoom:
+        description: '얼빡 확대 배율(기본 0.72 · 작을수록 더 확대)'
+        required: false
+        default: ''
 
 concurrency:
   group: yeta-char-art
@@ -46,6 +54,8 @@ jobs:
           FORCE: ${{ inputs.force }}
           YETA_CHAR_ONLY: ${{ inputs.only }}
           YETA_AV_MODE: ${{ inputs.avmode }}   # 1 = 얼빡 프사 축(운영자 260725)
+          YETA_AV_REBUILD: ${{ inputs.rebuild }}   # 1 = 크롭만 다시(무과금)
+          YETA_AV_ZOOM: ${{ inputs.zoom }}
         run: python3 .github/scripts/yeta_char_art.py
 
       - name: 커밋 (신규 있을 때만)
