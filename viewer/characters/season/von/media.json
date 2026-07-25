@@ -1,0 +1,7 @@
+{
+ "_comment": "시즌 감정 미디어 manifest(본) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. ⚠ 260726 현재 = 사람 없는 체육관 장소 씬만(운영자 '페르소나 구축 안 된 애들은 익명으로 넣고 나중에 보강') — 인물 초상은 미수집. 정본=viewer/characters/season/von/main/<감정>/.",
+ "base": [
+  "characters/season/von/main/base/von_01.jpg",
+  "characters/season/von/main/base/von_02.jpg"
+ ]
+}
