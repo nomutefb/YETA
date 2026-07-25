@@ -27,6 +27,19 @@ import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# 훅 자동 활성화(260725) — clone·기기마다 `git config core.hooksPath .githooks`를 손으로 치는 걸
+# 잊으면 게이트가 "조용히 미실행"되고 통과한 줄 착각한다. 실행기가 스스로 켠다(최초 1회).
+if os.path.isdir(os.path.join(ROOT, '.githooks')):
+    try:
+        import subprocess as _sp
+        if not _sp.run(['git', 'config', 'core.hooksPath'], cwd=ROOT,
+                       capture_output=True, text=True).stdout.strip():
+            _sp.run(['git', 'config', 'core.hooksPath', '.githooks'], cwd=ROOT, capture_output=True)
+            print('🔧 core.hooksPath=.githooks 자동 설정(최초 1회 · pre-commit 게이트 활성화)')
+    except Exception:
+        pass
+
+
 # 검사 대상 md (백업 폴더 _versions 제외)
 SCAN_GLOBS = ('*.md', 'apps/**/*.md', '.claude/skills/**/*.md')
 # 루트 기준 경로 참조로 보는 접두사 + 확장자

@@ -196,7 +196,7 @@ export async function onRequestPost({ request, env }) {
     if (s.cur && !(s.threads || {})[s.cur]) { s.cur = ''; ch = true; }   // cur 고아 = 리스트 폴백(첫 방 순간이동 오폭 차단 · 평의회5④)
     return ch;
   };
-  const DEAD_ON = (s, id) => { const v = (s.dead || {})[id]; return (((v && v.t) || +v || 0)) > Date.now(); };   // 사망 두절(운영자 260714) — 러너 <<DEAD: 맥락>>가 sess.dead[id]={t:만료ts, d:사망ts, mood, why} 박제(구형 숫자 흡수) · 24h 대화·초대·오프닝 차단 · 만료 = 비교 자연 통과(엔트리 = 부활 첫 답이 소비)
+  const DEAD_ON = (s, id) => { const v = (s.dead || {})[id]; return !!(v && v.pray) || (((v && v.t) || +v || 0)) > Date.now(); };   // 사망 두절(운영자 260714 · 260725 기도 게이트) — 러너 <<DEAD: 맥락>>가 sess.dead[id]={t, d, mood, why, pray, wit, nm} 박제(구형 숫자 흡수) · 대화·초대·오프닝 차단 · pray = 시간 무관 두절(러너 <<PRAY>>가 t를 당겨 해제 = 유일 경로) · 해제 후 = 비교 자연 통과(엔트리 = 부활 첫 답이 소비)
 
   // ── PIN 해시 + R2 오버라이드(운영자 260710 R2 재설계 · pinset 보안 BLOCK 해소) ──
   // 게스트 PIN 셀프변경 = users.json(공개 레포·main) 무커밋 → 비공개 R2 `auth/overrides.json`에 {원래해시: 새해시} 저장.
@@ -346,7 +346,7 @@ export async function onRequestPost({ request, env }) {
     if (!env.GH_TOKEN) return json({ error: '서버 미설정 — GH_TOKEN 필요' }, 500);
     const persona = String(body.persona || '');
     if (persona && !ID_RE.test(persona)) return json({ error: '잘못된 페르소나 id' }, 400);
-    { const sd = await readSess(); if (DEAD_ON(sd, persona || sd.cur || '')) return json({ error: '신호가 가지 않아 — 지금은 연락이 닿지 않는 상대야' }, 409); }   // 사망 = 전화 차단(260714 · 유료 TTS 헛발도 방지)
+    { const sd = await readSess(); if (DEAD_ON(sd, persona || sd.cur || '')) return json({ error: '신호가 가지 않아 — 신당에서 누가 빌어주기 전엔 닿지 않아' }, 409); }   // 사망 = 전화 차단(260714 · 유료 TTS 헛발도 방지)
     let cap = parseInt(env.YETA_CALL_MAX_PER_DAY ?? '3', 10);
     if (!Number.isFinite(cap)) cap = 3;   // 미설정·빈값·오타 = 보수 기본 3(유료 가드가 조용히 풀리는 구멍 차단 · 0 = 명시적 무제한)
     const kst = new Date(Date.now() + 9 * 3600e3).toISOString().slice(2, 10).replace(/-/g, '');
@@ -513,10 +513,14 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: true, pin: !!(TH(sess, t) || {}).pin });
   }
 
-  if (op === 'revive') {   // 유저 부활(운영자 260725 "당신은 죽었습니다. 부활하시겠습니까?") — sess.me_dead 해제 단일 경로. 유저 사망 박제 = 러너 <<MEDEAD: 맥락>>(타의·자의 공통) · 캐릭터 dead(24h 대기)와 달리 유저는 즉시 부활(대기 없음 = 놀이 흐름 유지)
+  if (op === 'revive') {   // 유저 부활(운영자 260725) — sess.me_dead 해제 단일 경로. 유저 사망 박제 = 러너 <<MEDEAD: 맥락>>(타의·자의 공통).
+    // 조건(운영자 260725 개정) = ⓐ 누군가 신당에서 빌어줬거나(me_dead.pray · 러너 <<PRAYME>>) ⓑ 무음동 48시간 경과. 둘 다 아니면 거부 = 뷰어 버튼 우회로도 못 돌아온다(뷰어 yMeRevOK와 같은 식).
+    const MEREV_MS = 48 / 6 * 3600e3;   // 무음동 48h = 현실 8h(6배속 · 접속 무관 실시간 축)
     const { sess, abort } = await casPut(s => {
       if (!s.me_dead) return { abort: { noop: 1 } };   // 이미 살아있음 = 무변경(중복 탭·재진입 멱등)
-      s.me_revived = { d: (s.me_dead || {}).d || 0, why: (s.me_dead || {}).why || '', at: Date.now() };   // 직전 죽음 = 부활 맥락으로 1세대 보존(러너가 다음 턴에 "돌아왔네" 결로 쓸 재료)
+      const md = s.me_dead;
+      if (!md.pray && Date.now() < (md.d || 0) + MEREV_MS) return { abort: { error: '아직 돌아갈 수 없어 — 누가 신당에서 빌어주거나, 무음동의 밤이 더 흘러야 해' } };
+      s.me_revived = { d: md.d || 0, why: md.why || '', at: Date.now(), pray: md.pray || null };   // 직전 죽음 + 그 기도 = 부활 맥락으로 1세대 보존(러너가 다음 턴에 "돌아왔네" 결로 쓸 재료)
       delete s.me_dead;
     });
     if (abort && abort.error) return json(abort, 409);
@@ -622,7 +626,7 @@ export async function onRequestPost({ request, env }) {
     let gid = '';
     const { sess, abort } = await casPut(s => {
       const th = TH(s, t); if (!th) return { abort: { error: '없는 대화방이야' } };
-      if (DEAD_ON(s, persona)) return { abort: { error: '지금은 부를 수 없어 — 연락이 닿지 않는 상대야' } };   // 사망 = 초대 차단(260714)
+      if (DEAD_ON(s, persona)) return { abort: { error: '지금은 부를 수 없어 — 신당에서 누가 빌어주기 전엔 닿지 않아' } };   // 사망 = 초대 차단(260714)
       const room = Array.isArray(th.room) && th.room.length ? th.room : [t];
       if (room.includes(persona)) return { abort: { error: '이미 같이 있어' } };
       if (room.length >= MAX_ROOM) return { abort: { error: '자리가 없어 — 한 명을 보내고 불러줘' } };
@@ -748,14 +752,14 @@ export async function onRequestPost({ request, env }) {
     const at = String(body.t || preS.cur || '');
     if (!ID_RE.test(at)) return json({ error: '먼저 대화방을 열어줘' }, 409);
     if (!TH(preS, at)) return json({ error: '없는 대화방이야 — 캐릭터 탭에서 열어줘' }, 409);   // ⚠️ R2 put '이전' 방 실존 선검증(평의회 260717 HIGH — 가짜 방 id 반복 = 상한 우회 무한 고아 객체 적재 DoS 차단 · 최종 판정은 아래 casPut이 재확인)
-    if (DEAD_ON(preS, at)) return json({ error: '…지금은 연락이 닿지 않아. 하루쯤 뒤에 다시 걸어봐' }, 409);
+    if (DEAD_ON(preS, at)) return json({ error: '…지금은 연락이 닿지 않아. 누군가 신당에 가서 빌어줘야 돌아와' }, 409);
     if (KIMI_COST[amodel]) { const kb = kimiGate(env, preS); if (kb) return json(kb, 429); }   // 키미 일일 실비 방파제(Q.40) — 첨부 상한 소비·R2 저장 전 차단(비전 턴 = 이미지 토큰까지 실과금 축)
     await env.YETA_R2.put(aqkey, JSON.stringify({ n: aused + 1 }), { httpMetadata: { contentType: 'application/json' } });   // 상한 = 시도 즉시 소비(pinset 결 — put까지 간 시도는 실패해도 카운트 = 저장 축 남용 하드캡)
     const akey = `att/${at}/${Date.now().toString(36)}.jpg`;
     await env.YETA_R2.put(akey, bin.buffer, { httpMetadata: { contentType: 'image/jpeg' } });   // 이미지 저장 → 턴 적재(러너가 턴을 집는 순간 실물 보장 · CAS abort 시 고아 객체 = 상한 안에서 유계)
     const { abort } = await casPut(s => {
       const th = TH(s, at); if (!th) return { abort: { error: '없는 대화방이야 — 캐릭터 탭에서 열어줘' } };
-      if (DEAD_ON(s, at)) return { abort: { error: '…지금은 연락이 닿지 않아. 하루쯤 뒤에 다시 걸어봐' } };
+      if (DEAD_ON(s, at)) return { abort: { error: '…지금은 연락이 닿지 않아. 누군가 신당에 가서 빌어줘야 돌아와' } };
       th.turns.push({ role: 'user', text: '', img: akey, ts: Date.now(), model: amodel, effort: aeffort });
       if (th.turns.length > 200) th.turns = th.turns.slice(-200);
       th.state = 'awaiting'; th.awaiting_since = Date.now(); th.err = ''; delete th.retry_n;
@@ -795,7 +799,7 @@ export async function onRequestPost({ request, env }) {
   if (!ID_RE.test(t)) return json({ error: '페르소나가 없어 — 🎲 먼저 뽑아줘' }, 409);
   const { abort } = await casPut(s => {
     const th = TH(s, t); if (!th) return { abort: { error: '없는 대화방이야 — 캐릭터 탭에서 열어줘' } };
-    if (DEAD_ON(s, t)) return { abort: { error: '…지금은 연락이 닿지 않아. 하루쯤 뒤에 다시 걸어봐' } };   // 사망 두절(운영자 260714) — 1:1 방 24h 발신 차단(단톡 g방 = dead 키 아님 = 통과 · 생존자와 계속)
+    if (DEAD_ON(s, t)) return { abort: { error: '…지금은 연락이 닿지 않아. 누군가 신당에 가서 빌어줘야 돌아와' } };   // 사망 두절(운영자 260714) — 1:1 방 24h 발신 차단(단톡 g방 = dead 키 아님 = 통과 · 생존자와 계속)
     const turn = { role: 'user', text, ts: Date.now(), model, effort };   // 다이얼 = 턴별 박제
     if (body.ptt) turn.ptt = 1;   // 무전기(PTT) 턴 박제
     if (body.sc) turn.sc = 1;   // 상황 설명 턴(운영자 260714 '#' 모드) — 상대에게 하는 말이 아니라 장면 설정(러너 격리 주입 · 뷰어 .ysit 렌더) · 불리언만 = 주입 축 없음

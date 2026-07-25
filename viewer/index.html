@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="tokens.css">
 <link rel="icon" href="favicon.ico" sizes="32x32"><!-- PC 브라우저 탭 파비콘(운영자 260706 · 데스크톱 누락 보강) -->
 <link rel="icon" type="image/png" href="assets/brand/yeta-face-icon-192.png" sizes="192x192"><!-- PC 파비콘 = 영상 캐릭터 얼굴(운영자 260706) -->
-<link rel="apple-touch-icon" href="assets/brand/yeta-splash-192.png">
+<link rel="apple-touch-icon" href="assets/brand/yeta-face-icon-192.png"><!-- iOS 홈화면 아이콘(운영자 260725 "탭에 뜨는 저게 뜨면 됨") — 종전 yeta-splash-192.png는 **실존하지 않는 파일**이라 404 = 아이콘 없음이었다(실측). PC 파비콘·manifest와 같은 얼굴로 통일 -->
 <link rel="manifest" href="manifest.json">
 <!-- PWA 웹앱(홈화면 설치·전체화면) — 안드로이드=manifest, iOS=아래 apple 메타(운영자 260704 "웹앱 형태로 여는것") -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -94,6 +94,9 @@ html,body { margin:0; height:100%; }
 ::-webkit-scrollbar-button:single-button:vertical:increment { -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 6'%3E%3Cpath d='M4 6 0 0h8z'/%3E%3C/svg%3E") center/8px 6px no-repeat; }
 .sc-top::-webkit-scrollbar-button:single-button:vertical:decrement { background-color:rgba(var(--accent-rgb),.2); }   /* 맨 위 도달 = ▲ */
 .sc-bot::-webkit-scrollbar-button:single-button:vertical:increment { background-color:rgba(var(--accent-rgb),.2); }   /* 맨 아래 도달 = ▼ */
+/* 탭 패널 4종만 스크롤바 숨김(운영자 260725) — 이 넷은 inset:0 = 프레임 전폭·전높이라 트랙이 고정 헤더(로고·세계시계·아바타·시즌 띠)를 관통해 맨 위까지 올라오던 축. 방식 = .yside/.ypb-rail 전례 100% 계승(새 값 창작 0) · 챗 로그·상세시트 등 나머지 스크롤 표면은 위 글래스 스크롤바 유지 */
+.ychar, .ylist, .ymapp, .ysetting { scrollbar-width:none; }
+.ychar::-webkit-scrollbar, .ylist::-webkit-scrollbar, .ymapp::-webkit-scrollbar, .ysetting::-webkit-scrollbar { display:none; }
 body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app-font, Pretendard,-apple-system,system-ui,sans-serif); -webkit-font-smoothing:antialiased; overscroll-behavior:none; }   /* --app-font = 설정 폰트 선택(영문/한글 · yFontApply가 html에 주입 · 기본 = Pretendard 스택 · 운영자 260707) */
 ::selection { background:var(--cobalt); color:var(--fg); }   /* 2차 강조 코발트 — 텍스트 선택(브랜드 통일 260704) */
 /* ── 공통 컴포넌트(계승): nm-toast · msgUnfold · dialog · tool-x · gdots ── */
@@ -355,7 +358,8 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     background:linear-gradient(var(--glass),var(--glass)),rgba(18,18,18,.75); backdrop-filter:blur(var(--blur-l)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-l)) saturate(1); border:1px solid var(--glass-line); box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card); }   /* 글래스 = 헤더 .yeta-h 정본 계승(운영자 260712 "기틀 배껴서" — .yeta-pick 불투명 rgba(.94) override) · 크롬 계승 · 헤더 알약 바로 아래 · 등장 .44s */
   #yetaPdc:not(.on):not(.drag) { pointer-events:none; }
   #yetaPdc.drag { transition:none; opacity:1; transform:none; }   /* 드래그 추종 = 손 따라 즉시 */
-  #yetaPdc.on { height:285px; opacity:1; transform:none; }   /* 카드 높이 285(선택값) */
+  #yetaPdc.on { height:285px; opacity:1; transform:none; }   /* 285 = JS 미동작 폴백 — 실제 열림 높이는 yPdH() 내용 실측이 인라인으로 덮는다(운영자 260725 "잘리는 부분": 고정 285 + overflow:hidden에서 생각 2줄 = 306px → 액션 라벨 하단 21.6px 절단 실측) */
+  #yetaPdc.ypd-fit { overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }   /* 내용이 화면 잔여를 넘는 극단(가로모드·초소형)만 = 자르지 말고 안에서 스크롤 */
   #yetaPdc .pin { display:flex; flex-direction:column; align-items:center; text-align:center; gap:7px; padding:var(--sp-3) var(--sp-2); }
   #yetaPdc .pin > * { opacity:0; transform:translateY(6px); }
   #yetaPdc.on .pin > * { opacity:1; transform:none; transition:opacity .3s var(--ease), transform .3s var(--ease); }
@@ -725,7 +729,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yworldclock { flex-direction:row; justify-content:flex-end; align-items:center; gap:var(--lgap); }   /* 단일 행 [낮밤 픽토][무음동 시각](운영자 260725) · 픽토↔글자 중앙(높이) 정렬 = align-items:center · 우측 프로필 기준 우정렬 유지 */
   .yworldclock .ywc-ic { flex:none; display:flex; align-items:center; }   /* 픽토 박스 = 라인박스 편차 제거(광학 중앙) · 크기·색 = SVG 인라인 13px·currentColor(밤 = .night 터콰이즈 동행) */
   .yworldclock.night { color:var(--think); opacity:.82; }   /* 밤 = 터콰이즈 디밍(낮/밤 결 구분) */
-  @media (max-width:399px) { .yworldclock { font-size:10px; letter-spacing:0; } }   /* 좁은 폰 = 풀포맷(Q.26)이 로고와 겹치던 26px 침범 해소(Q.27 실측) — 10px = .yssn-date 전례 계승 */
+  @media (max-width:399px) { .yworldclock { font-size:10px; letter-spacing:0; } }   /* 좁은 폰 = 풀포맷(Q.26)이 로고와 겹치던 26px 침범 해소(Q.27 실측) — 10px = 구 .yssn-date(현실 날짜) 전례 계승 · 그 요소 자체는 260725 폐지 */
   .yprof:active { transform:scale(var(--press-s)); }
   .yprof svg { width:17px; height:17px; }   /* 픽토 = has-img 아닐 때만 보이는 폴백 */
   .yprof.has-img svg { display:none; }
@@ -1061,9 +1065,9 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ydepth-effs i.on { color:var(--fg); }
   /* 대화 깊이 안내(운영자 260712 "경고 감 X · 토글 아래 중앙정렬 · 작은 블러 글래스") — Sonnet 구간(data-model=s)일 때만 촤르륵 노출 · 경고 톤(danger) 아님 = 뉴트럴 정보 */
   .ydepth-note { max-height:0; opacity:0; overflow:hidden; margin-top:0; text-align:center; transition:max-height .3s var(--ease), opacity .3s var(--ease), margin .3s var(--ease); }
-  .ydepth-wrap[data-model="s"] .ydepth-note, .ydepth-wrap[data-model="k"] .ydepth-note { max-height:44px; opacity:1; margin-top:11px; }
-  .ydepth-note .nns, .ydepth-note .nnk { display:none; }   /* 모델별 안내 1장만(s=소넷 품질 · k=키미 과금 · 260719) */
-  .ydepth-wrap[data-model="s"] .ydepth-note .nns, .ydepth-wrap[data-model="k"] .ydepth-note .nnk { display:inline-block; }
+  .ydepth-wrap[data-model="k"] .ydepth-note { max-height:44px; opacity:1; margin-top:11px; }   /* 소넷 구간 제외(운영자 260725 안내 폐지) — s에서 열면 빈 글래스 알약이 뜬다 */
+  .ydepth-note .nnk { display:none; }   /* 안내 = 키미 과금 1장만(소넷 품질 안내 폐지 260725) */
+  .ydepth-wrap[data-model="k"] .ydepth-note .nnk { display:inline-block; }
   .ydepth-note span { display:inline-block; padding:6px 12px; border-radius:var(--r-pill); background:var(--glass); backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); border:1px solid var(--glass-line); color:var(--fg-2); font-size:var(--fs-xs); font-weight:var(--fw-b); line-height:1.4; }
   .ydepth-mn { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.08em; text-align:center; opacity:.5; transition:opacity .18s var(--ease); }
   .ydepth-half.hs .ydepth-mn { color:var(--cobalt); } .ydepth-half.ho .ydepth-mn { color:var(--accent); } .ydepth-half.hk .ydepth-mn { color:var(--think); }
@@ -1133,6 +1137,8 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     background:rgba(255,255,255,.06); border:1px solid var(--glass-line); color:var(--yeta-ac); background-size:cover; background-position:center;
     box-shadow:0 0 6px rgba(var(--accent-rgb),.21); }   /* 아바타 라임 글로우 = 갤러리 동결 */
   .ylist-ava.has-img { color:transparent; }
+  .ylist-avastk { flex:none; display:flex; align-items:center; }   /* 단톡 아바타 스택 래퍼(운영자 260725 "단톡환경에서도 프로필이 겹치게") — 행 gap:12 밖에서 겹침 자립 · 레퍼런스 = 챗 헤더 스택(#yetaAva2) 그대로 */
+  .ylist-avastk .ylist-ava + .ylist-ava { margin-left:-18px; box-shadow:0 0 0 2px var(--yeta-bg), 0 0 6px rgba(var(--accent-rgb),.21); }   /* 겹침 = 헤더 비율 계승(34px:-12 = 35.3% → 50px:-17.6 ≈ -18 · 스택 겹침 = 기하 raw 예외축) · 분리 링 = #yetaAva2 그대로 + 기존 라임 글로우 유지(box-shadow = 토큰 없는 축) */
   .ylist-mid { flex:1; min-width:0; display:flex; flex-direction:column; }   /* 4줄 고정 슬롯(운영자 260707) — 등급줄 → 이름줄 → 생각줄 → 최근말 · 간격 = --lgap 비율 5:5:3.5 */
   .ylist-nm .ygrade, .ylist-nm .yprem { flex:none; }   /* 등급·보이스 배지 = 이름줄 직업 우측 나란히(운영자 260708) — 이름만 shrink·배지 유지 */
   .ylist-nm { display:flex; align-items:center; min-width:0; font-weight:var(--fw-x); font-size:var(--fs-h3); margin-bottom:calc(var(--lgap)*.55); }   /* ② 이름 줄 — flex 중앙축 = 우측 메타와 수직 중앙 자동 정렬 · 이름→상황 간격 축소(운영자 260708 · 전 목록 동일) */
@@ -1207,13 +1213,12 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yssn { display:block; padding:0; margin-bottom:var(--sp-3); animation:ypickIn .42s cubic-bezier(.22,.61,.36,1) both; }   /* 시즌 = 박스 폐지(운영자 260709 "둥그렇게 넣지 마") · 가독 = #ytopfade 담당 · 패딩 0 = 좌단 로고 24px 세로선(Q.26)·우단 프로필 24px 세로선(Q.27 대칭) 픽셀 정렬(구 2px = 박스 시절 잔재 제거) */
   .yssn:empty { display:none; }   /* YWORLD 미로드 = 빈 박스 숨김(로드 전 플래시 포함 · 운영자 260707) */
   .yssn-hd { display:flex; align-items:center; gap:14px; }   /* 배지↔제목 간격 충분(운영자 ②) */
-  .yssn-tag, .yssn-nm, .yssn-date { line-height:1; }   /* 수직 중앙 통일(운영자 260709 "중앙 높이 정렬 + 날짜 높이 이어줘") — 폰트별(레몬밀크 이탤릭·한글·숫자) 라인박스 편차 제거 = flex center 광학 일치 */
+  .yssn-tag, .yssn-nm { line-height:1; }   /* 수직 중앙 통일(운영자 260709 "중앙 높이 정렬") — 폰트별(레몬밀크 이탤릭·한글) 라인박스 편차 제거 = flex center 광학 일치 */
   .yssn-tag { flex:none; display:inline-flex; align-items:center; color:var(--accent);
     font-family:'LEMONMILK',Pretendard,sans-serif; font-style:italic; font-weight:700; font-size:13.5px; letter-spacing:.01em;
     text-shadow:0 0 5px rgba(var(--accent-rgb),.9), 0 0 16px rgba(var(--accent-rgb),.55); }   /* SEASON 01 = 라임 워드마크 · 형광 2중 글로우(운영자 260709 "형광색으로 — 지금 묻히네" · 근접 .9 코어 + 확산 .55 헤일로 · text-shadow = 토큰 없는 축) */
-  .yssn-nm { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; font-size:var(--fs-body); font-weight:var(--fw-x); white-space:nowrap; }   /* shrink 허용 + … (Q.27 방어 — 긴 시즌명이 날짜를 24px 우단 밖으로 밀던 축 봉인 · 현 '무음동'은 무영향) */
+  .yssn-nm { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; font-size:var(--fs-body); font-weight:var(--fw-x); white-space:nowrap; }   /* shrink 허용 + … (Q.27 방어 — 긴 시즌명이 우단 밖으로 넘치던 축 봉인 · 현 '무음동'은 무영향) */
   .yssn-nm small { font-weight:var(--fw-b); color:var(--fg-2); font-size:var(--fs-sm); }   /* 한자 부기 */
-  .yssn-date { margin-left:auto; flex:none; font-family:'LEMONMILK',Pretendard,sans-serif; font-weight:400; font-style:normal; font-size:10px; color:var(--fg); letter-spacing:.04em; font-variant-numeric:tabular-nums; }   /* 날짜 = 흰색(운영자 260707 항목4 — mut 폐지) */
   .yssn-tl { margin-top:9px; text-align:left; font-size:11.5px; color:var(--fg-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }   /* 설명 = 살짝 옅은 흰(fg-2) · 좌측 정렬 = SEASON 01과 같은 좌측선(운영자 260709 "설명 기준 좌측정렬" — 구 가운데 고정 폐지) · 1줄 초과 = … */
   .ylr-wrap { position:relative; margin-bottom:10px; border-radius:var(--r-l); overflow:hidden; }   /* 행 래퍼(분할 리스트 획 셀렉터 앵커) · overflow = 스와이프 액션 트레이 감춤(운영자 260712) */
   .ylr-wrap .ylist-row { margin-bottom:0; position:relative; z-index:1; -webkit-touch-callout:none; user-select:none; transition:padding-right .3s var(--ease); }   /* 스와이프 = 텍스트 선택/콜아웃 차단(.ypick-row 관례 계승 · UX감사①c) */
@@ -2160,11 +2165,10 @@ const YTH = t => (((YSESS || {}).threads) || {})[t || (YSESS || {}).cur] || null
 const yReadTs = t => { try { return +localStorage.getItem('yeta_read_' + t) || 0; } catch { return 0; } };   // unread = 스레드별 "마지막 읽은 턴 ts"(카운트 폐지 = 200캡 트리밍 내성 · UX감사④1)
 const yMarkRead = (t, ts) => { try { if (t && ts) localStorage.setItem('yeta_read_' + t, String(ts)); } catch {} };
 function ySnip(t, n) { return (t || '').replace(/\*[^*]*\*/g, '').replace(/\s+/g, ' ').trim().slice(0, n); }   // 스니펫 = *지문* 제거 + n자
-function ySsnHtml() {   // 시즌 표기 정본(대화·캐릭터 탭 공용 — 운영자 통일 지시): [SEASON 01 필배지][이름(한자)][우측 날짜] / 태그라인
+function ySsnHtml() {   // 시즌 표기 정본(대화·캐릭터 탭 공용 — 운영자 통일 지시): [SEASON 01 필배지][이름(한자)] / 태그라인
   if (!YWORLD) return '';
-  const k = new Date(Date.now() + 9 * 3600e3);   // KST 고정(§표기표준)
-  const dt = `${String(k.getUTCFullYear()).slice(2)}. ${String(k.getUTCMonth() + 1).padStart(2, '0')}. ${String(k.getUTCDate()).padStart(2, '0')}`;
-  return `<div class="yssn-hd"><span class="yssn-tag">SEASON ${String(YWORLD.n || 1).padStart(2, '0')}</span><span class="yssn-nm">${esc(YWORLD.name || '')}${YWORLD.hanja ? `<small>(${esc(YWORLD.hanja)})</small>` : ''}</span><span class="yssn-date">${dt}</span></div><div class="yssn-tl">${esc(YWORLD.tagline || '')}</div>`;
+  // 우측 현실 KST 날짜(.yssn-date) 폐지 — 운영자 260725 "흰색 날짜 없애 = 현실시간 없애". 앱 안 시간축은 무음동 세계시각(#yworldclock) 하나로 단일화(1318행 "다른 시간은 앱 안에 필요없음"과 동일 축).
+  return `<div class="yssn-hd"><span class="yssn-tag">SEASON ${String(YWORLD.n || 1).padStart(2, '0')}</span><span class="yssn-nm">${esc(YWORLD.name || '')}${YWORLD.hanja ? `<small>(${esc(YWORLD.hanja)})</small>` : ''}</span></div><div class="yssn-tl">${esc(YWORLD.tagline || '')}</div>`;
 }
 // ── 내 상태 행(운영자 260707 항목22·23) — 위치·감정 = 클라 로컬 전용(localStorage yeta_me_place/yeta_me_mood · 게이트웨이 미전송 = 무인증 공개 주입면 0) ──
 const YME_MOODS = { warm: '따뜻함', tense: '긴장', blue: '가라앉음', joy: '신남', love: '설렘', shy: '수줍음', mad: '짜증' };   // 무대 무드(러너 <<MOOD>> 배경 축 · Y_MOODS와 짝 — 8감정 확장 Q.29)
@@ -2306,8 +2310,11 @@ async function yListRender() {
       : `<span class="ylist-tht off">(심리 상태 알 수 없음)</span>`;
     const lastLn = opPend ? `<span class="ylist-last on">곧 말을 걸어와…</span>` : (last ? `<span class="ylist-last${(unTxt && last.role !== 'user') ? ' on' : ''}">${last.role === 'user' ? '나 · ' : ''}${esc(ySnip(last.text, 40) || '…')}</span>` : '');   // #186 안읽음 조건부 on 유지
     const meta = last ? `<span class="ylist-meta">${yAgo(last.ts)}${(() => { try { const L = yLocOf(r); return L && L.nm ? `<span class="ylist-loc${L.on ? ' on' : ''}">${esc(L.nm)}</span>` : ''; } catch (e) { return ''; } })()}</span>` : '';   // 항목1(260708): 절대시각(ylist-t) 폐지 → 상대시간(mut) → 최근 장소
+    // 아바타 = 단톡이면 2겹 스택(운영자 260725 "단톡환경에서도 프로필이 겹치게") — 레퍼런스 = 챗 헤더 yHeadRoom 그대로: room 앞 2명 · 사망 멤버 제외(260714) · 배지는 위에 얹힌 둘째에
+    const mem = grp ? (r.room || []).map(yPersona).filter(Boolean).filter(c => !yDead(c)).slice(0, 2) : [];
+    const avaOf = (c, badge) => (pav => `<span class="ylist-ava${pav ? ' has-img' : ''}"${pav ? ` style="background-image:url('${esc(pav)}')"` : ''}>${pav ? '' : esc(c.initial || (c.name || '?')[0])}${badge ? `<span class="ylist-badge">${badge}</span>` : ''}</span>`)(yCAva(c));
     return `<div class="ylr-wrap"><button type="button" class="ylist-row${es ? ' estr' : ''}" data-t="${esc(r.id)}">`
-      + (pav => `<span class="ylist-ava${pav ? ' has-img' : ''}"${pav ? ` style="background-image:url('${esc(pav)}')"` : ''}>${pav ? '' : esc(p.initial || p.name[0])}${unTxt ? `<span class="ylist-badge">${unTxt}</span>` : ''}</span>`)(yCAva(p))
+      + (mem.length >= 2 ? `<span class="ylist-avastk">${avaOf(mem[0], '')}${avaOf(mem[1], unTxt)}</span>` : avaOf(p, unTxt))
       + `<span class="ylist-mid"><span class="ylist-nm">${r.pin ? '<svg class="ylist-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-label="고정됨"><path d="M12 17v5"/><path d="M15 9.34V5a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1v4.34a2 2 0 0 1-.59 1.42L5.7 14.87A1 1 0 0 0 6.41 17h11.18a1 1 0 0 0 .71-1.71l-2.71-2.7A2 2 0 0 1 15 9.34"/></svg>' : ''}<i class="ynm-t">${esc(dispName)}</i>${grp ? '<span class="yjob">단톡</span>' : yJobBadge(p) + badges}${meta}</span>`
       + tht + lastLn + `</span></button>`
       + `<div class="ylr-tray" role="group" aria-label="대화 관리" aria-hidden="true">`   // 좌로 밀면 나오는 우측 2칸(운영자 260712) — 우클릭 팝업 대체
@@ -2477,7 +2484,7 @@ async function yCharRender() {   // 메뉴1 = 시즌 세계관 헤더 + 캐릭�
     const es = !dd && !lk && !um && yEstranged(c);   // 소원(운영자 260709) — 만났지만 친밀도가 식어 대화 어려움 · 이름·아바타는 보임(흐림)
     const ava = (lk || um || dd) ? `<span class="ylock-avawrap">${yAva(c)}<span class="ylock-ava">${YLOCK_SVG}</span></span>` : yAva(c, 'yava' + yGradeRing(c));   // 언락 = 등급 링(운영자 260708 · 보이스/시즌/IDOL) · 잠금·미대면·사망 = 실루엣만(링 없음)
     const meta = dd ? `<span class="ylock-pill">${YLOCK_SVG}사망</span>` : lk ? `<span class="ylock-pill">${YLOCK_SVG}${esc(lk)}</span>` : um ? `<span class="ylock-pill">${YLOCK_SVG}아직 못 만남</span>` : es ? `<span class="ylock-pill">${YLOCK_SVG}만났지만 대화는 어려움</span>` : (act.has(c.id) ? '<span class="ycrow-on">대화 중</span>' : '');
-    const desc = dd ? '사망 — 하루(24시간)가 지나면 돌아온다' : um ? '아직 만나지 못한 상대 — 어디선가 스쳐 지나갔을지도' : lk ? '만났지만, 아직 대화할 수 없는 상대' : es ? '한동안 뜸했더니 서먹해졌다 — 골목에서 다시 마주치면 풀릴지도' : (c.desc || c.tagline || '');   // 잠긴·소원·사망 = 캐릭터 설명 대신 내 상황 서술(운영자 260709·260714)
+    const desc = dd ? '죽음 — 누군가 신당에 가서 간절히 빌어줘야 돌아온다' : um ? '아직 만나지 못한 상대 — 어디선가 스쳐 지나갔을지도' : lk ? '만났지만, 아직 대화할 수 없는 상대' : es ? '한동안 뜸했더니 서먹해졌다 — 골목에서 다시 마주치면 풀릴지도' : (c.desc || c.tagline || '');   // 잠긴·소원·사망 = 캐릭터 설명 대신 내 상황 서술(운영자 260709·260714)
     const quote = (lk || um || es || dd) ? '' : (c.quote || '');
     return `<button type="button" class="ycrow${(lk || um || dd) ? ' locked' : es ? ' estr' : (act.has(c.id) ? ' talking' : '')}" data-id="${esc(c.id)}">${ava}`
     + `<span class="ycrow-mid"><span class="ycrow-nm"><i class="ynm-t${um ? ' qm' : ''}">${esc(um ? YUNMET_NM : c.name)}</i>${(lk || um || dd) ? '' : yJobBadge(c)}${yGradeBadge(c)}${window.yPremBadge ? yPremBadge(c) : ''}${meta}</span><span class="ycrow-desc">${esc(desc)}</span>${quote ? `<span class="ycrow-quote">“${esc(quote)}”</span>` : ''}</span>`
@@ -2496,7 +2503,7 @@ function yShowDetail(id) {   // 캐릭터 세부 디테일 — 대형 아바타�
     + (c.video ? `<video class="ycd-video" src="${esc(c.video)}"${c.video_poster ? ` poster="${esc(c.video_poster)}"` : ''} muted loop playsinline autoplay preload="metadata"></video>` : '')
     + yHexSvg(c.stats, true, yStatBoost(c))
     + (yLockLabel(c) || um || yEstranged(c) || yDead(c)
-        ? `<button type="button" class="ycd-cta locked" disabled>${yDead(c) ? '사망 — 현실 24시간 동안 어떤 대화도 닿지 않아' : um ? '아직 만나지 못했어 — 골목 어딘가에서 마주치면 열려' : yEstranged(c) ? '한동안 뜸했어 — 다시 마주치면 이어져' : yLockLabel(c) === '아직 모르는 인물' ? '아직 대화할 수 없어' : '아직 열리지 않은 인물'}</button>`
+        ? `<button type="button" class="ycd-cta locked" disabled>${yDead(c) ? '죽음 — 살아 있는 누군가가 신당에서 빌어줘야 돌아와' : um ? '아직 만나지 못했어 — 골목 어딘가에서 마주치면 열려' : yEstranged(c) ? '한동안 뜸했어 — 다시 마주치면 이어져' : yLockLabel(c) === '아직 모르는 인물' ? '아직 대화할 수 없어' : '아직 열리지 않은 인물'}</button>`
         : `<button type="button" class="ycd-cta" data-id="${esc(c.id)}">대화 시작</button>`)
     + (c.phone ? `<button type="button" class="ycd-sub" data-vcf="${esc(c.id)}" aria-label="연락처 등록" title="연락처 등록 — 전화 올 때 사진·이름이 뜨게"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg></button>` : '');   // 글자 → 픽토그램-온리(운영자 260709 — 헤더서 옮겨온 그 자리 픽토 재사용 · 라벨 = aria/title)
   $('#ycdGear').dataset.set = c.id;   // ⚙ = 헤더 행 상주 버튼(카드 재주입 아님) — 대상 캐릭터만 갱신
@@ -2641,7 +2648,23 @@ const ySetVt = k => { const [t, d] = ySetVal(k); return `<span class="si-vt${d ?
 // 「대화 깊이」 통합 게이지(운영자 260710) — 대화모델 행+생각깊이 행 통합 · 9단 선형(0-2 Sonnet·3-5 Opus·6-8 Kimi × 빠름/중간/깊게 · 260719 3열)
 function yDepthIdx() { const b = YDIAL.model === 'claude-sonnet-5' ? 0 : YDIAL.model === 'kimi-k3' ? 6 : 3, e = YDIAL.effort === 'low' ? 0 : YDIAL.effort === '' ? 1 : 2; return b + e; }   // 현 model×effort → 0-8
 const yDepthSec = i => i < 3 ? 's' : i < 6 ? 'o' : 'k';   // 게이지 인덱스 → 모델 구간 키(s=Sonnet·o=Opus·k=Kimi · 3모델 260719)
-function yDepthChips() { const i = yDepthIdx(), c = yDepthSec(i); return `<span class="ychip ychip-m${c === 's' ? ' s' : c === 'k' ? ' k' : ''}">${c === 's' ? 'SONNET' : c === 'k' ? 'KIMI-K3' : 'OPUS'}</span><span class="ychip ychip-e">${YDEPTH_EFF[i % 3]}</span>`; }   // 헤더 [모델][노력] 칩
+const YSEC_KEY = { s: 'sonnet', o: 'opus', k: 'kimi' };   // 게이지 구간 키 → YDIAL_MODELS 키(표시명 SSOT 진입점 · 260725)
+const yDepthMN = c => YDIAL_MODELS[YSEC_KEY[c]][1].toUpperCase();   // 구간 라벨 = YDIAL_MODELS 표시명 대문자(운영자 260725 "소넷하고 오퍼스는 버전명이 없어") — 하드코딩 폐지 = 모델 승격 시 자동 추종
+function yDepthChips() { const i = yDepthIdx(), c = yDepthSec(i); return `<span class="ychip ychip-m${c === 's' ? ' s' : c === 'k' ? ' k' : ''}">${yDepthMN(c)}</span><span class="ychip ychip-e">${YDEPTH_EFF[i % 3]}</span>`; }   // 헤더 [모델][노력] 칩
+function yDialSet(mKey, effort) {   // 다이얼 단일 라이터(운영자 260725 "대화에서 모델 변경하면 시스템에 같이 동기화") — 설정 게이지·대화 미터가 같은 문을 쓴다. 종전엔 미터가 range 값만 되쏴 칩·범례·구간색이 안 따라왔다.
+  try { localStorage.setItem('yeta_dial_model', mKey); localStorage.setItem('yeta_dial_effort', effort); localStorage.removeItem('yeta_dial_vfast'); } catch (x) {}
+  yDialLoad(); yMeter(); yDepthSync();
+}
+function yDepthSync() {   // 설정 「대화 깊이」 표면 재동기 — 카드가 안 떠 있으면 no-op(다음 yShowSettings가 yDepthIdx()로 새로 그린다 = 스테일 0)
+  const i = yDepthIdx(), sec = yDepthSec(i), si = i % 3;
+  const rg = document.getElementById('ydepthRange'); if (rg) rg.value = i;
+  const wrap = document.getElementById('ydepthWrap'); if (wrap) wrap.dataset.model = sec;
+  const chips = document.getElementById('ydepthChips'); if (chips) chips.innerHTML = yDepthChips() + YICO.chev;
+  document.querySelectorAll('#ydepthRow .ydepth-half').forEach((h, hi) => {
+    const c = ['s', 'o', 'k'][hi]; h.classList.toggle('act', c === sec);   // 구간 3열(260719) — 마크업 순서 hs·ho·hk와 짝
+    h.querySelectorAll('.ydepth-effs i').forEach((t, ti) => t.classList.toggle('on', c === sec && ti === si));
+  });
+}
 function yDepthRow() {
   const i = yDepthIdx(), sec = yDepthSec(i), si = i % 3;
   const effs = c => YDEPTH_EFF.map((l, ei) => `<i class="${c === sec && ei === si ? 'on' : ''}">${l}</i>`).join('');
@@ -2653,10 +2676,10 @@ function yDepthRow() {
     + `<div class="ydepth-track"><div class="ydepth-line"></div>`
     + `<input type="range" class="ydepth-range" id="ydepthRange" min="0" max="8" step="1" value="${i}" aria-label="대화 깊이"></div>`
     + `<div class="ydepth-legend">`
-    + `<div class="ydepth-half hs${sec === 's' ? ' act' : ''}"><div class="ydepth-effs">${effs('s')}</div><div class="ydepth-mn">SONNET</div></div>`
-    + `<div class="ydepth-half ho${sec === 'o' ? ' act' : ''}"><div class="ydepth-effs">${effs('o')}</div><div class="ydepth-mn">OPUS</div></div>`
-    + `<div class="ydepth-half hk${sec === 'k' ? ' act' : ''}"><div class="ydepth-effs">${effs('k')}</div><div class="ydepth-mn">KIMI-K3</div></div>`
-    + `</div><div class="ydepth-note"><span class="nns">소넷 모델은 빠르지만 품질은 낮을 수 있어</span><span class="nnk">KIMI-K3는 문샷 종량제 키로 과금돼</span></div></div></div></div>`;
+    + `<div class="ydepth-half hs${sec === 's' ? ' act' : ''}"><div class="ydepth-effs">${effs('s')}</div><div class="ydepth-mn">${yDepthMN('s')}</div></div>`
+    + `<div class="ydepth-half ho${sec === 'o' ? ' act' : ''}"><div class="ydepth-effs">${effs('o')}</div><div class="ydepth-mn">${yDepthMN('o')}</div></div>`
+    + `<div class="ydepth-half hk${sec === 'k' ? ' act' : ''}"><div class="ydepth-effs">${effs('k')}</div><div class="ydepth-mn">${yDepthMN('k')}</div></div>`
+    + `</div><div class="ydepth-note"><span class="nnk">${yDepthMN('k')}는 문샷 종량제 키로 과금돼</span></div></div></div></div>`;   // 소넷 품질 안내 폐지(운영자 260725 "빠르지만 어쩌고~ 설명은 없어도됨") · 키미 = 실과금 경고라 존치
 }
 const yKimiCostOf = u => Object.keys(u || {}).filter(m => YCOST[m]).reduce((s, m) => s + ((u[m].i || 0) * YCOST[m][0] + (u[m].cr || 0) * YCOST[m][1] + (u[m].o || 0) * YCOST[m][2]) / 1e6, 0);   // 키미 계열 실비 USD(Q.37/38 공용 계산기) — 모델별 각자 요율 · 캐시 히트 1/10가 분리
 function yKimiCost() { return yKimiCostOf((YSESS && YSESS.usage) || {}); }   // 전체 누계판(좌상단 미터 병기)
@@ -2900,17 +2923,8 @@ $('#ycsettingsCard').addEventListener('click', e => {
 });
 $('#ycsettingsCard').addEventListener('input', e => {   // 「대화 깊이」 통합 게이지 드래그 = model×effort 저장 + 헤더 칩·썸·범례 실시간 갱신(운영자 260710)
   const r = e.target.closest('.ydepth-range'); if (!r) return;
-  const i = Math.max(0, Math.min(8, parseInt(r.value, 10) || 0)), sec = yDepthSec(i), si = i % 3;
-  const d = YDIAL_DEPTH[i];
-  try { localStorage.setItem('yeta_dial_model', d[0]); localStorage.setItem('yeta_dial_effort', d[1]); localStorage.removeItem('yeta_dial_vfast'); } catch (x) {}
-  yDialLoad(); yMeter();
-  const wrap = document.getElementById('ydepthWrap'); if (wrap) wrap.dataset.model = sec;
-  const chips = document.getElementById('ydepthChips'); if (chips) chips.innerHTML = yDepthChips() + YICO.chev;
-  document.querySelectorAll('#ydepthRow .ydepth-half').forEach((h, hi) => {
-    const c = ['s', 'o', 'k'][hi]; h.classList.toggle('act', c === sec);   // 구간 3열(260719) — 마크업 순서 hs·ho·hk와 짝
-    h.querySelectorAll('.ydepth-effs i').forEach((t, ti) => t.classList.toggle('on', c === sec && ti === si));
-  });
-  // Sonnet 안내 = 하단 경고 토스트 폐지 → 게이지 안 .ydepth-note(글래스·중앙·data-model=s CSS 자동표시)로 대체(운영자 260712)
+  const i = Math.max(0, Math.min(8, parseInt(r.value, 10) || 0));
+  yDialSet(YDIAL_DEPTH[i][0], YDIAL_DEPTH[i][1]);   // 저장·미터·게이지 표면 = 단일 라이터가 전담(260725 — 미터 탭과 같은 문)
 });
 let _ydepthCloseT;
 $('#ycsettingsCard').addEventListener('change', e => {   // 「대화 깊이」 선택 완료(드래그 놓기 = change) = 여닫이 자동 닫힘 + 다음 옵션으로 카메라 이동(운영자 "고르고 나면 닫고 다음거 고르기 편하게")
@@ -3063,7 +3077,7 @@ function yRenderList() {   // 캐릭터 = SNS 리스트(.ypick-row 계승) + �
 function yShowList() { yRenderList(); yView('list'); }
 async function yEnterChat(c) {   // 리스트에서 캐릭터 선택 → 대화방 진입(draw)
   if (!c) return;
-  if (yDead(c)) { _yOpenGate = false; miniToast(`${c.name}은(는) 사망했어 — 현실 24시간 동안 대화할 수 없어`); yShowDetail(c.id); return; }   // 사망(운영자 260714 "락보다 한단계 위") = 최우선 게이트 · 그 시각 기준 24h 전면 차단 — 만료 = 자연 부활(같은 가드 자동 통과)
+  if (yDead(c)) { _yOpenGate = false; miniToast(`${c.name}은(는) 죽었어 — 살아 있는 누군가가 신당에 가서 빌어줘야 돌아와`); yShowDetail(c.id); return; }   // 사망(운영자 260714 "락보다 한단계 위") = 최우선 게이트 · 그 시각 기준 24h 전면 차단 — 만료 = 자연 부활(같은 가드 자동 통과)
   if (yLockLabel(c)) { yShowDetail(c.id); return; }   // 잠금 캐릭터(카드 없음) = 진입 차단 → 미리보기만(READ ONLY · 운영자 260708)
   if (yUnmet(c)) { miniToast('아직 만나지 못한 사람이야 — 골목 어딘가에서 마주치면 열려'); yShowDetail(c.id); return; }   // 미대면 = 진입 차단(운영자 260709 "이벤트 발생해야 대화 가능") — 해금 = 난입·마주침 합석
   if (yEstranged(c)) { miniToast(`${c.name}과는 한동안 뜸했어 — 골목에서 다시 마주치면 풀릴지도`); yShowDetail(c.id); return; }   // 소원 = 재대화 차단(운영자 260709 친밀도 감쇠) — 회복 = 재회 이벤트
@@ -3172,7 +3186,7 @@ function yHeadSync() {   // 헤더 픽토 상태 동기(운영자 260725) — [�
   const bondOK = !one || yBond(c) >= YBOND_CONTACT;   // 연락처 = 친목 눈금 도달(단톡 = 이미 아는 사이 취급)
   const tag = document.getElementById('yetaTag');   // 대면 여부 = 픽토 대신 이름 옆 문장(운영자 260725 A안) — 막혔을 때만 사유를 말하고, 멀쩡하면 종전 소개로 원복(무소식 = 가능)
   if (tag && one) {   // 기본값 = 그 인물 소개(c.tagline · 헤더 도장 정본과 같은 출처라 별도 보관 불요)
-    const why = yDead(c) ? '연락이 닿지 않아 — 하루쯤 뒤에' : yEstranged(c) ? '한동안 뜸했어 — 골목에서 마주치면 풀려' : yLockLabel(c) ? '아직 말을 걸 수 없는 상대' : yUnmet(c) ? '아직 만나지 못했어' : _yFarOnly ? '멀리 있어 — 문자는 안 닿아' : '';
+    const why = yDead(c) ? '연락이 닿지 않아 — 신당에서 누가 빌어줘야' : yEstranged(c) ? '한동안 뜸했어 — 골목에서 마주치면 풀려' : yLockLabel(c) ? '아직 말을 걸 수 없는 상대' : yUnmet(c) ? '아직 만나지 못했어' : _yFarOnly ? '멀리 있어 — 문자는 안 닿아' : '';
     const want = why || c.tagline || '';
     if (tag.textContent !== want) tag.textContent = want;   // 무변경 재페인트 차단(시그니처 가드 결)
   }
@@ -3189,11 +3203,12 @@ function yEstranged(c) {   // 소원해짐(운영자 260709 "일정 친밀도 �
   return yBond(c) < 1.5;
 }
 const YREV_MS = 3 * 3600e3;   // 부활 직후 성당 체류 창(지도 표시 · 운영자 260714 "나타나는 곳 = 부활장소") — 첫 답(엔트리 소비)이나 3h 경과 = 동선 복귀
-function yDeadT(id) { const v = ((YSESS || {}).dead || {})[id]; return (v && v.t) || +v || 0; }   // dead 엔트리 만료ts — v2 객체{t,d,mood,why}(260714 부활맥락) · 구형 숫자 흡수
-function yDead(c) {   // 사망 락(운영자 260714 "락보다 한단계 위 · 24시간 모든 대화 불가") — 러너 <<DEAD: 맥락>> 태그가 sess.dead[id]={t,d,mood,why} 박제 · 만료(24h) = 비교만으로 자연 부활(엔트리는 부활 첫 답이 소비)
-  return yDeadT(c && c.id) > Date.now();
+function yDeadT(id) { const v = ((YSESS || {}).dead || {})[id]; return (v && v.t) || +v || 0; }   // dead 엔트리 만료ts — v2 객체{t,d,mood,why,pray,wit,nm}(260714 부활맥락 · 260725 기도) · 구형 숫자 흡수
+function yPray(id) { return !!(((YSESS || {}).dead || {})[id] || {}).pray; }   // 기도 대기(운영자 260725 "누군가 간절하게 신당에 가서 빌어야 부활") — 시간으로는 안 풀린다 · 해제 = 러너 <<PRAY>> 단일 경로(게이트웨이 DEAD_ON과 대칭)
+function yDead(c) {   // 사망 락(운영자 260714 "락보다 한단계 위 · 모든 대화 불가") — 러너 <<DEAD: 맥락>> 태그가 sess.dead[id] 박제 · 해제(기도) = 비교만으로 자연 부활(엔트리는 부활 첫 답이 소비)
+  return yPray(c && c.id) || yDeadT(c && c.id) > Date.now();
 }
-function yRevPend(id) { const t = yDeadT(id); return !!t && t <= Date.now(); }   // 부활 미답(만료됐지만 첫 답 전 = 엔트리 잔존) — 서먹·원거리 유예 + 성당 표시 재료
+function yRevPend(id) { const t = yDeadT(id); return !t ? false : !yPray(id) && t <= Date.now(); }   // 부활 미답(기도로 풀렸지만 첫 답 전 = 엔트리 잔존) — 서먹·원거리 유예 + 성당 표시 재료
 let _yNearC = null, _yNear = [], _yNearGen = 0;   // 공간 초대 후보(pill) + 근처 목록(스택·팝업) · gen = 세대 토큰(평의회A — await 중 방 전환 시 교차 방 오염 차단)
 async function yNearCalc() {   // 현재 방 상대와 같은 장소(동선 판정)의 다른 캐릭터들 — 잠금·미대면·소원·방 멤버 제외 · 로컬 누적 → 원자 커밋(낡은 세대·타 방 결과 = 폐기)
   const gen = ++_yNearGen, _prev = _yNearC && _yNearC.id, th0 = YTH();
@@ -3635,14 +3650,22 @@ function yPdRender() {   // 카드 내용 = 프사 팝오버 파생 축 동일(�
     + `<button type="button" class="ypd-act" data-pda="prof"><i>${YICO.user}</i><span>프로필</span></button></span>`;
   return true;
 }
+function yPdH() {   // 열림 높이 = 내용 실측(운영자 260725 "잘리는 부분" — 고정 285는 생각 2줄·긴 이름·큰 글꼴에서 하단 액션 라벨을 잘랐다)
+  const pdc = $('#yetaPdc'), pin = $('#yetaPdcIn'); if (!pdc || !pin) return 285;
+  const op = pdc.offsetParent, top = pdc.offsetTop + (op ? op.getBoundingClientRect().top : 0);   // 레이아웃 기준 위치 = 등장 transform(-8px) 이동 중에도 불변(rect.top은 애니메이션 중간값이 섞여 상한을 부풀린다)
+  const cap = Math.max(160, innerHeight - top - 12);   // 상한 = 화면 잔여(하단 여백 12 = --sp-2 · 기하 계산축)
+  const h = pin.scrollHeight + 2;   // +2 = 상하 테두리 1px(box-sizing:border-box 전역)
+  pdc.classList.toggle('ypd-fit', h > cap);   // 상한 초과 = 절단 대신 내부 스크롤
+  return Math.min(h, cap);
+}
 function yPdOpen() {
   if (!yPdRender()) return;
   yProfPop(false); yPickToggle(false); yInvToggle(false);   // 팝오버 상호배타
-  const pdc = $('#yetaPdc'); pdc.classList.remove('drag'); pdc.style.height = ''; pdc.classList.add('on'); pdc.inert = false;   // 열림 = inert 해제(키보드·SR 진입 가능 — 평의회D)
+  const pdc = $('#yetaPdc'); pdc.classList.remove('drag'); pdc.style.height = yPdH() + 'px'; pdc.classList.add('on'); pdc.inert = false;   // 열림 = inert 해제(키보드·SR 진입 가능 — 평의회D) · 높이 = 실측(고정 285 폐지)
   yetadlg.classList.add('ypd-on');
   if (!YMAPD) yMeMap();   // 장소 SSOT 지연 로드(다음 열기에 장소명 채움 — 프사 팝오버 동일)
 }
-function yPdClose() { const pdc = $('#yetaPdc'); if (!pdc) return; pdc.classList.remove('on', 'drag'); pdc.style.height = ''; pdc.inert = true; yetadlg.classList.remove('ypd-on'); }   // 접힘 = inert(보이지 않는 4버튼이 탭 순서·SR에 잔존하던 것 차단 — 평의회D WCAG 2.4.3)
+function yPdClose() { const pdc = $('#yetaPdc'); if (!pdc) return; pdc.classList.remove('on', 'drag', 'ypd-fit'); pdc.style.height = ''; pdc.inert = true; yetadlg.classList.remove('ypd-on'); }   // 접힘 = inert(보이지 않는 4버튼이 탭 순서·SR에 잔존하던 것 차단 — 평의회D WCAG 2.4.3)
 (() => {   // 드래그 추종(높이 = 손 위치) + 임계 40 판정 + 탭(<6px) 토글 — 포인터 캡처 · 마우스/터치 공용
   const who = $('#yetaWho'), pdc = $('#yetaPdc'); if (!who || !pdc) return;
   let dr = null;
@@ -3651,8 +3674,8 @@ function yPdClose() { const pdc = $('#yetaPdc'); if (!pdc) return; pdc.classList
     if (!dr) return;
     const dy = Math.max(0, e.clientY - dr.y0); dr.m = Math.max(dr.m, dy); dr.mx = Math.max(dr.mx, Math.abs(e.clientX - dr.x0));
     if (dy > 4 && !pdc.classList.contains('on')) {
-      if (!dr.on) { if (!yPdRender()) { dr = null; return; } yProfPop(false); yPickToggle(false); yInvToggle(false); dr.on = 1; }
-      pdc.classList.add('drag'); pdc.style.height = Math.min(dy, 285) + 'px';
+      if (!dr.on) { if (!yPdRender()) { dr = null; return; } yProfPop(false); yPickToggle(false); yInvToggle(false); dr.on = 1; dr.h = yPdH(); }   // 상한 = 그 인물 카드 실측(드래그 중 1회 = 리플로우 억제)
+      pdc.classList.add('drag'); pdc.style.height = Math.min(dy, dr.h) + 'px';
     }
   });
   who.addEventListener('pointerup', () => {
@@ -3663,6 +3686,8 @@ function yPdClose() { const pdc = $('#yetaPdc'); if (!pdc) return; pdc.classList
   });
   who.addEventListener('pointercancel', () => { if (dr) { dr = null; pdc.classList.remove('drag'); pdc.style.height = ''; } });
   who.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pdc.classList.contains('on') ? yPdClose() : yPdOpen(); } });   // 키보드(role=button · WCAG 2.1.1)
+  const pin = $('#yetaPdcIn');   // 열린 뒤 내용 높이가 변해도 추종(웹폰트 도착·아바타 로드·회전·글꼴 크기 변경) — 재계산 없이 두면 그때부터 다시 잘린다
+  if (pin && window.ResizeObserver) new ResizeObserver(() => { if (pdc.classList.contains('on')) pdc.style.height = yPdH() + 'px'; }).observe(pin);
 })();
 $('#yetaPdc').addEventListener('click', e => {   // 액션 4 = 통화(유료 2탭 가드 보존)·초대(2차 팝업)·성향·프로필(시트 = dialog 아래층이라 챗 회수 후 개방 = ydock 결)
   const b = e.target.closest('.ypd-act[data-pda]'); if (!b) return;
@@ -3759,11 +3784,9 @@ $('#yetaInvBtn').addEventListener('click', e => { e.stopPropagation();
 $('#yetaMeter').addEventListener('click', e => {   // 미터 탭 = 모델 순환(Sonnet→Opus→Kimi · 260719) / 노력 순환(빠름→깊게→최대→빠름) — 운영자 260712 · 9단 슬라이더와 별개 직접 전환
   const seg = e.target.closest('.ym-seg'); if (!seg) return; e.stopPropagation();
   if (seg.classList.contains('ym-stat')) { _ymView = (_ymView + 1) % 3; yMeter(); return; }   // 계기판 순환(토큰→속도→길이) — 다이얼 무변경(운영자 260714)
-  if (seg.classList.contains('ym-model')) { const mo = ['sonnet', 'opus', 'kimi'], cur = YDIAL.model === 'claude-sonnet-5' ? 'sonnet' : YDIAL.model === 'kimi-k3' ? 'kimi' : 'opus'; try { localStorage.setItem('yeta_dial_model', mo[(mo.indexOf(cur) + 1) % 3]); } catch (x) {} }   // 3모델 순환(운영자 260719 순서 SONNET→OPUS→KIMI)
-  else { const order = ['low', '', 'max']; try { localStorage.setItem('yeta_dial_effort', order[(order.indexOf(YDIAL.effort) + 1) % 3]); } catch (x) {} }   // 노력만 순환(모델과 독립) · 최대→다시 빠름
-  try { localStorage.removeItem('yeta_dial_vfast'); } catch (x) {}
-  yDialLoad(); yMeter();
-  const rg = document.getElementById('ydepthRange'); if (rg) { try { rg.value = yDepthIdx(); rg.dispatchEvent(new Event('input', { bubbles: true })); } catch (x) {} }   // 설정 게이지 열려있으면 동기(배타 화면이라 보통 no-op)
+  const [mk, ef] = YDIAL_DEPTH[yDepthIdx()];   // 현 다이얼 → [모델 키, 노력](YDIAL_DEPTH ↔ yDepthIdx 왕복) · ID→키 재매핑 폐지
+  if (seg.classList.contains('ym-model')) { const mo = ['sonnet', 'opus', 'kimi']; yDialSet(mo[(mo.indexOf(mk) + 1) % 3], ef); }   // 3모델 순환(운영자 260719 순서 SONNET→OPUS→KIMI)
+  else { const order = ['low', '', 'max']; yDialSet(mk, order[(order.indexOf(YDIAL.effort) + 1) % 3]); }   // 노력만 순환(모델과 독립) · 최대→다시 빠름
 });
 async function yImgB64(f) {   // 사진 캔버스 축소(장변 1280 · JPEG .82) — 업로드 페이로드·비전 토큰 절제(운영자 260717 '+' 사진 첨부)
   const url = URL.createObjectURL(f);
@@ -3782,7 +3805,7 @@ $('#yetaFile').addEventListener('change', async e => {   // + 사진 첨부(운�
   if (!f || _yAttBusy) return;
   if (!/^image\//.test(f.type || '')) { miniToast('지금은 사진만 보낼 수 있어'); return; }
   if (_yFarOnly) { miniToast('멀리 있어서 문자는 안 닿아 — 전화로 걸어봐'); return; }
-  if (YCUR && (YSESS || {}).cur === YCUR.id && yDead(YCUR)) { miniToast('사망 — 현실 24시간 동안 연락이 닿지 않아'); return; }
+  if (YCUR && (YSESS || {}).cur === YCUR.id && yDead(YCUR)) { miniToast('죽음 — 신당에서 누가 빌어주기 전엔 연락이 닿지 않아'); return; }
   if (!YCUR) return;
   _yAttBusy = true;
   try {
@@ -3992,21 +4015,44 @@ function yReconcile(root, html) {   // 증분 렌더(운영자 260717 근본) �
 }
 let _yOpenGate = false;   // 진입 1회 게이트 — openYeta가 세우고 첫 렌더가 소진(사망 상대 방 복원 차단용 · 대화 중 사망은 종전 두절 연출 유지)
 let _yMeDeadSeq = false;   // 유저 사망 연출 진행 중 래치(중복 발화 0) — 팝업이 뜨면 풀린다(다음 진입 시도 = 다시 물음)
-function yMeDeadCheck() {   // 유저 사망(운영자 260725 "타의든 자의든") — 러너 <<MEDEAD: 맥락>> → sess.me_dead 박제 · 대화창 암전 → 이탈 → 대화 목록 → "당신은 죽었습니다. 부활하시겠습니까?"
+// 유저 부활 하한(운영자 260725 "누가 기도 안해주면 48시간 대기 — 게임 내 시간 · 접속 안 해도 흘러감")
+//   무음동은 현실의 6배속이라 무음동 48h = 현실 8h. 저장은 현실 ts(md.d)로 하고 비교만 환산 = 접속 여부와 무관하게 흐른다(뷰어 yWorldMin·러너 wmin과 같은 축).
+const YMEREV_WORLD_H = 48;
+const YMEREV_MS = YMEREV_WORLD_H / 6 * 3600e3;
+const yMeRevAt = md => (md.d || 0) + YMEREV_MS;                                   // 기도가 없을 때 스스로 눈을 뜨는 시각
+const yMeRevOK = md => !!(md && md.pray) || Date.now() >= yMeRevAt(md || {});      // 기도 = 즉시 · 아니면 하한 경과
+const yJosa = (w, withJong, noJong) => { const s = String(w || ''), c = s.charCodeAt(s.length - 1); return (c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28) ? withJong : noJong; };   // 받침 조사(이름 뒤 "이(가)" 병기가 렌더에서 튀어서 · 렌더 실측 260725) — 한글 아님·받침 없음 = 뒤 값
+function yMeDeadCheck() {   // 유저 사망(운영자 260725 "타의든 자의든") — 러너 <<MEDEAD: 맥락>> → sess.me_dead 박제 · 대화창 암전 → 이탈 → 대화 목록 → 상태별 팝업
   const md = (YSESS || {}).me_dead;
   if (!md) { _yMeDeadSeq = false; return false; }
   if (_yMeDeadSeq) return true;
   _yMeDeadSeq = true; yStopPoll();   // 죽은 채로 폴 돌 이유 없음(부활 = op revive가 세션을 되돌림)
-  const ask = () => { _yMeDeadSeq = false; yConfirm({ title: '당신은 죽었습니다', body: `${md.why ? md.why + '\n\n' : ''}부활하시겠습니까?`, okLabel: '부활한다', noLabel: '아니오', onOk: yRevive }); };   // 팝업 = 범용 확인 정본(yexit 골격 계승 · 새 팝업 창작 0)
+  const ask = () => {   // 팝업 = 범용 확인 정본(yexit 골격 계승 · 새 팝업 창작 0) — 세 상태를 같은 골격의 문구·라벨로만 분기
+    _yMeDeadSeq = false;
+    const why = md.why ? md.why + '\n\n' : '';
+    const pr = md.pray;
+    if (pr) {   // 누군가 신당에서 빌어줬다(운영자 260725 "해당 내용이 전달되면서 회신 문자 · 즉시 부활 활성화")
+      const nm = pr.by || (yPersona(pr.id) || {}).name || '누군가';
+      yConfirm({ title: '누군가 당신을 위해 빌었습니다', body: `${why}${nm}${yJosa(nm, '이', '가')} 신당까지 찾아가 빌었다.\n\n“${pr.txt || '…돌아와 줘.'}”\n\n돌아가서 답할까?`,
+        okLabel: '돌아가서 답한다', noLabel: '조금 더 있는다', onOk: () => yRevive(pr.id) });
+      return;
+    }
+    if (yMeRevOK(md)) { yConfirm({ title: '당신은 죽었습니다', body: `${why}아무도 당신을 위해 빌지 않았지만, 무음동의 밤이 충분히 흘렀다.\n\n다시 눈을 뜰까?`, okLabel: '눈을 뜬다', noLabel: '아니오', onOk: () => yRevive() }); return; }
+    const leftH = Math.max(1, Math.ceil((yMeRevAt(md) - Date.now()) / 3600e3 * 6));   // 남은 시간 = 무음동 시각으로 표기(앱 안 시계와 같은 축)
+    yConfirm({ title: '당신은 죽었습니다', body: `${why}살아 있는 누군가가 신당에서 빌어주면 그 순간 돌아올 수 있다.\n아무도 빌지 않으면 무음동 시간으로 약 ${leftH}시간 뒤에 스스로 눈을 뜬다.`, okLabel: '기다린다', noLabel: '닫기', onOk: yConfirmClose });
+  };
   if (yetadlg.open) { yetadlg.classList.add('ydlg-dead'); setTimeout(() => { yetadlg.classList.remove('ydlg-dead'); navBack('ydlg'); setTimeout(() => { if (yetadlg.open) yDlgClose(); ask(); }, 260); }, 900); }   // 암전(.9s) → 이탈 = 대화 목록 복귀(닫힘 핸들러가 yTab('list')) → 팝업 · 백스택 미등재 경로(레이어 없이 열린 챗)에선 navBack이 헛발이라 직접 닫기로 받침(실측 260725 — 죽은 채 대화창에 갇히는 경로 봉인)
   else ask();
   return true;
 }
-async function yRevive() {   // 부활 = 서버 me_dead 해제 단일 경로(op revive) · 실패해도 로컬 해제 후 다음 폴이 서버 진실로 재동기(죽은 채 갇힘 차단)
+async function yRevive(replyTo) {   // 부활 = 서버 me_dead 해제 단일 경로(op revive) · 실패해도 로컬 해제 후 다음 폴이 서버 진실로 재동기(죽은 채 갇힘 차단)
   yConfirmClose();
   const r = await yApi('revive').catch(() => null);
-  if (r && r.ok && r.sess) YSESS = r.sess; else if (YSESS) delete YSESS.me_dead;
-  _yMeDeadSeq = false; miniToast('다시 눈을 떴어.');
+  if (r && r.ok && r.sess) YSESS = r.sess; else if (r && r.error) { miniToast(r.error); _yMeDeadSeq = false; return; } else if (YSESS) delete YSESS.me_dead;   // 서버 거부(하한 미도래·기도 없음) = 죽은 상태 유지 · 사유 그대로 표시
+  _yMeDeadSeq = false; yStartPoll();
+  const c = replyTo && yPersona(replyTo);
+  if (c) { miniToast(`${c.name}에게 답장할 수 있어.`); yEnterChat(c); return; }   // 회신 문자(운영자 260725) = 빌어준 그 사람 방으로 직행 — 부활 첫 마디를 유저가 먼저 건다
+  miniToast('다시 눈을 떴어.');
 }
 function yRender() {
   const _ct = (YSESS || {}).cur || '';
@@ -4145,7 +4191,7 @@ function yStopPoll() { if (_yPoll) clearInterval(_yPoll.t); _yPoll = null; if (_
 async function ySend() {
   const ta = $('#yetaText'), rawV = ta.value, text = rawV.trim();
   if (_yFarOnly) { miniToast('멀리 있어서 문자는 안 닿아 — 전화로 걸어봐'); return; }   // 원거리 불가 상대 = 전화만(운영자 260709)
-  if (YCUR && (YSESS || {}).cur === YCUR.id && yDead(YCUR)) { miniToast('사망 — 현실 24시간 동안 연락이 닿지 않아'); return; }   // 사망(운영자 260714) — 입력 숨김의 이중 안전벨트(스테일 DOM 경로)
+  if (YCUR && (YSESS || {}).cur === YCUR.id && yDead(YCUR)) { miniToast('죽음 — 신당에서 누가 빌어주기 전엔 연락이 닿지 않아'); return; }   // 사망(운영자 260714) — 입력 숨김의 이중 안전벨트(스테일 DOM 경로)
   if (!text || !YCUR) return;
   const btn = $('#yetaSend'); btn.disabled = true;
   const sc = _yMode;   // 입력 모드 래치(260714 '#' · 260725 '*')
