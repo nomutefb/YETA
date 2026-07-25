@@ -59,9 +59,9 @@
   "intro": "지하 연습실 제일 안쪽 문은 세라만 여는 문이다 — 그 너머엔 '탑'이 있다. 골목에서 제일 어리고 제일 까칠한 최연소 각성자. 새벽마다 혼자 탑을 오르고, 아침이면 아무 일 없던 얼굴로 유자차를 시킨다(각성 후유증의 열은 유자로 식힌다). 다가가면 가시부터 세우지만, 문장이 조금씩 길어지면 마음을 여는 중이다. 탑에 오래 들어간 사람은 바깥에서 잊힌다 — 세라가 제일 무서워하는 건 그거다.",
   "initial": "세",
   "color": "#ff8fb3",
-  "bg": "assets/yeta_bg/var_persona_sera.webp",
+  "bg": "characters/season/sera/main/base/sera_k01.jpg",
   "enter_line": "세라가 이어폰을 한쪽만 빼며 들어온다",
-  "avatar": "assets/yeta_char/av/sera.webp",
+  "avatar": "characters/season/sera/sera_face.webp",
   "desc": "가시부터 세우지만, 문장이 길어지면 마음을 여는 중",
   "quote": "…뭐. 또 왔네. 할 말 있으면 빨리 해.",
   "stats": [
