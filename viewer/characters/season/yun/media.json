@@ -1,0 +1,6 @@
+{
+ "_comment": "시즌 감정 미디어 manifest(윤) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. ⚠ 260726 현재 = **얼빡 프사 1장뿐**(운영자 '저분들은 그냥 얼빡으로만 일단 반영') — 수집분 들어오면 감정 폴더에 부어 확장. 정본=viewer/characters/season/yun/main/<감정>/.",
+ "base": [
+  "characters/season/yun/main/base/yun_face01.webp"
+ ]
+}
