@@ -264,6 +264,9 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yeta-setup { padding:var(--sp-3); color:var(--mut); font-size:var(--fs-label); line-height:1.7; }
   .yeta-setup.yempty { color:var(--fg); text-align:center; max-width:280px; margin-inline:auto; }   /* 빈 대화 목록 = 흰색·중앙(운영자) — 가로중앙+흰색은 여기, 세로중앙은 .ylist.list-empty 컨테이너가 담당 */
   /* 입력행 = 플로팅 알약 캡슐(운영자 260705 "네비처럼 감싸서 띄워" · 레퍼런스 결) — [마이크][입력][+][전송] 중앙정렬 */
+  .ypickbar { position:absolute; bottom:calc(66px + env(safe-area-inset-bottom)); left:10px; right:10px; z-index:3; display:flex; flex-direction:column; gap:6px; }   /* 미연시 선택지 바(운영자 260725) — 입력행 바로 위 · bottom = 입력행(12px) + 그 높이·숨(54) */
+  .ypickbar button { text-align:left; padding:9px 13px; border-radius:var(--r-pill); background:var(--glass-2); border:1px solid var(--glass-line); color:var(--fg); font:inherit; font-size:var(--fs-sm); line-height:1.45; cursor:pointer; backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }   /* 표면 = .yexit-btn.yes 조합 그대로(글래스+라인+흰 글자) · 알약 = --r-pill */
+  .ypickbar button:active { transform:scale(var(--press-m,.9)); }
   .yeta-in { position:absolute; bottom:calc(12px + env(safe-area-inset-bottom)); left:10px; right:10px; z-index:3; display:flex; align-items:center; gap:4px; padding:5px 6px;
     background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-pill);
     backdrop-filter:blur(var(--blur-l)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-l)) saturate(1);
@@ -1367,6 +1370,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
       <div class="yeta-pick" id="yetaPdc" role="region" aria-label="인물 프로필 시트" inert><div class="pin" id="yetaPdcIn"></div></div>   <!-- 이름부 풀다운 시트(운영자 260712) — 상시 노드(높이 0 = 접힘 · hidden 미사용 = 드래그 추종) · inert = 접힘 중 탭·SR 차단(평의회D WCAG 2.4.3) -->
       <div class="yeta-list" id="yetaList" hidden></div>   <!-- SNS 메뉴식 캐릭터 선택 리스트(첫 진입 · 운영자 260703) -->
     </div>
+    <div class="ypickbar" id="ypickbar" hidden></div>   <!-- 미연시 선택지(운영자 260725 "내가 항상 대답 안 하더라도 고를 수 있게 가끔") — 러너 <<PICK: a | b | c>> → thread.picks · 탭 = 그 문장이 내 말로 전송 · 무시하고 직접 써도 된다 -->
     <div class="yeta-in" id="yetaIn" hidden>
       <nav class="ydock" id="ydock" aria-label="메뉴 이동">   <!-- 안2 도킹(운영자 260705): 탭 = 챗 닫고 그 메뉴로 -->
         <button type="button" data-go="char" aria-label="캐릭터"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0112 0v1"/></svg></button>
@@ -4286,6 +4290,7 @@ function yRender() {
     _yNoAnim = false;   // 스왑 무애니 = 1회성(다음 렌더부터 정상 촤르륵)
     if (atBottom) log.scrollTop = log.scrollHeight;
   }
+  yPickBar();   // 미연시 선택지(운영자 260725) — 렌더 꼬리에서 매번 재판정(답장 생성 시작·사망·방 전환에 자동 회수)
   if (((awaiting && waitMs <= zlim) || invP || gbP || staged) && !deadNow) yStartPoll(); else yStopPoll();   // 초대 판정·자율 비트도 폴로 픽업(state 비점유) · staged = 페이스 공개 중엔 감시 유지(그 사이 도착하는 교대 턴 즉시 픽업) · 사망 방 = 폴 정지(운영자 260714 — 두절 연출)
 }
 let _yWatchTk = null, _yEtag = '', _yDEtag = '';   // watch 롱폴 토큰 + 세션/draft etag 기준선(watch 응답만 갱신 — get 무관)
@@ -4310,6 +4315,22 @@ function yStartPoll() {   // 대기 감시 1선 = watch 롱폴(대화 속도 260
   })();
 }
 function yStopPoll() { if (_yPoll) clearInterval(_yPoll.t); _yPoll = null; if (_yWatchTk) { _yWatchTk.on = false; _yWatchTk = null; } }
+function yPickBar() {   // 미연시 선택지 렌더(운영자 260725) — thread.picks가 있고 내 답 차례일 때만 · 답장 생성 중·사망·원거리엔 안 띄운다
+  const bar = document.getElementById('ypickbar'); if (!bar) return;
+  const th = YTH(), ps = (th && Array.isArray(th.picks)) ? th.picks.filter(x => x && String(x).trim()).slice(0, 3) : [];
+  const off = !ps.length || !YCUR || _yFarOnly || (th && th.state === 'awaiting') || ((YSESS || {}).me_dead) || yDead(YCUR) || $('#yetaIn').hidden;
+  if (off) { bar.hidden = true; bar._h = ''; return; }
+  const html = ps.map(t => `<button type="button" data-pk="${esc(t)}">${esc(t)}</button>`).join('');
+  if (bar._h !== html) { bar.innerHTML = html; bar._h = html; }
+  bar.hidden = false;
+}
+document.addEventListener('click', e => {   // 선택지 탭 = 그 문장을 내 말로 보낸다(직접 타이핑과 같은 경로 = ySend 단일 깔때기)
+  const b = e.target.closest('#ypickbar [data-pk]'); if (!b) return;
+  const ta = $('#yetaText'); if (!ta) return;
+  const bar = document.getElementById('ypickbar'); if (bar) { bar.hidden = true; bar._h = ''; }
+  const th = YTH(); if (th) delete th.picks;   // 낙관 소거(서버 소거 = op send) — 연타로 두 번 보내지는 것 차단
+  ta.value = b.dataset.pk; ySend();
+});
 async function ySend() {
   const ta = $('#yetaText'), rawV = ta.value, text = rawV.trim();
   if (_yFarOnly) { miniToast('멀리 있어서 문자는 안 닿아 — 전화로 걸어봐'); return; }   // 원거리 불가 상대 = 전화만(운영자 260709)
