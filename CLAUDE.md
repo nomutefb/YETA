@@ -78,7 +78,7 @@
 - **팔레트 예외** = 없음 · **계정 축**(D3-1) = 미배선
 - **플레이그라운드**(B3) = `viewer/pg/`(라이브 URL 제공)
 - **원장**(C1) = `docs/요구사항_큐.md` · 이력 `docs/작업이력.md` · 백업 `_versions/{yymmdd_HHmm}_{라벨}/`
-- **게이트**(C4) = `python3 shared/check_refs.py` + `.githooks` pre-commit
+- **게이트**(C4) = `python3 shared/check_refs.py` + `.githooks` pre-commit · ⚠ **clone·기기마다 1회 `git config core.hooksPath .githooks`**(미설정이면 조용히 미실행)
 - **평의회 대상**(D3) = `CLAUDE.md` · `viewer/index.html` `:root` · `docs/절대명령2_정본인덱스.md` · `docs/CII_컴포넌트계승인덱스.md` · 웹앱 전반 코드
 - **손대지 마라**(D2-1) = `viewer/tokens.css` · `구성도/base.css`(빌드 거울)
 - **모델 ID** = `shared/models.json` · 승격 = `shared/apply_models.py`
