@@ -101,7 +101,7 @@ jobs:
       # (성공 푸시는 스크립트가 웜 루프 안에서 답장마다 즉시 발송 — push_reply() · 잡끝 스텝은 웜 대기만큼 지연이라 폐지 · 아이데이션③)
       # 실패 웹푸시 — 앱 닫아둔 유저도 답장 실패를 인지(§📰 실패알림=웹푸시 정신 · 평의회①⑥⑩). 세션 state=error 는 yeta_chat.sh 가 기록.
       - name: 실패 알림
-        if: failure()
+        if: ${{ failure() || cancelled() }}   # cancelled 포함(운영자 260725) — concurrency 대기열에서 밀려 취소된 런은 failure()가 false라 실패 푸시가 조용히 스킵됐다(260725 21:14 실측: 답장 생성 스텝 failure인데 잡 cancelled → 이 스텝 skipped = 유저는 끊긴 줄도 모름). 러너가 통째로 회수되는 경우는 여전히 못 돌지만, 그 경로는 뷰어 탭복귀 재조회가 받는다
         env:
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}

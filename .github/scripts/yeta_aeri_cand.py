@@ -213,14 +213,19 @@ def gemini_image(prompt, aspect="1:1"):
 
 
 def av_square(png_path):
-    """1:1 원본 → 512² webp = av/aeri.webp(크롭 없이 축소 · 얼빡은 이미 얼굴이 꽉 참). ffmpeg 없으면 None."""
+    """1:1 원본 → **확대 크롭** 512² webp = av/aeri.webp. ffmpeg 없으면 None.
+    배율 = yeta_char_art.AV_ZOOM과 같은 값(0.72 · 10인 렌더 실측 확정) — 프롬프트만으론 정수리~턱 헤드샷으로 나와
+    32px 원에서 얼굴이 작았다. 애리만 다른 배율이면 목록에서 혼자 튄다 = 같은 노브·같은 기본값으로 묶는다."""
     if not shutil.which("ffmpeg"):
         print("  ⚠️ ffmpeg 없음 — av 변환 생략", flush=True); return None
     os.makedirs(AVDIR, exist_ok=True)
     out = os.path.join(AVDIR, "aeri.webp")
+    z = (os.environ.get("YETA_AV_ZOOM") or "0.72").strip()
+    yb = (os.environ.get("YETA_AV_YBIAS") or "0.04").strip()
     try:
         subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", png_path,
-                        "-vf", "scale=512:512", "-quality", "86", out], check=True, timeout=120)
+                        "-vf", f"crop=iw*{z}:iw*{z}:(iw-iw*{z})/2:(ih-iw*{z})/2-ih*{yb},scale=512:512",
+                        "-quality", "86", out], check=True, timeout=120)
         return out
     except Exception as e:
         print(f"  ⚠️ av 변환 실패(비치명): {e}", flush=True); return None

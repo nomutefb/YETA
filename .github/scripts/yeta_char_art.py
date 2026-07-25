@@ -9,7 +9,8 @@ OpenAI Images API(gpt-image) → `viewer/assets/yeta_char/<id>.png`(+webp 768w) 
   = 〔큰 그림 → 작은 얼굴 크롭 → roster 배선〕 한 dispatch로 hands-off. 큰 그림 편집 베이스 성격은 유지(원하면 운영자가 png 손보고 재크롭).
 + 얼빡 프사 축(운영자 260725 "프로필 영역이 작아서 가슴 위를 쓰면 실제로는 안 보인다 · 몸은 더더욱 필요 없다"):
   `YETA_AV_MODE=1` → 큰 초상은 건드리지 않고 **얼굴이 프레임을 꽉 채우는 1:1 극단 클로즈업**만 새로 뽑아
-  `<id>_face.png`(1024² 편집 베이스) + `av/<id>.webp`(512²) + roster 배선. 크롭 축(avatar_crop)과 배타 — 이 모드에선 크롭 안 씀.
+  `<id>_face.png`(1024² 편집 베이스) + `av/<id>.webp`(512² · **확대 크롭 0.72**) + roster 배선. 상단 정사각 크롭(avatar_crop) 축과 배타.
+  `YETA_AV_REBUILD=1` = 생성 없이 기존 원본에서 크롭만 다시(무과금 · 배율 노브 `YETA_AV_ZOOM`·`YETA_AV_YBIAS`).
 멱등: 이미 있는 id는 skip(FORCE=1 재생성 · 얼빡 모드 기준 = `<id>_face.png`). 게이트 = OPENAI_API_KEY(없으면 no-op).
 """
 import base64, json, os, re, shutil, subprocess, sys, time, urllib.request
@@ -20,6 +21,9 @@ API = "https://api.openai.com/v1/images/generations"
 FORCE = os.environ.get("FORCE", "") == "1"
 ONLY = os.environ.get("YETA_CHAR_ONLY", "").strip()   # 특정 id 하나만(비용 절감 테스트)
 AV_MODE = os.environ.get("YETA_AV_MODE", "") == "1"   # 얼빡 프사 전용 모드(운영자 260725) — 큰 초상 무시, av/<id>.webp만 새로 뽑는다
+AV_REBUILD = os.environ.get("YETA_AV_REBUILD", "") == "1"   # 이미 뽑아둔 <id>_face.png에서 크롭만 다시(생성 0 = 무과금 · 배율 조정용)
+AV_ZOOM = (os.environ.get("YETA_AV_ZOOM") or "0.72").strip()   # 얼빡 확대 배율(실측 확정 0.72 · 아래 av_write 주석)
+AV_YBIAS = (os.environ.get("YETA_AV_YBIAS") or "0.04").strip()  # 크롭 창 y 편향(위로)
 OUT = "viewer/assets/yeta_char"
 AVDIR = os.path.join(OUT, "av")                       # 작은 얼굴(아바타) 512²
 ROSTER = "apps/yeta/characters/roster.json"
@@ -110,17 +114,25 @@ def set_avatar(text, pid, url):
 
 
 def av_write(png_bytes, cid):
-    """얼빡 원본(1024²) 저장 + 512² webp = av/<id>.webp(뷰어 아바타 규격 · 크롭 없이 그대로 축소).
-    원본 png = 편집 베이스 관례 계승(같은 폴더 <id>_face.png · 새 디렉터리 0). ffmpeg 없으면 None(주입 생략 = avatar_crop 결)."""
+    """얼빡 원본(1024²) 저장 + **확대 크롭** 512² webp = av/<id>.webp(뷰어 아바타 규격).
+    원본 png = 편집 베이스 관례 계승(같은 폴더 <id>_face.png · 새 디렉터리 0). ffmpeg 없으면 None(주입 생략 = avatar_crop 결).
+    png_bytes=None = 기존 원본에서 크롭만 다시(재생성 0 · 무과금)."""
     os.makedirs(AVDIR, exist_ok=True)
     src = os.path.join(OUT, f"{cid}_face.png")
-    open(src, "wb").write(png_bytes)
+    if png_bytes is not None:
+        open(src, "wb").write(png_bytes)
+    if not os.path.exists(src):
+        return None
     if not shutil.which("ffmpeg"):
         print("  ⚠️ ffmpeg 없음 — av webp 변환 생략", flush=True); return None
     out = os.path.join(AVDIR, f"{cid}.webp")
     try:
+        # 확대 크롭(운영자 260725 "얼빡이야 얼빡") — 생성 이미지가 프롬프트만으론 정수리~턱 다 들어간 헤드샷으로 나와
+        # 32px 원에서 얼굴이 작았다. 배율 실측(0.82/0.72/0.64 × 10인 렌더 대조) = **0.72**가 견본(lucy_face) 프레이밍과 일치
+        # (0.82 = 여백 잔존 · 0.64 = 입·턱 절단 다발). y −4% = 얼굴이 화면 중앙보다 살짝 위에 앉는 초상 관례.
         subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", src,
-                        "-vf", "scale=512:512", "-quality", "86", out], check=True, timeout=120)
+                        "-vf", f"crop=iw*{AV_ZOOM}:iw*{AV_ZOOM}:(iw-iw*{AV_ZOOM})/2:(ih-iw*{AV_ZOOM})/2-ih*{AV_YBIAS},scale=512:512",
+                        "-quality", "86", out], check=True, timeout=120)
         return out
     except Exception as e:
         print(f"  ⚠️ av webp 실패(비치명): {e}", flush=True); return None
@@ -160,6 +172,12 @@ def main():
     for cid, desc in (chars if AV_MODE else []):   # 얼빡 축(운영자 260725) — 큰 초상은 손대지 않는다(편집 베이스 보존) · 아래 초상 루프와 배타
         av = os.path.join(AVDIR, f"{cid}.webp")
         src = os.path.join(OUT, f"{cid}_face.png")
+        if AV_REBUILD:   # 크롭만 다시(생성 0 · 무과금) — 배율 조정·ffmpeg 부재 런 복구용
+            if av_write(None, cid):
+                wired.append(cid); made += 1; print(f"  ✓ 재크롭 {av}", flush=True)
+            else:
+                print(f"  ⚠️ {cid} 원본 없음 — 재크롭 생략", flush=True)
+            continue
         if os.path.exists(src) and not FORCE:
             print(f"skip {cid}(기존 얼빡)")
             if os.path.exists(av):

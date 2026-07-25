@@ -1,0 +1,51 @@
+{
+ "_comment": "시즌 감정 미디어 manifest(조지 로이스) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. 정본=viewer/characters/season/desk/main/<감정>/.",
+ "base": [
+  "characters/season/desk/main/base/desk_01.jpg",
+  "characters/season/desk/main/base/desk_04.jpg",
+  "characters/season/desk/main/base/desk_12.jpg",
+  "characters/season/desk/main/base/desk_13.jpg",
+  "characters/season/desk/main/base/desk_14.jpg",
+  "characters/season/desk/main/base/desk_16.jpg",
+  "characters/season/desk/main/base/desk_19.jpg",
+  "characters/season/desk/main/base/desk_23.jpg",
+  "characters/season/desk/main/base/desk_n05.jpg",
+  "characters/season/desk/main/base/desk_n06.jpg"
+ ],
+ "warm": [
+  "characters/season/desk/main/warm/desk_02.jpg",
+  "characters/season/desk/main/warm/desk_10.jpg",
+  "characters/season/desk/main/warm/desk_20.jpg",
+  "characters/season/desk/main/warm/desk_28.jpg",
+  "characters/season/desk/main/warm/desk_n04.jpg"
+ ],
+ "joy": [
+  "characters/season/desk/main/joy/desk_27.jpg"
+ ],
+ "love": [
+  "characters/season/desk/main/love/desk_15.jpg",
+  "characters/season/desk/main/love/desk_22.jpg",
+  "characters/season/desk/main/love/desk_26.jpg"
+ ],
+ "shy": [
+  "characters/season/desk/main/shy/desk_07.jpg"
+ ],
+ "blue": [
+  "characters/season/desk/main/blue/desk_03.jpg",
+  "characters/season/desk/main/blue/desk_08.jpg",
+  "characters/season/desk/main/blue/desk_09.jpg"
+ ],
+ "tense": [
+  "characters/season/desk/main/tense/desk_06.jpg",
+  "characters/season/desk/main/tense/desk_11.jpg",
+  "characters/season/desk/main/tense/desk_18.jpg",
+  "characters/season/desk/main/tense/desk_24.jpg"
+ ],
+ "mad": [
+  "characters/season/desk/main/mad/desk_05.jpg",
+  "characters/season/desk/main/mad/desk_17.jpg",
+  "characters/season/desk/main/mad/desk_21.jpg",
+  "characters/season/desk/main/mad/desk_25.jpg",
+  "characters/season/desk/main/mad/desk_v02.jpg"
+ ]
+}
