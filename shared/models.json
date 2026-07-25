@@ -1,0 +1,81 @@
+{
+  "_": "모델 ID·표시명 정본(SSOT · 운영자 260725 · nomute-editor 260725 확립분 이식). 승격 = `python3 shared/apply_models.py <티어|벤더키> <새ID> [\"<표시명>\"] [\"<한글명>\"]` → 전 호출처 일괄 치환 + 이 파일 자동 갱신 → `python3 shared/check_refs.py`(rc=0) → 커밋. 손으로 고치지 마라(빠뜨림 = check_model_ids 차단).",
+  "_런타임": "호출처는 이 파일을 읽지 않는다(리터럴 유지) — Cloudflare Functions·정적 뷰어는 런타임 파일 접근이 없고, 러너 스크립트의 모델 해석을 바꾸는 건 고위험. 대신 '정본 1곳 + 기계 치환 + 드리프트 게이트' 3점으로 같은 효과.",
+  "_이식노트": "nomute-editor 이식이되 이 레포 실측에 맞춰 조정 — ① 벤더 중복이 더 심하다(gpt-image-2 = 6파일 · gemini = 3파일 · 각자 '실제 ID 바뀌면 함께 교체' 주석 의존) ② kimi는 다이얼에선 클로드와 동급으로 보이지만 공급사(문샷)·종량제라 vendors ③ CLAUDE.md는 스캔 제외 = 마커 구간이 nomute-editor에서 전파되는 구간이라 여기서 고치면 다음 전파 PR이 덮는다.",
+  "tiers": {
+    "opus": {
+      "id": "claude-opus-5",
+      "en": "Opus 5",
+      "ko": "오퍼스 5",
+      "축": "대화 기본(yeta_chat.sh DEFAULT_MODEL = D1 세션급) · 전화(yeta_call.sh) · 게이트웨이 화이트리스트 · 뷰어 다이얼 기본"
+    },
+    "sonnet": {
+      "id": "claude-sonnet-5",
+      "en": "Sonnet 5",
+      "ko": "소넷 5",
+      "축": "넛지(yeta_nudge.sh `NUDGE_MODEL` × effort low) · 다이얼 선택지 · ⚠️ sonnet×low는 캐릭터 프레임 이탈 실측(260712)이 있어 본대화 기본으로 승격 금지"
+    }
+  },
+  "vendors": {
+    "kimi": {
+      "id": "kimi-k3",
+      "family": "kimi-k[0-9][0-9a-z.]*",
+      "allow": ["kimi-k2.5"],
+      "축": "문샷 종량제 대화 축(yeta_chat.sh `KIMI_MODEL` · 게이트웨이 화이트리스트 · 뷰어 다이얼 3번째) — 키 = 러너 시크릿 KIMI_CODE_MUTE · k2.5 = 저가축(260721 승인이나 /anthropic 게이트 404 실측 = 뷰어 미노출·배선만)"
+    },
+    "openai_image": {
+      "id": "gpt-image-2",
+      "family": "gpt-image-[0-9][0-9a-z.-]*",
+      "축": "얼굴·캐릭터아트·배경변주·아에리 후보 렌더 = **6파일 동기 필요**(yeta_face·yeta_char_art·yeta_bg_var·yeta_aeri_cand + yeta-face.yml·yeta-meface.yml 주석) · vars `OPENAI_IMAGE_MODEL`로 덮어씀"
+    },
+    "gemini_image": {
+      "id": "gemini-3.1-flash-image-preview",
+      "family": "gemini-[0-9][0-9a-z.-]*",
+      "축": "배경·지도 렌더 = **3파일 각자 하드코딩**(yeta_bg·yeta_map_bg·yeta_map_char — 전부 '실제 ID 바뀌면 함께 교체' 주석 의존이던 축)"
+    },
+    "openai_tts": {
+      "id": "gpt-4o-mini-tts",
+      "family": "gpt-4o[0-9a-z.-]*",
+      "축": "전화 TTS 폴백 = yeta_tts.py 기본 + yeta_call.sh·yeta-call.yml 주석 3곳 · vars `OPENAI_TTS_MODEL`"
+    },
+    "elevenlabs_tts": {
+      "id": "eleven_multilingual_v2",
+      "family": "eleven_[a-z0-9_]+",
+      "allow": ["eleven_flash_v2_5"],
+      "축": "전화 TTS 정본(한국어 클론 음색 보존 1순위) · 저지연 대안 = eleven_flash_v2_5(allow) · vars `ELEVENLABS_TTS_MODEL`"
+    }
+  },
+  "retired": [
+    "claude-opus-4-8",
+    "Opus 4.8",
+    "opus 4.8",
+    "OPUS 4.8",
+    "오퍼스 4.8"
+  ],
+  "scan": {
+    "include": [
+      ".github/scripts/*",
+      ".github/workflows/*.yml",
+      "shared/*.sh",
+      "functions/api/*.js",
+      "viewer/*.html",
+      "viewer/*.js",
+      "docs/디자인방식론_YETA.md",
+      "docs/절대명령1_포터블.md",
+      "docs/절대명령2_정본인덱스.md",
+      "docs/CII_컴포넌트계승인덱스.md"
+    ],
+    "exclude": [
+      "shared/apply_models.py",
+      "shared/check_refs.py",
+      "CLAUDE.md",
+      "_versions/**",
+      "viewer/characters/**",
+      "apps/yeta/characters/**",
+      "docs/작업이력.md",
+      "docs/요구사항_큐.md",
+      "docs/reports/**"
+    ],
+    "_exclude주석": "앞 2개 = 이 축의 도구 자체 · CLAUDE.md = 마커 구간이 nomute-editor에서 전파되는 구간(여기서 고치면 다음 전파 PR이 덮어써 증발) · 나머지 = 원장·보고서·백업·캐릭터 데이터(과거 기록·콘텐츠라 개서 금지)."
+  }
+}

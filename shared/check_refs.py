@@ -20,6 +20,7 @@ import os
 import re
 import sys
 import glob
+import json
 import shutil
 import subprocess
 import tempfile
@@ -798,6 +799,95 @@ def check_map_bg_pair():
     return rc
 
 
+# ── 모델 ID 드리프트 게이트 (운영자 260725 한 수 · 정본 = shared/models.json) ──
+# 모델 ID가 호출처마다 리터럴로 흩어져 있다 — 이 레포 실측(260725): gpt-image-2 6파일 · gemini 3파일(각자
+# '실제 ID 바뀌면 함께 교체' 주석 의존) · claude 티어 20+곳. 런타임 결합은 Functions·정적 뷰어에 파일 접근이 없어 불가 → 「정본 1곳 +
+# 기계 치환(shared/apply_models.py) + 이 게이트」 3점(nomute-editor 260725 확립분 이식). 치환기가 놓친 한 곳을 여기서 차단.
+_MODEL_ID_RE = re.compile(r'claude-[a-z]+-[0-9][0-9a-z.-]*')
+_MODEL_NAME_GUARD = '(?![인명])'   # `Opus 5인/5명`(인원) = 모델명 아님 — apply_models.py NAME_GUARD와 동일 규약
+
+
+def _model_registry():
+    with open(os.path.join(ROOT, 'shared', 'models.json'), encoding='utf-8') as f:
+        return json.load(f)
+
+
+def _model_scan_files(reg):
+    drop = set()
+    for g in reg['scan']['exclude']:
+        drop |= {os.path.abspath(p) for p in glob.glob(os.path.join(ROOT, g), recursive=True)}
+    out = []
+    for g in reg['scan']['include']:
+        for p in glob.glob(os.path.join(ROOT, g), recursive=True):
+            ap = os.path.abspath(p)
+            if os.path.isfile(ap) and ap not in drop and not any(ap.startswith(d + os.sep) for d in drop):
+                out.append(ap)
+    return sorted(set(out))
+
+
+def check_model_ids():
+    """모델 ID·표시명 드리프트 하드게이트(운영자 260725 한 수 · 정본 = `shared/models.json`).
+    ① 스캔 경로의 모든 `claude-*` 리터럴이 정본 등재 ID인지 — 오타(`claude-opus5`)·미등재 모델 차단.
+    ② 정본 `retired`(구세대 ID·표시명)가 한 톨도 안 남았는지 — 승격 때 '한 곳 빠뜨림' 봉쇄(이 게이트의 본체).
+    승격법 = `python3 shared/apply_models.py <티어|벤더키> <새ID> ["<표시명>"] ["<한글명>"]` → 이 게이트로 검산 → 커밋.
+    ⚠️ 표시명 검사는 `Opus 5인/5명`(인원 표기)을 (?![인명]) 가드로 제외 — 인원은 '명'으로 써라(모델명과 붙어 읽힌다).
+    스캔 범위·제외(원장·보고서·동결본·산출물)도 models.json `scan`이 정본 = 여기 하드코딩 없음."""
+    try:
+        reg = _model_registry()
+    except Exception as e:
+        print('❌ 모델 ID 게이트: shared/models.json 못 읽음(부재/문법?) —', e); return 1   # fail-closed = 정본 소실 무성 무력화 차단
+    ids = {t['id'] for t in reg['tiers'].values()}
+    retired = [(r, re.compile(re.escape(r) + (_MODEL_NAME_GUARD if not r.startswith('claude-') else '')))
+               for r in reg.get('retired', [])]
+    # 벤더(비-Claude · 종량제) = 표시명 없이 ID만 · family 정규식으로 '그 계열의 다른 버전이 섞였나'를 본다
+    vendors = [(k, v['id'], re.compile(v['family']), set(v.get('allow', [])))
+               for k, v in reg.get('vendors', {}).items() if v.get('family')]
+    bad = []
+    for path in _model_scan_files(reg):
+        try:
+            src = open(path, encoding='utf-8').read()
+        except (OSError, UnicodeDecodeError):
+            continue
+        rel = os.path.relpath(path, ROOT)
+        for lit in sorted(set(_MODEL_ID_RE.findall(src))):
+            if lit not in ids:
+                bad.append('%s: 미등재 모델 ID `%s` (정본 = %s)' % (rel, lit, ' · '.join(sorted(ids))))
+        for key, vid, rx, allow in vendors:
+            for lit in sorted(set(rx.findall(src))):
+                if lit != vid and lit not in allow:
+                    bad.append('%s: 벤더[%s] 계열 드리프트 `%s` — 정본 `%s`%s (종량제 = ID 어긋나면 실패·오과금)'
+                               % (rel, key, lit, vid, (' · 허용 알리아스 %s' % ' '.join(sorted(allow))) if allow else ''))
+        for raw, rx in retired:
+            n = len(rx.findall(src))
+            if n:
+                bad.append('%s: 구세대 표기 `%s` %d곳 잔존 — `python3 shared/apply_models.py` 재실행 or 수동 교체' % (rel, raw, n))
+    if bad:
+        print('❌ 모델 ID 게이트 — 정본(shared/models.json) 드리프트:')
+        for b in bad: print('   -', b)
+        return 1
+    print('✅ 모델 ID 게이트 — %d티어(%s) + 벤더 %d종(%s) 정본 일치 · 구세대 %d종 잔존 0(스캔 %d파일 · 승격 = apply_models.py).'
+          % (len(ids), ' · '.join(t['id'] for t in reg['tiers'].values()), len(vendors),
+             ' · '.join(k for k, *_ in vendors), len(retired), len(_model_scan_files(reg))))
+    return 0
+
+
+# ── 게이트 문서화 메타 게이트 (운영자 260723 Q468 "게이트 문서화 강제 = 만들어놓고 안 봄 구조 차단") ──
+# 모든 게이트(def check_*)가 정본 문서에 *이름으로* 등재됐는지 대조 → 미등재 신규 게이트 = rc=1 차단.
+# = 색 전파 골격(STAGE4·check_palette_sync)의 SSOT 인덱스 완전성 소프트룰("새 기틀 = 인덱스 행 추가 · 누락
+# = 규칙2 위반" = 디자인기틀_SSOT.md 서문 · 기계 강제 아님이라던 그것)의 기계화. 정본 = CLAUDE.md + 디자인
+# SSOT + 규칙·큐레이션 정본 문서(로그류 큐/이력 제외). 기존 미등재 = _GATE_DOC_BASELINE 면책(품질 유지 =
+# 대량 소급 문서화 강제 안 함 · 신규만 래칫 · 베이스라인 = 소급 문서화 TODO·축소 지향). 자기 자신
+# (check_gate_docs)도 대상 = SSOT §6·CLAUDE.md [15] 등재(자기참조 정합).
+_GATE_DOC_CANON = ('CLAUDE.md', 'docs/디자인기틀_SSOT.md', 'docs/CII_컴포넌트계승인덱스.md',
+                   'docs/라우터_법령전문.md', 'docs/실행계약_전문.md', 'docs/플레이그라운드_포터블.md',
+                   'docs/curation-algorithm.md', 'docs/curation-rubric.md')
+_GATE_DOC_BASELINE = frozenset({   # 260723 스냅샷 = 소급 문서화 대상(신규 추가 = 문서화 회피라 지양 · diff 가시 · 축소 지향)
+    'check_paths', 'check_versions', 'check_viewer_js', 'check_functions_js', 'check_inject_dividers',
+    'check_inject_markers', 'check_sens_vocab', 'check_fast_max_h_parity', 'check_shell_cache_parity',
+    'check_tokens_link', 'check_dangling_var', 'check_candidates_size', 'check_conflict_markers',
+    'check_qledger_unique', 'check_anchor_liveness', 'check_html_charset', 'check_fp_parity', 'check_label_fill'})
+
+
 def main():
     fails = check_paths() + check_versions() + check_inject_dividers() + check_inject_markers()
     rc = 0
@@ -892,6 +982,11 @@ def main():
             rc = 1
     except Exception as e:
         print('⚠️ 세계율 게이트 스킵:', e)
+    try:
+        if check_model_ids() != 0:   # 모델 ID 드리프트(하드 — 승격 시 '한 곳 빠뜨림' 봉쇄 + 벤더 계열 드리프트 · 정본 shared/models.json · 승격기 = apply_models.py · 운영자 260725 이식)
+            rc = 1
+    except Exception as e:
+        print('❌ check_model_ids 예외(fail-closed):', e); rc = 1
     try:
         if check_map_bg_pair() != 0:   # 지도 배경↔도로 좌표 짝(하드 게이트 — 배경 재생성 = 좌표 침묵 실효 차단 · Q.08 평의회9)
             rc = 1
