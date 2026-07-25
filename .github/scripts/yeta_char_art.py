@@ -35,21 +35,27 @@ BASE = ("Fantasy character portrait, polished Korean manhwa / webtoon key-art il
         "no text, no caption, no watermark, no logo, no border. Character — ")
 
 # 얼빡 프사(운영자 260725 "프로필 영역이 작아서 가슴 위를 쓰면 실제로는 안 보인다 · 몸은 더더욱 필요 없다").
-# 얼빡 = 얼굴이 여백 없이 화면을 빡빡하게 채우는 극단 클로즈업(K팝 얼빡직캠 어원) — 정본 견본 = 루시 lucy_face.webp.
-# 스타일 어휘는 위 BASE 그대로 계승(붓결·아우라·입자 = 같은 축), 바뀐 건 프레이밍 하나뿐(새 결 창작 0).
+# 얼빡 = 얼굴이 여백 없이 화면을 빡빡하게 채우는 극단 클로즈업(K팝 얼빡직캠 어원) — **정본 견본 = 루시 lucy_face.webp**(운영자가 "저런식으로"로 지목).
+# ⚠ run#1 반성: 스타일 어휘를 위 BASE(판타지 반신 초상)에서 통째로 계승했더니 결이 어긋났다 —
+#   반실사 글로시 + 번개·아우라·입자 범벅에 마이크·손·어깨까지 들어가 얼빡도 아니었다(운영자 "루시 얼빡 말고는 다시 만들어야 된다").
+#   그래서 계승 대상을 **BASE가 아니라 견본 프사(lucy_face.webp) 실물**로 바꿔 적는다 = 납작한 애니 셀 · 파스텔 · FX 0 · 얼굴만.
 AV_BASE = ("Extreme close-up face shot — the face fills the entire square frame edge to edge with no margin, "
-           "cropped just above the eyebrows and just below the lower lip, no shoulders, no neck, no scenery, "
+           "cropped through the top of the head just above the eyebrows and cut just below the lower lip, "
+           "NO shoulders, NO neck, NO hands, NO props or instruments, NO scenery or objects in frame — face only, "
            "perfectly square 1:1, one single original fictional character, "
-           "polished Korean manhwa / webtoon key-art illustration, painterly semi-realistic, glossy rendering with soft painterly shading, "
-           "looking straight at the viewer, large expressive highly-detailed eyes, flawless luminous skin, "
-           "shallow depth of field, cinematic rim light against deep spotify-black shadows, "
-           "a restrained neon-lime and cobalt palette with the character's own aura color, delicate floating light particles, "
+           "clean flat anime illustration with crisp dark line art and soft cel shading — like a modern anime key visual, "
+           "NOT semi-realistic, NOT photoreal, NOT glossy painterly rendering, NO sweaty skin, "
+           "matte pastel colour palette, soft airbrushed blush across the cheeks and nose, "
+           "large detailed eyes with clean eyeliner accents, calm even lighting, "
+           "plain softly blurred background in one quiet tone (a faint hint of the character's own aura colour), "
+           "NO lightning, NO sparks, NO glowing particles, NO magic effects, NO neon streaks, NO heavy rim light, "
+           "keep the described gender and apparent age exactly — the crop hides hair length and clothing, so read the description, not the framing, "   # 260725 run#1 실측: 세라(19세 여성)가 남성 얼굴로 나왔다 — 얼빡 크롭이 성별·나이 단서(포니테일·의상)를 지워 프롬프트 표류
            "no text, no caption, no watermark, no logo, no border. Character — ")
 
 # 10인 판타지 초상(카드 서사 각색 · 포인트색 아우라 = roster color) — grounded 인물도 '낮게 새는 판타지'로 승격
 CHARS = [
     ("mudi",  "an ageless serene androgynous keeper of a centuries-old 24-hour teahouse, early-40s appearance but timeless eyes that have heard a thousand years of sorrows, a soft knowing half-smile, tidy linen apron over a fitted robe, holding a warm cup from which luminous jade-green steam curls into drifting glowing wisps; a mint-green (#7ee0a3) ethereal aura, warm amber lanterns behind."),
-    ("sera",  "a fierce beautiful 19-year-old youngest 'awakener', chic aloof guarded expression with loneliness underneath, sleek high ponytail with one earphone in, faint incandescent power-lines glowing along one arm from climbing 'the Tower', a sporty crop-and-jacket practice outfit; a hot-pink (#ff8fb3) awakened aura crackling faintly, a vast shadowy spire looming in the deep background."),
+    ("sera",  "a fierce beautiful 19-year-old girl, the youngest 'awakener' — unmistakably a teenage young woman with soft feminine features, chic aloof guarded expression with loneliness underneath, sleek high ponytail with one earphone in, faint incandescent power-lines glowing along one arm from climbing 'the Tower', a sporty crop-and-jacket practice outfit; a hot-pink (#ff8fb3) awakened aura crackling faintly, a vast shadowy spire looming in the deep background."),
     ("haeun", "an elegant playful 32-year-old literature teacher touched by quiet word-magic, a warm teasing smile, soft wavy shoulder-length hair, refined features, a stylish blouse with a chalk-dusted satchel, faint glowing hangul letters and golden ink drifting off an open book beside her like fireflies; a soft gold (#ffd36b) aura, dusk school-gate glow behind."),
     ("baek",  "an extremely handsome tall broad-shouldered 43-year-old warden — the last surviving hunter of the guild that turns back the 'night-things' from beyond the boundary, chiseled jaw, intense weary watchful eyes, a faint old scar on the arm, a sharp dark warding-coat with a sheathed blade, faint protective runes dimly lit; a steel-blue (#9db2bf) mist aura, pre-dawn alley shadow behind."),
     ("ryu",   "a charismatic handsome 45-year-old kendo master who was a legendary sword-saint of the martial world five centuries ago and woke here, light stubble, an alluring half-lidded lazy gaze that turns razor-sharp, dark hair loosely tied back, elegant traditional-modern attire, a folding fan in one hand and a faintly luminous spectral blade resting at his side; a silver-teal (#6bd6e8) moonlit aura, dojo veranda haze behind."),
