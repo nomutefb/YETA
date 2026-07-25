@@ -116,7 +116,7 @@
 [15] 웹앱 구조 (레포 고유 — 실측. 폴더 = 역할 1줄씩, 실존 경로만)
 - `viewer/` = 웹앱 본체(PWA). `viewer/index.html`=값 SSOT(`:root` 디자인 토큰)+메인 UI · `viewer/call.js`=음성·전화 모듈 · `viewer/nm-svg.js`=아이콘 SSOT · `viewer/tokens.css`=구조토큰 거울(빌드 산출·직접수정 금지) · `viewer/sw.js`·`viewer/manifest.json`=PWA · `viewer/pg/`=플레이그라운드 서빙 경로(시안 = 라이브 URL 제공 · [5]) · `viewer/characters/`·`viewer/assets/`·`viewer/fonts/`.
 - `functions/` = 서버리스 백엔드(Cloudflare Functions). `functions/api/yeta.js`=제타 API.
-- `shared/` = 파이썬·셸 도구. `shared/check_refs.py`=커밋 전 전체 게이트 · `shared/build_design_mirror.py`=디자인 거울 빌더 · `shared/account_failover.py`·`shared/claude_meter.sh` 등.
+- `shared/` = 파이썬·셸 도구. `shared/check_refs.py`=커밋 전 전체 게이트 · **`shared/models.json`=모델 ID·표시명 정본(SSOT) + `shared/apply_models.py`=승격 일괄 치환기**{`python3 shared/apply_models.py <티어|벤더키> <새ID> ["<표시명>"] ["<한글명>"]` 1발로 전 호출처 치환 → 게이트 짝 = check_refs `check_model_ids`(구세대 잔존·미등재 ID + 벤더 계열 드리프트 차단) · 왜 = gpt-image-2 6파일·gemini 3파일이 각자 하드코딩이던 축 · nomute-editor 260725 확립분 이식} · `shared/build_design_mirror.py`=디자인 거울 빌더 · `shared/account_failover.py`·`shared/claude_meter.sh` 등.
 - `docs/` = 문서 정본. `docs/절대명령1_포터블.md` · `docs/절대명령2_정본인덱스.md`(위치 SSOT) · `docs/CII_컴포넌트계승인덱스.md`(컴포넌트) · `docs/브랜드_팔레트_확립본.html` · `docs/디자인방식론_YETA.md` · `docs/reports/`.
 - `구성도/` = 디자인 시각 정본(블루프린트). `구성도/00_가이드북_버튼인터랙션.html` · `구성도/base.css`(거울·직접수정 금지) · `구성도/픽토그램.html`·`구성도/텍스트 위계.html` 등 확립본 + `구성도/노뮤트_웹UI_공통규약.md`.
 - `apps/yeta/` = 캐릭터챗 콘텐츠·설정. `apps/yeta/characters/`(캐릭터 카드)·`apps/yeta/worlds.json`·`apps/yeta/places.json`·`apps/yeta/users.json`·`apps/yeta/policy.json`·세계관 문서.
