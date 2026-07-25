@@ -76,6 +76,16 @@ SEASONS = {
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음(mode_dir 없음 = 시간대 필터 비활성). "
                     "정본=viewer/characters/season/seyeun/main/<감정>/."),
     },
+    "mudi": {
+        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
+        "modes": {"main": ["base"]},
+        "comment": ("시즌 감정 미디어 manifest(홍석천) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
+                    "⚠ 260726 현재 = 사람 없는 찻집 장소 씬 3장(yeta_bg_var 산출 var_mudi_* 사본 — 원본은 생성기 소관이라 여긴 사본이 정본). "
+                    "배치 = 주방(불·주전자)→base · 뒷문(넘어진 스툴+발자국 = 도주 직후)→tense · 새벽 지붕(발자국이 넘어감)→blue. "
+                    "정본=viewer/characters/season/mudi/main/<감정>/."),
+    },
     "von": {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
         "modes": {"main": ["base"]},
