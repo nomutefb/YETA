@@ -540,6 +540,10 @@ export async function onRequestPost({ request, env }) {
       if (!q || !o) return { abort: { error: '그 선택지는 없어' } };
       done.push(OI);
       md.cut = (md.cut || 0) + CUT_MS;
+      if (q.p && o.t) {   // 고른 대사 자체를 보존(운영자 260725 승인) — 숫자 축보다 강하게 말투를 수렴시키는 재료: 러너가 "네가 그 애답다고 고른 말"로 프롬프트에 얹는다. 링버퍼 5개(오래된 것부터 밀려남 = 최신 취향 반영).
+        const P = (s.tune_picks = s.tune_picks || {}), pa = (P[q.p] = P[q.p] || []);
+        pa.push(String(o.t).slice(0, 120)); if (pa.length > 5) pa.splice(0, pa.length - 5);
+      }
       const ax = parseInt(o.ax, 10), d = (parseInt(o.d, 10) || 0) >= 0 ? 1 : -1;
       if (q.p && ax >= 0 && ax <= 15) {
         const V = (s.tune_votes = s.tune_votes || {}), arr = (V[q.p] = V[q.p] || []);
@@ -838,6 +842,7 @@ export async function onRequestPost({ request, env }) {
     if (th.turns.length > 200) th.turns = th.turns.slice(-200);   // 스레드 캡(보안 감사⑤)
     th.state = 'awaiting'; th.awaiting_since = Date.now(); th.err = ''; delete th.retry_n;   // 새 유저 턴 = 재시도 사다리 리셋(뉘앙스 블록 잔류 차단 · 260714)
     delete th.gb;   // 단톡 자율 비트 예약 취소(260725) — 내가 끼어들면 너희끼리 하던 차례는 끝(러너도 pending 우선이라 안 태우지만, 여기서 지워야 뷰어 타이핑 점이 '내 답장 대기'로 즉시 정정된다)
+    delete th.picks;   // 미연시 선택지 소거(260725) — 골랐든 직접 썼든 내 턴이 나간 순간 그 갈림길은 끝(다음 답이 새로 제안한다)
     th.updated = Date.now();
     s.cur = t;   // 발신 = 현재 방 확정(푸시 딥링크·phone 발신자 정본 · 러너 감사⑤B)
     s.pref = { model, effort };
