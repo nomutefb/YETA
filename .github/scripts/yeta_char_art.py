@@ -24,6 +24,10 @@ AV_MODE = os.environ.get("YETA_AV_MODE", "") == "1"   # 얼빡 프사 전용 모
 AV_REBUILD = os.environ.get("YETA_AV_REBUILD", "") == "1"   # 이미 뽑아둔 <id>_face.png에서 크롭만 다시(생성 0 = 무과금 · 배율 조정용)
 AV_ZOOM = (os.environ.get("YETA_AV_ZOOM") or "0.72").strip()   # 얼빡 확대 배율(실측 확정 0.72 · 아래 av_write 주석)
 AV_YBIAS = (os.environ.get("YETA_AV_YBIAS") or "0.04").strip()  # 크롭 창 y 편향(위로)
+try:
+    AV_TAKES = max(1, min(6, int(os.environ.get("YETA_AV_TAKES") or "1")))   # 한 인물 얼빡 N장(운영자 260726 "지피티로 한 4장") — 2장째부터는 av/<id>_v2.webp… 로 빠지고 roster 주입 안 함(고르는 건 운영자)
+except ValueError:
+    AV_TAKES = 1
 OUT = "viewer/assets/yeta_char"
 AVDIR = os.path.join(OUT, "av")                       # 작은 얼굴(아바타) 512²
 ROSTER = "apps/yeta/characters/roster.json"
@@ -58,7 +62,9 @@ AV_BASE = ("Extreme close-up face shot — the face fills the entire square fram
 
 # 10인 판타지 초상(카드 서사 각색 · 포인트색 아우라 = roster color) — grounded 인물도 '낮게 새는 판타지'로 승격
 CHARS = [
-    ("mudi",  "an ageless serene androgynous keeper of a centuries-old 24-hour teahouse, early-40s appearance but timeless eyes that have heard a thousand years of sorrows, a soft knowing half-smile, tidy linen apron over a fitted robe, holding a warm cup from which luminous jade-green steam curls into drifting glowing wisps; a mint-green (#7ee0a3) ethereal aura, warm amber lanterns behind."),
+    # 260726 운영자 개편("게이 + 근육질 컨셉 · 종종 동물로 변신해 대화 중 도망 · 얼굴에 임팩트 있고 선이 강하게") —
+    # 종전 androgynous/serene 어휘가 얼굴을 물렁하게 만들어 10인 중 개성이 제일 옅었다. 남성 명사 + 각진 골격 + 굵은 선으로 교체.
+    ("mudi",  "a striking masculine gay man in his early 40s who keeps a centuries-old 24-hour teahouse — a broad-shouldered heavily muscled build with a thick corded neck and visible collarbones, a hard angular jawline and high sharp cheekbones, a strong straight nose, one arched brow, a knowing lopsided half-smile with a slight fang, deep-set timeless eyes that have heard a thousand years of sorrows; bold heavy confident line art with strong dark linework and high-contrast shading — a face with impact, not a soft one; close-cropped dark hair, a small hoop earring, a linen apron strap over a bare muscular shoulder; a faint animal cast to the pupils (he does not stay human when he is startled); a mint-green (#7ee0a3) ethereal aura, warm amber lanterns behind."),
     ("sera",  "a fierce beautiful 19-year-old girl, the youngest 'awakener' — unmistakably a teenage young woman with soft feminine features, chic aloof guarded expression with loneliness underneath, sleek high ponytail with one earphone in, faint incandescent power-lines glowing along one arm from climbing 'the Tower', a sporty crop-and-jacket practice outfit; a hot-pink (#ff8fb3) awakened aura crackling faintly, a vast shadowy spire looming in the deep background."),
     ("haeun", "an elegant playful 32-year-old literature teacher touched by quiet word-magic, a warm teasing smile, soft wavy shoulder-length hair, refined features, a stylish blouse with a chalk-dusted satchel, faint glowing hangul letters and golden ink drifting off an open book beside her like fireflies; a soft gold (#ffd36b) aura, dusk school-gate glow behind."),
     ("baek",  "an extremely handsome tall broad-shouldered 43-year-old warden — the last surviving hunter of the guild that turns back the 'night-things' from beyond the boundary, chiseled jaw, intense weary watchful eyes, a faint old scar on the arm, a sharp dark warding-coat with a sheathed blade, faint protective runes dimly lit; a steel-blue (#9db2bf) mist aura, pre-dawn alley shadow behind."),
@@ -194,6 +200,15 @@ def main():
         made += 1
         print(f"  ✓ {av} ({len(png)//1024}KB 원본)", flush=True)
         time.sleep(2)
+        for n in range(2, AV_TAKES + 1):   # 여벌 테이크(운영자 260726 "한 4장") — 같은 프롬프트 재추첨분은 <id>_v2… 로만 떨어뜨리고 roster는 안 건드린다(픽 = 운영자)
+            print(f"얼빡 {cid} 테이크 {n} …", flush=True)
+            png2 = openai_image(AV_BASE + desc, size="1024x1024")
+            if not png2:
+                continue
+            if av_write(png2, f"{cid}_v{n}"):
+                made += 1
+                print(f"  ✓ {AVDIR}/{cid}_v{n}.webp (여벌 · roster 미주입)", flush=True)
+            time.sleep(2)
     for cid, desc in ([] if AV_MODE else chars):
         path = os.path.join(OUT, f"{cid}.png")
         if os.path.exists(path) and not FORCE:

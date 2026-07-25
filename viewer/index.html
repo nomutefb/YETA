@@ -3571,11 +3571,11 @@ function yStage(mood) {   // 무대 우선순위(운영자 260707): 난입 플�
   const bg = th.barged;
   const bargeP = bg && (th.room || []).includes(bg.id) && !turns.some(t => t.role === 'user' && (t.ts || 0) > (bg.ts || 0)) ? yPersona(bg.id) : null;   // 난입 직후(내 후속 발화 전) = 난입자 시그니처 순간 노출(kick pill 판정과 동일 창)
   const place = sig ? '' : yPlaceSync();   // 장소 국면에서만 위치 조회(시그니처 국면은 조회 생략)
-  const key = `${YCUR.id}|${sig ? '' : (mood || '')}|${sig ? 'sig' : place}|${bargeP ? bargeP.id : ''}`;   // 시그니처 국면 = 그림이 mood 무관(tries=[YCUR.bg]) → 키에서 mood 제외 = 같은 그림 재스테이지('숨') 방지(감사 260707)
+  const key = `${YCUR.id}|${sig ? '' : (mood || '')}|${sig ? 'sig' : place}|${bargeP ? bargeP.id + (yModeOn(bargeP) ? '+' : '') : ''}`;   // 시그니처 국면 = 그림이 mood 무관(tries=[YCUR.bg]) → 키에서 mood 제외 = 같은 그림 재스테이지('숨') 방지(감사 260707) · 난입자 모드축(260726) = 흉내 모드 배경으로 갈릴 때 키가 달라져야 재페인트된다
   if (key === _yStageKey) return;
   _yStageKey = key;
   const tint = YCUR.color || '#7c5cfc';
-  const tries = bargeP ? [bargeP.bg || '', YCUR.bg || '']
+  const tries = bargeP ? [yCBg(bargeP), YCUR.bg || '']
     : sig ? [YCUR.bg || '']
     : [place ? ySceneForPlace(place, mood) : '', mood ? ySceneFor(mood) : '', mood && YCUR.bg ? yMoodUrl(YCUR.bg, mood) : '', YCUR.bg || ''];
   const T = tries.filter(Boolean);
@@ -3999,12 +3999,17 @@ function yGreet(c) {   // 첫인사 = 변주 풀 랜덤 픽(운영자 260707 "�
   const g = (c && Array.isArray(c.greetings) && c.greetings.length) ? c.greetings : (c && c.greeting ? [c.greeting] : ['왔네.']);
   return g[Math.floor(Math.random() * g.length)];
 }
-function yModeOn(c) {   // 변신 모드 시간대 게이트 판정 — 배지(yJobBadge)·모드 프사(yCAva) 공용 SSOT(운영자 260717 Q "도깨비 모드 = 프사 자동 교체" · 판정 이원화 = 배지/프사 엇갈림 드리프트라 1함수)
+function yModeOn(c) {   // 변신 모드 게이트 판정 — 배지(yJobBadge)·모드 프사(yCAva)·모드 배경(yCBg) 공용 SSOT(운영자 260717 Q "도깨비 모드 = 프사 자동 교체" · 판정 이원화 = 배지/프사 엇갈림 드리프트라 1함수)
   const m = c && c.mode;
   if (!m || !m.nm) return false;
+  if (Array.isArray(m.with) && m.with.length) {   // 동석 게이트(운영자 260726 드루실라 "고죠와 단톡에 있을때 또는 대화할때 난입" = 흉내 모드) — 시간대축과 직교, 둘 다 있으면 AND
+    const rm = (YTH() || {}).room || [];          // 지금 열린 방의 정원(목록 행 = 방 미상 → 흉내 미발동 = 안전측)
+    if (!m.with.some(id => rm.includes(id))) return false;
+  }
   return !m.t || m.t.includes(ymSlot(yWorldDH().h));   // 시간대 = ymSlot 단일 정의(Q.18 통일 — 지도·동선·러너 slot_of/state_block과 같은 시계 · 구 인라인 late<4/night≥20 폐지 = 도깨비 창 21~03시)
 }
 const yCAva = c => (yModeOn(c) && c.mode.avatar) ? c.mode.avatar : ((c && c.avatar) || '');   // 캐릭터 아바타 해석 SSOT — 모드 활성 + 모드 프사(roster mode.avatar) 있으면 그걸로, 아니면 평시 프사(내 아바타는 yMeAva 별축)
+const yCBg = c => (yModeOn(c) && c.mode.bg) ? c.mode.bg : ((c && c.bg) || '');   // 캐릭터 배경 해석 SSOT — yCAva 대칭축(운영자 260726 "배경바뀌고 프사 바뀌면서 등장") · 모드 배경 없으면 평시 bg
 function yJobBadge(c) {   // 이름 옆 직업/변신 배지(운영자 260707) — 변신 모드(시간대 게이트) 있으면 터콰이즈 우선 · 아니면 메인 직업 라임
   if (!c) return '';
   if (yModeOn(c)) return `<span class="yjob tq">${esc(c.mode.nm)}</span>`;
