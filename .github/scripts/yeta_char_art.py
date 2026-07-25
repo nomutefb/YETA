@@ -44,6 +44,7 @@ AV_BASE = ("Extreme close-up face shot — the face fills the entire square fram
            "looking straight at the viewer, large expressive highly-detailed eyes, flawless luminous skin, "
            "shallow depth of field, cinematic rim light against deep spotify-black shadows, "
            "a restrained neon-lime and cobalt palette with the character's own aura color, delicate floating light particles, "
+           "keep the described gender and apparent age exactly — the crop hides hair length and clothing, so read the description, not the framing, "   # 260725 run#1 실측: 세라(19세 여성)가 남성 얼굴로 나왔다 — 얼빡 크롭이 성별·나이 단서(포니테일·의상)를 지워 프롬프트 표류
            "no text, no caption, no watermark, no logo, no border. Character — ")
 
 # 10인 판타지 초상(카드 서사 각색 · 포인트색 아우라 = roster color) — grounded 인물도 '낮게 새는 판타지'로 승격
