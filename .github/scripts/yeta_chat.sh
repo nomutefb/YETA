@@ -1070,6 +1070,15 @@ wd, wh = world_dh()                                  # 무음동 세계 시각(6
 sp = s.get("last_sp") or os.environ.get("THREAD", "")
 pl = place_of(PL, sp, wd, wh) if sp else ""
 pnm = place_name(PL, pl) if pl else "무음동 골목"
+# 다음 자리 = 아크의 회수 무대(평의회D 260725) — place_of는 (캐릭터·날짜·슬롯·hour//2) 순수함수라 **다음 2시간 버킷의 장소를 지금 계산할 수 있다**.
+# 발단은 여기, 회수는 다음 자리로 넘기면 "골목을 타고 옮겨가는 사건"이 세계 동선만으로 공짜로 생긴다(신규 데이터 0).
+nnm = ""
+try:
+    _nh = wh + 2                                     # place_of 시드 입도 = hour//2 → +2면 반드시 다른 버킷
+    _nd = wd if _nh < 24 else f"w{int(wd[1:]) + 1}"
+    _npl = place_of(PL, sp, _nd, _nh % 24) if sp else ""
+    if _npl and _npl != pl: nnm = place_name(PL, _npl)
+except Exception: nnm = ""
 season = ["겨울","겨울","봄","봄","봄","여름","여름","여름","가을","가을","가을","겨울"][datetime.now(timezone(timedelta(hours=9))).month - 1]   # 계절 = 현실 축(10_세계관.md "계절·날짜·요일은 현실") · 경계 = state_block 정본 배열 그대로 계승(사본 드리프트 금지) · KST 강제([12])
 h0, h1 = (T.get("deep_hours") or [0, 3])[:2]
 deep_on = deep and (h0 <= wh < h1)                   # 경계가 얇아지는 시간대에만 어반 판타지 결 추첨(10_세계관.md 정합)
@@ -1077,7 +1086,8 @@ deep_on = deep and (h0 <= wh < h1)                   # 경계가 얇아지는 �
 # 생성 시점(evq_ctx=유저 턴 수 · evq_pl=장소)을 스탬프해두고, 대화가 stale_turns만큼 굴렀거나 장소가 바뀌면 큐가 남아 있어도 새로 뽑는다(ambient_store가 교체 적재).
 uc = len([t for t in (s.get("turns") or []) if (t or {}).get("role") == "user"])
 _c0 = s.get("evq_ctx"); _p0 = s.get("evq_pl") or ""
-stale = (isinstance(_c0, int) and uc - _c0 > int(T.get("stale_turns") or 3)) or bool(_p0 and pl and _p0 != pl)
+_nbr = set(((PL.get("places") or {}).get(_p0) or {}).get("neighbors") or []) if _p0 else set()   # 인접 이동은 폐기 면제(평의회D 260725) — 옆 골목으로 한 칸 옮긴 걸 '딴 세상'으로 치면 아크가 매번 끊긴다(places.json 이웃 그래프 = 기존 자산)
+stale = (isinstance(_c0, int) and uc - _c0 > int(T.get("stale_turns") or 3)) or bool(_p0 and pl and _p0 != pl and pl not in _nbr)
 if len(s.get("evq") or []) >= int(T.get("queue_min") or 2) and not stale: sys.exit(0)   # 큐 충분 + 신선 = 생성 안 함(호출 절약)
 pool = max(batch, batch * int(T.get("seed_pool") or 3))   # 씨앗을 batch보다 넉넉히 뽑아 **후보**로 던진다(운영자 260725 "그 상황에 맞는 걸 넣어줘") — 강제 소진이면 안 맞는 소재도 문장이 되어 뜬금없어진다. 골라 쓰게 하는 게 관련도 축의 핵심.
 seeds = []
@@ -1099,6 +1109,8 @@ fired = fired[-2:]
 L = [f"무음동 골목에서 지금 막 터지는 사건 **하나**를 잡아, 그게 굴러가는 {batch}비트로 쪼개 써라.", "",
      "[무대] 서울 변두리, 밤이 유난히 긴 동네 무음동. 낮보다 밤에 살아나는 골목이다.",
      f"[지금] {pnm} · 세계시각 {wh}시 · {season}", ""]
+if nnm:
+    L += [f"[다음 자리] 시간이 넘어가면 {nnm} 쪽이다. 마지막 비트는 여기서 마무리돼도 좋다 — 사건이 골목을 타고 옮겨간 것처럼(억지로 옮기진 마라).", ""]
 if ctx:
     L += ["[지금 대화] 유저와 상대가 방금까지 나눈 말. 사건은 **이 장면 옆에서** 터진다:"] + ctx + [""]
 if fired:
@@ -1142,15 +1154,18 @@ for ln in (os.environ.get("AMB_RAW") or "").splitlines():
     ln = re.sub(r'^\s*(?:[-*·]|\d+[.)])\s*', '', ln).strip().strip('"“”\'')   # 번호·불릿·따옴표 방어(형식 이탈 흡수)
     if 8 <= len(ln) <= 90 and not ln.startswith("[") and ln not in out: out.append(ln)
 if not out: sys.exit(1)
+_PL = {}
 try:                                                 # 장소 스탬프(fail-soft — 실패해도 적재는 계속 · 계산식 = ambient_prompt와 동형)
     from yeta_place import load_places, place_of, world_dh
     _wd, _wh = world_dh()
     _sp = s.get("last_sp") or os.environ.get("THREAD", "")
-    _pl = place_of(load_places(), _sp, _wd, _wh) if _sp else ""
+    _PL = load_places()
+    _pl = place_of(_PL, _sp, _wd, _wh) if _sp else ""
 except Exception: _pl = ""
 uc = len([t for t in (s.get("turns") or []) if (t or {}).get("role") == "user"])
 _c0 = s.get("evq_ctx"); _p0 = s.get("evq_pl") or ""
-stale = (isinstance(_c0, int) and uc - _c0 > int((A.get("tuning") or {}).get("stale_turns") or 3)) or bool(_p0 and _pl and _p0 != _pl)
+_nbr = set(((_PL.get("places") or {}).get(_p0) or {}).get("neighbors") or []) if _p0 else set()   # 인접 이동 폐기 면제 = ambient_prompt와 동형(판정 불일치 = 생성했는데 버리는 사고)
+stale = (isinstance(_c0, int) and uc - _c0 > int((A.get("tuning") or {}).get("stale_turns") or 3)) or bool(_p0 and _pl and _p0 != _pl and _pl not in _nbr)
 q = [] if stale else [x for x in (s.get("evq") or []) if isinstance(x, str)]   # 묵은 큐 = 폐기 후 교체(옛 맥락 사건이 새 장면에 섞여 터지는 것 차단 · 신선분은 보존)
 q += out
 s["evq"] = q[-12:]                                   # 큐 상한 = 무한적재·스테일 누적 차단
