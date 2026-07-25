@@ -3164,6 +3164,19 @@ function yBond(c) {   // 유효 친밀도 = 내 발화 수 × 감쇠 — 커브(
   const t = Math.min(1, Math.max(0, (d - 1) / 6)), ease = t * t * (3 - 2 * t);
   return n * (1 - .5 * ease);
 }
+const YBOND_CONTACT = 8;   // 연락처 교환 임계(운영자 260725 "상호간 어느정도 친목이 올라왔을 때만") — yBond(내 발화 수×감쇠) 기준 · 소원 임계 1.5와 같은 척도의 상위 눈금(노브: 여기 한 곳)
+function yHeadSync() {   // 헤더 픽토 상태 동기(운영자 260725) — [✉문자][👤+연락처][💬대면][📞전화] 4픽토를 한 함수에서 판정(전화는 call.js 소관 · 빗금 문법 .slash 공통 계승)
+  const c = YCUR, one = !!(c && (YSESS || {}).cur === c.id);   // 1:1 방일 때만 인물 판정(단톡 = 방 축이라 인물 게이트 미적용)
+  const blocked = one && (yDead(c) || yEstranged(c) || yLockLabel(c) || yUnmet(c));
+  const talkOK = !!c && !blocked && !_yFarOnly;   // 대화 가능 = 사망·소원·잠금·미대면·원거리 아님
+  const bondOK = !one || yBond(c) >= YBOND_CONTACT;   // 연락처 = 친목 눈금 도달(단톡 = 이미 아는 사이 취급)
+  const talk = document.getElementById('yetaTalkBtn');
+  if (talk) { talk.classList.toggle('able', talkOK); talk.classList.toggle('slash', !talkOK); }
+  const msg = document.getElementById('yetaMsgBtn');   // 문자 = 대화 불가면 전화처럼 빗금(운영자 260725) · 미구현 자리표라 .dim은 유지
+  if (msg) msg.classList.toggle('slash', !talkOK);
+  const inv = document.getElementById('yetaInvBtn');   // 연락처 = 친목 미달이면 빗금(탭하면 사유 토스트 — .off[만석·대기]와 별개 축이라 공존)
+  if (inv) { inv.classList.toggle('slash', !bondOK); inv.dataset.bond = bondOK ? '' : '1'; }
+}
 function yEstranged(c) {   // 소원해짐(운영자 260709 "일정 친밀도 이하 = 다시 대화가 안 되게 — 만났지만 대화는 어려움") — 대화했던 사이가 감쇠 임계(1.5) 미만으로 식음 · 회복 = 마주침·난입 재회(우연 축)
   if (!c || c.locked || yUnmet(c)) return false;
   if (yRevPend(c.id)) return false;   // 부활 미답 = 서먹 판정 유예(260714 — 24h 공백이 소원 락을 걸어 부활 재회를 막는 겹잠금 차단 · 첫 답 후 엔트리 소거 = 정상 규칙 복귀)
@@ -3235,6 +3248,7 @@ function yFarApply() {   // far-only = 입력행 차단 + 전화 유도 플레�
   const t = $('#yetaText'), s = $('#yetaSend'), p = $('#yetaPlus');
   if (t) { t.disabled = _yFarOnly; t.placeholder = _yFarOnly ? (YCUR && YCUR.phone ? '멀리 있어 — 전화로 걸어봐' : '자리를 떴어 — 그 장소로 가면 이어져') : '메시지'; }   // 전화 미배선 = 전화 유도 문구 오배송 차단(분신술 260709)
   if (s) s.disabled = _yFarOnly; if (p) p.disabled = _yFarOnly;
+  try { yHeadSync(); } catch (x) {}   // 원거리 전이 = 헤더 픽토(문자·대면) 동반 갱신(운영자 260725)
 }
 async function yFarRecalc() {   // 챗 열어둔 채 here→away 전이 재판정(분신술 260709 — 진입 1회 박제가 시간 경과 우회로 뚫리던 것 봉인) · 전이 순간만 토스트
   if (!yetadlg.open || !YCUR || _yView !== 'chat') return;
@@ -3707,6 +3721,7 @@ function yScRebase(v) {   // 편집 1회분 prefix/suffix diff → _ySegs 절대
 }
 function yScMark(sc) { const ta = $('#yetaText'); _ySegs.push({ at: ta.value.length, sc: sc | 0 }); }
 function yScSet(m) { _yMode = m | 0; const b = $('#yetaSc'); if (b) b.classList.toggle('on', _yMode === 1); const bt = $('#yetaTh'); if (bt) bt.classList.toggle('on-th', _yMode === 2); const row = $('#yetaIn'); if (row) { row.classList.toggle('sc', _yMode === 1); row.classList.toggle('th', _yMode === 2); } const ta = $('#yetaText'); if (ta) ta.placeholder = _yMode === 1 ? '상황 설명' : _yMode === 2 ? '머릿속 생각' : '메시지'; }   // 문구 = 한 낱말(운영자 260716 — 두 줄 설명문이 입력행을 눌러 답답)   // 모드 ON = 입력행 톤 전환(운영자 260714 "자동 블루톤 전환") — 상황 = 터콰이즈 · 생각 = 코발트
+const YSEND_HOLD = 1000;   // 발송 홀드(운영자 260725 "딱 입력하고 1초가 지나면 화자가 답장 시작") — 말 = 1초 뒤 러너 기동(그 사이 이어 친 말이 같은 묶음에 합류) · 생각 = 0(노브: 여기 한 곳)
 const yThWrap = x => `*${x.replace(/\s*\n\s*/g, ' ').replace(/\*/g, '')}*`;   // 생각 구간 = *…* 한 줄로 봉함(yFmt 이탤릭 지문 결 계승 · 줄바꿈 접기·내부 '*' 제거 = 지문 정규식 보호)
 function yScGap(ta) { if (ta.value.trim() && !/\n\n\s*$/.test(ta.value)) ta.value = ta.value.replace(/\s*$/, '') + '\n\n'; ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px'; }   // 전환 = 빈 줄(2줄바꿈) 규칙 — 진입·종료 공통(운영자 260714 "종료되도 2줄 이후로")
 function yScToggle(ta, m) {   // 모드 토글 단일 정본 — 버튼 탭·타이핑이 같은 함수(운영자 260725 "화자가 #을 쓰면 키보드의 #처럼 바로 반응") · 같은 글자 = 닫힘 · 다른 글자 = 그 모드로 갈아탐
@@ -3734,7 +3749,9 @@ $('#yetaText').addEventListener('beforeinput', e => {   // 타이핑 '#'·'*' = 
   const m = YSC_KEY[e.data]; if (!m) return;
   e.preventDefault(); yScToggle(e.target, m);   // 그 글자는 남기지 않는다 = 버튼 탭과 100% 같은 결과(모드 스위치 · 2줄 갭)
 });
-$('#yetaInvBtn').addEventListener('click', e => { e.stopPropagation(); yPdClose(); yInvToggle(); });   // 헤더 초대 + = 초대 팝업(운영자 260712 · .off = pointer-events:none이라 만석·대기 시 무반응 = 자리만 유지)
+$('#yetaInvBtn').addEventListener('click', e => { e.stopPropagation();
+  if (e.currentTarget.dataset.bond === '1') { miniToast(`${(YCUR || {}).name || '이 사람'}과는 아직 연락처를 나눌 사이가 아니야 — 좀 더 얘기해봐`); return; }   // 친목 게이트(운영자 260725) — 빗금 픽토 탭 = 사유 안내(무반응 금지)
+  yPdClose(); yInvToggle(); });   // 헤더 초대 + = 초대 팝업(운영자 260712 · .off = pointer-events:none이라 만석·대기 시 무반응 = 자리만 유지)
 $('#yetaMeter').addEventListener('click', e => {   // 미터 탭 = 모델 순환(Sonnet→Opus→Kimi · 260719) / 노력 순환(빠름→깊게→최대→빠름) — 운영자 260712 · 9단 슬라이더와 별개 직접 전환
   const seg = e.target.closest('.ym-seg'); if (!seg) return; e.stopPropagation();
   if (seg.classList.contains('ym-stat')) { _ymView = (_ymView + 1) % 3; yMeter(); return; }   // 계기판 순환(토큰→속도→길이) — 다이얼 무변경(운영자 260714)
@@ -4009,6 +4026,7 @@ function yRender() {
     _yOpenGate = false; miniToast(`${(YCUR || {}).name || '상대'}은(는) 사망했어 — 현실 24시간 동안 대화할 수 없어`); yShowList(); return;
   }
   _yOpenGate = false;   // 정상 진입 = 게이트 소진(이후 폴 렌더는 통과 — 대화 중 사망은 종전 두절 연출 유지 · 운영자 260714)
+  yHeadSync();   // 헤더 4픽토 상태 동기(대화 가능·문자·연락처 · 운영자 260725)
   $('#yetaIn').hidden = deadNow;
   const prevN = _yLastN, first = prevN < 0;   // 첫 렌더(재진입 포함) = 전체 무애니(히스토리 우르르 방지)
   // 답장 페이스(운영자 260706 → 260714 버블 단위 개편): 꼬리 답장 런을 통짜 공개 대신 **버블 하나씩** 이어붙임("2개 먼저 뱉고 2개 그다음" 리듬 — 러너 finish 버블 분할과 짝).
@@ -4127,11 +4145,12 @@ async function ySend() {
   const sc = _yMode;   // 입력 모드 래치(260714 '#' · 260725 '*')
   // 분리 발송(버그픽스 260715) — _ySegs 모드 타임라인을 구간 그대로 소비(종전엔 전송 순간 스위치만 봐서 "~다." 자동 종결 뒤 보내면 상황문이 통째 대사 턴 = "될 때 안 될 때"). 상황 구간 = 항상 sc 턴(.ysit 지문) · 생각 구간 = *…*로 봉해 대사 턴에 실린다(내 버블 안 이탤릭 = 지문 결).
   const segs = _ySegs;
-  let parts = [];
+  let parts = [], _spoke = false;   // _spoke = 이번 메시지에 '말'이 섞였나(생각만이면 false → 홀드 없이 즉발)
   for (let i = 0; i < segs.length; i++) {
     const st = Math.min(segs[i].at, rawV.length), en = i + 1 < segs.length ? Math.min(segs[i + 1].at, rawV.length) : rawV.length;
     const x0 = rawV.slice(st, en).trim(); if (!x0) continue;   // 빈 구간(#·* 눌러놓고 안 씀) = 미발사(빈 턴 방지 · 종전 결)
     const md = segs[i].sc | 0, x = md === 2 ? yThWrap(x0) : x0, f = md === 1 ? 1 : 0;   // 생각(2) = *…* 봉함 후 대사 축으로 합류 = 아래 병합·합성 규칙 그대로 재사용(새 전송 축 0)
+    if (md !== 2) _spoke = true;   // 생각 아닌 구간이 하나라도 있으면 = 말한 것 → 아래 1초 홀드 대상
     if (parts.length && parts[parts.length - 1].sc === f) parts[parts.length - 1].x += '\n' + x; else parts.push({ x, sc: f });   // 인접 동종 구간 병합 = 턴 수 최소
   }
   if (!parts.length) parts = [{ x: sc === 2 ? yThWrap(text) : text, sc: sc === 1 ? 1 : 0 }];   // 안전망 — 타임라인 유실 시 종전 단일 턴 폴백
@@ -4158,6 +4177,8 @@ async function ySend() {
   clearTimeout(_yTypT); _yTypT = setTimeout(() => { if (Date.now() >= _yTypHold && !_yTypOn && YSESS) { log.insertAdjacentHTML('beforeend', yTypingHtml(true)); _typEl = log.lastElementChild; _yTypOn = true; log.scrollTop = log.scrollHeight; } }, 1150 + Math.random() * 1700);
   log.scrollTop = log.scrollHeight;
   let r = { ok: true }, sent = 0;
+  btn.disabled = false;   // 홀드 동안에도 다음 말을 이어 칠 수 있게 즉시 재개(운영자 260725 "연달아서 다음 대화에 뭘 입력할 수도 있으니까")
+  if (_spoke) await new Promise(z => setTimeout(z, YSEND_HOLD));   // 1초 홀드 — 곧바로 이어 치는 말이 같은 pending 묶음에 들어가 한 답으로 소화된다(웜 러너 batch와 짝 · 낙관 버블·타이핑 연출은 이미 떠 있어 체감 지연 0) · 생각(*)만 = 홀드 없이 즉발("하지만 생각은 바로")
   for (const p of parts) {   // 순차 발송 — 입력 순서대로(웜 러너가 pending 묶음으로 한 답에 소화)
     r = await yApi('send', { t: (YSESS || {}).cur || (YCUR && YCUR.id) || '', text: p.x, model: YDIAL.model, effort: YDIAL.effort, ...(p.sc ? { sc: 1 } : {}), ...(_yRemote ? { far: 1 } : {}) }).catch(() => ({ error: '네트워크 실패 — 다시 보내줘' }));   // far = 상대 다른 장소(원거리) → 러너가 물리 접촉 금지 주입(운영자 260714)
     if (!r.ok) break;
