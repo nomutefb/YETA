@@ -289,8 +289,10 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yeta-plus { flex:none; width:var(--btn); height:var(--btn); align-self:center; border:none; background:none; color:var(--fg-2);
     display:grid; place-items:center; cursor:pointer; touch-action:manipulation; }
   .yeta-plus svg { width:22px; height:22px; }
+  .yeta-plus[hidden] { display:none; }   /* [hidden] 복원 — 위 display:grid가 UA [hidden]을 이긴다(사진 첨부 '+' 숨김 · 운영자 260725) */
   .yeta-plus:active { transform:scale(var(--press-m,.9)); }
   .yeta-plus { transition:transform .28s var(--ease), color .4s var(--ease), background-color .4s var(--ease), box-shadow .4s var(--ease); }   /* 상황 모드 색전환 = 동일 모양에서 부드럽게 페이드(운영자 260714 "확 바뀌지 말고") */
+  .yeta-plus.on-th { color:var(--cobalt); background:rgba(var(--cobalt-rgb),.16); border-radius:var(--r-pill); box-shadow:inset 0 1px 0 var(--glass-line), 0 0 18px rgba(var(--cobalt-rgb),.18); }   /* 생각 모드('*' 운영자 260725) 활성 = 바로 아래 .on 필 레시피의 코발트 변주(값 복제 0·토큰만 교체 · 입력행 .yeta-in.th 톤과 같은 축) */
   .yeta-plus.on { color:var(--think); background:rgba(var(--think-rgb),.16); border-radius:var(--r-pill); box-shadow:inset 0 1px 0 var(--glass-line), 0 0 18px rgba(var(--think-rgb),.18); }   /* 상황 모드('#') 활성 = ydock .on 필 레시피의 터콰이즈 변주(운영자 260714 "2강조색 더콰이즈" — 토큰 --think[터콰이즈 정본] 계승 · 라임=대화/터콰이즈=연출 축 분리) */
   .yeta-in.sc { border-color:rgba(var(--think-rgb),.5); }   /* 상황 모드 = 입력행 자동 터콰이즈 톤(운영자 260714) — 알약 테두리(라임 → 터콰이즈 페이드) */
   .yeta-in.sc:focus-within { border-color:rgba(var(--think-rgb),.65); }
@@ -1353,8 +1355,8 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
       <textarea id="yetaText" rows="1" placeholder="메시지" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="enter"></textarea>
       <input type="file" id="yetaFile" accept="image/*,application/pdf,.txt,.docx" hidden>   <!-- 첨부 파일 선택(항목11) -->
       <button class="yeta-plus" id="yetaSc" type="button" aria-label="상황 설명 모드 — 상대에게 하는 말이 아니라 장면 설정"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3.5 8 20.5M16 3.5l-1.5 17M4 9h17M3 15h17"/></svg></button>   <!-- # = 상황 설명 모드(운영자 260714) — 탭 = 토글 · 켠 채 전송 = 장면 설정 턴(sc) · 원샷(보내면 해제) · .yeta-plus 정본 계승 -->
-      <button class="yeta-plus" id="yetaPlus" type="button" aria-label="파일 첨부"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>   <!-- + = 파일 첨부(운영자 260707 항목11 · 초대는 헤더 픽토로 이설) -->
-      <button class="yeta-send" id="yetaSend" type="button" aria-label="전송" data-motion="rise"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2 15 22 11 13 2 9z"/></svg></button>   <!-- 종이비행기 픽토(강조색 · 운영자 260703·260705) -->
+      <button class="yeta-plus" id="yetaTh" type="button" aria-label="머릿속 생각 모드 — 소리 내지 않은 속마음"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5h6a5.5 5.5 0 0 1 0 11H9a5.5 5.5 0 0 1 0-11z"/><circle cx="6.4" cy="18.4" r="1.5" fill="currentColor" stroke="none"/><circle cx="3.2" cy="21.2" r="1" fill="currentColor" stroke="none"/></svg></button>   <!-- 생각 풍선 = 머릿속 생각 모드('*' 운영자 260725 — '+' 자리 대체) · 탭 = 토글(타이핑 '*'와 같은 함수) · .yeta-plus 정본 계승 · 점 2개 = ydock 말풍선 점 문법(fill currentColor·stroke none) 계승 -->
+      <button class="yeta-plus" id="yetaPlus" type="button" aria-label="파일 첨부" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>   <!-- + = 파일 첨부(운영자 260707 항목11) — 260725 **숨김만**(배선·업로드 경로 전량 보존 · hidden 한 글자 제거 = 즉시 부활) -->      <button class="yeta-send" id="yetaSend" type="button" aria-label="전송" data-motion="rise"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2 15 22 11 13 2 9z"/></svg></button>   <!-- 종이비행기 픽토(강조색 · 운영자 260703·260705) -->
     </div>
   </div>
 </dialog>
@@ -3704,7 +3706,7 @@ function yScRebase(v) {   // 편집 1회분 prefix/suffix diff → _ySegs 절대
   _ySegPrev = v;
 }
 function yScMark(sc) { const ta = $('#yetaText'); _ySegs.push({ at: ta.value.length, sc: sc | 0 }); }
-function yScSet(m) { _yMode = m | 0; const b = $('#yetaSc'); if (b) b.classList.toggle('on', _yMode === 1); const row = $('#yetaIn'); if (row) { row.classList.toggle('sc', _yMode === 1); row.classList.toggle('th', _yMode === 2); } const ta = $('#yetaText'); if (ta) ta.placeholder = _yMode === 1 ? '상황 설명' : _yMode === 2 ? '머릿속 생각' : '메시지'; }   // 문구 = 한 낱말(운영자 260716 — 두 줄 설명문이 입력행을 눌러 답답)   // 모드 ON = 입력행 톤 전환(운영자 260714 "자동 블루톤 전환") — 상황 = 터콰이즈 · 생각 = 코발트
+function yScSet(m) { _yMode = m | 0; const b = $('#yetaSc'); if (b) b.classList.toggle('on', _yMode === 1); const bt = $('#yetaTh'); if (bt) bt.classList.toggle('on-th', _yMode === 2); const row = $('#yetaIn'); if (row) { row.classList.toggle('sc', _yMode === 1); row.classList.toggle('th', _yMode === 2); } const ta = $('#yetaText'); if (ta) ta.placeholder = _yMode === 1 ? '상황 설명' : _yMode === 2 ? '머릿속 생각' : '메시지'; }   // 문구 = 한 낱말(운영자 260716 — 두 줄 설명문이 입력행을 눌러 답답)   // 모드 ON = 입력행 톤 전환(운영자 260714 "자동 블루톤 전환") — 상황 = 터콰이즈 · 생각 = 코발트
 const yThWrap = x => `*${x.replace(/\s*\n\s*/g, ' ').replace(/\*/g, '')}*`;   // 생각 구간 = *…* 한 줄로 봉함(yFmt 이탤릭 지문 결 계승 · 줄바꿈 접기·내부 '*' 제거 = 지문 정규식 보호)
 function yScGap(ta) { if (ta.value.trim() && !/\n\n\s*$/.test(ta.value)) ta.value = ta.value.replace(/\s*$/, '') + '\n\n'; ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px'; }   // 전환 = 빈 줄(2줄바꿈) 규칙 — 진입·종료 공통(운영자 260714 "종료되도 2줄 이후로")
 function yScToggle(ta, m) {   // 모드 토글 단일 정본 — 버튼 탭·타이핑이 같은 함수(운영자 260725 "화자가 #을 쓰면 키보드의 #처럼 바로 반응") · 같은 글자 = 닫힘 · 다른 글자 = 그 모드로 갈아탐
@@ -3720,6 +3722,11 @@ function yScKeyAt(v, p) {   // 직전값 p → 현재값 v 델타가 '#'·'*' �
 $('#yetaSc').addEventListener('click', e => {
   e.stopPropagation(); const ta = $('#yetaText');
   yScToggle(ta, 1);
+  ta.focus();
+});
+$('#yetaTh').addEventListener('click', e => {   // 생각 풍선 = '*' 타이핑과 같은 함수(운영자 260725 "생각 픽토그램을 + 대신에") — # 버튼과 완전 대칭
+  e.stopPropagation(); const ta = $('#yetaText');
+  yScToggle(ta, 2);
   ta.focus();
 });
 $('#yetaText').addEventListener('beforeinput', e => {   // 타이핑 '#'·'*' = 입력행 # 버튼과 동일 반응(운영자 260725) — 한 글자 직접 입력만 가로챈다(붙여넣기·조합 입력 제외 = 본문에 섞여 온 기호는 그대로 남음)
