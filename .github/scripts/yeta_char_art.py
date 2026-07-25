@@ -23,6 +23,9 @@ ONLY = os.environ.get("YETA_CHAR_ONLY", "").strip()   # 특정 id 하나만(비�
 AV_MODE = os.environ.get("YETA_AV_MODE", "") == "1"   # 얼빡 프사 전용 모드(운영자 260725) — 큰 초상 무시, av/<id>.webp만 새로 뽑는다
 AV_REBUILD = os.environ.get("YETA_AV_REBUILD", "") == "1"   # 이미 뽑아둔 <id>_face.png에서 크롭만 다시(생성 0 = 무과금 · 배율 조정용)
 AV_ZOOM = (os.environ.get("YETA_AV_ZOOM") or "0.72").strip()   # 얼빡 확대 배율(실측 확정 0.72 · 아래 av_write 주석)
+# ⚠ 260726 실측(홍석천 4테이크): 0.72는 **260725 출력 기준**으로 잰 값이다. 프롬프트가 바뀌어 원본부터 여백 없이 꽉 찬 얼빡으로
+#   나오는 계열은 여기서 더 자르면 **입·턱이 잘린다**(4테이크 전부 재현). 그런 경우 dispatch에 zoom=1.0을 넘겨 크롭을 끄고,
+#   0.72는 여백이 남는 옛 계열에만 쓴다. 판정법 = 생성 직후 <id>_face.png를 그냥 봐라(여백 있으면 0.72 · 없으면 1.0).
 AV_YBIAS = (os.environ.get("YETA_AV_YBIAS") or "0.04").strip()  # 크롭 창 y 편향(위로)
 try:
     AV_TAKES = max(1, min(6, int(os.environ.get("YETA_AV_TAKES") or "1")))   # 한 인물 얼빡 N장(운영자 260726 "지피티로 한 4장") — 2장째부터는 av/<id>_v2.webp… 로 빠지고 roster 주입 안 함(고르는 건 운영자)
