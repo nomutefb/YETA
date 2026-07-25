@@ -1036,6 +1036,138 @@ PY
   return 0
 }
 
+# ── 주변 사건(ambient · 운영자 260725 "주변에서 계속 이슈가 터지게 · 짱구의 하루 결 · 정해놓지 말고 그 순간 랜덤") ──
+# 왜: 1:1 왕복만 이어지면 제3자 사건이 없어 맥락이 끊긴다(운영자 진단 "재미가 없어"). 옆에서 일이 터지면 대화에 결·리듬이 생긴다.
+# 구조: 씨앗 SSOT(apps/yeta/ambient.json · who×what×sense 교차 **추첨** = 고정 대본 0) → LLM이 그 순간 사건 N개 생성 → 스레드 큐(s.evq) 적재
+#   → 이후 턴에서 하나씩 sys(kind=amb)로 심어 캐릭터가 반응. 생성 = **답장 완료 후**(운영자 "대화가 한번 시작되면 준비해놓기") = 답장 지연 0.
+# 축 분리: 캐릭터 등장 = barge_check(난입) 고유 축 — 여기선 이름 있는 주민 금지(비특정 제3자만 · 운영자 "비특정인물도 좋으니까").
+# 규율: 전 단계 fail-soft(채팅 본선 무영향) · 생성은 서브셸 국소 env(본답장 MODEL/EFF/OUT 무오염) · 큐 상한으로 무한적재 차단.
+AMB_JSON="$ROOT/apps/yeta/ambient.json"
+AMB_MODEL="${YETA_AMB_MODEL:-claude-opus-5}"   # 운영자 260725 지정("무진장 랜덤일테니까 opus 5.0") · env = 회귀 노브
+AMB_EFF="${YETA_AMB_EFF:-max}"                 # 운영자 260725 지정("--effort max")
+
+# 큐가 마르면 프롬프트를 stdout에 뱉는다(충분하면 빈 출력 = 생성 스킵). 씨앗 추첨 = 진짜 랜덤(운영자 "그 순간에 자연스럽게 랜덤하게" — barge의 결정적 시드와 반대 축).
+ambient_prompt() {
+  THREAD="${THREAD:-}" python3 - "$SESS" "$AMB_JSON" <<'PY' 2>/dev/null
+import json, os, random, sys
+from datetime import datetime, timezone, timedelta
+sys.path.insert(0, ".github/scripts")
+from yeta_place import load_places, place_of, place_name, world_dh
+from yeta_v3 import migrate_v3
+try:
+    S = migrate_v3(json.load(open(sys.argv[1], encoding="utf-8")))
+    A = json.load(open(sys.argv[2], encoding="utf-8"))
+except Exception: sys.exit(0)
+s = (S.get("threads") or {}).get(os.environ.get("THREAD", ""))
+if not s: sys.exit(0)
+T = A.get("tuning") or {}
+batch = int(T.get("batch") or 5)
+if len(s.get("evq") or []) >= int(T.get("queue_min") or 2): sys.exit(0)   # 큐 충분 = 생성 안 함(호출 절약)
+ax = A.get("axes") or {}
+who, what, sense, deep = ax.get("who") or [], ax.get("what") or [], ax.get("sense") or [], ax.get("deep") or []
+if not (who and what and sense): sys.exit(0)
+PL = load_places()
+wd, wh = world_dh()                                  # 무음동 세계 시각(6배속 · 지도·동선과 동일 정본)
+sp = s.get("last_sp") or os.environ.get("THREAD", "")
+pl = place_of(PL, sp, wd, wh) if sp else ""
+pnm = place_name(PL, pl) if pl else "무음동 골목"
+season = ["겨울","겨울","봄","봄","봄","여름","여름","여름","가을","가을","가을","겨울"][datetime.now(timezone(timedelta(hours=9))).month - 1]   # 계절 = 현실 축(10_세계관.md "계절·날짜·요일은 현실") · 경계 = state_block 정본 배열 그대로 계승(사본 드리프트 금지) · KST 강제([12])
+h0, h1 = (T.get("deep_hours") or [0, 3])[:2]
+deep_on = deep and (h0 <= wh < h1)                   # 경계가 얇아지는 시간대에만 어반 판타지 결 추첨(10_세계관.md 정합)
+seeds = []
+for i in range(batch):
+    if deep_on and random.random() < 0.35: seeds.append(f"{random.choice(deep)} / {random.choice(sense)}")
+    else: seeds.append(f"{random.choice(who)} / {random.choice(what)} / {random.choice(sense)}")
+L = [f"무음동 골목의 '지금 이 순간' 주변에서 벌어지는 짧은 사건 {batch}개를 만들어라.", "",
+     "[무대] 서울 변두리, 밤이 유난히 긴 동네 무음동. 낮보다 밤에 살아나는 골목이다.",
+     f"[지금] {pnm} · 세계시각 {wh}시 · {season}", "",
+     "[씨앗] 줄마다 하나씩. 이 씨앗은 소재일 뿐이다 — 그대로 옮기지 말고 구체적인 장면으로 굴려라:"]
+for i, sd in enumerate(seeds, 1): L.append(f"{i}) {sd}")
+L += ["", "[규칙]",
+      f"- 한 줄 = 사건 하나. 정확히 {batch}줄. 번호·불릿·따옴표·설명 금지(줄만 뱉어라).",
+      "- 주인공은 유저도 대화 상대도 아닌 **제3자·주변**이다. 이름 있는 주민(캐릭터)은 절대 등장시키지 마라.",
+      "- 유저에게 말을 걸거나 대화를 요구하지 마라. 옆에서 그냥 벌어질 뿐이다.",
+      "- 25~55자. 현재형 지문체. 소리·냄새·빛 중 최소 하나를 감각으로 박아라.",
+      "- 5줄이 서로 다른 사건이어야 한다(같은 소재·같은 구조 반복 금지).",
+      "- 유혈·사망 같은 큰 사고 말고, 골목에서 실제로 일어날 법한 소란 위주로(가끔 하나쯤은 기묘해도 좋다)."]
+print("\n".join(L))
+PY
+}
+
+# 생성 결과를 큐에 적재(fresh 재-read → CAS put · barge 동형). $1 = LLM 원문
+ambient_store() {
+  r2get 2>/dev/null || return 0
+  if THREAD="${THREAD:-}" AMB_RAW="$1" python3 - "$SESS" "$AMB_JSON" <<'PY'
+import json, os, re, sys, time
+sys.path.insert(0, ".github/scripts")
+from yeta_v3 import migrate_v3
+try:
+    S = migrate_v3(json.load(open(sys.argv[1], encoding="utf-8")))
+    A = json.load(open(sys.argv[2], encoding="utf-8"))
+except Exception: sys.exit(1)
+s = (S.get("threads") or {}).get(os.environ.get("THREAD", ""))
+if s is None: sys.exit(1)
+out = []
+for ln in (os.environ.get("AMB_RAW") or "").splitlines():
+    ln = re.sub(r'^\s*(?:[-*·]|\d+[.)])\s*', '', ln).strip().strip('"“”\'')   # 번호·불릿·따옴표 방어(형식 이탈 흡수)
+    if 8 <= len(ln) <= 90 and not ln.startswith("[") and ln not in out: out.append(ln)
+if not out: sys.exit(1)
+q = [x for x in (s.get("evq") or []) if isinstance(x, str)]
+q += out
+s["evq"] = q[-12:]                                   # 큐 상한 = 무한적재·스테일 누적 차단
+s["evq_ts"] = int(time.time() * 1000)
+json.dump(S, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False)
+PY
+  then r2put >/dev/null 2>&1 && echo "  🎲 주변 사건 적재(큐 보충 · 다음 턴부터 사용)" || true; fi
+  return 0
+}
+
+# 답장 완료 후 호출 — 큐가 마르면 채운다(웜 대기 시간에 미리 = 다음 턴 지연 0)
+ambient_refill() {
+  local _p; _p="$(ambient_prompt)" || return 0
+  [ -n "$_p" ] || return 0
+  local _o; _o="$( MODEL="$AMB_MODEL" EFF="$AMB_EFF" METER_STREAM="" gen_out "$_p" >/dev/null 2>&1 && printf '%s' "$OUT" )"   # 서브셸 국소 env = 본답장 MODEL/EFF/OUT 무오염
+  [ -n "$_o" ] || return 0
+  ambient_store "$_o"
+  return 0
+}
+
+# 답장 완료 후 호출 — 큐에서 하나 꺼내 sys(kind=amb) 턴을 대화에 심는다.
+# 심은 사건은 다음 턴 프롬프트의 recent에 `— 사건 —`(line() sys 문법)으로 들어가 캐릭터가 자연히 반응한다(별도 배선 0 = 기존 계약 계승).
+ambient_fire() {
+  r2get 2>/dev/null || return 0
+  if THREAD="${THREAD:-}" python3 - "$SESS" "$AMB_JSON" <<'PY'
+import json, os, random, sys, time
+sys.path.insert(0, ".github/scripts")
+from yeta_place import world_dh
+from yeta_v3 import migrate_v3
+try:
+    S = migrate_v3(json.load(open(sys.argv[1], encoding="utf-8")))
+    A = json.load(open(sys.argv[2], encoding="utf-8"))
+except Exception: sys.exit(0)
+s = (S.get("threads") or {}).get(os.environ.get("THREAD", ""))
+if not s: sys.exit(0)
+T = A.get("tuning") or {}
+q = [x for x in (s.get("evq") or []) if isinstance(x, str)]
+if not q: sys.exit(0)
+turns = s.get("turns") or []
+if len([t for t in turns if (t or {}).get("role") == "user"]) < int(T.get("warmup_turns") or 2): sys.exit(0)   # 초반 보호 = 관계 전 소음 차단(barge 동형·문턱은 낮게)
+gap = int(T.get("min_gap_turns") or 1)
+for t in turns[-(gap + 1):]:
+    if (t or {}).get("kind") == "amb": sys.exit(0)                # 직전 간격 미달 = 연타 금지
+if random.randint(1, max(1, int(T.get("fire_gate") or 2))) != 1: sys.exit(0)   # 발화 게이트(운영자 "계속·정신없이" = 기본 1/2)
+txt = q.pop(0)
+s["evq"] = q
+turns.append({"role": "sys", "text": txt, "ts": int(time.time() * 1000), "kind": "amb"})
+s["turns"] = turns[-200:]
+s["updated"] = int(time.time() * 1000)
+S["updated"] = int(time.time() * 1000)
+json.dump(S, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False)
+PY
+  then r2put >/dev/null 2>&1 && echo "  🎬 주변 사건 발생(다음 턴에 반영)" || true; fi
+  return 0
+}
+
 # ── 1턴 처리: 0=답함 · 1=하드실패(탈출) · 2=NOPENDING · 3=r2 읽기 오류 ──
 process_turn() {
   _did_reply=0
@@ -1314,7 +1446,7 @@ ${CONTRACT1}${GROUP_RULE}${ME_RULE}
   export LAT_W_MS LAT_F_MS
   finish ok "$OUT" || { echo "::error::세션 반영 실패(R2 put)"; draft_clear; return 1; }
   draft_clear   # 확정 반영 뒤 회수(뷰어 = 세션 변경 먼저 픽업 → 버블 스왑 → 잔여 draft 소거)
-  [ "$_did_reply" = 1 ] && { echo "yeta: 답장 완료(${#OUT}자 · ${GEN_S}s)"; push_reply "$OUT"; [ "$PTT" = "1" ] && ptt_voice "$OUT"; barge_check; }
+  [ "$_did_reply" = 1 ] && { echo "yeta: 답장 완료(${#OUT}자 · ${GEN_S}s)"; push_reply "$OUT"; [ "$PTT" = "1" ] && ptt_voice "$OUT"; barge_check; ambient_fire; ambient_refill; }   # 주변 사건(260725) — 심기(다음 턴 반영) → 큐 보충(운영자 "대화가 한번 시작되면 준비해놓기" · 답장 이후라 사용자 대기 0 · 큐가 마를 때만 = 배치 5턴에 1회)
   return 0
 }
 

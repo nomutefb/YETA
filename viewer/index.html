@@ -3945,6 +3945,7 @@ function yRender() {
       if (t.sc) return mk + `<div class="ysit${fresh ? ' in' : ''}">${yFmt(t.text)}</div>`;   // 상황 설명 턴(260714 '#') = 장면 지문 결(.ysit 계승) — 말풍선·'1'·시각 없음(연출 라인)
       const tm = yTime(t.ts); const un = i === _lastUserI && _meUnread && yPrefOn('read', true); const imh = t.img ? `<img class="yatt" data-att="${esc(t.img)}" alt="보낸 사진">` : ''; return mk + `<div class="ymrow me${fresh ? ' in' : ''}${pv && pv.role === 'user' ? ' cont' : ''}" data-k="u|${un ? 1 : 0}|${pv && pv.role === 'user' ? 1 : 0}|${esc(t.img || '')}|${esc(t.text || '')}">${un ? '<span class="yb-un">1</span>' : ''}${tm ? `<time class="ytime">${tm}</time>` : ''}<div class="yb me">${imh}${t.text ? yFmt(t.text) : ''}</div></div>`; }   // data-k = 번호표('1'읽음·그룹핑·img·텍스트) · 내 메시지 = [1][시각][버블] · 1 = 마지막 미읽음 내 턴 · img = 첨부 사진(260717 '+')
     if (t.role === 'assistant') return mk + yAiMsg(t, fresh, pv && pv.role === 'assistant' && (pv.persona || '') === (t.persona || ''));
+    if (t.kind === 'amb') return mk + `<div class="ysit${fresh ? ' in' : ''}">${esc(t.text)}</div>`;   // 주변 사건(운영자 260725 "주변에서 계속 이슈가 터지게") = 장면 지문 결(.ysit 계승 — 상황 턴·기분 마커와 동일 문법 · 새 스타일 창작 0) · 씨앗 SSOT = apps/yeta/ambient.json · 생성 = 러너 ambient_refill
     return mk + `<div class="yb sys${fresh ? ' in' : ''}">${esc(t.text)}</div>`;   // sys = 페르소나 합류 등(그룹 끊음)
   }).join('');
   for (; _mj < _mks.length; _mj++) h += _mkH(_mks[_mj]);   // 마지막 턴 이후 기분(대개 방금 바꾼 것) = 로그 말미
