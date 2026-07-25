@@ -626,6 +626,14 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
   .ymap-frame svg { display:block; width:100%; height:auto; touch-action:manipulation; }
   .ymap-cap { font-size:var(--fs-xs); color:var(--mut); padding:0 4px; line-height:1.6; }
+  /* ── 실내 뷰(운영자 260725 "무음 시범 하나") — 지도에서 장소 탭 = 그 안으로 들어감. 표면 크롬 = `.yeta-pick` **클래스 자체를 같이 입혀** 100% 계승(값 복제 0) · 여기선 위치·크기·내부 부품만 ── */
+  .yin { top:0; left:0; right:0; bottom:0; margin:auto; height:fit-content; width:min(330px,90%); max-height:min(74dvh,540px); z-index:9; transform-origin:center; }   /* 중앙 = inset0+margin:auto(transform 미사용 — `.yeta-pick` 등장 애니(msgUnfold)가 transform 축을 쓰므로 충돌 회피) */
+  .yin-bg { display:block; width:100%; height:130px; object-fit:cover; border-radius:var(--r-m); }
+  .yin-ttl { display:flex; align-items:baseline; gap:6px; padding:var(--sp-2) 8px 6px; }
+  .yin-ttl b { font-size:var(--fs-h3); font-weight:var(--fw-x); }
+  .yin-ttl i { font-style:normal; font-size:var(--fs-xs); color:var(--mut); }
+  .yin-look { font-size:var(--fs-xs); color:var(--mut); line-height:var(--lh-base); padding:0 8px 8px; }
+  .yin-empty { font-size:var(--fs-sm); color:var(--mut); font-style:italic; text-align:center; padding:8px 8px 14px; }   /* 아무도 없음 = 장면 지문 결(.ysit 문법 계승) */
   .ymp-name { fill:var(--fg-2); font-size:9px; font-weight:var(--fw-b); paint-order:stroke; stroke:rgba(18,18,18,.85); stroke-width:2.6px; }
   .ymp-node { fill:rgba(18,18,18,.4); stroke:rgba(255,255,255,.28); stroke-width:1; }
   .ymp-node.zone { fill:rgba(18,18,18,.14); stroke:rgba(255,255,255,.2); stroke-dasharray:3 4; }   /* 야외 배회 구획(운영자 260709) = 은은한 점선 링(워커 시인성 우선) */
@@ -1250,7 +1258,8 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     <div class="ymapp" id="ymapp">   <!-- 지도 탭(운영자 260707) — 위치 SSOT = apps/yeta/places.json(raw) · 워커 탭 = 그 캐릭터와 대화 -->
       <div class="ymap-head"><b>무음동</b><i id="ymapClock"></i></div>
       <div class="ymap-frame"><svg id="ymapSvg" viewBox="0 0 500 500" aria-label="무음동 지도"></svg></div>
-      <div class="ymap-cap">지금 이 시각의 동네 — 쪼만한 주민을 탭하면 바로 대화. <span style="color:var(--accent)">라임 링</span> = 지금 붐비는 곳.</div>
+      <div class="ymap-cap">지금 이 시각의 동네 — 쪼만한 주민을 탭하면 바로 대화. <span style="color:var(--accent)">라임 링</span> = 지금 붐비는 곳. 찻집 <b>무음</b>은 탭하면 안으로 들어가진다.</div>
+      <div class="yeta-pick yin" id="yin" hidden></div>   <!-- 실내 뷰 시트(운영자 260725 시범) — 표면 = .yeta-pick 정본 크롬 그대로 · 내용 = yInRender -->
     </div>
     <div class="ycd" id="ycdetail" aria-modal="true" role="dialog">   <!-- 캐릭터 세부 디테일 → [대화 시작](운영자 260706) -->
       <div class="ycd-top"><button type="button" class="ycd-back" id="ycdBack" aria-label="뒤로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><button type="button" class="ycd-gear" id="ycdGear" aria-label="성향 설정" title="성향 설정"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h.01a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h.01a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.01a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button></div>   <!-- ⚙ = 헤더 행 우측(뒤로가기와 쌍 · 운영자 260707 "마진 좋게") -->
@@ -1668,6 +1677,8 @@ ySwipeBind(document.getElementById('ymain'), dir => {   // 메인 좌우 스와�
 // ── 지도 탭(운영자 260707 "앱에 다 반영") — 위치 SSOT = apps/yeta/places.json(raw) · 판정 = yeta_place.py의 JS 등가 포팅(sha256 BigInt · 플레이그라운드 대조 검증 100%) ──
 //    워커 10인 = 현재 KST 실위치 + 어슬렁 · 차량 = 엣지(길) 순회 · 전부 rAF + style.transform(합성만 = 60fps · 운영자 260707) · 탭 이탈 = 루프 정지.
 let YMAPD = null, _ymapRaf = 0, _ymapIv = 0, _ymapWalkers = [], _ymapCars = [], _ymapLast = 0, _ymapTone = '';
+let _ymapAt = {}, _yinOpen = '';   // 실내 뷰(운영자 260725 "무음 시범 하나") — _ymapAt = 장소별 재실자(ymPlaceAll 캐시 공유) · _yinOpen = 열린 장소 id
+const YIN_PLACES = { tea: 'tea_sunset' };   // 실내 뷰 개방 장소 → 배경 씬(assets/yeta_bg/var_*.webp · Y_PLACE_POOL의 tea 매핑과 동일 정본값 계승). ⚠️ 시범 = 찻집 '무음' 하나만(운영자 260725) — 확장 = 이 표에 {장소id: 씬} 한 줄 추가로 끝(코드 무수정).
 const YMAP_SC = 5, YMAP_RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 // ── 맵 시각 레이어(운영자 260707 "자연스럽게 배치 · 차는 차도로 · 신호등 정지 · 건물 안이면 이름표") — map_night.png 좌표계(0~100) · 논리 SSOT(places.json)와 별개 축.
 //    건물 draw 위치(논리좌표는 중앙 뭉침이라 이미지와 불일치 → 실측 트레이스), 도로 링(회색길), 신호등, 실내/야외.
@@ -1801,7 +1812,32 @@ async function ymPlaceOf(cid, dateStr, hour) {   // yeta_place.place_of 등가(�
   if (nb.length) { const seed = await ymSha(`${cid}:${dateStr}:${ymSlot(hour)}:${Math.floor(hour / 2)}:go`); if (seed % 2n === 0n) return nb[Number(seed % BigInt(nb.length))]; }   // 이동 1/2·2h 입도(운영자 260709 "많이 이동") — yeta_place.py와 시드 완전 동일(드리프트 금지)
   return base;
 }
-function yMapLeave() { if (_ymapRaf) cancelAnimationFrame(_ymapRaf); _ymapRaf = 0; if (_ymapIv) clearInterval(_ymapIv); _ymapIv = 0; }
+function yMapLeave() { if (_ymapRaf) cancelAnimationFrame(_ymapRaf); _ymapRaf = 0; if (_ymapIv) clearInterval(_ymapIv); _ymapIv = 0; if (_yinOpen) yInClose(); }   // 실내 뷰도 동반 회수(탭 이탈에 시트 잔류 금지 · 260725)
+// ── 실내 뷰(운영자 260725 "무음 시범 하나") — 지도에서 장소를 탭하면 그 안으로 '들어간다'. 3D 모델 0개: 기존 배경 씬 1장 + 그 시각 재실자(ymPlaceAll 캐시) 재활용.
+//   부품 계승 = 표면 `.yeta-pick` · 행 `.ypick-row`+`.yp-col/.yp-name/.yp-tag`(리스트 정본) · 아바타 `yAva` · 진입 `openYeta`(워커 탭과 동일) — 신규 부품 창작 0. 확장 = YIN_PLACES 표에 한 줄.
+function yInRender(pl) {
+  const box = document.getElementById('yin'); if (!box || !YMAPD) return;
+  const scene = YIN_PLACES[pl]; if (!scene) return;
+  const info = ((YMAPD.places || {})[pl]) || {};
+  const here = (_ymapAt[pl] || []).filter(id => yPersona(id));
+  const rows = here.map(id => {
+    const c = yPersona(id), um = yUnmet(c);
+    return `<button class="ypick-row" type="button" data-yin-go="${esc(id)}"${um ? ' data-yin-um="1"' : ''}>${yAva(c)}<span class="yp-col"><span class="yp-name">${um ? `<span class="yqm">${YUNMET_NM}</span>` : esc(c.name || '')}</span><span class="yp-tag">${esc(um ? '' : (c.tagline || ''))}</span></span></button>`;   // 행 마크업 = 리스트 정본(yRenderList) 그대로 계승
+  }).join('');
+  box.innerHTML = `<img class="yin-bg" src="assets/yeta_bg/var_${esc(scene)}.webp" alt="${esc(info.name || '')} 안">`
+    + `<div class="yin-ttl"><b>${esc(info.name || '')}</b><i>지금 ${here.length}명</i></div>`
+    + (info.look ? `<div class="yin-look">${esc(String(info.look).split(' — ')[0])}</div>` : '')
+    + (rows || `<div class="yin-empty">지금은 아무도 없다.</div>`);
+  box.hidden = false;
+}
+function yInOpen(pl) { if (!YIN_PLACES[pl]) return; _yinOpen = pl; yInRender(pl); }
+function yInClose() { _yinOpen = ''; const b = document.getElementById('yin'); if (b) { b.hidden = true; b.innerHTML = ''; } }
+document.addEventListener('click', e => {   // 위임 1핸들러(개별 배선 금지 · 레포 관례) — 주민 행 = 그 방 직행(워커 탭과 동일 정본 openYeta) · 바깥 탭 = 닫힘(팝오버 관례 계승)
+  const go = e.target.closest('[data-yin-go]');
+  if (go) { if (go.dataset.yinUm) { miniToast('아직 만나지 못한 사람이야'); return; } yInClose(); openYeta(go.dataset.yinGo); return; }
+  if (_yinOpen && !e.target.closest('#yin')) yInClose();
+});
+
 async function yMapEnter() {
   const svg = $('#ymapSvg'); if (!svg) return;
   if (!YMAPD) {
@@ -1828,11 +1864,18 @@ function ymBuild(svg) {   // 정적 레이어 — 배경(낮/밤 = KST 시각 ·
     if (p.private || !YMAP_POS[id]) continue;   // 집(private)·맵 미등재 노드 = 지도 제외
     const zn = YMAP_ZONE[id];   // 야외 = 구획 원(배회 반경 시각화 · 운영자 260709 "장소별 구역 구획") · 실내 = 기존 소형 노드
     S.push(`<circle class="ymp-node${zn ? ' zone' : ''}" id="ymn-${esc(id)}" cx="${zn ? zn.x * YMAP_SC : px(id)}" cy="${zn ? zn.y * YMAP_SC : py(id)}" r="${zn ? zn.r * YMAP_SC : 7}"/>`);
-    S.push(`<text class="ymp-name" x="${zn ? zn.x * YMAP_SC : px(id)}" y="${(zn ? zn.y * YMAP_SC : py(id)) + (zn ? zn.r * YMAP_SC + 9 : 17)}" text-anchor="middle">${esc(p.name)}</text>`);
+    S.push(`<text class="ymp-name" id="ymnl-${esc(id)}" x="${zn ? zn.x * YMAP_SC : px(id)}" y="${(zn ? zn.y * YMAP_SC : py(id)) + (zn ? zn.r * YMAP_SC + 9 : 17)}" text-anchor="middle">${esc(p.name)}</text>`);   // id = 실내 뷰 탭 타깃(라벨도 탭 표면 · 260725)
   }
   S.push(`<mask id="ymRoadM" maskUnits="userSpaceOnUse" x="0" y="0" width="500" height="500"><image id="ymRoadImg" href="assets/yeta_map/road_mask_${ymIsDay(yWorldDH().h) ? 'day' : 'night'}.png" x="0" y="0" width="500" height="500"/></mask>`);   // 픽셀 도로 마스크(v5 — 운영자 260716 "픽셀 단위 레이어 분리"): 백색 = 아스팔트. 차 레이어를 이 마스크로 클리핑 = 도로 밖·건물 위 렌더 불가 · 건물이 도로를 덮는 픽셀 = 구멍 = 차가 건물 뒤로 숨음(z)
   S.push(`<g id="ymLights"></g><g id="ymCars" mask="url(#ymRoadM)"></g><g id="ymWalkers"></g><g id="ymTags"></g>`);   // 태그 = 워커에서 분리(구역 앵커 고정 · 운영자 260709 "이름 태그는 구획 원 위에 지금처럼")
   svg.innerHTML = S.join('');
+  for (const pid of Object.keys(YIN_PLACES)) {   // 실내 뷰 개방 장소(260725 시범 = 찻집 '무음') — 노드 원 + 이름 라벨 둘 다 탭 표면(작은 원만이면 폰에서 놓침)
+    for (const el of [svg.querySelector('#ymn-' + pid), svg.querySelector('#ymnl-' + pid)]) {
+      if (!el) continue;
+      el.style.cursor = 'pointer'; el.style.pointerEvents = 'auto';
+      el.addEventListener('click', ev => { ev.stopPropagation(); yInOpen(pid); });   // stopPropagation = 문서 위임의 '바깥 탭 = 닫힘'과 자기충돌 차단
+    }
+  }
   const L = svg.querySelector('#ymLights'), lx = 45.5 * YMAP_SC, ly = 40.5 * YMAP_SC;   // 신호등 = 광장 N 진입로 모퉁이(v4 — nw 's' 정지선(밤 44,39 · 낮 47,42)과 짝 · 톤 중간값 = 양 톤 ~10px 등거리 · 평의회2)
   L.innerHTML = `<g class="ymp-light" transform="translate(${lx},${ly})"><rect x="-3.4" y="-9" width="6.8" height="18" rx="3" fill="rgba(18,18,18,.88)" stroke="rgba(255,255,255,.25)" stroke-width=".5"/><circle id="ymLR" cx="0" cy="-4.4" r="2.3" fill="#3a1414"/><circle id="ymLG" cx="0" cy="4.4" r="2.3" fill="#153a1a"/></g>`;
   _ymapWalkers = (YCHARS || []).map(c => { const nm = c.name || '?'; const um = yUnmet(c); return { id: c.id, um, name: um ? YUNMET_NM : nm, short: um ? YUNMET_NM : (c.short || (nm.length >= 3 ? nm.slice(0, 2) : nm)), initial: um ? '?' : (c.initial || nm[0]), color: c.color || '#8fb7bf', x: 250, y: 250, bx: 250, by: 250, mode: '', placed: 0, el: null, spr: null, tag: null }; });   // 미대면 = ??? 이름표+실루엣(운영자 260709 "안 만난 사람 = ???")
@@ -1883,6 +1926,8 @@ async function ymPlaceAll() {   // 현재 시각 실위치 재판정 → 워커 
   { const gl = document.getElementById('ymRevGlow'); if (gl) gl.style.display = (!ymIsDay(h) && _ymapWalkers.some(w => at[w.id] === 'cathedral' && yRevPend(w.id))) ? '' : 'none'; }   // 부활 발광(한 수 260717) — 부활 대기자가 성당에 있는 밤에만 성당 자리 웜 발광 = "누가 방금 살아 돌아왔다" 신호
   const byPlace = {};
   for (const [cid, pl] of Object.entries(at)) (byPlace[pl] = byPlace[pl] || []).push(cid);
+  _ymapAt = byPlace;   // 실내 뷰(260725 찻집 시범) — 장소별 재실자 캐시 공유(재계산 0 · 1분 갱신 주기 그대로 계승)
+  if (_yinOpen) yInRender(_yinOpen);   // 실내 뷰 열려 있으면 같은 틱에 갱신(주민이 나가고 들어오는 게 그대로 보임)
   for (const w of _ymapWalkers) {
     const pl = at[w.id], grp = byPlace[pl] || [w.id], i = grp.indexOf(w.id), zn = YMAP_ZONE[pl];
     if (yDead({ id: w.id })) { w.mode = 'hide'; w.zone = ''; }   // 사망 = 지도 은신(운영자 260714 "자리에서 안보이고") — 집(hide) 모드 계승 · 만료 = 다음 1분 재판정에 자연 복귀
