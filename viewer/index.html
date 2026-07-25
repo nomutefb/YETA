@@ -147,6 +147,9 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   #yetadlg.ydlg-in { animation:ydlgIn .26s var(--ease) both; }
   @keyframes ydlgOut { to { opacity:0; } }
   #yetadlg.ydlg-out { animation:ydlgOut .18s var(--ease) both; }   /* 챗 닫기 = 페이드 퇴장(즉발 close 금지 · 북극성 260707) */
+  @keyframes ydeadFade { to { opacity:1; } }
+  #yetadlg.ydlg-dead::after { content:''; position:fixed; inset:0; z-index:var(--z-float); background:var(--bg); opacity:0; animation:ydeadFade .9s var(--ease) forwards; }   /* 유저 사망(운영자 260725 "대화창이 어두워지며 이탈") = 페이드 암전 후 이탈 — 색 = --bg 계승(새 색 0) · 퇴장 이징 = ydlgOut과 같은 --ease */
+  @media (prefers-reduced-motion:reduce){ #yetadlg.ydlg-dead::after { animation:none; opacity:1; } }   /* reduce = 즉시 암전(ydlg-in 결 계승) */
   #yetadlg.ydlg-in::backdrop { animation:ydlgBd .3s var(--ease) both; }
   #yetadlg.ydlg-in .yeta-h { animation:ydlgUp .44s var(--ease) .05s both; }
   #yetadlg.ydlg-in .yeta-stage { animation:ydlgUp .46s var(--ease) .12s both; }
@@ -292,6 +295,9 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yeta-in.sc { border-color:rgba(var(--think-rgb),.5); }   /* 상황 모드 = 입력행 자동 터콰이즈 톤(운영자 260714) — 알약 테두리(라임 → 터콰이즈 페이드) */
   .yeta-in.sc:focus-within { border-color:rgba(var(--think-rgb),.65); }
   .yeta-in.sc textarea { caret-color:var(--think); }
+  .yeta-in.th { border-color:rgba(var(--cobalt-rgb),.8); }   /* 생각 모드('*' 운영자 260725) = 입력행 코발트 톤 — 상황(터콰이즈)과 같은 레시피·다른 토큰(2차 강조 --cobalt 계승 · 축 분리: 라임=대화·터콰이즈=연출·코발트=속마음) · 알파 .8 = 광학 보정(코발트가 터콰이즈보다 어두워 .5면 검은 입력바에서 회색으로 읽힘 — 렌더 실측) */
+  .yeta-in.th:focus-within { border-color:rgba(var(--cobalt-rgb),.95); }
+  .yeta-in.th textarea { caret-color:var(--cobalt); }
   /* 페르소나 픽커 — 헤더 이름 탭 → 주민 직접 선택(msgpop 무채 글래스 계승 · saturate(0)=뒤 색 비침 차단 · §🎨 무채 크롬) */
   .yeta-who { flex:1; display:flex; align-items:center; gap:8px; min-width:0; color:inherit; font:inherit; padding:0; text-align:left; }   /* 상대 = 좌우 한 폭 차지(운영자 260705 · flex:1) · 표시 전용(전환 제거) */
   /* 대화상대 초대 = 헤더 프로필 옆 픽토(운영자 260707 항목12 "버튼 말고 픽토그램만 · 누르면 액티브 지속") — 입력행 +에서 이설 */
@@ -659,8 +665,9 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yexit-btn.yes { background:var(--glass-2); border:1px solid var(--glass-line); color:var(--fg); }   /* 예 = 뉴트럴 글래스 + 흰(운영자 "너무 안 보여도 안 됨") */
   .yexit-btn.no { background:none; border:1px solid rgba(var(--danger-rgb),.4); color:var(--arm); }   /* 아니오 = 주의 색(.yset-reset.armed 정본 계승) · #yconfirm에선 '확인'(진행 = 경고 액션)에 이 톤 */
   /* 범용 확인 팝업 확장(운영자 260709 — 매우 빠름 경고·캐시 초기화) */
-  .ycf-body { font-size:var(--fs-sm); color:var(--fg-2); text-align:center; line-height:1.55; margin:-6px 0 14px; }
+  .ycf-body { font-size:var(--fs-sm); color:var(--fg-2); text-align:center; line-height:1.55; margin:-6px 0 14px; white-space:pre-line; }   /* pre-line = 본문 줄바꿈 살림(운영자 260725 사망 팝업 "맥락 한 줄 + 빈 줄 + 물음" — 종전엔 textContent \n이 접혀 한 줄로 붙었음 · 줄바꿈 없는 기존 문구는 무영향) */
   .ycf-chk { display:flex; align-items:center; justify-content:center; gap:8px; font-size:var(--fs-xs); color:var(--fg-2); margin-bottom:14px; cursor:pointer; }
+  .ycf-chk[hidden] { display:none; }   /* [hidden] 복원 — class display:flex가 UA [hidden]을 이겨서, check 없는 팝업(나가기·사망)에 빈 체크박스가 떠 있던 것(렌더 실측 260725) */
   .ycf-chk input { accent-color:var(--accent); width:16px; height:16px; margin:0; }
   .ycf-bar { position:relative; height:8px; border-radius:var(--r-pill); background:var(--glass); border:1px solid var(--glass-line); overflow:hidden; margin:2px 0 14px; }
   .ycf-bar i { position:absolute; inset:0; transform-origin:left; transform:scaleX(0); background:var(--accent); border-radius:inherit; }
@@ -713,7 +720,8 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     align-items:center; padding:0 4px; color:var(--fg-2); font-size:var(--fs-sm); font-weight:var(--fw-b); font-variant-numeric:tabular-nums; letter-spacing:.02em; white-space:nowrap;
     text-shadow:0 1px 3px rgba(0,0,0,.85), 0 0 9px rgba(0,0,0,.55); transition:color .6s var(--ease), opacity .6s var(--ease); pointer-events:none; }   /* 무음동 시각 = 프로필 좌측 · 배경 위 판독 헤일로(토큰 없는 축) */
   .ymain.unlocked .yworldclock:not([hidden]) { display:flex; }
-  .yworldclock { flex-direction:column; justify-content:center; align-items:flex-end; }   /* 단일 행(현실 KST 풀포맷 · 운영자 260717 Q.26 — 현실병기 2단 폐지) · 우측 프로필 기준 우정렬 유지 */
+  .yworldclock { flex-direction:row; justify-content:flex-end; align-items:center; gap:var(--lgap); }   /* 단일 행 [낮밤 픽토][무음동 시각](운영자 260725) · 픽토↔글자 중앙(높이) 정렬 = align-items:center · 우측 프로필 기준 우정렬 유지 */
+  .yworldclock .ywc-ic { flex:none; display:flex; align-items:center; }   /* 픽토 박스 = 라인박스 편차 제거(광학 중앙) · 크기·색 = SVG 인라인 13px·currentColor(밤 = .night 터콰이즈 동행) */
   .yworldclock.night { color:var(--think); opacity:.82; }   /* 밤 = 터콰이즈 디밍(낮/밤 결 구분) */
   @media (max-width:399px) { .yworldclock { font-size:10px; letter-spacing:0; } }   /* 좁은 폰 = 풀포맷(Q.26)이 로고와 겹치던 26px 침범 해소(Q.27 실측) — 10px = .yssn-date 전례 계승 */
   .yprof:active { transform:scale(var(--press-s)); }
@@ -1305,7 +1313,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     </div>
   </div>
   <div class="ywm" id="ywm" role="img" aria-label="YETA"></div>   <!-- 좌상단 상시 로고(운영자 260705 확정 조합 · 겹층 JS 조립 · 언락 후 표시) -->
-  <div class="yworldclock" id="yworldclock" hidden aria-label="현재 시각(KST)"><span id="ywcMain">2026. 1. 1. 00:00 AM KST</span></div>   <!-- 상단 시계 = 현실 KST 단일 풀포맷(운영자 260717 Q.26 "2026. 7. 17. 00:00 AM/PM KST" — 구 세계시각+현실병기 2단 폐지 · 세계시각 표시는 지도 탭 ymapClock 존치) -->
+  <div class="yworldclock" id="yworldclock" hidden aria-label="무음동 시각"><i class="ywc-ic" id="ywcIc" aria-hidden="true"></i><span id="ywcMain">00:00 AM</span></div>   <!-- 상단 시계 = 무음동 세계 시각 단독(운영자 260725 "여기 시간[현실의 6배]만 보이고 흐르게 · 다른 시간은 앱 안에 필요없음" — 구 현실 KST 풀포맷[Q.26] 폐지) · 앞 픽토 = 낮 해/밤 달(nm-svg SSOT 주입 · 밤 = 터콰이즈) -->
   <button class="yprof has-img" id="yprof" type="button" aria-label="내 프로필"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0112 0v1"/></svg></button>   <!-- 우상단 개인 프로필 = 기본 캐릭터 얼굴(has-img 기본 · 커스텀 이미지 주입 축 후속) -->
   <nav class="ynav" id="ynav">   <!-- 메뉴(운영자 260706 재편): 1=캐릭터 · 2=대화(목록 — 대화 탭이 곧 진입점, 행 눌러 챗) · 3=설정. 옛 '지금' 탭 폐지 = 챗은 메뉴2 대화 목록으로 편입(진입 = 대화 행 탭) · lockdot 폐지(네비 = 언락 후에만 표시) -->
     <button class="on" data-tab="char" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0112 0v1"/></svg><span>캐릭터</span></button>
@@ -1342,7 +1350,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
         <button type="button" data-go="char" aria-label="캐릭터"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0112 0v1"/></svg></button>
         <button type="button" class="on" aria-label="지금 대화 — 현재 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 01-12 7.7L3 21l1.8-6A8.5 8.5 0 1121 11.5z"/><circle cx="8.6" cy="11.5" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="11.5" r=".9" fill="currentColor" stroke="none"/><circle cx="15.4" cy="11.5" r=".9" fill="currentColor" stroke="none"/></svg></button>
       </nav>
-      <textarea id="yetaText" rows="1" placeholder="메시지" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send"></textarea>
+      <textarea id="yetaText" rows="1" placeholder="메시지" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="enter"></textarea>
       <input type="file" id="yetaFile" accept="image/*,application/pdf,.txt,.docx" hidden>   <!-- 첨부 파일 선택(항목11) -->
       <button class="yeta-plus" id="yetaSc" type="button" aria-label="상황 설명 모드 — 상대에게 하는 말이 아니라 장면 설정"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3.5 8 20.5M16 3.5l-1.5 17M4 9h17M3 15h17"/></svg></button>   <!-- # = 상황 설명 모드(운영자 260714) — 탭 = 토글 · 켠 채 전송 = 장면 설정 턴(sc) · 원샷(보내면 해제) · .yeta-plus 정본 계승 -->
       <button class="yeta-plus" id="yetaPlus" type="button" aria-label="파일 첨부"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>   <!-- + = 파일 첨부(운영자 260707 항목11 · 초대는 헤더 픽토로 이설) -->
@@ -1919,7 +1927,7 @@ async function ymPlaceAll() {   // 현재 시각 실위치 재판정 → 워커 
   const { d: dateStr, h } = yWorldDH();   // 지도 시간축 = 무음동 세계 시각(운영자 260716 "지도 싱크가 아예 안 맞아" — 종전 현실 KST라 세계시계·대화 속 시간과 어긋났음 · 6배 가속 = 동선이 실시간으로 살아 움직임)
   const bg = document.getElementById('ymapBg');   // 낮/밤 배경 실시간 교체(1분 재판정이 시간대 경계 자동 반영) + 차선 재생성(톤별 좌표 · v4)
   if (bg) { const _bgw = `assets/yeta_map/map_${ymIsDay(h) ? 'day' : 'night'}.png`; if (bg.getAttribute('href') !== _bgw) { bg.setAttribute('href', _bgw); const sv = $('#ymapSvg'); if (sv) ymCarsBuild(sv); } }
-  const cl = $('#ymapClock'); if (cl) cl.textContent = `무음동 ${yWorldClock().txt} · ${{ late: '깊은 밤', dawn: '새벽', morning: '아침', day: '낮', evening: '저녁', night: '밤' }[ymSlot(h)]}`;   // 지도 시계 = 무음동 세계 시각(6배 가속) — '무음동' 라벨 = 메인 현실 KST 시계(Q.26)와 이축임을 명시(운영자 260717 Q.28 "시간이 두 개?" 혼동 차단)
+  const cl = $('#ymapClock'); if (cl) cl.textContent = { late: '깊은 밤', dawn: '새벽', morning: '아침', day: '낮', evening: '저녁', night: '밤' }[ymSlot(h)];   // 지도 머리 = 시간대 낱말만(운영자 260725 시간축 단일화) — 시각은 상단 무음동 시계가 전담 · 종전 '무음동 05:12 AM · 낮'은 <b>무음동</b> 중복 + 같은 시각 이중 표시였음
   const at = {};
   for (const w of _ymapWalkers) at[w.id] = await ymPlaceOf(w.id, dateStr, h);
   for (const w of _ymapWalkers) if (yRevPend(w.id) && Date.now() < yDeadT(w.id) + YREV_MS && (YMAPD.places || {}).cathedral) at[w.id] = 'cathedral';   // 부활 직후 = 성당 앞뜰에 나타남(운영자 260714 "부활장소") — 첫 답(엔트리 소비)·3h 경과 = 동선 복귀 · 지도 표시 전용(원거리·근처 판정 불변)
@@ -2418,7 +2426,7 @@ async function yThreadSwitch(c) {   // 스레드 전환 단일 함수(v3) — dr
   YSESS = r.sess; yApply(c);
   _yLastN = -1; _yTypOn = false; _yFailOn = false; _yKickOn = false; _yPaceN = -1; _yTypHold = 0;
   clearTimeout(_yTypT); _yTypT = null; clearTimeout(_yPaceT); _yPaceT = 0; _meUnread = false;   // QA13: 스레드 전환/닫기 = 이전 방 타이머 해제(유령 '입력 중'/'1' 다른 방 누출 차단)
-  yScSet(false); _ySegs = [{ at: 0, sc: 0 }]; yScSync();   // 방 경계 = # 모드·타임라인 리셋(이전 방 상황 모드·구간이 새 방 오발송으로 누수 차단 · 평의회 260715) — 초안 텍스트는 종전대로 유지(전량 대사 취급)
+  yScSet(0); _ySegs = [{ at: 0, sc: 0 }]; yScSync();   // 방 경계 = # 모드·타임라인 리셋(이전 방 상황 모드·구간이 새 방 오발송으로 누수 차단 · 평의회 260715) — 초안 텍스트는 종전대로 유지(전량 대사 취급)
   yRender(); ySideRender(); yFarApply(); yNearCalc(); return true;
 }
 $('#yside').addEventListener('click', async e => {   // 레일 탭 = 그 캐릭터의 방으로 전환(v3 = 스레드 전환)
@@ -3007,6 +3015,7 @@ $('#ycdCard').addEventListener('click', e => {
   b.classList.add('go');   // 게이지 차오르는 액티브(운영자 260709 "로딩 픽토가 게이지바에 쭉 뜨면서 열리는 느낌") — .38s 후 줌 전환
   setTimeout(() => { navSwap('ycdetail', 'ydlg', yDlgClose); openYeta(b.dataset.id, true); }, 380); });   // 디테일→챗 = 레이어 교체(history 칸 재사용 · 뒤로 = 대화목록 복귀)
 async function openYeta(charId, _noNav) {
+  _yOpenGate = true;   // 이번 열기 = 진입 게이트 무장(운영자 260725) — 첫 렌더에서 상대 사망이면 들어가지 않고 알림 후 목록으로
   if (!yetadlg.open) { yetadlg.showModal(); yetadlg.classList.add('ydlg-in'); setTimeout(() => yetadlg.classList.remove('ydlg-in'), 720);   // 열 때만 촤르륵 진입 애니(원샷 · 720ms = 최장 시퀀스보다 여유 후 클래스 회수 = 내부 뷰 토글 재트리거 방지)
     try { document.activeElement && document.activeElement.blur(); } catch {} document.documentElement.style.overflow = 'hidden'; if (!_noNav) navOpen('ydlg', yDlgClose); _yLastN = -1; _yTypOn = false; _yFailOn = false; }   // 재진입 = 촤르륵 키드 리셋 · 뒤로가기 레이어 등재(_noNav = navSwap이 이미 등재 = CTA 경로) · showModal 자동 포커스 해제
   yStair.pause(); yMapLeave();   // 챗 열림 = 계단·지도 루프 정지(top layer 투과 아티팩트 + GPU/배터리 차단 · QA13: 지도 탭 위 챗 열려도 rAF+60s 인터벌 계속 돌던 누수 봉쇄) — 닫힘 핸들러 yTab이 map 복귀 시 재개
@@ -3052,7 +3061,7 @@ function yRenderList() {   // 캐릭터 = SNS 리스트(.ypick-row 계승) + �
 function yShowList() { yRenderList(); yView('list'); }
 async function yEnterChat(c) {   // 리스트에서 캐릭터 선택 → 대화방 진입(draw)
   if (!c) return;
-  if (yDead(c)) { miniToast(`${c.name}은(는) 사망했어 — 현실 24시간 동안 대화할 수 없어`); yShowDetail(c.id); return; }   // 사망(운영자 260714 "락보다 한단계 위") = 최우선 게이트 · 그 시각 기준 24h 전면 차단 — 만료 = 자연 부활(같은 가드 자동 통과)
+  if (yDead(c)) { _yOpenGate = false; miniToast(`${c.name}은(는) 사망했어 — 현실 24시간 동안 대화할 수 없어`); yShowDetail(c.id); return; }   // 사망(운영자 260714 "락보다 한단계 위") = 최우선 게이트 · 그 시각 기준 24h 전면 차단 — 만료 = 자연 부활(같은 가드 자동 통과)
   if (yLockLabel(c)) { yShowDetail(c.id); return; }   // 잠금 캐릭터(카드 없음) = 진입 차단 → 미리보기만(READ ONLY · 운영자 260708)
   if (yUnmet(c)) { miniToast('아직 만나지 못한 사람이야 — 골목 어딘가에서 마주치면 열려'); yShowDetail(c.id); return; }   // 미대면 = 진입 차단(운영자 260709 "이벤트 발생해야 대화 가능") — 해금 = 난입·마주침 합석
   if (yEstranged(c)) { miniToast(`${c.name}과는 한동안 뜸했어 — 골목에서 다시 마주치면 풀릴지도`); yShowDetail(c.id); return; }   // 소원 = 재대화 차단(운영자 260709 친밀도 감쇠) — 회복 = 재회 이벤트
@@ -3065,7 +3074,7 @@ async function yEnterChat(c) {   // 리스트에서 캐릭터 선택 → 대화�
   if (c.bg) { const im = new Image(); im.src = c.bg; }   // 진입 즉시 이 캐릭터 시그니처 배경 프리로드(로딩=진입 동기 · 운영자 260707)
   _yLastN = -1; _yTypOn = false; _yFailOn = false; _yKickOn = false; _yPaceN = -1; _yTypHold = 0;
   clearTimeout(_yTypT); _yTypT = null; clearTimeout(_yPaceT); _yPaceT = 0; _meUnread = false;   // QA13: 스레드 전환/닫기 = 이전 방 타이머 해제(유령 '입력 중'/'1' 다른 방 누출 차단)
-  yScSet(false); _ySegs = [{ at: 0, sc: 0 }]; yScSync();   // 방 경계 = # 모드·타임라인 리셋(이전 방 상황 모드·구간이 새 방 오발송으로 누수 차단 · 평의회 260715) — 초안 텍스트는 종전대로 유지(전량 대사 취급)
+  yScSet(0); _ySegs = [{ at: 0, sc: 0 }]; yScSync();   // 방 경계 = # 모드·타임라인 리셋(이전 방 상황 모드·구간이 새 방 오발송으로 누수 차단 · 평의회 260715) — 초안 텍스트는 종전대로 유지(전량 대사 취급)
   // F(운영자 260708): draw 왕복 '전에' 이 캐릭터 대화창을 즉시 세운다 — "yeta 목업 → 인물" 교체 깜빡임 제거(헤더·배경·상황·타이핑 전부 인물로 선반영). 왕복 중 = 상황 지문 + "입력 중"(동적 오프닝 = 실제로 러너가 생성 중).
   // 낙관적 재진입(운영자 260712): 로컬에 이 방 대화가 있으면 draw 왕복 '전에' 기존 대화를 즉시 렌더 = "안 먹힌 줄 알고 계속 누름" 딜레이 체감 제거 · 첫 진입(캐시 無)은 기존대로 오프닝 타이핑
   const _cached = !!(YSESS && YSESS.threads && YSESS.threads[c.id] && (YSESS.threads[c.id].turns || []).length);
@@ -3681,8 +3690,8 @@ function yInvToggle(force) {   // 초대 2차 팝업(운영자 260712 재생 —
   pk.hidden = false;
 }
 $('#yetaPlus').addEventListener('click', e => { e.stopPropagation(); $('#yetaFile').click(); });   // 입력행 + = 파일 첨부(항목11 · 초대는 헤더 픽토로 이설)
-let _yScOn = false;   // 상황 설명 모드(운영자 260714 '#') — 상황 구간 = 장면 설정 턴(sc · 상대에게 하는 말 아님)
-let _ySegs = [{ at: 0, sc: 0 }];   // 모드 타임라인(260714) — {at: 그 오프셋부터, sc: 상황 여부}. 전송 시 구간별로 대사/상황 턴 분리(순서 무관 — 상황이 앞이든 뒤든)
+let _yMode = 0;   // 입력 모드 — 0 대사 · 1 상황 설명('#' 260714) · 2 머릿속 생각('*' 운영자 260725 "상황설명 #, 화자의 머릿속 생각 *"). 연 글자로 다시 닫을 때까지 유지(자동 종결 없음)
+let _ySegs = [{ at: 0, sc: 0 }];   // 모드 타임라인(260714) — {at: 그 오프셋부터, sc: 모드값 0·1·2}. 전송 시 구간 그대로 대사/상황/생각으로 분리(순서 무관 — 상황·생각이 앞이든 뒤든)
 let _ySegPrev = '';   // 직전 입력값(평의회 260715) — 오프셋 리베이스용 기준 스냅샷
 function yScSync() { const ta = $('#yetaText'); _ySegPrev = ta ? ta.value : ''; }   // 프로그램적 값 변경(#버튼 갭·자동 종결·발송·복원) 직후 호출 = 다음 input diff 이중 반영 차단
 function yScRebase(v) {   // 편집 1회분 prefix/suffix diff → _ySegs 절대 오프셋 이동(평의회 260715 — 앞·중간 삽입/삭제/교체 시 대사↔상황 경계 밀림 오배치 봉인)
@@ -3694,13 +3703,29 @@ function yScRebase(v) {   // 편집 1회분 prefix/suffix diff → _ySegs 절대
   for (const g of _ySegs) { if (g.at > s + cut) g.at += d; else if (g.at > s) g.at = s; }   // 편집 뒤쪽 = 델타 이동 · 편집 안에 삼켜진 경계 = 편집 시작점으로 붕괴(빈 구간 = 전송서 스킵)
   _ySegPrev = v;
 }
-function yScMark(sc) { const ta = $('#yetaText'); _ySegs.push({ at: ta.value.length, sc: sc ? 1 : 0 }); }
-function yScSet(on) { _yScOn = !!on; const b = $('#yetaSc'); if (b) b.classList.toggle('on', _yScOn); const row = $('#yetaIn'); if (row) row.classList.toggle('sc', _yScOn); const ta = $('#yetaText'); if (ta) ta.placeholder = _yScOn ? '상황 설명' : '메시지'; }   // 문구 = "상황 설명"만(운영자 260716 — 두 줄 설명문이 입력행을 눌러 답답)   // 모드 ON = 입력행 코발트 톤(운영자 260714 "자동 블루톤 전환")
+function yScMark(sc) { const ta = $('#yetaText'); _ySegs.push({ at: ta.value.length, sc: sc | 0 }); }
+function yScSet(m) { _yMode = m | 0; const b = $('#yetaSc'); if (b) b.classList.toggle('on', _yMode === 1); const row = $('#yetaIn'); if (row) { row.classList.toggle('sc', _yMode === 1); row.classList.toggle('th', _yMode === 2); } const ta = $('#yetaText'); if (ta) ta.placeholder = _yMode === 1 ? '상황 설명' : _yMode === 2 ? '머릿속 생각' : '메시지'; }   // 문구 = 한 낱말(운영자 260716 — 두 줄 설명문이 입력행을 눌러 답답)   // 모드 ON = 입력행 톤 전환(운영자 260714 "자동 블루톤 전환") — 상황 = 터콰이즈 · 생각 = 코발트
+const yThWrap = x => `*${x.replace(/\s*\n\s*/g, ' ').replace(/\*/g, '')}*`;   // 생각 구간 = *…* 한 줄로 봉함(yFmt 이탤릭 지문 결 계승 · 줄바꿈 접기·내부 '*' 제거 = 지문 정규식 보호)
 function yScGap(ta) { if (ta.value.trim() && !/\n\n\s*$/.test(ta.value)) ta.value = ta.value.replace(/\s*$/, '') + '\n\n'; ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px'; }   // 전환 = 빈 줄(2줄바꿈) 규칙 — 진입·종료 공통(운영자 260714 "종료되도 2줄 이후로")
+function yScToggle(ta, m) {   // 모드 토글 단일 정본 — 버튼 탭·타이핑이 같은 함수(운영자 260725 "화자가 #을 쓰면 키보드의 #처럼 바로 반응") · 같은 글자 = 닫힘 · 다른 글자 = 그 모드로 갈아탐
+  yScSet(_yMode === m ? 0 : m); yScGap(ta); yScMark(_yMode); yScSync();   // 켜기 = 이후 그 모드 구간 · 끄기 = 이후 대사 구간(동일 2줄 규칙) · sync = 갭 삽입이 리베이스에 이중 반영 안 되게
+}
+const YSC_KEY = { '#': 1, '*': 2 };   // 여는·닫는 글자 정본 — '#' 상황 설명 · '*' 머릿속 생각(운영자 260725)
+function yScKeyAt(v, p) {   // 직전값 p → 현재값 v 델타가 '#'·'*' 한 글자 삽입이면 {i:위치, m:모드}(아니면 null) — beforeinput 취소 불가 IME(안드로이드) 폴백 경로
+  if (v.length !== p.length + 1) return null;
+  let s = 0; while (s < p.length && p.charCodeAt(s) === v.charCodeAt(s)) s++;
+  const m = YSC_KEY[v.charAt(s)];
+  return m && p.slice(s) === v.slice(s + 1) ? { i: s, m } : null;
+}
 $('#yetaSc').addEventListener('click', e => {
   e.stopPropagation(); const ta = $('#yetaText');
-  yScSet(!_yScOn); yScGap(ta); yScMark(_yScOn ? 1 : 0); yScSync();   // 켜기 = 이후 상황 구간 · 수동 끄기 = 이후 대사 구간(자동 종료와 동일 2줄 규칙) · sync = 갭 삽입이 리베이스에 이중 반영 안 되게
+  yScToggle(ta, 1);
   ta.focus();
+});
+$('#yetaText').addEventListener('beforeinput', e => {   // 타이핑 '#'·'*' = 입력행 # 버튼과 동일 반응(운영자 260725) — 한 글자 직접 입력만 가로챈다(붙여넣기·조합 입력 제외 = 본문에 섞여 온 기호는 그대로 남음)
+  if (e.inputType !== 'insertText' || !e.cancelable) return;
+  const m = YSC_KEY[e.data]; if (!m) return;
+  e.preventDefault(); yScToggle(e.target, m);   // 그 글자는 남기지 않는다 = 버튼 탭과 100% 같은 결과(모드 스위치 · 2줄 갭)
 });
 $('#yetaInvBtn').addEventListener('click', e => { e.stopPropagation(); yPdClose(); yInvToggle(); });   // 헤더 초대 + = 초대 팝업(운영자 260712 · .off = pointer-events:none이라 만석·대기 시 무반응 = 자리만 유지)
 $('#yetaMeter').addEventListener('click', e => {   // 미터 탭 = 모델 순환(Sonnet→Opus→Kimi · 260719) / 노력 순환(빠름→깊게→최대→빠름) — 운영자 260712 · 9단 슬라이더와 별개 직접 전환
@@ -3856,9 +3881,9 @@ function yIntroHtml(c) {   // 방 상단 캐릭터 소개 = 아바타(큰) + 이
   const desc = c.intro ? `<span class="yintro-desc">${esc(c.intro)}</span>` : '';
   return `<div class="yintro">${yAva(c, 'yintro-ava')}<span class="yintro-name">${esc(c.name || '')}${yGradeBadge(c)}${window.yPremBadge ? yPremBadge(c) : ''}</span>${tag}${desc}<span class="yintro-sep"></span></div>`;
 }
-function yTime(ts) {   // KST "오전/오후 h:mm"(운영자 260705 · "4s" 소요초 캡션 폐지) — §표기표준: UTC러너/브라우저 무관 고정 KST = ts+9h 후 UTC getter
-  if (!ts) return '';
-  const d = new Date(ts + 9 * 3600e3), h = d.getUTCHours(), m = String(d.getUTCMinutes()).padStart(2, '0');
+function yTime(ts) {   // 메시지 시각 = 무음동 세계 시각 "오전/오후 h:mm"(운영자 260725 "다른 시간은 앱 안에 필요없음" — 구 현실 KST 표기[260705] 폐지 · 표기 문법·자리는 종전 그대로) · 환산 = yWorldMin(ts) 순수 함수라 저장값·과거 로그 무변경
+  const wm = window.yWorldMin; if (!ts || !wm) return '';
+  const t = wm(ts), h = (t / 60) | 0, m = String(t % 60).padStart(2, '0');
   return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${m}`;
 }
 function yAiMsg(t, fresh, cont) {   // 캐릭터 메시지 = 아바타 + 이름 + [버블|시각](버블 밖 우하단 = 카톡 결) · fresh=신규만 촤르륵 · cont=직전과 같은 화자(아바타·이름 생략 = 톡방 그룹핑)
@@ -3937,6 +3962,24 @@ function yReconcile(root, html) {   // 증분 렌더(운영자 260717 근본) �
   const ref = O[O.length - b] || null;   // 유지된 첫 뒷부분 노드 = 삽입 기준(없으면 끝에 append)
   for (let i = a; i < N.length - b; i++) { const nd = N[i]; root.insertBefore(nd, ref); if (nd.classList.contains('in')) { const clr = () => nd.classList.remove('in'); nd.addEventListener('animationend', clr, { once: true }); setTimeout(clr, 400); } }   // 가운데 새것만 삽입(나머지 파괴 0 · 스트리밍=마지막 버블만 교체) · 등장 애니 1회 후 .in 제거 = 통짜 방식의 자동 자기정리 재현(축적 시 매 틱 sig cloneNode 낭비 · 평의회 perf F3) · reduced-motion 백스톱 400ms
 }
+let _yOpenGate = false;   // 진입 1회 게이트 — openYeta가 세우고 첫 렌더가 소진(사망 상대 방 복원 차단용 · 대화 중 사망은 종전 두절 연출 유지)
+let _yMeDeadSeq = false;   // 유저 사망 연출 진행 중 래치(중복 발화 0) — 팝업이 뜨면 풀린다(다음 진입 시도 = 다시 물음)
+function yMeDeadCheck() {   // 유저 사망(운영자 260725 "타의든 자의든") — 러너 <<MEDEAD: 맥락>> → sess.me_dead 박제 · 대화창 암전 → 이탈 → 대화 목록 → "당신은 죽었습니다. 부활하시겠습니까?"
+  const md = (YSESS || {}).me_dead;
+  if (!md) { _yMeDeadSeq = false; return false; }
+  if (_yMeDeadSeq) return true;
+  _yMeDeadSeq = true; yStopPoll();   // 죽은 채로 폴 돌 이유 없음(부활 = op revive가 세션을 되돌림)
+  const ask = () => { _yMeDeadSeq = false; yConfirm({ title: '당신은 죽었습니다', body: `${md.why ? md.why + '\n\n' : ''}부활하시겠습니까?`, okLabel: '부활한다', noLabel: '아니오', onOk: yRevive }); };   // 팝업 = 범용 확인 정본(yexit 골격 계승 · 새 팝업 창작 0)
+  if (yetadlg.open) { yetadlg.classList.add('ydlg-dead'); setTimeout(() => { yetadlg.classList.remove('ydlg-dead'); navBack('ydlg'); setTimeout(ask, 260); }, 900); }   // 암전(.9s) → 이탈 = 대화 목록 복귀(닫힘 핸들러가 yTab('list')) → 팝업
+  else ask();
+  return true;
+}
+async function yRevive() {   // 부활 = 서버 me_dead 해제 단일 경로(op revive) · 실패해도 로컬 해제 후 다음 폴이 서버 진실로 재동기(죽은 채 갇힘 차단)
+  yConfirmClose();
+  const r = await yApi('revive').catch(() => null);
+  if (r && r.ok && r.sess) YSESS = r.sess; else if (YSESS) delete YSESS.me_dead;
+  _yMeDeadSeq = false; miniToast('다시 눈을 떴어.');
+}
 function yRender() {
   const _ct = (YSESS || {}).cur || '';
   if (_yCurT !== _ct) {   // 방 정체 전환 감지(Q.06 평의회5) — 단톡 재합류·휘발 소멸로 서버가 cur을 옮기면 yThreadSwitch를 안 거쳐 키드가 이전 방 기준으로 남음 → 방 경계 리셋과 동형 처리(정규 전환 뒤 중복 실행은 무해·멱등)
@@ -3944,7 +3987,7 @@ function yRender() {
     if (_old && _ct) {
       _yLastN = -1; _yPaceN = -1; _yTypHold = 0; _meUnread = false; _yDrKeep = false;   // 첫 렌더 취급 = 병합된 1:1 히스토리 일괄 촤르륵 폭주 차단(평의회5①) · 겹침 draft 래치도 방 경계 리셋(260717)
       clearTimeout(_yTypT); _yTypT = null; clearTimeout(_yPaceT); _yPaceT = 0;
-      yScSet(false); _ySegs = [{ at: 0, sc: 0 }]; yScSync();   // # 상황 모드 구간 교차 방 누수 차단(방 경계 리셋 계승 · 평의회5⑤)
+      yScSet(0); _ySegs = [{ at: 0, sc: 0 }]; yScSync();   // # 상황 모드 구간 교차 방 누수 차단(방 경계 리셋 계승 · 평의회5⑤)
       if (!YTH(_old)) { try {   // 옛 방이 소멸(=병합·휘발)이면 읽음 마커 승계 + 고아 키 제거(안읽음 재점화·localStorage 누적 차단 · 평의회5②)
         const _or = +localStorage.getItem('yeta_read_' + _old) || 0, _nr = +localStorage.getItem('yeta_read_' + _ct) || 0;
         if (_or > _nr) localStorage.setItem('yeta_read_' + _ct, String(_or));
@@ -3952,8 +3995,13 @@ function yRender() {
       } catch {} }
     }
   }
+  if (yMeDeadCheck()) return;   // 유저 사망(운영자 260725) = 최우선 게이트 — 암전·이탈·부활 팝업이 이 렌더를 대체
   const log = $('#yetaLog'), s = YTH() || {}, all = s.turns || [];   // v3 = 현재 방 스코프(state/opening/err/room/invite/barged 전부)
   const deadNow = !!(YCUR && (YSESS || {}).cur === YCUR.id && yDead(YCUR));   // 사망 두절(운영자 260714) — 1:1 방만 잠금(단톡 = 러너가 이탈 처리·생존자와 계속) · 만료 = 자연 해제
+  if (deadNow && _yOpenGate) {   // 진입 차단(운영자 260725 "사망했으면 아예 대화창 안들어가져야 · 대화창 누르면 가장 최근 게 뜨거든?") — 마지막 방 복원 경로엔 yEnterChat 가드가 없어 죽은 상대의 방이 그대로 열리던 것
+    _yOpenGate = false; miniToast(`${(YCUR || {}).name || '상대'}은(는) 사망했어 — 현실 24시간 동안 대화할 수 없어`); yShowList(); return;
+  }
+  _yOpenGate = false;   // 정상 진입 = 게이트 소진(이후 폴 렌더는 통과 — 대화 중 사망은 종전 두절 연출 유지 · 운영자 260714)
   $('#yetaIn').hidden = deadNow;
   const prevN = _yLastN, first = prevN < 0;   // 첫 렌더(재진입 포함) = 전체 무애니(히스토리 우르르 방지)
   // 답장 페이스(운영자 260706 → 260714 버블 단위 개편): 꼬리 답장 런을 통짜 공개 대신 **버블 하나씩** 이어붙임("2개 먼저 뱉고 2개 그다음" 리듬 — 러너 finish 버블 분할과 짝).
@@ -4069,23 +4117,23 @@ async function ySend() {
   if (YCUR && (YSESS || {}).cur === YCUR.id && yDead(YCUR)) { miniToast('사망 — 현실 24시간 동안 연락이 닿지 않아'); return; }   // 사망(운영자 260714) — 입력 숨김의 이중 안전벨트(스테일 DOM 경로)
   if (!text || !YCUR) return;
   const btn = $('#yetaSend'); btn.disabled = true;
-  const sc = _yScOn;   // 상황 설명 모드 래치(260714 '#')
-  // 분리 발송(버그픽스 260715) — _ySegs 모드 타임라인을 구간 그대로 소비(종전엔 전송 순간 스위치만 봐서 "~다." 자동 종결 뒤 보내면 상황문이 통째 대사 턴 = "될 때 안 될 때"). 상황 구간 = 항상 sc 턴(.ysit 지문).
+  const sc = _yMode;   // 입력 모드 래치(260714 '#' · 260725 '*')
+  // 분리 발송(버그픽스 260715) — _ySegs 모드 타임라인을 구간 그대로 소비(종전엔 전송 순간 스위치만 봐서 "~다." 자동 종결 뒤 보내면 상황문이 통째 대사 턴 = "될 때 안 될 때"). 상황 구간 = 항상 sc 턴(.ysit 지문) · 생각 구간 = *…*로 봉해 대사 턴에 실린다(내 버블 안 이탤릭 = 지문 결).
   const segs = _ySegs;
   let parts = [];
   for (let i = 0; i < segs.length; i++) {
     const st = Math.min(segs[i].at, rawV.length), en = i + 1 < segs.length ? Math.min(segs[i + 1].at, rawV.length) : rawV.length;
-    const x = rawV.slice(st, en).trim(); if (!x) continue;   // 빈 구간(# 눌러놓고 안 씀) = 미발사(빈 턴 방지 · 종전 결)
-    const f = segs[i].sc ? 1 : 0;
+    const x0 = rawV.slice(st, en).trim(); if (!x0) continue;   // 빈 구간(#·* 눌러놓고 안 씀) = 미발사(빈 턴 방지 · 종전 결)
+    const md = segs[i].sc | 0, x = md === 2 ? yThWrap(x0) : x0, f = md === 1 ? 1 : 0;   // 생각(2) = *…* 봉함 후 대사 축으로 합류 = 아래 병합·합성 규칙 그대로 재사용(새 전송 축 0)
     if (parts.length && parts[parts.length - 1].sc === f) parts[parts.length - 1].x += '\n' + x; else parts.push({ x, sc: f });   // 인접 동종 구간 병합 = 턴 수 최소
   }
-  if (!parts.length) parts = [{ x: text, sc: sc ? 1 : 0 }];   // 안전망 — 타임라인 유실 시 종전 단일 턴 폴백
+  if (!parts.length) parts = [{ x: sc === 2 ? yThWrap(text) : text, sc: sc === 1 ? 1 : 0 }];   // 안전망 — 타임라인 유실 시 종전 단일 턴 폴백
   if (parts.length > 1 && parts.some(p => !p.sc)) {   // 대사+상황 혼합 = 한 메시지 합성(운영자 260717) — 상황 구간은 (괄호) 줄로 끼워 순서 그대로 · 발송 1회·버블 1개(yFmt이 괄호 줄을 지문 결로) · 상황만 있으면 종전 sc 턴(.ysit) 유지
     const cx = parts.map(p => p.sc ? `(${p.x.replace(/\s*\n\s*/g, ' ').replace(/[()]/g, m => m === '(' ? '〔' : '〕')})` : p.x).join('\n');   // 내부 괄호 = 〔〕 치환(평의회 260717 — 중첩 괄호가 지문 정규식 이탈하던 것)
     if (cx.length <= 4000) parts = [{ x: cx, sc: 0 }];   // 서버 캡(4000) 초과 = 합성 포기·종전 분리 발송 폴백(무언 절단으로 괄호 깨짐 방지 — 평의회 260717)
   }
   ta.value = ''; ta.style.height = ''; _yComposing = false; _yRenderPend = false;   // 입력 비움 = IME 조합 리셋(버튼탭 blur가 compositionend 없이 _yComposing 갇히는 경로 차단 · 평의회 IME F1)
-  _ySegs = [{ at: 0, sc: _yScOn ? 1 : 0 }]; _ySegPrev = '';   // 발송 = 타임라인 리셋(입력 리셋과 동형 — 라이브 모드 반영 · 평의회 260715 비대칭 정정)
+  _ySegs = [{ at: 0, sc: _yMode }]; _ySegPrev = '';   // 발송 = 타임라인 리셋(입력 리셋과 동형 — 라이브 모드 반영 · 평의회 260715 비대칭 정정)
   const log = $('#yetaLog');   // 낙관적 표시(확정은 폴이 대체) — 내 버블 즉시 · 타이핑은 "읽는 시간" 뒤(운영자 260707 "보내자마자 1초도 안 돼 입력 중 = 어색")
   const li = parts.reduce((k, p, i) => p.sc ? k : i, -1);   // 마지막 대사 파트 = '1' 단독 부착 대상(평의회 260715 — 파트마다 붙이면 '1' 이중 + 엉뚱한 소멸)
   const _opt = []; let _unEl = null;
@@ -4110,13 +4158,13 @@ async function ySend() {
     if (_yLastN >= 0) _yLastN += 1;   // 낙관 버블은 이미 촤르륵함 — 폴 확정 재렌더에서 같은 턴 재애니 방지
   }
   btn.disabled = false;
-  if (r.ok && sc && _yScOn) yScSet(false);   // 원샷 — 상황 깔고 나면 자동으로 대화 모드 복귀(실패 시엔 유지 = 재전송 대비) · 래치 sc 조건 = 발송 중 사용자가 켠 모드는 안 끔(평의회 260715)
+  if (r.ok && sc && _yMode === sc) yScSet(0);   // 원샷 — 상황·생각 깔고 나면 자동으로 대화 모드 복귀(실패 시엔 유지 = 재전송 대비) · 래치 동일 조건 = 발송 중 사용자가 바꾼 모드는 안 건드림(평의회 260715)
   if (!r.ok) {
     if (_typEl) yOut(_typEl); _opt.slice(sent).forEach(yOut); clearTimeout(_yTypT); _yTypOn = false;   // 미전송 파트 낙관 노드만 회수 — 커밋된 앞 파트 버블은 유지(서버에 이미 박힘 · 평의회 260715 중복 재전송 봉인)
     let rv = ''; const rs = [];
     for (let i = sent; i < parts.length; i++) { if (rv) rv += '\n\n'; rs.push({ at: rv.length, sc: parts[i].sc }); rv += parts[i].x; }   // 복원 = 미전송 파트만 + 타임라인 재구성(전문 복원이면 커밋분이 재전송 시 중복 적재)
     ta.value = rv; _ySegs = rs.length ? rs : [{ at: 0, sc: 0 }]; _ySegPrev = rv; ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px';
-    yScSet(!!(rs.length && rs[rs.length - 1].sc));   // # 래치 = 복원 타임라인과 동기(합성 실패 후 모드 표시·구간 불일치 봉합 · 평의회 260717)
+    yScSet(rs.length ? rs[rs.length - 1].sc : 0);   // 모드 래치 = 복원 타임라인과 동기(합성 실패 후 모드 표시·구간 불일치 봉합 · 평의회 260717) · 생각 구간은 이미 *…*로 봉해져 텍스트에 남는다
     if (!sent) _yDrKeep = false;   // 전송 전체 실패 = 겹침 draft 래치 롤백(서버에 겹침 턴 없음 → mut 오염 방지 · 평의회 260717)
     log.insertAdjacentHTML('beforeend', `<div class="yb fail in">${esc(r.error || '전송 실패')}</div>`); _yFailOn = true; log.scrollTop = log.scrollHeight;
     if (sent) yStartPoll();   // 앞 파트는 커밋·dispatch 완료 — 그 답장 폴 기동(종전엔 미기동 = 답이 와도 안 보임 · 평의회 260715)
@@ -4126,21 +4174,14 @@ async function ySend() {
   yStartPoll();
 }
 $('#yetaSend').addEventListener('click', ySend);
-$('#yetaText').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault();
-  if (_yScOn) {   // # 모드 Enter = 전송 아님(운영자 260717 "#치고 엔터 = 바로 전송돼버림") — 상황 구간 닫고 줄바꿈 = 이어서 대사 입력(합성 메시지 계속) · 전송 = 대사 모드 Enter 또는 보내기 버튼
-    const ta = e.target; if (!ta.value.trim()) return;
-    yScSet(false); ta.value = ta.value.replace(/\s*$/, '') + '\n';
-    while (_ySegs.length > 1 && _ySegs[_ySegs.length - 1].at > ta.value.length - 1) _ySegs.pop();   // 빈 상황 구간 = strip이 마크 앞까지 잘라 세그 역순화 → 꼬리 스테일 마크 회수(중복 발송 봉합 · 평의회 260717 MED)
-    yScMark(0); yScSync();
-    ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px';
-    return;
-  }
-  if (!$('#yetaSend').disabled) ySend(); } });   // 폰 enterkeyhint=send · Shift+Enter=줄바꿈 · disabled 가드 = 발송 중 Enter 재진입 차단(평의회 260715)
-$('#yetaText').addEventListener('input', e => { const t = e.target; t.style.height = 'auto'; t.style.height = Math.min(120, t.scrollHeight) + 'px';
-  if (!t.value) { _ySegs = [{ at: 0, sc: _yScOn ? 1 : 0 }]; _ySegPrev = ''; return; }   // 입력 전량 삭제 = 타임라인 리셋(오프셋 어긋남 방지)
+// Enter 전송 폐지(운영자 260725 "키보드에 보내기를 누르면 엔터가 되어버리거든? 줄바꿈이 되게 해줘") — 키보드 액션키·Enter = 항상 줄바꿈(네이티브 그대로 · keydown 가로채기 0) · 전송 = 입력행 종이비행기 버튼 단일 경로. textarea enterkeyhint도 'enter'(줄바꿈 글리프)로 동행.
+$('#yetaText').addEventListener('input', e => { const t = e.target;
+  const hk = yScKeyAt(t.value, _ySegPrev);   // 타이핑된 '#'·'*' 회수 → 버튼과 동일 토글(beforeinput 취소 불가 IME 폴백 · 텍스트에는 그 글자를 남기지 않는다)
+  if (hk) { t.value = t.value.slice(0, hk.i) + t.value.slice(hk.i + 1); yScSync(); yScToggle(t, hk.m); return; }
+  t.style.height = 'auto'; t.style.height = Math.min(120, t.scrollHeight) + 'px';
+  if (!t.value) { _ySegs = [{ at: 0, sc: _yMode }]; _ySegPrev = ''; return; }   // 입력 전량 삭제 = 타임라인 리셋(오프셋 어긋남 방지)
   yScRebase(t.value);   // 편집 델타 → 오프셋 리베이스(평의회 260715 — 앞·중간 편집 시 경계 밀림 봉인)
-  // 상황문 자동 종결(운영자 260714) — 마지막 상황 구간이 문장으로 끝나면(~다. · 문장부호) 자동으로 대화 모드 복귀 + 2줄바꿈. 이어 치는 건 대사.
-  if (_yScOn) { const seg = _ySegs[_ySegs.length - 1] || { at: 0 }; const cur = t.value.slice(seg.at); if (/(다\.|[.!?…])[)"'\]]?\s*$/.test(cur) && cur.trim().length >= 2) { yScSet(false); t.value = t.value.replace(/\s*$/, '') + '\n\n'; yScMark(0); yScSync(); t.style.height = 'auto'; t.style.height = Math.min(120, t.scrollHeight) + 'px'; } }
+  // 상황문 자동 종결(구 260714) 폐지 — 운영자 260725 "#으로 닫을 때까지 그 #(상황 설명)이 유지되게". 문장부호·엔터로 저절로 꺼지던 축을 걷어내고 종료 = '#'(타이핑·버튼) 단일 트리거.
 });
 $('#yetaText').addEventListener('focus', yWarm);   // 쓰기 시작 = 러너 선부팅(콜드 부팅 30~40s를 타이핑 시간과 겹침 — 유휴 복귀 첫 답장 단축 · 4.5분 디바운스는 yWarm 내장)
 $('#yetaText').addEventListener('compositionstart', () => { _yComposing = true; });   // 한글 조합 시작 = 로그 리페인트 유예 개시(입력 유실 차단 · 운영자 260717)
@@ -4196,17 +4237,18 @@ try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(fun
   const outLeft = () => { try { const u = +localStorage.getItem('yeta_pin_until') || 0; return Math.max(0, u - Date.now()); } catch { return 0; } };
   // ── 무음동 세계 시계(운영자 260715) — 실제 시각과 분리, 6배 가속(실제 4h = 무음동 하루 · 자는 새벽도 겪게). 러너 state_block wmin과 동일 공식(epoch분×6 mod 1440) = 저장 없이 동기. ──
   const YWORLD_RATE = 6;   // 6배(1배=현실, 24배=1시간 하루) — 조정 노브
-  window.yWorldMin = () => Math.floor(Date.now() / 60000 * YWORLD_RATE) % 1440;   // 무음동 분(0~1439)
+  window.yWorldMin = ts => Math.floor((ts || Date.now()) / 60000 * YWORLD_RATE) % 1440;   // 무음동 분(0~1439) · ts = 그 시각의 무음동 분(메시지 시각 환산 — 순수 함수라 저장·마이그레이션 0 · 운영자 260725)
   window.yWorldDH = () => { const wt = Date.now() / 60000 * YWORLD_RATE; return { d: 'w' + Math.floor(wt / 1440), h: Math.floor(wt % 1440 / 60) }; };   // 무음동 (날짜열, 시각) — 동선·지도 시간축 SSOT(운영자 260716 지도 싱크: 지도·동선·근처·원거리 전부 세계 시각으로 통일 · 러너 yeta_place.world_dh와 동일 공식 = 드리프트 금지)
-  window.yWorldClock = () => { const m = yWorldMin(), h = (m / 60) | 0, mm = m % 60, ap = h < 12 ? 'AM' : 'PM'; let hh = h % 12; if (!hh) hh = 12; return { h, txt: String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ' ' + ap, night: h < 6 || h >= 20 }; };
-  let _yWorldT = null, _yModeSig = null;
-  function yWorldTick() {   // 상단 시계 = 현실 KST 단일 풀포맷(운영자 260717 Q.26 "2026. 7. 17. 00:00 AM/PM KST · 아래 실제 시간 삭제" — 구 세계시각+현실병기 2단 폐지) · KST 고정 = naive Date 표기 금지 규약[12] · 세계시각(yWorldClock)은 지도·모드 게이트 소비 존치
+  window.yWorldClock = ts => { const m = yWorldMin(ts), h = (m / 60) | 0, mm = m % 60, ap = h < 12 ? 'AM' : 'PM'; let hh = h % 12; if (!hh) hh = 12; return { h, txt: String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ' ' + ap, night: !ymIsDay(h) }; };   // night = ymIsDay 단일 정의 계승(Q.18 — 지도 배경·시계 픽토가 같은 경계)
+  let _yWorldT = null, _yModeSig = null, _ywcT = 0;
+  function yWorldTick() {   // 상단 시계 = 무음동 세계 시각 단독(운영자 260725 "여기 시간만 보이고 흐르게 · 다른 시간은 앱 안에 필요없음" — 구 현실 KST 풀포맷[Q.26] 폐지) · 낮/밤 픽토 = ymIsDay 단일 경계(지도 배경과 동기)
     const el = document.getElementById('yworldclock'); if (!el) return;
-    const k = new Date(Date.now() + 9 * 3600e3);
-    const kh = k.getUTCHours(), ap = kh < 12 ? 'AM' : 'PM'; let hh = kh % 12; if (!hh) hh = 12;
-    const txt = `${k.getUTCFullYear()}. ${k.getUTCMonth() + 1}. ${k.getUTCDate()}. ${String(hh).padStart(2, '0')}:${String(k.getUTCMinutes()).padStart(2, '0')} ${ap} KST`;
-    const m = document.getElementById('ywcMain'); if (m) m.textContent = txt; else el.textContent = txt;
-    el.hidden = false; el.classList.toggle('night', kh < 6 || kh >= 20);   // 밤 터콰이즈 = 표시 시각(현실 KST)과 동기
+    const w = yWorldClock();
+    const m = document.getElementById('ywcMain'); if (m) m.textContent = w.txt; else el.textContent = w.txt;
+    const ic = document.getElementById('ywcIc'), key = w.night ? 'n' : 'd';
+    if (ic && ic.dataset.dn !== key) { ic.innerHTML = w.night ? MOON_SVG : SUN_SVG; ic.dataset.dn = key; }   // 픽토 = 낮 해 / 밤 달(nm-svg SSOT) — 경계 넘는 틱에만 재주입(평시 no-op)
+    el.hidden = false; el.classList.toggle('night', w.night);   // 밤 터콰이즈 = 표시 시각(무음동)과 동기
+    if (_ywcT++ % 4) return;   // 아래 변신 경계 동기는 4틱(8s)마다 = 종전 주기 유지(시계 글자만 2s로 촘촘히 = "흐르게")
     try {   // 변신 경계 동기(운영자 260717 Q.17 "정각 자동 전환") — 모드 on/off 서명이 바뀐 틱에만 열린 화면의 프사·배지 재도장(8s 틱 = 경계 지연 ≤8s · 평시 no-op)
       const sig = (YCHARS || []).filter(c => c.mode && c.mode.nm).map(c => c.id + (yModeOn(c) ? '+' : '-')).join('|');
       if (_yModeSig !== sig) {
@@ -4220,7 +4262,8 @@ try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(fun
       }
     } catch (e) {}
   }
-  function yWorldStart() { yWorldTick(); if (!_yWorldT) _yWorldT = setInterval(yWorldTick, 8000); }   // 8s = 무음동 48s(6배)마다 갱신 = 분 단위 충분
+  window.yWorldStart = yWorldStart;   // QA 경로(?qa=1)용 노출 — 정상 가동은 setUnlocked(언락) · 시계가 안 돌면 상단 띠가 hidden이라 헤드리스 검증이 불가([E13] 영수증 인에이블러)
+  function yWorldStart() { yWorldTick(); if (!_yWorldT) _yWorldT = setInterval(yWorldTick, 2000); }   // 2s = 무음동 12s(6배) — 무음동 1분 = 현실 10s라 분 표시가 눈에 보이게 흐른다(운영자 260725 "흐르게") · 무거운 변신 경계 동기는 tick 안에서 4틱마다
   function setUnlocked(animate) {   // 언락 = PIN 창 촤르륵 닫고(pin-mode 해제) 네비 등장 · animate=라이브 언락만 슬라이드업(재방문 복원은 무애니)
     unlocked = true; ymain.classList.remove('pin-mode'); ymain.classList.add('unlocked'); yTab('char'); setTimeout(yStair, 1150); yWarmBg();   // 언락 = 바로 메뉴1 캐릭터 · 계단 쌓기 1.15s 지연(운영자 확정 — 행 촤르륵 먼저) · 배경 프리로드 착수(첫 진입 전 캐시 = 진입 동기)
     yWorldStart();   // 무음동 세계 시계 가동(운영자 260715)

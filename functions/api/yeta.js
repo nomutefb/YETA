@@ -511,6 +511,16 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: true, pin: !!(TH(sess, t) || {}).pin });
   }
 
+  if (op === 'revive') {   // 유저 부활(운영자 260725 "당신은 죽었습니다. 부활하시겠습니까?") — sess.me_dead 해제 단일 경로. 유저 사망 박제 = 러너 <<MEDEAD: 맥락>>(타의·자의 공통) · 캐릭터 dead(24h 대기)와 달리 유저는 즉시 부활(대기 없음 = 놀이 흐름 유지)
+    const { sess, abort } = await casPut(s => {
+      if (!s.me_dead) return { abort: { noop: 1 } };   // 이미 살아있음 = 무변경(중복 탭·재진입 멱등)
+      s.me_revived = { d: (s.me_dead || {}).d || 0, why: (s.me_dead || {}).why || '', at: Date.now() };   // 직전 죽음 = 부활 맥락으로 1세대 보존(러너가 다음 턴에 "돌아왔네" 결로 쓸 재료)
+      delete s.me_dead;
+    });
+    if (abort && abort.error) return json(abort, 409);
+    return json({ ok: true, sess: sess || null });
+  }
+
   if (op === 'reset') {   // t 有 = 그 스레드만 나가기(threads[t]+notes[t] 삭제 · 관계 리셋) / t 無 = 전체 초기화. 직전 whole 백업 유지(레이스 감사④·보안 감사③)
     const t = String(body.t || '');
     if (t && !ID_RE.test(t)) return json({ error: '잘못된 스레드 id' }, 400);

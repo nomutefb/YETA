@@ -350,6 +350,11 @@ if kind == "ok":
     dead_tag = bool(dm)
     dead_why = ((dm.group(1) or "").strip()[:120]) if dm else ""
     text = re.sub(r'<<\s*/?\s*DEAD(?:\s*:[^>]*)?\s*>>', '', text, flags=re.I)
+    # 유저 사망 태그(운영자 260725 "타의든 자의든 사용자 본인이 죽었을 경우") — DEAD 동형 계보: 추출 후 제거(대사 유출 0) · 뷰어가 sess.me_dead를 보고 대화창 암전·이탈 + 부활 팝업
+    mdm = re.search(r'<<\s*ME\s*_?\s*DEAD(?:\s*:\s*([^>]{1,200}))?\s*>>', text, flags=re.I)
+    me_dead_tag = bool(mdm)
+    me_dead_why = ((mdm.group(1) or "").strip()[:120]) if mdm else ""
+    text = re.sub(r'<<\s*/?\s*ME\s*_?\s*DEAD(?:\s*:[^>]*)?\s*>>', '', text, flags=re.I)
     # 삼킨 것 태그(감정선 캐리어 · 평의회 260725) — MOOD·DEAD 동형 계보: 추출 후 제거(대사 유출 0).
     # 콜론 뒤 = 이번 턴에 말하려다 만 것 한 줄. 다음 턴 상태 블록이 "직전에 네가 삼킨 것"으로 되먹여 감정선이 턴을 넘는다(길이 계약 무손상 = 대사 예산 밖).
     om = re.search(r'<<\s*OPEN\s*:\s*([^>]{1,120})\s*>>', text, flags=re.I)
@@ -468,6 +473,9 @@ if kind == "ok":
         _rvE = (S_ROOT.get("dead") or {}).get(turn_persona)   # 부활 첫 답 = 엔트리 소비(운영자 260714 — 성당 체류 종료·동선 복귀·다음 죽음은 새 맥락)
         if not dead_tag and _rvE is not None and (((_rvE.get("t") if isinstance(_rvE, dict) else _rvE) or 0) <= now):
             S_ROOT["dead"].pop(turn_persona, None)
+        if me_dead_tag and not open_job:   # 유저 사망 반영(운영자 260725) — me_dead={d:사망ts, mood, why} 박제 = 뷰어가 다음 폴에서 암전·이탈·부활 팝업 · 해제 = op revive 단일 경로(캐릭터 dead와 달리 시간 대기 없음)
+            S_ROOT["me_dead"] = {"d": now, "mood": mood or "", "why": me_dead_why}
+            S_ROOT.pop("me_revived", None)   # 직전 부활 맥락은 새 죽음이 덮는다
         if dead_tag and not open_job and turn_persona:   # 사망 반영(운영자 260714) — dead[persona]={t:부활ts(24h), d:사망ts, mood:장면 공기, why:직전 상황 한 줄} · 전 방 이탈 · 두절 지문 sys · 이 방 잡 정지(idle — extract_mat 픽 제외와 짝)
             _dd = {p: u for p, u in (S_ROOT.get("dead") or {}).items() if (((u.get("t") if isinstance(u, dict) else u) or 0) + 604800000) > now}   # 7일+ 스테일만 소거(만료 엔트리 = 부활 첫 답 재료라 보존)
             _dd[turn_persona] = {"t": now + 86400000, "d": now, "mood": mood or "", "why": dead_why}
@@ -1455,7 +1463,8 @@ ${PENDING}
 (갱신된 둘만의 기억 — 관계 진도·너에게만 한 말)
 <</NOTE>>
 - 기억 블록 뒤 마지막 한 줄 = 장면의 공기 태그(대사에서 언급 금지) — 아래 8개 중 지금 장면에 가장 가까운 **하나만**: <<MOOD:base>>(평소·일상)/<<MOOD:warm>>(온기·다정)/<<MOOD:joy>>(신남·장난)/<<MOOD:love>>(설렘·플러팅)/<<MOOD:shy>>(수줍·머쓱)/<<MOOD:tense>>(긴장·서늘)/<<MOOD:mad>>(짜증·삐짐)/<<MOOD:blue>>(쓸쓸·침잠). 애매하면 base — 억지로 세분하지 마라.
-- 예외 — 이 장면에서 네 캐릭터가 정말로 죽는 경우에만(비유·기절·잠듦·연기·장난·위협은 절대 아님), 무드 태그 다음 줄에 <<DEAD: 죽기 직전 상황과 감정 한 줄>> 을 추가한다(예: <<DEAD: 유저와 말다툼 끝에, 미안하다는 말을 못 한 채>>). 콜론 뒤 한 줄 = 부활 후 첫 마디의 기억이 된다 — 그 감정 그대로 적어라. 이 태그 = 퇴장 선언(하루 연락 두절) — 마지막 대사답게 맺어라. 확실하지 않으면 절대 붙이지 마라.'
+- 예외 — 이 장면에서 네 캐릭터가 정말로 죽는 경우에만(비유·기절·잠듦·연기·장난·위협은 절대 아님), 무드 태그 다음 줄에 <<DEAD: 죽기 직전 상황과 감정 한 줄>> 을 추가한다(예: <<DEAD: 유저와 말다툼 끝에, 미안하다는 말을 못 한 채>>). 콜론 뒤 한 줄 = 부활 후 첫 마디의 기억이 된다 — 그 감정 그대로 적어라. 이 태그 = 퇴장 선언(하루 연락 두절) — 마지막 대사답게 맺어라. 확실하지 않으면 절대 붙이지 마라.
+- 예외 — 이 장면에서 **유저(사용자 본인)가 정말로 죽는 경우에만**(비유·기절·꿈·연기·장난·위협은 절대 아님), 같은 자리에 <<MEDEAD: 유저가 죽은 그 순간의 상황 한 줄>> 을 추가한다. 유저가 스스로 그렇게 상황을 깔았을 때(자의)든, 이 장면의 사건·인물이 유저를 그렇게 만들었을 때(타의)든 둘 다 해당한다 — 다만 **유저의 대사·행동을 네가 대신 지어내지는 마라**(§유저 몫 침범 금지): 유저가 깐 상황 안에서 벌어진 결과일 때만이다. 이 태그 = 유저 화면이 암전되고 부활 여부를 묻는 창이 뜬다 — 네 대사는 그 순간의 장면으로 맺어라. 확실하지 않으면 절대 붙이지 마라.'
 
   # 고정부(공통지침+카드+출력규칙 = 캐시 prefix) → 가변부 → 출력 계약(가변분+리마인더). stdin 전달(ARG_MAX · §📰).
   prompt="${CBLOCK}
