@@ -3970,7 +3970,7 @@ function yMeDeadCheck() {   // 유저 사망(운영자 260725 "타의든 자의�
   if (_yMeDeadSeq) return true;
   _yMeDeadSeq = true; yStopPoll();   // 죽은 채로 폴 돌 이유 없음(부활 = op revive가 세션을 되돌림)
   const ask = () => { _yMeDeadSeq = false; yConfirm({ title: '당신은 죽었습니다', body: `${md.why ? md.why + '\n\n' : ''}부활하시겠습니까?`, okLabel: '부활한다', noLabel: '아니오', onOk: yRevive }); };   // 팝업 = 범용 확인 정본(yexit 골격 계승 · 새 팝업 창작 0)
-  if (yetadlg.open) { yetadlg.classList.add('ydlg-dead'); setTimeout(() => { yetadlg.classList.remove('ydlg-dead'); navBack('ydlg'); setTimeout(ask, 260); }, 900); }   // 암전(.9s) → 이탈 = 대화 목록 복귀(닫힘 핸들러가 yTab('list')) → 팝업
+  if (yetadlg.open) { yetadlg.classList.add('ydlg-dead'); setTimeout(() => { yetadlg.classList.remove('ydlg-dead'); navBack('ydlg'); setTimeout(() => { if (yetadlg.open) yDlgClose(); ask(); }, 260); }, 900); }   // 암전(.9s) → 이탈 = 대화 목록 복귀(닫힘 핸들러가 yTab('list')) → 팝업 · 백스택 미등재 경로(레이어 없이 열린 챗)에선 navBack이 헛발이라 직접 닫기로 받침(실측 260725 — 죽은 채 대화창에 갇히는 경로 봉인)
   else ask();
   return true;
 }
