@@ -12,9 +12,9 @@ set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
-DEFAULT_MODEL="claude-opus-4-8"
+DEFAULT_MODEL="claude-opus-5"
 DEFAULT_EFF="low"                 # 첫마디 한 호흡 = 30초 컷과 같은 결(챗 기본 동형)
-case "${YETA_CALL_MODEL:-}" in claude-opus-4-8|claude-sonnet-5) MODEL="$YETA_CALL_MODEL" ;; *) MODEL="$DEFAULT_MODEL" ;; esac
+case "${YETA_CALL_MODEL:-}" in claude-opus-5|claude-sonnet-5) MODEL="$YETA_CALL_MODEL" ;; *) MODEL="$DEFAULT_MODEL" ;; esac
 case "${YETA_CALL_EFF:-low}" in low|medium|high|max) EFF="${YETA_CALL_EFF:-low}" ;; *) EFF="$DEFAULT_EFF" ;; esac
 SAFE=""
 case "${YETA_SAFE:-1}" in 1|true|on) SAFE="--safe-mode" ;; esac   # 기본 ON — 런타임은 CLAUDE.md 미주입(개발 세션 전용 · 턴당 ~37k 토큰 절약 · 운영자 260704) · ⚠️ --bare 는 여전히 절대 금지(OAuth 즉사)
