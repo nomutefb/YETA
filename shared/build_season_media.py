@@ -104,6 +104,28 @@ SEASONS = {
                     "⚠ 260726 현재 = 얼굴 없는 검도 실루엣 1장뿐(운영자 '익명으로 넣고 나중에 보강') — 인물 확정 아님 · tense 국면 전용. "
                     "정본=viewer/characters/season/ryu/main/<감정>/."),
     },
+    "winter": {
+        # 평면 축(flat) — 감정 하위폴더 없이 파일명 토큰으로 분류. 파일을 안 옮기는 이유 = build_flat 독스트링.
+        "flat": "characters/idol/winter",
+        # ⚠ 위에서부터 첫 일치 승 — 좁은 토큰을 먼저. (예: glaring_cut → shy 가 glaring → mad 보다 위)
+        "rules": [
+            ("shy",   ["glaring_cut", "glaring_cuty", "tsundere", "hesitant_to_speak", "flustered", "giggle_bashfully", "act_cute", "play_cute", "playful_cute"]),
+            ("love",  ["seduce", "flirty", "love_u", "how_do_i_look", "miss_someone", "fond_look"]),
+            ("blue",  ["sob", "crying", "heartbroken", "worried", "brooding", "sleepy", "asleep", "dozing", "heavy_eyes", "gotosleep", "go_sleep", "helpless", "at_a_loss", "let_down", "overwhelmed", "sad"]),
+            ("mad",   ["angry", "furious", "annoy", "irritat", "offend", "pouty", "sulky", "grumpy", "upset", "low_key_mad", "feigning_mad", "disgusting", "cold_shoulder", "glaring", "curt"]),
+            ("tense", ["suspicious", "taken_aback", "confused", "clueless", "dumbfounded", "panick", "freaking", "is_this_happening", "no_way", "for_real", "oh_really", "are_u_kidding", "what_now", "speechless", "so_cold", "poker_face", "fake_smile", "i_told_you_so", "smirk", "distracted"]),
+            ("joy",   ["happy", "excited", "eureka", "goofy", "proud", "full_of_oneself", "playful", "hopeful"]),
+            ("warm",  ["smile", "chuckle", "cheerup", "hi_", "its_you", "love"]),
+            # 나머지(무대·연습·일상·배경·모델컷 등) = base 폴백
+        ],
+        "comment": ("시즌 감정 미디어 manifest(윈터) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29). "
+                    "⚠ 다른 인물과 축이 다르다 = **평면(flat) 폴더** — 사진이 감정 하위폴더가 아니라 `characters/idol/winter/`에 "
+                    "감정이 적힌 파일명(happy_01 · are_u_kidding_02 · glaring_cutely_03 …)으로 모여 있고, SEASONS['winter']['rules']의 "
+                    "토큰 규칙이 그걸 읽어 버킷에 넣는다(파일 이동 0 = roster avatar·bg·카드 폴백 경로 불변). "
+                    "새 사진 = 같은 폴더에 감정 단어가 들어간 이름으로 넣기만 · 어디에도 안 걸리면 base 폴백. "
+                    "정본=viewer/characters/idol/winter/."),
+    },
     "drusilla": {
         # 고죠 흉내 = 변신 모드(gojo 폴더) · mode_dir 지정 → viewer 모드 게이트가 경로로 필터.
         # ⚠ 루시(도깨비)의 시간대 게이트와 축이 다르다 — 드루실라 mode는 roster mode.with=["gojo"](동석 게이트)라
@@ -123,7 +145,40 @@ def rel(p: Path) -> str:
     return p.relative_to(ROOT / "viewer").as_posix()  # viewer 서빙 루트 기준(로스터 bg 경로 규약과 동일)
 
 
+def build_flat(cid: str, cfg: dict) -> dict:
+    """평면 폴더 축(260726 윈터) — 감정 하위폴더 없이 **파일명에 감정이 적혀 있는** 수집분을 규칙으로 분류.
+
+    왜 별도 축인가: 윈터 189장은 `characters/idol/<id>/` 규약(아이돌 등급 · inject_character.sh 폴백 경로)으로 먼저 모였고,
+    파일명 자체가 감정 라벨이다(happy_01 · are_u_kidding_02 · glaring_cutely_03 …). 이걸 감정 폴더로 옮기면
+    roster avatar·bg와 카드 폴백 경로가 전부 깨진다 → **파일을 옮기는 대신 규칙으로 읽는다**(경로 불변).
+    규칙 = (버킷, [토큰…]) 리스트 · **위에서부터 첫 일치 승**(specific → general 순서로 적을 것 · 오타 수집분도 토큰으로 흡수).
+    어디에도 안 걸리면 base(안전망) — 새 파일을 부어도 최소 base로는 잡힌다.
+    """
+    fdir = ROOT / "viewer" / cfg["flat"]
+    if not fdir.is_dir():
+        raise SystemExit(f"평면 폴더 없음: {fdir}")
+    buckets = {e: [] for e in EMOS}
+    rules = cfg["rules"]
+    for p in sorted(fdir.iterdir()):
+        if not p.is_file() or p.suffix.lower() not in IMG_EXT:
+            continue
+        nm = p.stem.lower()
+        for emo, toks in rules:
+            if any(t in nm for t in toks):
+                buckets[emo].append(p)
+                break
+        else:
+            buckets["base"].append(p)
+    out = {"_comment": cfg["comment"]}
+    for e in EMOS:
+        if buckets[e]:
+            out[e] = [rel(p) for p in buckets[e]]
+    return out
+
+
 def build_one(cid: str, cfg: dict) -> dict:
+    if cfg.get("flat"):
+        return build_flat(cid, cfg)
     cdir = SEASON_DIR / cid
     if not cdir.is_dir():
         raise SystemExit(f"캐릭터 폴더 없음: {cdir}")
@@ -154,7 +209,7 @@ def main() -> int:
     check = "--check" in sys.argv
     rc = 0
     for cid, cfg in SEASONS.items():
-        mpath = SEASON_DIR / cid / "media.json"
+        mpath = (ROOT / "viewer" / cfg["flat"] / "media.json") if cfg.get("flat") else (SEASON_DIR / cid / "media.json")
         fresh = build_one(cid, cfg)
         cur = None
         if mpath.exists():

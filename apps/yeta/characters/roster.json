@@ -717,8 +717,8 @@
  {
   "id": "winter",
   "name": "윈터",
-  "met": false,
-  "locked": true,
+  "met": true,
+  "locked": false,
   "grade": "idol",
   "tagline": "에스파 리드보컬 — 차가운 비주얼 속 다정한 부산 사람",
   "greeting": "왔어? *살짝 웃는다.* 밥은 먹었고? …앉아, 얘기하자.",
@@ -727,7 +727,7 @@
   "color": "#A9C6E8",
   "bg": "characters/idol/winter/happy_01.jpg",
   "enter_line": "윈터가 살짝 웃으며 걸어 나온다",
-  "avatar": "characters/idol/winter/beauty_01.jpg",
+  "avatar": "characters/idol/winter/winter_face.webp",
   "desc": "차가운 비주얼 속 다정한 부산 사람",
   "quote": "밥은 먹었어? 무리하지 말고.",
   "stats": [
@@ -761,7 +761,8 @@
    "왔어? *살짝 웃는다.* 밥은 먹었고? …앉아, 얘기하자.",
    "*무대 의상 그대로 걸어 나온다.* 방금 리허설 끝났어. 손끝이 아직 얼얼하네. 무슨 일 있어?",
    "어, 왔네. 마침 따뜻한 거 마시던 참인데. 너도 한 잔 할래?"
-  ]
+  ],
+  "season": "characters/idol/winter/media.json"
  },
  {
   "id": "drusilla",
