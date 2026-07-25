@@ -39,11 +39,12 @@
     "seed_pool": 3,
     "ctx_turns": 8,
     "stale_turns": 3,
+    "arc_span": 6,
     "queue_min": 2,
     "fire_gate": 2,
     "min_gap_turns": 1,
     "warmup_turns": 2,
     "deep_hours": [0, 3],
-    "_doc": "batch=1회 생성 개수(호출 1회로 N턴 커버 = 쿼터 절약 · 260725 5→3: 클수록 오래 묵어 뜬금없어진다) · seed_pool=씨앗을 batch의 N배로 뽑아 후보로 던짐(맞는 것만 골라 쓰게 = 관련도 축) · ctx_turns=프롬프트에 넣는 최근 대화 턴 수 · stale_turns=생성 후 유저 턴이 N턴 넘게 굴렀거나 장소가 바뀌면 큐를 폐기하고 새 맥락으로 재생성 · queue_min=이 밑으로 떨어지면 프리페치 · fire_gate=매 턴 1/N 확률로 발화(2=약 절반 = '정신없이' 결) · min_gap_turns=직전 사건 후 최소 간격 · warmup_turns=대화 초반 보호(내 발화 N회 전엔 안 터짐) · deep_hours=[시작,끝) 세계시각에만 deep 축 추첨(경계가 얇아지는 시간)"
+    "_doc": "batch=**한 사건을 쪼갠 비트 수**(260725 아크화 — 독립 사건 N개가 아니라 뿌림→굴러감→회수 3비트 · 호출 1회로 N턴 커버 = 쿼터 절약 · 5→3: 클수록 오래 묵어 뜬금없어진다) · arc_span=최근 N턴 안에 터진 비트가 있고 큐가 batch보다 짧으면 '아크 진행 중' = 발화 게이트를 건너뛰고 결정적으로 끝까지 소진(비트가 흩어지면 한 이야기로 안 묶인다) · seed_pool=씨앗을 batch의 N배로 뽑아 후보로 던짐(맞는 것만 골라 쓰게 = 관련도 축) · ctx_turns=프롬프트에 넣는 최근 대화 턴 수 · stale_turns=생성 후 유저 턴이 N턴 넘게 굴렀거나 장소가 바뀌면 큐를 폐기하고 새 맥락으로 재생성 · queue_min=이 밑으로 떨어지면 프리페치 · fire_gate=매 턴 1/N 확률로 발화(2=약 절반 = '정신없이' 결) · min_gap_turns=직전 사건 후 최소 간격 · warmup_turns=대화 초반 보호(내 발화 N회 전엔 안 터짐) · deep_hours=[시작,끝) 세계시각에만 deep 축 추첨(경계가 얇아지는 시간)"
   }
 }
