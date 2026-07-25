@@ -14,7 +14,7 @@ cd "$ROOT"
 CHAR="${YETA_CHAR:?세션 id 필요(env YETA_CHAR — 단일 스레드 = main)}"
 [[ "$CHAR" =~ ^[a-z0-9_-]{1,24}$ ]] || { echo "잘못된 세션 id: $CHAR"; exit 1; }
 
-DEFAULT_MODEL="claude-opus-4-8"   # D1 = 세션급(운영자 확정)
+DEFAULT_MODEL="claude-opus-5"   # D1 = 세션급(운영자 확정)
 DEFAULT_EFF="low"                 # 30초 컷 — effort 미지정은 CLI 기본(high)로 돌아 느림 → 기본 low(아이데이션①)
 # KIMI-K3(운영자 260719 종량제) = 문샷 Anthropic 호환 게이트 경유 — 다이얼 kimi-k3 턴만 gen_out이 BASE_URL·키를 서브셸 국소 주입(구독 OAuth·폴오버 체인 무오염).
 #   env: KIMI_API_KEY(= 레포 시크릿 KIMI_CODE_MUTE · yeta-chat.yml) · KIMI_BASE_URL(선택 노브 · 기본 https://api.moonshot.ai/anthropic).
@@ -856,7 +856,7 @@ invite_turn() {   # extract_mat mode=invite — 판정 1회(같은 폴오버 체
   PLACE_NM="$(matv place_nm)"; BARGE_VIA=""   # 초대받은 애의 지금 장소(거절 사유 구체화 · 마주침 260707)
   ME_CALL="$(matv me_call)"; ME_ABOUT="$(matv me_about)"   # 유저 프로필(호칭+소개 · 260708) — 초대 첫마디도 유저 이름 호명 가능
   GAP_H=0; RIV=""; HANDOFF=""
-  case "$RAW_MODEL" in claude-opus-4-8|claude-sonnet-5) MODEL="$RAW_MODEL" ;; "$KIMI_MODEL"|"$KIMI25_MODEL") MODEL="$([ -n "${KIMI_API_KEY:-}" ] && echo "$RAW_MODEL" || echo "$DEFAULT_MODEL")" ;; *) MODEL="$DEFAULT_MODEL" ;; esac   # 초대 판정 = 내부 기계 축 — kimi 키 부재면 조용히 기본 모델 폴백(에러 표면화는 본답장에서만)
+  case "$RAW_MODEL" in claude-opus-5|claude-sonnet-5) MODEL="$RAW_MODEL" ;; "$KIMI_MODEL"|"$KIMI25_MODEL") MODEL="$([ -n "${KIMI_API_KEY:-}" ] && echo "$RAW_MODEL" || echo "$DEFAULT_MODEL")" ;; *) MODEL="$DEFAULT_MODEL" ;; esac   # 초대 판정 = 내부 기계 축 — kimi 키 부재면 조용히 기본 모델 폴백(에러 표면화는 본답장에서만)
   EFF="low"
   POL="$(matv policy)"; POLICY_BLOCK=""   # L1 시즌 수위 = 초대 첫마디에도 적용(보안감사③ — 기존 누락 편입)
   if [ -n "$POL" ] && [ "$POL" != "None" ]; then POLICY_BLOCK="$(python3 - "$POL" "$ROOT/apps/yeta/policy.json" < /dev/null <<'PYP'
@@ -1081,7 +1081,7 @@ ${_afl}위 경로의 사진을 Read 도구로 직접 열어 실제 내용을 확
 "
     fi
   fi
-  case "$RAW_MODEL" in claude-opus-4-8|claude-sonnet-5|"$KIMI_MODEL"|"$KIMI25_MODEL") MODEL="$RAW_MODEL" ;; *) MODEL="$DEFAULT_MODEL" ;; esac   # 화이트리스트 재강제(방어 심층 · 아이데이션④ · kimi 패밀리 = 운영자 260719/260721)
+  case "$RAW_MODEL" in claude-opus-5|claude-sonnet-5|"$KIMI_MODEL"|"$KIMI25_MODEL") MODEL="$RAW_MODEL" ;; *) MODEL="$DEFAULT_MODEL" ;; esac   # 화이트리스트 재강제(방어 심층 · 아이데이션④ · kimi 패밀리 = 운영자 260719/260721)
   if is_kimi "$MODEL" && [ -z "${KIMI_API_KEY:-}" ]; then finish error "KIMI 키가 러너에 없어 — 레포 Actions 시크릿 KIMI_CODE_MUTE 확인 후 다시 보내줘"; return 1; fi   # 유저가 명시 선택한 축 = 조용한 폴백 대신 사유 표면화
   case "$RAW_EFF" in low|medium|high|max) EFF="$RAW_EFF" ;; "") EFF="" ;; *) EFF="$DEFAULT_EFF" ;; esac
   [[ "$PERSONA" =~ ^[a-z0-9_-]{1,24}$ ]] || { finish error "페르소나가 비어 있어 — 🎲 다시 뽑아줘"; return 1; }

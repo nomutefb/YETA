@@ -40,7 +40,7 @@ const MAX_ROOM = 2;                 // 합석 정원(나 제외 캐릭터 수 ·
 const INVITE_TTL = 600000;          // 초대 pending 10분 — 러너 사망 시 스테일 마커가 다음 초대를 영구 차단하지 않게
 const EXPIRE_MS = 86400000;         // 대화 휘발 TTL(운영자 260716 Q.06) — 무음동 6일 = 현실 24h(세계 시계 6배 가속: 실제 4h=하루 → 6일이 현실 하루와 정확히 맞아떨어져 7일[28h] 대신 채택)
 const josa = (s, a, b) => { const c = String(s || '').charCodeAt(String(s || '').length - 1); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 > 0 ? a : b; };   // 받침 → 을/은, 무받침 → 를/는
-const MODELS = new Set(['claude-opus-4-8', 'claude-sonnet-5', 'kimi-k3', 'kimi-k2.5']);   // §기틀 정확 ID — 집합 확장은 운영자 확인(kimi-k3 = 260719 · kimi-k2.5 = 260721 승인이나 문샷 /anthropic 게이트 404 실측 = 뷰어 미노출·배선 대기[Q.33] · 둘 다 러너 시크릿 KIMI_CODE_MUTE 경유)
+const MODELS = new Set(['claude-opus-5', 'claude-sonnet-5', 'kimi-k3', 'kimi-k2.5']);   // §기틀 정확 ID — 집합 확장은 운영자 확인(kimi-k3 = 260719 · kimi-k2.5 = 260721 승인이나 문샷 /anthropic 게이트 404 실측 = 뷰어 미노출·배선 대기[Q.33] · 둘 다 러너 시크릿 KIMI_CODE_MUTE 경유)
 const EFFORTS = new Set(['', 'low', 'medium', 'high', 'max']);           // '' = --effort 생략(CLI 기본)
 // ── 키미(문샷 종량제 = 유일 실과금 다이얼) 일일 실비 방파제(운영자 260723 Q.40 "대화비용 급증 원인해결") — 유료 축 = 일 상한 규범(ring/phone/meface 동형)의 채팅 편입 ──
 //   근거 실측(260723): 문샷 자동 캐시가 실사용 메시지 간격에선 미적중(누적 26턴 i=396,518/cr=64,000 = 히트율 16% · 당일 cr=0) → 고정 몸통 ~15k tok이 매턴 정가($3/M) 재과금 ≈ $0.05/턴.
@@ -730,7 +730,7 @@ export async function onRequestPost({ request, env }) {
     if (aqo) { try { aused = (await aqo.json()).n || 0; } catch { aused = 0; } }
     if (acap > 0 && aused >= acap) return json({ error: `오늘 사진 상한(${acap}장) 도달 — 내일 다시`, remain: 0 }, 429);
     let amodel = String(body.model || ''); let aeffort = String(body.effort ?? 'low');
-    if (!MODELS.has(amodel)) amodel = 'claude-opus-4-8';
+    if (!MODELS.has(amodel)) amodel = 'claude-opus-5';
     if (!EFFORTS.has(aeffort)) aeffort = 'low';
     const preS = await readSess();
     const at = String(body.t || preS.cur || '');
@@ -767,7 +767,7 @@ export async function onRequestPost({ request, env }) {
   // 다이얼(모델×노력) — 화이트리스트 강제(오타·주입 = 기본 폴백 · 30초 목표라 effort 기본 low)
   let model = String(body.model || '');
   let effort = String(body.effort ?? 'low');
-  if (!MODELS.has(model)) model = 'claude-opus-4-8';
+  if (!MODELS.has(model)) model = 'claude-opus-5';
   if (!EFFORTS.has(effort)) effort = 'low';
 
   // 채팅 상한 폐지(운영자 260706 — env YETA_MAX_PER_DAY 축 제거·무제한. 사용자별 상한은 후속 보류) · 카운터는 관측용 상시 기록 유지(KST 일자 키)
