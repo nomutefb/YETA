@@ -38,6 +38,7 @@ const ID_RE = /^[a-z0-9_-]{1,24}$/;
 const KEY = 'sessions/main.json';
 const MAX_ROOM = 2;                 // 합석 정원(나 제외 캐릭터 수 · 운영자 260707 "한 명 정도는") — 3 확장은 실험 축
 const INVITE_TTL = 600000;          // 초대 pending 10분 — 러너 사망 시 스테일 마커가 다음 초대를 영구 차단하지 않게
+const RD_MAX = 1;                   // 리퍼 자동 재발사 상한(운영자 260725) — 러너 사망으로 증발한 답을 대신 한 번 눌러준다. 1인 이유 = 재발사분도 죽으면 원인이 일시장애가 아니라 계정·쿼터·코드 쪽이라 더 쏴봐야 쿼터만 태운다(뷰어 yAutoRetry 4회가 별도로 앞단에 있다)
 const EXPIRE_MS = 86400000;         // 대화 휘발 TTL(운영자 260716 Q.06) — 무음동 6일 = 현실 24h(세계 시계 6배 가속: 실제 4h=하루 → 6일이 현실 하루와 정확히 맞아떨어져 7일[28h] 대신 채택)
 const josa = (s, a, b) => { const c = String(s || '').charCodeAt(String(s || '').length - 1); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 > 0 ? a : b; };   // 받침 → 을/은, 무받침 → 를/는
 const MODELS = new Set(['claude-opus-5', 'claude-sonnet-5', 'kimi-k3', 'kimi-k2.5']);   // §기틀 정확 ID — 집합 확장은 운영자 확인(kimi-k3 = 260719 · kimi-k2.5 = 260721 승인이나 문샷 /anthropic 게이트 404 실측 = 뷰어 미노출·배선 대기[Q.33] · 둘 다 러너 시크릿 KIMI_CODE_MUTE 경유)
@@ -211,12 +212,21 @@ export async function onRequestPost({ request, env }) {
     const swept = sweepSess(sess);   // 로컬 선판정(읽기 사본에 적용) — 변경 없으면 put 0 유지
     if (stale || swept) {   // 변경 있을 때만 CAS 쓰기(폴 다발 = 무변경 put 금지 · 보안 감사④)
       if (swept) { try { const cu = await env.YETA_R2.get(KEY); if (cu) await env.YETA_R2.put('sessions/main.sweep.json', await cu.arrayBuffer(), { httpMetadata: { contentType: 'application/json' } }); } catch {} }   // 휘발/병합 직전 1세대 백업(비가역 완화 — reset의 main.prev.json과 별도 키 = 상호 클로버 없음 · 평의회3③)
+      let rdFire = 0;   // 이번 리퍼가 자동 재발사를 걸었나(casPut 성공 후 1회만 dispatch — 콜백 안에서 쏘면 CAS 재시도마다 중복 발사)
       const { sess: s2 } = await casPut(s => {
-        let ch = false;
-        for (const th of Object.values(s.threads || {})) {
+        let ch = false; rdFire = 0;   // CAS 재시도 = 신선 read 위에서 재판정(앞 시도의 잔재 금지)
+        for (const [tid, th] of Object.entries(s.threads || {})) {
           if (th.state === 'awaiting' && th.awaiting_since && Date.now() - th.awaiting_since > 600000) {
+            const tn = th.turns || [], la = tn.map(x => x.role).lastIndexOf('assistant');
+            const pend = tn.slice(la + 1).some(x => x && x.role === 'user');   // 답을 못 받은 유저 턴이 실제로 남아 있나(retry op 판정 계승)
             if (th.opening) { th.opening = 0; th.awaiting_since = 0; th.state = 'idle'; }   // 멈춘 오프닝 = 정적 폴백(뷰어 yGreet · 기틀검증 UX2)
-            else { th.state = 'error'; th.err = '응답이 오지 않았어 — 다시 보내면 재시도'; th.awaiting_since = 0; }
+            else if (env.GH_TOKEN && pend && !DEAD_ON(s, tid) && (th.rd || 0) < RD_MAX) {
+              // 자동 재발사(운영자 260725 "증발한 답을 되살려라") — 러너가 SIGTERM(exit 143)으로 죽으면 답장이 통째로 유실되는데, 그 순간
+              // 러너 안의 어떤 스텝도 못 돈다(실패 알림조차 skipped) = **러너 바깥에서 감지해야 하는 이유**. 여기가 그 바깥의 유일한 상시 지점이다.
+              // 종전엔 이 자리에서 곧장 error로 내리고 사람이 다시 보내주길 기다렸다 → 회차 상한 안에서 한 번은 대신 눌러준다.
+              th.rd = (th.rd || 0) + 1; th.awaiting_since = Date.now(); th.err = ''; rdFire = 1;   // 시계 리셋 = 재발사분에 10분 재부여(연달아 죽으면 다음 리퍼가 상한에 걸려 error)
+            }
+            else { th.state = 'error'; th.err = '응답이 오지 않았어 — 다시 보내면 재시도'; th.awaiting_since = 0; th.rd = 0; }   // 상한 소진·재발사 불가 = 종전 결(rd 리셋 = 다음 사건은 다시 1회 확보)
             ch = true;
           }
         }
@@ -224,6 +234,17 @@ export async function onRequestPost({ request, env }) {
         if (!ch) return { abort: { noop: 1 } };   // 신선 read에 변경 없음(타 폴러 선처리) = put 생략 — no-op 재-put·etag 처닝·watch 오발화 차단(평의회8②) · abort여도 casPut이 신선 sess를 돌려줘 그대로 서빙
       });
       if (s2) sess = s2;
+      if (rdFire) {   // 재발사 실물 — CAS가 확정된 뒤 1회(성공 = 러너가 pending 유저 턴을 그대로 다시 문다 · 새 턴 추가 없음 = retry op와 동형)
+        const rs = await dispatch(env);
+        if (rs !== 204) {   // 발사 자체가 막힘(쿼터·토큰·GitHub 장애) = 10분 더 기다릴 이유가 없다 → 즉시 종전 결로 되돌린다
+          const { sess: s3 } = await casPut(s => {
+            let ch = false;
+            for (const th of Object.values(s.threads || {})) { if (th.state === 'awaiting' && th.rd) { th.state = 'error'; th.err = `재발사 실패(GitHub ${rs})`; th.awaiting_since = 0; th.rd = 0; ch = true; } }
+            if (!ch) return { abort: { noop: 1 } };
+          });
+          if (s3) sess = s3;
+        }
+      }
     }
     const cur = sess.cur;   // 비활성 스레드 turns = 꼬리 2턴 절단(목록 미리보기 분량 · 페이로드 ×5 방지 · 보안 감사④)
     const out = { ...sess, threads: Object.fromEntries(Object.entries(sess.threads || {}).map(([id, th]) =>
@@ -796,7 +817,7 @@ export async function onRequestPost({ request, env }) {
       if (DEAD_ON(s, at)) return { abort: { error: '…지금은 연락이 닿지 않아. 누가 신당에서 빌어주면 바로, 아니면 무음동 이틀은 지나야 돌아와' } };
       th.turns.push({ role: 'user', text: '', img: akey, ts: Date.now(), model: amodel, effort: aeffort });
       if (th.turns.length > 200) th.turns = th.turns.slice(-200);
-      th.state = 'awaiting'; th.awaiting_since = Date.now(); th.err = ''; delete th.retry_n;
+      th.state = 'awaiting'; th.awaiting_since = Date.now(); th.err = ''; delete th.retry_n; th.rd = 0;
       th.updated = Date.now();
       s.cur = at; s.pref = { model: amodel, effort: aeffort };
     });
@@ -840,7 +861,7 @@ export async function onRequestPost({ request, env }) {
     if (body.far) turn.far = 1;   // 원거리 턴(운영자 260714) — 상대 다른 장소 = 러너가 물리 접촉·같은 공간 전제 금지 주입(불리언만)
     th.turns.push(turn);
     if (th.turns.length > 200) th.turns = th.turns.slice(-200);   // 스레드 캡(보안 감사⑤)
-    th.state = 'awaiting'; th.awaiting_since = Date.now(); th.err = ''; delete th.retry_n;   // 새 유저 턴 = 재시도 사다리 리셋(뉘앙스 블록 잔류 차단 · 260714)
+    th.state = 'awaiting'; th.awaiting_since = Date.now(); th.err = ''; delete th.retry_n; th.rd = 0;   // 새 유저 턴 = 재시도 사다리 리셋(뉘앙스 블록 잔류 차단 · 260714)
     delete th.gb;   // 단톡 자율 비트 예약 취소(260725) — 내가 끼어들면 너희끼리 하던 차례는 끝(러너도 pending 우선이라 안 태우지만, 여기서 지워야 뷰어 타이핑 점이 '내 답장 대기'로 즉시 정정된다)
     delete th.picks;   // 미연시 선택지 소거(260725) — 골랐든 직접 썼든 내 턴이 나간 순간 그 갈림길은 끝(다음 답이 새로 제안한다)
     th.updated = Date.now();
