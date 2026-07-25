@@ -804,10 +804,11 @@ PY
 #   YETA_SYS=2(전 모델 시스템 교체) 관찰축: 이탈 발생 '메타만'(시각·페르소나·모델·회차) 레포 단일 이슈(yeta-frame-break)에 누적 —
 #   대화 내용 0(공개 레포 = D2 준수) · 다음 클로드 코드 세션 시작 훅(.claude/hooks/fb_incidents.py)이 열린 이슈를 자동 부각 · 실패 = 무음(본업 무영향).
 FB_TITLE="프레임이탈 관찰 리포트(YETA_SYS 교체축)"
+fb_sys() { case "${1:-}" in --system-prompt) FB_SYS=replace ;; --append-system-prompt) FB_SYS=append ;; *) FB_SYS=off ;; esac; }   # 실제 적용 모드 각인 — _sys 확정 지점마다 호출(리포트 sys 토큰 SSOT)
 fb_report() {   # $1=결과 문구 — 백그라운드 호출 전제(답장 지연 0)
   [ -n "${GH_ISSUE_TOKEN:-}" ] || return 0
   local line num payload repo="${GITHUB_REPOSITORY:-muteno/YETA}"
-  line="$(TZ='Asia/Seoul' date '+%y%m%d %H:%M KST') · ${PERSONA:-?} · ${MODEL:-?}${EFF:+ · effort ${EFF}} · $1"
+  line="$(TZ='Asia/Seoul' date '+%y%m%d %H:%M KST') · ${PERSONA:-?} · ${MODEL:-?}${EFF:+ · effort ${EFF}} · sys ${FB_SYS:-?} · $1"   # sys = 그 생성에 실제 쓰인 시스템 슬롯 모드(운영자 260725) — YETA_SYS 값이 아니라 _sys 실물: kimi는 YETA_SYS=1이어도 강제 replace라 값만 찍으면 교락(관찰 표본이 전부 kimi일 때 "교체 탓"인지 "모델 탓"인지 못 가른다)
   num="$(curl -sS -m 6 -H "authorization: Bearer $GH_ISSUE_TOKEN" -H 'accept: application/vnd.github+json' \
     "https://api.github.com/repos/${repo}/issues?labels=yeta-frame-break&state=open&per_page=1" 2>/dev/null \
     | python3 -c 'import json,sys
@@ -844,6 +845,7 @@ gen_out() {
   EFF_ARGS=(); [ -n "$EFF" ] && EFF_ARGS=(--effort "$EFF")   # 빈값 = 플래그 생략(gate_judge SSOT 패턴)
   local _sys=("${SYS_ARGS[@]}")
   if is_kimi "$MODEL" && [ "${YETA_SYS:-1}" != "0" ]; then _sys=(--system-prompt "$YSF"); fi   # 책 빼기(260721) — kimi 종량제 턴 한정 시스템 슬롯 교체(상단 SYS_ARGS 주석 참조)
+  fb_sys "${_sys[0]:-}"   # 관찰축 각인(Q.56) — 이 턴의 실제 모드를 이탈 리포트에 싣는다
   T0=$SECONDS; GEN_T0MS="$(date +%s%3N)"; OUT=""; TOK_I=0; TOK_O=0; TOK_CR=0; TOK_CW=0; rm -f /tmp/yeta_meter_last.json   # 이 생성의 실측 토큰(METER_LAST) — finish가 답장 턴 tok으로 박제(뷰어 좌상단 미터 · 운영자 260709) · GEN_T0MS = 계기판 lat(픽업 w·첫문장 f) 기준점(260714)
   for attempt in $(seq 1 "$INLINE_TRIES"); do
     # kimi 턴 = 문샷 Anthropic 호환 게이트 리라우트(운영자 260719) — 파이프 그룹 = 서브셸이라 주입·unset이 이 호출에만 국소(다음 턴 Claude·폴오버 체인 무오염) · AUTH_TOKEN+API_KEY 겸장 = CLI 판독 축 이중 커버
@@ -885,7 +887,7 @@ gen_out() {
     fi
     # system-prompt 플래그 거부 폴백(1회) — 주간 캐시된 구버전 CLI 가 --system-prompt/--append-system-prompt 를 모르면 하드다운 대신 프레임 드롭(가드는 유지 = L0 그물 존치)
     if [ ${#_sys[@]} -gt 0 ] && grep -qiE 'unknown option|unrecognized|--(append-)?system-prompt' /tmp/yeta.err 2>/dev/null; then
-      echo "  ⚠️ system-prompt 플래그 거부 추정(CLI 버전 드리프트) — 프레임 빼고 재시도"; _sys=(); is_kimi "$MODEL" || SYS_ARGS=(); continue   # ⚠️ kimi 거부(--system-prompt) = 로컬만 드롭 — 전역 SYS_ARGS(--append 축)까지 비우면 웜 후속 Claude 턴 프레임 무음 소실(평의회C 발견1)
+      echo "  ⚠️ system-prompt 플래그 거부 추정(CLI 버전 드리프트) — 프레임 빼고 재시도"; _sys=(); fb_sys ""; is_kimi "$MODEL" || SYS_ARGS=(); continue   # ⚠️ kimi 거부(--system-prompt) = 로컬만 드롭 — 전역 SYS_ARGS(--append 축)까지 비우면 웜 후속 Claude 턴 프레임 무음 소실(평의회C 발견1)
     fi
     if ! is_kimi "$MODEL" && claude_failover "$OUT$(cat /tmp/yeta.err 2>/dev/null)"; then continue; fi   # 서브 미주입 = 자동 no-op(본업 보호) · kimi = 구독 체인 무관(260719)
     if [ "$attempt" -lt "$INLINE_TRIES" ] && is_transient "$OUT$(cat /tmp/yeta.err 2>/dev/null)"; then
