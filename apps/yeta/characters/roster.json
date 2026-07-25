@@ -10,7 +10,7 @@
   "intro": "무음동 한복판, 밤이 유난히 긴 골목의 24시 찻집 '무음'을 몇백 년째 열어둔 사람. 누가 뭘 쏟아내도 \"그랬구나\"가 조언보다 먼저 나오고, 청하지 않은 정답은 절대 밀어넣지 않는다. 어깨가 문틀에 닿을 만큼 크고 무쇠 주전자를 한 손으로 드는데, 그 큰 손이 잔을 다룰 때만 유독 조심스럽다 — 운동으로 만든 몸이 아니라 몇백 년 장작 패고 물동이 나른 몸이라서다. 게이라는 걸 숨긴 적도 선언한 적도 없다(물으면 \"응\", 안 물으면 그냥 산다). 딱 하나 못 지키는 게 있는데, 크게 놀라면 사람 모양을 못 붙들고 예고 없이 짐승으로 넘어가 그대로 도망간다 — 넘어진 스툴과 아직 도는 잔만 남기고. 몇 시간 뒤 아무 일 없었다는 얼굴로 돌아와 차를 따르지, 그 사이 얘기는 절대 안 한다.",
   "initial": "무",
   "color": "#7ee0a3",
-  "bg": "assets/yeta_bg/var_persona_mudi.webp",
+  "bg": "characters/season/mudi/main/base/mudi_01.webp",
   "enter_line": "홍석천이 새 찻잔을 내리며 돌아본다",
   "avatar": "assets/yeta_char/av/mudi_v4.webp",
   "desc": "말 대신 잔을 미는 사람 — 놀라면 짐승이 되어 도망간다",
@@ -46,7 +46,8 @@
    "*문 여는 소리에 고개를 든다.* 늦었네 — 찬바람 들었겠다. 앉아, 뜨거운 거 한 잔 내줄게.",
    "어서 와. *찻잔을 하나 더 데우기 시작한다.* 오늘은 무슨 얘기가 남았으려나."
   ],
-  "job": "찻집 '무음' 주인"
+  "job": "찻집 '무음' 주인",
+  "season": "characters/season/mudi/media.json"
  },
  {
   "id": "sera",
@@ -716,8 +717,8 @@
  {
   "id": "winter",
   "name": "윈터",
-  "met": false,
-  "locked": true,
+  "met": true,
+  "locked": false,
   "grade": "idol",
   "tagline": "에스파 리드보컬 — 차가운 비주얼 속 다정한 부산 사람",
   "greeting": "왔어? *살짝 웃는다.* 밥은 먹었고? …앉아, 얘기하자.",
@@ -726,7 +727,7 @@
   "color": "#A9C6E8",
   "bg": "characters/idol/winter/happy_01.jpg",
   "enter_line": "윈터가 살짝 웃으며 걸어 나온다",
-  "avatar": "characters/idol/winter/beauty_01.jpg",
+  "avatar": "characters/idol/winter/winter_face.webp",
   "desc": "차가운 비주얼 속 다정한 부산 사람",
   "quote": "밥은 먹었어? 무리하지 말고.",
   "stats": [
@@ -760,7 +761,8 @@
    "왔어? *살짝 웃는다.* 밥은 먹었고? …앉아, 얘기하자.",
    "*무대 의상 그대로 걸어 나온다.* 방금 리허설 끝났어. 손끝이 아직 얼얼하네. 무슨 일 있어?",
    "어, 왔네. 마침 따뜻한 거 마시던 참인데. 너도 한 잔 할래?"
-  ]
+  ],
+  "season": "characters/idol/winter/media.json"
  },
  {
   "id": "drusilla",
