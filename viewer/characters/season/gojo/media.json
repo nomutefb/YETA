@@ -8,13 +8,18 @@
   "characters/season/gojo/main/base/gojo_20.jpg",
   "characters/season/gojo/main/base/gojo_n01.jpg",
   "characters/season/gojo/main/base/gojo_n03.jpg",
-  "characters/season/gojo/main/base/gojo_n15.jpg"
+  "characters/season/gojo/main/base/gojo_n15.jpg",
+  "characters/season/gojo/main/base/gojo_v09.jpg",
+  "characters/season/gojo/main/base/gojo_v13.jpg",
+  "characters/season/gojo/main/base/gojo_v14.jpg",
+  "characters/season/gojo/main/base/gojo_v15.jpg"
  ],
  "warm": [
   "characters/season/gojo/main/warm/gojo_03.jpg",
   "characters/season/gojo/main/warm/gojo_09.jpg",
   "characters/season/gojo/main/warm/gojo_n10.jpg",
-  "characters/season/gojo/main/warm/gojo_n12.jpg"
+  "characters/season/gojo/main/warm/gojo_n12.jpg",
+  "characters/season/gojo/main/warm/gojo_v07.jpg"
  ],
  "joy": [
   "characters/season/gojo/main/joy/gojo_05.jpg",
@@ -23,7 +28,9 @@
   "characters/season/gojo/main/joy/gojo_n09.jpg",
   "characters/season/gojo/main/joy/gojo_n11.jpg",
   "characters/season/gojo/main/joy/gojo_n14.jpg",
-  "characters/season/gojo/main/joy/gojo_n17.jpg"
+  "characters/season/gojo/main/joy/gojo_n17.jpg",
+  "characters/season/gojo/main/joy/gojo_v10.jpg",
+  "characters/season/gojo/main/joy/gojo_v11.jpg"
  ],
  "love": [
   "characters/season/gojo/main/love/gojo_14.jpg",
@@ -41,7 +48,9 @@
  ],
  "tense": [
   "characters/season/gojo/main/tense/gojo_01.jpg",
-  "characters/season/gojo/main/tense/gojo_07.jpg"
+  "characters/season/gojo/main/tense/gojo_07.jpg",
+  "characters/season/gojo/main/tense/gojo_v03.jpg",
+  "characters/season/gojo/main/tense/gojo_v12.jpg"
  ],
  "mad": [
   "characters/season/gojo/main/mad/gojo_10.jpg",
