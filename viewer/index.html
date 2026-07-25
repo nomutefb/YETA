@@ -596,8 +596,8 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .lk-pat.bad .lk-node.on { background:rgba(var(--danger-rgb),.22); box-shadow:inset 0 0 0 1px var(--danger), 0 0 16px rgba(var(--danger-rgb),.55); }
   .lk-pat.bad .lk-line { stroke:var(--danger); filter:drop-shadow(0 0 6px rgba(var(--danger-rgb),.55)); }
   .lk-node:focus:not(:focus-visible){ outline:none; }
-  .lk-reset { display:grid; place-items:center; color:var(--mut); background:rgba(0,0,0,.35); }   /* 다시 입력(운영자 260717) — 음영 원판(관용 다크필 .35 계승·운영자 260717 "음영 칠하고") · 링은 .lk-node inset 계승 · 아이콘 = REFRESH_SVG(SSOT) */
-  .lk-reset svg { width:50%; height:50%; display:block; }   /* 버튼의 50%(운영자 지시값) · block = 인라인 베이스라인 오프셋 제거 → 그리드 사분할 정중앙 */
+  .lk-reset { display:grid; place-items:center; color:var(--fg); background:rgba(0,0,0,.35); }   /* 다시 입력(운영자 260717) — 음영 원판(관용 다크필 .35 계승·운영자 260717 "음영 칠하고") · 링은 .lk-node inset 계승 · 아이콘 = REFRESH_SVG(SSOT) · 색 = 흰색(운영자 260725 "노란색 아니고 흰색이여도 됨" — 구 --mut 폐지) */
+  .lk-reset svg { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:50%; height:50%; display:block; }   /* 버튼의 50%(운영자 지시값) · 정중앙 = .lk-node::after 절대중앙 관용 그대로 계승(운영자 260725 "원 안에 삐뚫게 들어가있어") — <button>의 그리드 배치가 안 먹어 아이콘이 좌상단 구석(정확히 -5px = 제 크기 절반)에 박혀 있던 것 교정 */
   .lk-reset:active { transform:translate(-50%,-50%) scale(var(--press-s)); color:var(--fg-2); }
   @media (prefers-reduced-motion:reduce){ .lk-slots.shake{animation-duration:.01s} .lk-key:active{transform:none} .lk-slot.pop, .lk-key.hit, .lk-slots.ok .lk-slot{animation:none} .lk-node{transition:none} }
   /* 짧은 세로 프레임(가로모드 폰·분할창) = PIN 블록 압축 — '0'·백스페이스가 프레임 밖으로 잘려 언락 불가하던 사전존재 결함 방어(평의회3 H-1 · 임계 Hf<~550px) · lk- 베이스 뒤 선언 = 캐스케이드 승리 보장 */
@@ -1226,13 +1226,13 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yssn { display:block; padding:0; margin-bottom:var(--sp-3); animation:ypickIn .42s cubic-bezier(.22,.61,.36,1) both; }   /* 시즌 = 박스 폐지(운영자 260709 "둥그렇게 넣지 마") · 가독 = #ytopfade 담당 · 패딩 0 = 좌단 로고 24px 세로선(Q.26)·우단 프로필 24px 세로선(Q.27 대칭) 픽셀 정렬(구 2px = 박스 시절 잔재 제거) */
   .yssn:empty { display:none; }   /* YWORLD 미로드 = 빈 박스 숨김(로드 전 플래시 포함 · 운영자 260707) */
   .yssn-hd { display:flex; align-items:center; gap:14px; }   /* 배지↔제목 간격 충분(운영자 ②) */
-  .yssn-tag, .yssn-nm { line-height:1; }   /* 수직 중앙 통일(운영자 260709 "중앙 높이 정렬") — 폰트별(레몬밀크 이탤릭·한글) 라인박스 편차 제거 = flex center 광학 일치 */
+  .yssn-tag, .yssn-nm, .yssn-tl { line-height:1; }   /* 수직 중앙 통일(운영자 260709 "중앙 높이 정렬") — 폰트별(레몬밀크 이탤릭·한글) 라인박스 편차 제거 = flex center 광학 일치 · 260725 태그라인 합류 */
   .yssn-tag { flex:none; display:inline-flex; align-items:center; color:var(--accent);
     font-family:'LEMONMILK',Pretendard,sans-serif; font-style:italic; font-weight:700; font-size:13.5px; letter-spacing:.01em;
     text-shadow:0 0 5px rgba(var(--accent-rgb),.9), 0 0 16px rgba(var(--accent-rgb),.55); }   /* SEASON 01 = 라임 워드마크 · 형광 2중 글로우(운영자 260709 "형광색으로 — 지금 묻히네" · 근접 .9 코어 + 확산 .55 헤일로 · text-shadow = 토큰 없는 축) */
   .yssn-nm { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; font-size:var(--fs-body); font-weight:var(--fw-x); white-space:nowrap; }   /* shrink 허용 + … (Q.27 방어 — 긴 시즌명이 우단 밖으로 넘치던 축 봉인 · 현 '무음동'은 무영향) */
   .yssn-nm small { font-weight:var(--fw-b); color:var(--fg-2); font-size:var(--fs-sm); }   /* 한자 부기 */
-  .yssn-tl { margin-top:9px; text-align:left; font-size:11.5px; color:var(--fg-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }   /* 설명 = 살짝 옅은 흰(fg-2) · 좌측 정렬 = SEASON 01과 같은 좌측선(운영자 260709 "설명 기준 좌측정렬" — 구 가운데 고정 폐지) · 1줄 초과 = … */
+  .yssn-tl { flex:1 1 0; min-width:0; text-align:right; font-size:11.5px; color:var(--fg-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }   /* 설명 = 살짝 옅은 흰(fg-2) · 제목 줄 우측으로 합류(운영자 260725 "무음동 소개를 우측으로 — 화면을 더 확보") = 전용 1줄 폐지 → 시즌 헤더 높이 축소분이 --ssn-h 경유로 전 패널 상단 여백에 그대로 환급 · 구 좌측 정렬(260709)은 이 지시가 대체 · 좁은 폭 = 제목보다 먼저 줄어들고(flex-grow 1) 넘치면 … */
   .ylr-wrap { position:relative; margin-bottom:10px; border-radius:var(--r-l); overflow:hidden; }   /* 행 래퍼(분할 리스트 획 셀렉터 앵커) · overflow = 스와이프 액션 트레이 감춤(운영자 260712) */
   .ylr-wrap .ylist-row { margin-bottom:0; position:relative; z-index:1; -webkit-touch-callout:none; user-select:none; transition:padding-right .3s var(--ease); }   /* 스와이프 = 텍스트 선택/콜아웃 차단(.ypick-row 관례 계승 · UX감사①c) */
   .ylr-wrap.ylr-open .ylist-row { padding-right:calc(var(--sp-2) + 60px); }   /* 열림 = 트레이 폭만큼 콘텐츠 우측 확보 → 최근말·메타가 트레이 밑서 잘리지 않고 … 처리(운영자 260712) */
@@ -2212,7 +2212,8 @@ function ySnip(t, n) { return (t || '').replace(/\*[^*]*\*/g, '').replace(/\s+/g
 function ySsnHtml() {   // 시즌 표기 정본(대화·캐릭터 탭 공용 — 운영자 통일 지시): [SEASON 01 필배지][이름(한자)] / 태그라인
   if (!YWORLD) return '';
   // 우측 현실 KST 날짜(.yssn-date) 폐지 — 운영자 260725 "흰색 날짜 없애 = 현실시간 없애". 앱 안 시간축은 무음동 세계시각(#yworldclock) 하나로 단일화(1318행 "다른 시간은 앱 안에 필요없음"과 동일 축).
-  return `<div class="yssn-hd"><span class="yssn-tag">SEASON ${String(YWORLD.n || 1).padStart(2, '0')}</span><span class="yssn-nm">${esc(YWORLD.name || '')}${YWORLD.hanja ? `<small>(${esc(YWORLD.hanja)})</small>` : ''}</span></div><div class="yssn-tl">${esc(YWORLD.tagline || '')}</div>`;
+  // 태그라인 = 제목 줄 우측에 합류(운영자 260725 "무음동 소개를 우측으로 · 화면을 더 확보") — 구 아래 전용 1줄 폐지. 빈 자리 = 260725 폐지된 .yssn-date 자리 그대로.
+  return `<div class="yssn-hd"><span class="yssn-tag">SEASON ${String(YWORLD.n || 1).padStart(2, '0')}</span><span class="yssn-nm">${esc(YWORLD.name || '')}${YWORLD.hanja ? `<small>(${esc(YWORLD.hanja)})</small>` : ''}</span><span class="yssn-tl">${esc(YWORLD.tagline || '')}</span></div>`;
 }
 // ── 내 상태 행(운영자 260707 항목22·23) — 위치·감정 = 클라 로컬 전용(localStorage yeta_me_place/yeta_me_mood · 게이트웨이 미전송 = 무인증 공개 주입면 0) ──
 const YME_MOODS = { warm: '따뜻함', tense: '긴장', blue: '가라앉음', joy: '신남', love: '설렘', shy: '수줍음', mad: '짜증' };   // 무대 무드(러너 <<MOOD>> 배경 축 · Y_MOODS와 짝 — 8감정 확장 Q.29)
