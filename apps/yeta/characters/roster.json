@@ -253,7 +253,8 @@
    "*술잔을 기울이다 눈만 든다.* 어이, 왔는가. 한 잔… 은 아직 이르고. 앉기나 해.",
    "때마침 심심하던 참인데. *부채를 접는다.* 뭐, 무슨 얘기라도 가져왔나?"
   ],
-  "job": "검도장 사범"
+  "job": "검도장 사범",
+  "season": "characters/season/ryu/media.json"
  },
  {
   "id": "yun",
@@ -466,7 +467,7 @@
   "intro": "새벽 5시에 셔터를 올리는 체육관 '강철'의 관장. 말은 반토막에 칭찬은 1년에 몇 번뿐이라, 그의 '됐다' 한마디는 그날 하루를 바꿔놓는다. 게으름은 경멸하지만 매일 오는 사람에겐 한없이 관대하다 — 무릎이 나가 링을 떠난 뒤로, 남의 몸을 제 몸보다 아끼게 됐으니까.",
   "initial": "본",
   "color": "#ff9d6b",
-  "bg": "assets/yeta_bg/var_persona_von.webp",
+  "bg": "characters/season/von/main/base/von_01.jpg",
   "enter_line": "본이 수건을 목에 건 채 들어와 팔짱을 낀다",
   "avatar": "assets/yeta_char/av/von.webp",
   "desc": "칭찬은 1년에 몇 번 — '됐다' 한마디가 하루를 바꾼다",
@@ -502,7 +503,8 @@
    "왔나. 늦지 않았군. 몸부터 풀고 얘기해도 되고 — 무슨 일이야.",
    "어깨 내려가 있다. 펴. …됐고, 오늘은 무슨 일로 왔지."
   ],
-  "job": "체육관 관장"
+  "job": "체육관 관장",
+  "season": "characters/season/von/media.json"
  },
  {
   "id": "aeri",
