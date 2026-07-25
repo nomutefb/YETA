@@ -11,6 +11,10 @@ on:
         description: '1 = 기존 산출물도 재생성'
         required: false
         default: ''
+      ghibli:
+        description: '1 = 지브리 얼빡 프사만(제미나이 · 초상·스프라이트·표정 8장 건너뜀)'
+        required: false
+        default: ''
 
 concurrency:
   group: yeta-aeri-cand
@@ -31,7 +35,7 @@ jobs:
       - name: Pillow (스프라이트 크로마키 — 실패 시 원본 폴백)
         run: python3 -m pip install --quiet --break-system-packages pillow 2>/dev/null || echo "pillow 미설치 — 크로마키 폴백(원본 저장)"
 
-      - name: ffmpeg (webp·av 크롭 — 260721 run#2 실측: 러너 기본 이미지에 없어 크롭·변환 생략됐음)
+      - name: "ffmpeg (webp·av 크롭 — 260721 run#2 실측: 러너 기본 이미지에 없어 크롭·변환 생략됐음)"   # 따옴표 필수 — 값 안 ': '가 YAML 매핑으로 읽혀 이 워크플로 전체가 파싱 불가였다(260725 실측·디스패치 차단)
         run: sudo apt-get install -y -qq ffmpeg >/dev/null 2>&1 || echo "ffmpeg 미설치 — png 원본 폴백"
 
       - name: 애리 이미지 3종 생성(초상·지도·표정8)
@@ -39,7 +43,9 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_API_KEY_nomute: ${{ secrets.OPENAI_API_KEY_nomute }}
           OPENAI_IMAGE_MODEL: ${{ vars.OPENAI_IMAGE_MODEL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}   # ④ 지브리 얼빡 축 전용(운영자 260725) — 나머지 축은 OpenAI
           FORCE: ${{ inputs.force }}
+          AERI_GHIBLI: ${{ inputs.ghibli }}
         run: python3 .github/scripts/yeta_aeri_cand.py
 
       - name: 커밋 (신규 있을 때만 · 디스패치 브랜치로)

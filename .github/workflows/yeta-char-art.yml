@@ -14,6 +14,10 @@ on:
         description: '특정 id 하나만(예: mudi · 비용절감 테스트)'
         required: false
         default: ''
+      avmode:
+        description: '1 = 얼빡 프사만(큰 초상 무시 · 1:1 극단 클로즈업 → av/<id>.webp + roster 배선)'
+        required: false
+        default: ''
 
 concurrency:
   group: yeta-char-art
@@ -31,6 +35,9 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: ffmpeg (webp·av 변환 — 러너 기본 이미지에 없음 · 260721 aeri-cand 실측 계승)
+        run: sudo apt-get install -y -qq ffmpeg >/dev/null 2>&1 || echo "ffmpeg 미설치 — png 원본 폴백(av 배선 생략)"
+
       - name: 판타지 캐릭터 초상 생성
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -38,6 +45,7 @@ jobs:
           OPENAI_IMAGE_MODEL: ${{ vars.OPENAI_IMAGE_MODEL }}
           FORCE: ${{ inputs.force }}
           YETA_CHAR_ONLY: ${{ inputs.only }}
+          YETA_AV_MODE: ${{ inputs.avmode }}   # 1 = 얼빡 프사 축(운영자 260725)
         run: python3 .github/scripts/yeta_char_art.py
 
       - name: 커밋 (신규 있을 때만)

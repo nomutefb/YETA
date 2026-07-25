@@ -3940,7 +3940,7 @@ function yTime(ts) {   // 메시지 시각 = 무음동 세계 시각 "오전/오
 function yAiMsg(t, fresh, cont) {   // 캐릭터 메시지 = 아바타 + 이름 + [버블|시각](버블 밖 우하단 = 카톡 결) · fresh=신규만 촤르륵 · cont=직전과 같은 화자(아바타·이름 생략 = 톡방 그룹핑)
   const p = yPersona(t.persona) || YCUR || {};
   const tm = yTime(t.ts);
-  return `<div class="ymsg${fresh ? ' in' : ''}${cont ? ' cont' : ''}" data-k="a|${esc(t.persona || '')}|${cont ? 1 : 0}|${t.ov ? 1 : 0}|${esc(t.text || '')}">${yAva(p)}<span class="ycol"><span class="yname">${esc(p.name || '')}</span><span class="ybrow"><div class="yb ai${t.ov ? ' ov' : ''}">${yFmt(t.text)}</div>${tm ? `<time class="ytime">${tm}</time>` : ''}</span></span></div>`;   // data-k = 번호표(persona·그룹핑·ov·텍스트) — time 제외 = 낙관/확정 재사용(분경계 무관)
+  return `<div class="ymsg${fresh ? ' in' : ''}${cont ? ' cont' : ''}" data-k="a|${esc(t.persona || '')}|${cont ? 1 : 0}|${t.ov ? 1 : 0}|${yModeOn(p) ? 1 : 0}|${esc(t.text || '')}">${yAva(p)}<span class="ycol"><span class="yname">${esc(p.name || '')}</span><span class="ybrow"><div class="yb ai${t.ov ? ' ov' : ''}">${yFmt(t.text)}</div>${tm ? `<time class="ytime">${tm}</time>` : ''}</span></span></div>`;   // data-k = 번호표(persona·그룹핑·ov·**모드**·텍스트) — time 제외 = 낙관/확정 재사용(분경계 무관) · 모드 자리(운영자 260725 "도깨비 모드면 도깨비 프사") = 변신 경계에서 번호표가 달라져야 이미 그린 말풍선의 프사가 교체된다(없으면 yReconcile이 옛 노드를 영구 재사용 = 프사 고착)
 }
 let _yLastN = -1, _yTypOn = false, _yFailOn = false, _yTypHold = 0, _yTypT = null;   // 촤르륵 키드 + 타이핑 지연 홀드(읽는 시간 · 운영자 260707)
 let _yCurT = '';   // 마지막 렌더한 방 id — 서버발 cur 이동(단톡 재합류·휘발 소멸 · Q.06) 감지용(yThreadSwitch 미경유 전환도 방 경계로 취급)
@@ -4254,7 +4254,12 @@ async function ySend() {
   yStartPoll();
 }
 $('#yetaSend').addEventListener('click', ySend);
-// Enter 전송 폐지(운영자 260725 "키보드에 보내기를 누르면 엔터가 되어버리거든? 줄바꿈이 되게 해줘") — 키보드 액션키·Enter = 항상 줄바꿈(네이티브 그대로 · keydown 가로채기 0) · 전송 = 입력행 종이비행기 버튼 단일 경로. textarea enterkeyhint도 'enter'(줄바꿈 글리프)로 동행.
+// Enter = 전송(PC 한정 · 운영자 260725 "엔터는 보내기 · 쉬프트 엔터가 줄바꿈 · 근데 키보드 보내기는 줄바꿈"). 모바일 = 종전 그대로 네이티브 줄바꿈(가로채기 0 · enterkeyhint='enter' 글리프와 동행) — 화면 키보드 액션키가 곧 Enter라 여기서 보내면 260725 오전 지시("키보드 보내기 누르면 엔터가 되어버린다")로 되돌아간다. 기기 판정 = 매 타건 실측(하이브리드·외장키보드 연결 후 변동 추종) · 전송 본체는 종이비행기 버튼과 동일 경로(ySend 단일).
+$('#yetaText').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.shiftKey || e.isComposing || e.keyCode === 229) return;   // 쉬프트 = 줄바꿈 · 한글 조합 중(IME · keyCode 229 폴백) = 조합 확정용 Enter라 가로채면 글자가 날아간다
+  if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;   // 모바일·터치(coarse) = 네이티브 줄바꿈 유지
+  e.preventDefault(); ySend();
+});
 $('#yetaText').addEventListener('input', e => { const t = e.target;
   const hk = yScKeyAt(t.value, _ySegPrev);   // 타이핑된 '#'·'*' 회수 → 버튼과 동일 토글(beforeinput 취소 불가 IME 폴백 · 텍스트에는 그 글자를 남기지 않는다)
   if (hk) { t.value = t.value.slice(0, hk.i) + t.value.slice(hk.i + 1); yScSync(); yScToggle(t, hk.m); return; }
@@ -4336,7 +4341,7 @@ try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(fun
         if (!first) {   // 첫 틱 = 서명 씨앗만(렌더는 각 진입 경로가 이미 함)
           yCharRender(); yListRender();   // 내부 sig 가드가 중복 도장 흡수
           if (YCUR && YCUR.mode && !document.getElementById('yetaAva2')) yAvaSet($('#yetaAva'), YCUR);   // 챗 헤더(단톡 스택 중엔 방 이벤트가 재도장)
-          if (yetadlg.open && YCUR && YCUR.mode && _yView === 'chat') yStage(yLastMood());   // 배경도 같은 경계에 재스테이지(평의회 260717 bg-mode MED — 프사만 바뀌고 배경 잔류하던 desync 봉합 · ekey 모드 포함 = 중복 호출 키 가드 흡수)
+          if (yetadlg.open && _yView === 'chat') { _yNoAnim = true; yRender(); }   // 열린 대화 로그 통째 재도장(운영자 260725 "도깨비 모드면 도깨비 프사") — 종전엔 목록·헤더만 도장하고 로그가 빠져 이미 그린 말풍선 프사가 옛 폼으로 고착 · 무애니 1회 = 읽은 말풍선 re-whoosh 차단 · 배경 재스테이지(yStage · 평의회 260717 bg-mode MED)는 yRender가 겸한다
           const pf = document.getElementById('ycprofile'); if (pf && pf.classList.contains('on') && typeof yProfileRender === 'function') yProfileRender();   // 열린 프로필의 히어로 디스크
         }
       }
