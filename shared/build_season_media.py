@@ -104,6 +104,51 @@ SEASONS = {
                     "⚠ 260726 현재 = 얼굴 없는 검도 실루엣 1장뿐(운영자 '익명으로 넣고 나중에 보강') — 인물 확정 아님 · tense 국면 전용. "
                     "정본=viewer/characters/season/ryu/main/<감정>/."),
     },
+    "haeun": {
+        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
+        "modes": {"main": ["base"]},
+        "comment": ("시즌 감정 미디어 manifest(하서연) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
+                    "⚠ 260726 현재 = **얼빡 프사 1장뿐**(운영자 '저분들은 그냥 얼빡으로만 일단 반영') — 수집분 들어오면 감정 폴더에 부어 확장. "
+                    "정본=viewer/characters/season/haeun/main/<감정>/."),
+    },
+    "baek": {
+        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
+        "modes": {"main": ["base"]},
+        "comment": ("시즌 감정 미디어 manifest(백) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
+                    "⚠ 260726 현재 = **얼빡 프사 1장뿐**(운영자 '저분들은 그냥 얼빡으로만 일단 반영') — 수집분 들어오면 감정 폴더에 부어 확장. "
+                    "정본=viewer/characters/season/baek/main/<감정>/."),
+    },
+    "yun": {
+        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
+        "modes": {"main": ["base"]},
+        "comment": ("시즌 감정 미디어 manifest(윤) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
+                    "⚠ 260726 현재 = **얼빡 프사 1장뿐**(운영자 '저분들은 그냥 얼빡으로만 일단 반영') — 수집분 들어오면 감정 폴더에 부어 확장. "
+                    "정본=viewer/characters/season/yun/main/<감정>/."),
+    },
+    "kopi": {
+        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
+        "modes": {"main": ["base"]},
+        "comment": ("시즌 감정 미디어 manifest(카피) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
+                    "⚠ 260726 현재 = **얼빡 프사 1장뿐**(운영자 '저분들은 그냥 얼빡으로만 일단 반영') — 수집분 들어오면 감정 폴더에 부어 확장. "
+                    "정본=viewer/characters/season/kopi/main/<감정>/."),
+    },
+    "aeri": {
+        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
+        "modes": {"main": ["base"]},
+        "comment": ("시즌 감정 미디어 manifest(애리) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
+                    "⚠ 260726 현재 = **얼빡 프사 1장뿐**(운영자 '저분들은 그냥 얼빡으로만 일단 반영') — 수집분 들어오면 감정 폴더에 부어 확장. "
+                    "정본=viewer/characters/season/aeri/main/<감정>/."),
+    },
     "winter": {
         # 평면 축(flat) — 감정 하위폴더 없이 파일명 토큰으로 분류. 파일을 안 옮기는 이유 = build_flat 독스트링.
         "flat": "characters/idol/winter",
