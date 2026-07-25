@@ -27,6 +27,11 @@ jobs:
         with:
           fetch-depth: 1
 
+      # ⚠️ 260726 실측: 이 스텝이 없어서 mudi 3씬이 png만 커밋되고 webp가 조용히 생략됐다(뷰어는 .webp만 참조 = 그대로면 안 보임).
+      # yeta-char-art.yml의 동일 스텝 계승 — bg_var.webp()가 shutil.which("ffmpeg") 없으면 비치명 스킵이라 실패 신호도 안 뜬다.
+      - name: ffmpeg (webp 사본 변환 — 러너 기본 이미지에 없음)
+        run: sudo apt-get install -y -qq ffmpeg >/dev/null 2>&1 || echo "ffmpeg 미설치 — png 원본만(뷰어 참조 불가 · 수동 변환 필요)"
+
       - name: 배경 배리에이션 생성
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
