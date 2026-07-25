@@ -87,6 +87,10 @@ jobs:
           KIMI_API_KEY: ${{ secrets.KIMI_CODE_MUTE }}
           # YETA_SAFE 기본 ON(스크립트) = 런타임 CLAUDE.md 미주입(개발 세션 전용 · 운영자 260704) · 회귀 = YETA_SAFE: '0'
           YETA_SYS: '2'   # 운영자 260721 Q.35 승인 — 전 모델 시스템 '교체'(CC 기저 텍스트 미전송 = 구독 쿼터·종량제 공동 절감). 이탈 관찰축 = fb_report(이슈) + 세션훅 자동 부각 · 롤백 = 이 줄 제거(append 복귀)
+          # 단톡 대화 이어가기(운영자 260725 "자기들끼리 얘기를 이어나가야") — ① 대본 교대 LINES(한 호출 안 토막 수) ② 자율 비트 BEATS(유저 침묵 시 추가 턴 = 턴당 생성 +N).
+          #   비용 = 단톡 방에서만 유저 메시지당 최대 (1 + BEATS)회 생성 · 롤백 = BEATS '0'(자율 비트만 OFF) · 전면 종전 결 = LINES '1' + BEATS '0' · 발사 유예 초 = YETA_GCHAT_GAP(기본 6).
+          YETA_GCHAT_LINES: '4'
+          YETA_GCHAT_BEATS: '2'
           GH_ISSUE_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # 프레임이탈 관찰 리포트 전용(fb_report → 이슈 · Q.35) — 잡 스코프 기본 토큰(issues:write)
         run: |
           [ -n "${CLAUDE_CODE_OAUTH_TOKEN}" ] || { echo "::error::OAuth 토큰 없음"; exit 1; }

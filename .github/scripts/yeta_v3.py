@@ -5,6 +5,7 @@
 import time
 
 INVITE_TTL_MS = 600000
+GB_TTL_MS = 120000        # 단톡 자율 비트 예약(s.gb) 유효 시간 — yeta_chat.sh GB_TTL_MS·뷰어 gbP TTL과 3점 짝(러너 사망 시 자연 소멸)
 
 def migrate_v3(s):
     """v>=3 or threads 존재 = no-op(멱등). v2 = threads[persona] 랩 · updated = 마지막 턴 ts 백필."""
@@ -33,7 +34,7 @@ def migrate_v3(s):
             "me": s.get("me") if isinstance(s.get("me"), dict) else {"call": "", "about": ""}}
 
 def _age(th, now_ms):
-    """스레드의 일감 나이(ts) — 없으면 None. invite(신선)·pending(최고령)·opening(assistant 0) 통합."""
+    """스레드의 일감 나이(ts) — 없으면 None. invite(신선)·pending(최고령)·opening(assistant 0)·gb(단톡 자율 비트 예약) 통합."""
     turns = th.get("turns") or []
     la = max([i for i, t in enumerate(turns) if t.get("role") == "assistant"], default=-1)
     pend = [t for t in turns[la + 1:] if t.get("role") == "user"]
@@ -46,6 +47,9 @@ def _age(th, now_ms):
         cands.append(pend[0].get("ts") or 0)
     if th.get("opening") and not any(t.get("role") == "assistant" for t in turns):
         cands.append(th.get("opening") or 0)
+    gb = th.get("gb") if isinstance(th.get("gb"), dict) else None
+    if gb and not pend and len(room) == 2 and now_ms - (gb.get("ts") or 0) < GB_TTL_MS:
+        cands.append(now_ms)   # 자율 비트 = **항상 최연소**(유저를 기다리는 진짜 일감이 언제나 먼저 · 발동 게이트 전량은 extract_mat 정본)
     return min(cands) if cands else None
 
 def pick_thread(S, now_ms=None):

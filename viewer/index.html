@@ -4092,6 +4092,7 @@ function yRender() {
   _yKickOn = kickOn;
   if (_yNearC && !kickOn && ((s.room || []).length < 2)) h += `<button type="button" class="yb sys ykick ynear in" data-near="${esc(_yNearC.id)}">${esc(_yNearC.pl)} — ${esc(_yNearC.name)}도 여기 있다 · 불러볼까</button>`;   // 공간 초대(운영자 260709 메타버스 결) — 같은 장소 감지 시에만 · 탭 = 부르기(수락은 걔 마음)
   const invP = s.invite && Date.now() - (s.invite.ts || 0) < 600000 ? yPersona(s.invite.to) : null;   // 초대 판정 대기(단톡 260707)
+  const gbP = s.gb && s.gb.p && (s.room || []).length >= 2 && Date.now() - (s.gb.ts || 0) < 120000 ? yPersona(s.gb.p) : null;   // 단톡 자율 비트 예약(운영자 260725 "자기들끼리 얘기를 이어나가야") — 러너가 답장과 같은 write에 심는다 · state 비점유 = 초대 판정(invP) 결 계승(좀비 리퍼·자동재시도 축과 무관 = 러너 사망 시 TTL 120s로 조용히 소멸 · 짝 = yeta_chat.sh GB_TTL_MS·yeta_v3 GB_TTL_MS)
   const typing = yPrefOn('typing', true) && !deadNow && !gaveUp && !openingStuck && (awaiting || staged || failNow) && !!YCUR && Date.now() >= _yTypHold;   // 타이핑 표시(설정) 끄면 "입력 중" 숨김 · staged = 답장 페이스 홀드 · failNow = 자동 재시도 중에도 점 유지(실패 무노출) · _yTypHold = 읽는 시간 경과 후에만(운영자 260707)
   if (!awaiting && !staged && _yDraft) { _yDraft = null; _yDrKeep = false; }   // 확정 반영·대기 종료 = 잔여 draft 폐기(다음 턴 유령 버블 차단)
   const dr = _yDraft && awaiting && !deadNow && !gaveUp && (_yDrKeep || Date.now() >= _yTypHold) && _yDraft.t === ((YSESS || {}).cur || '') && (_yDrKeep || (_yDraft.ts || 0) >= ((s.awaiting_since || 0) - 5000)) && _yDraft.text ? _yDraft : null;   // 문장 스트리밍(한수2) — 현재 방 · 이번 대기분만(스테일 가드) · 사망/이탈 연출 우선 · 읽는시간(_yTypHold) 게이트 = 타이핑과 동일 · _yDrKeep = 겹침 중 예외 2종(260717 ⑨ — 홀드 게이트 + ts 가드: 내 발송이 awaiting_since를 당겨 유지 버블이 증발하던 것 봉합 · 평의회 MED)
@@ -4103,7 +4104,8 @@ function yRender() {
     yBubbles(dr.text).forEach((bt, bi) => { h += yAiMsg({ text: bt, persona: pid, ov: _yDrKeep ? 1 : 0 }, !_yDraftOn && bi === 0, bi > 0 || pcont); }); }   // 생성 중 부분 답장 — 확정과 같은 버블 분할로 미리 그림 · 등장만 촤르륵 · 겹침 중(_yDrKeep) = mut 톤(260717 ⑨)
   else if (typing) h += yTypingHtml(!_yTypOn);
   else if (invP) h += yTypingHtml(!_yTypOn, invP, '올지 생각 중');   // 초대받은 캐릭터의 고민 = 타이핑 변형(시안 A)
-  _yFailOn = gaveUp; _yTypOn = !dr && (typing || (!deadNow && !gaveUp && !typing && !!invP)); _yDraftOn = !!dr;
+  else if (gbP && yPrefOn('typing', true) && !deadNow) h += yTypingHtml(!_yTypOn, gbP);   // 자율 비트 생성 중 = 그 사람 이름으로 "입력 중"(정본 컴포넌트 계승 · 타이핑 설정 OFF면 숨김만 = 턴은 폴로 그대로 들어온다)
+  _yFailOn = gaveUp; _yTypOn = !dr && (typing || (!deadNow && !gaveUp && !typing && (!!invP || !!gbP))); _yDraftOn = !!dr;
   yHeadRoom();   // 단톡 헤더 동기화(스택/단일 멱등)
   yStackSync();   // 근처 인물 스택 동기(만석 전환·후보 소진 반영 — 시그니처 가드 = 무변경 no-op · 260712)
   yStage(yLastMood());   // 새 답장의 공기 → 배경 배리언트 크로스페이드(키 가드 = 같으면 no-op)
@@ -4116,7 +4118,7 @@ function yRender() {
     _yNoAnim = false;   // 스왑 무애니 = 1회성(다음 렌더부터 정상 촤르륵)
     if (atBottom) log.scrollTop = log.scrollHeight;
   }
-  if (((awaiting && waitMs <= zlim) || invP) && !deadNow) yStartPoll(); else yStopPoll();   // 초대 판정도 폴로 픽업(state 비점유) · 사망 방 = 폴 정지(운영자 260714 — 두절 연출)
+  if (((awaiting && waitMs <= zlim) || invP || gbP || staged) && !deadNow) yStartPoll(); else yStopPoll();   // 초대 판정·자율 비트도 폴로 픽업(state 비점유) · staged = 페이스 공개 중엔 감시 유지(그 사이 도착하는 교대 턴 즉시 픽업) · 사망 방 = 폴 정지(운영자 260714 — 두절 연출)
 }
 let _yWatchTk = null, _yEtag = '', _yDEtag = '';   // watch 롱폴 토큰 + 세션/draft etag 기준선(watch 응답만 갱신 — get 무관)
 function yStartPoll() {   // 대기 감시 1선 = watch 롱폴(대화 속도 260714 한수 · 서버가 R2 etag 1s 감시 → 변경 즉시 응답 = 픽업 ~0s) · 실패·구게이트웨이 = 4s 타이머 폴 강등(종전 결) — 대기 중에만 돎
