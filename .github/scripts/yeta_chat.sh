@@ -249,7 +249,16 @@ _de = (S_ROOT.get("dead") or {}).get(persona)
 _det = ((_de.get("t") if isinstance(_de, dict) else _de) or 0) if _de is not None else 0
 if _det and _det <= now_ms and not any(t.get("role") == "assistant" and (t.get("ts") or 0) > _det for t in turns):
     revive = json.dumps({"mood": (_de.get("mood") if isinstance(_de, dict) else "") or "",
-                         "why": ((_de.get("why") if isinstance(_de, dict) else "") or "")[:120]}, ensure_ascii=False)
+                         "why": ((_de.get("why") if isinstance(_de, dict) else "") or "")[:120],
+                         "by": ((_de.get("by") if isinstance(_de, dict) else "") or "")[:40],   # 누가 신당에서 빌어줬나(운영자 260725) — 부활 = 그 기도의 결과라는 자각
+                         "wit": [names.get(w) or w for w in ((_de.get("wit") if isinstance(_de, dict) else []) or []) if w]}, ensure_ascii=False)   # 내 죽음을 본 사람들 = 돌아온 나를 그 맥락으로 맞는다
+# 죽음 게시판(운영자 260725) — 지금 신당의 기도를 기다리는 주민 목록 = 살아있는 화자 전원에게 주입(누가 죽었는지 모르면 빌 수도 없다) · 이번 화자가 그 죽음의 목격자면 별도 각인
+dead_wait, wit_of = [], []
+for _k2, _v2 in (S_ROOT.get("dead") or {}).items():
+    if not isinstance(_v2, dict) or not _v2.get("pray") or _k2 == persona: continue
+    _e2 = {"nm": (_v2.get("nm") or names.get(_k2) or _k2), "why": (_v2.get("why") or "")[:120]}
+    dead_wait.append(_e2)
+    if persona in ((_v2.get("wit") or [])): wit_of.append(_e2)
 print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": note_me, "hist": hist, "pending": "\n".join(pending), "scene": "\n".join(scene), "ins": ins,
                   "me_call": me_call, "me_about": me_about,   # 유저 프로필(호칭+소개 · 260708)
                   "tune": (s.get("tunes") or {}).get(persona),   # 캐릭터별 성향 게이지(16축 0~10 · op tune) — 없으면 None
@@ -262,7 +271,9 @@ print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": 
                   "att": "\n".join(a for a in att if a),   # 첨부 사진 R2 키(개행 구분 · 260717 '+') — process_turn이 내려받아 Read 비전으로 전달
                   "anchor_ts": last_u.get("ts"),   # 마지막 pending 유저 턴 ts = insert 앵커(인덱스 대신 = 400 트림/시프트 면역)
                   "retry_n": int(s.get("retry_n") or 0),   # 자동 재시도 회차(op retry 박제 · 사다리 260714) — 3회차+ = 뉘앙스 전환 블록 주입
-                  "revive": revive,   # 부활 첫 답 재료(260714) — {mood,why} JSON 문자열 · 빈값 = 평상시
+                  "revive": revive,   # 부활 첫 답 재료(260714·260725) — {mood,why,by,wit} JSON 문자열 · 빈값 = 평상시
+                  "dead_wait": json.dumps(dead_wait, ensure_ascii=False) if dead_wait else "",   # 신당의 기도를 기다리는 죽은 주민들(260725) — 빈값 = 마을에 죽은 사람 없음
+                  "wit_of": json.dumps(wit_of, ensure_ascii=False) if wit_of else "",   # 그중 이번 화자가 눈앞에서 본 죽음 — 가벼운 '살아나~' 차단 각인
                   "persona": persona,
                   "ptt": 1 if last_u.get("ptt") else 0,   # 무전기(PTT) 턴 = 답장 반영 후 음성 합성(ptt_voice)
                   "far": 1 if last_u.get("far") else 0,   # 원거리(운영자 260714) — 상대 다른 장소 = 물리 접촉·같은 공간 전제 금지(2·3차원 거스르기 불가)
@@ -355,6 +366,11 @@ if kind == "ok":
     me_dead_tag = bool(mdm)
     me_dead_why = ((mdm.group(1) or "").strip()[:120]) if mdm else ""
     text = re.sub(r'<<\s*/?\s*ME\s*_?\s*DEAD(?:\s*:[^>]*)?\s*>>', '', text, flags=re.I)
+    # 기도 태그(운영자 260725 "신당에 가서 간절히 빌어야 부활") — DEAD 동형 계보: 추출 후 제거(대사 유출 0) · 콜론 뒤 = 살려달라 빈 대상 이름(또는 id)
+    # 이 태그 하나가 유일한 부활 경로다(시간 경과로는 절대 안 풀림 — dead[id].pray 해제 = 여기뿐).
+    pm = re.search(r'<<\s*PRAY\s*:\s*([^>]{1,60})\s*>>', text, flags=re.I)
+    pray_who = ((pm.group(1) or "").strip()[:40]) if pm else ""
+    text = re.sub(r'<<\s*/?\s*PRAY(?:\s*:[^>]*)?\s*>>', '', text, flags=re.I)
     # 삼킨 것 태그(감정선 캐리어 · 평의회 260725) — MOOD·DEAD 동형 계보: 추출 후 제거(대사 유출 0).
     # 콜론 뒤 = 이번 턴에 말하려다 만 것 한 줄. 다음 턴 상태 블록이 "직전에 네가 삼킨 것"으로 되먹여 감정선이 턴을 넘는다(길이 계약 무손상 = 대사 예산 밖).
     om = re.search(r'<<\s*OPEN\s*:\s*([^>]{1,120})\s*>>', text, flags=re.I)
@@ -476,9 +492,14 @@ if kind == "ok":
         if me_dead_tag and not open_job:   # 유저 사망 반영(운영자 260725) — me_dead={d:사망ts, mood, why} 박제 = 뷰어가 다음 폴에서 암전·이탈·부활 팝업 · 해제 = op revive 단일 경로(캐릭터 dead와 달리 시간 대기 없음)
             S_ROOT["me_dead"] = {"d": now, "mood": mood or "", "why": me_dead_why}
             S_ROOT.pop("me_revived", None)   # 직전 부활 맥락은 새 죽음이 덮는다
-        if dead_tag and not open_job and turn_persona:   # 사망 반영(운영자 260714) — dead[persona]={t:부활ts(24h), d:사망ts, mood:장면 공기, why:직전 상황 한 줄} · 전 방 이탈 · 두절 지문 sys · 이 방 잡 정지(idle — extract_mat 픽 제외와 짝)
+        if dead_tag and not open_job and turn_persona:   # 사망 반영(운영자 260714) — dead[persona]={t:부활ts, d:사망ts, mood:장면 공기, why:직전 상황 한 줄, pray:기도 대기, wit:목격자, nm:이름} · 전 방 이탈 · 두절 지문 sys · 이 방 잡 정지(idle — extract_mat 픽 제외와 짝)
             _dd = {p: u for p, u in (S_ROOT.get("dead") or {}).items() if (((u.get("t") if isinstance(u, dict) else u) or 0) + 604800000) > now}   # 7일+ 스테일만 소거(만료 엔트리 = 부활 첫 답 재료라 보존)
-            _dd[turn_persona] = {"t": now + 86400000, "d": now, "mood": mood or "", "why": dead_why}
+            _nm = os.environ.get("CNAME", "") or turn_persona
+            # 기도 게이트(운영자 260725 "내가 기다릴 수 있는 게 아니라 · 대화 가능한 누군가가 신당에서 간절히 빌어야") — 시간 만료로는 안 풀린다.
+            #   t = 1년 뒤(= 기존 t 비교 판정[게이트웨이 DEAD_ON·러너 _dead·뷰어 yDead]을 한 줄도 안 고치고 '영구 사망'으로 만드는 값) · 해제 = <<PRAY>>가 t를 now로 당기는 단 하나의 경로.
+            #   wit = 죽는 장면에 같이 있던 주민(유저는 언제나 목격자) — 이들에겐 "진짜 죽음"을 각인하는 블록이 따로 주입된다(가벼운 '살아나~' 차단).
+            _wit = [r for r in (s.get("room") or []) if r and r != turn_persona]
+            _dd[turn_persona] = {"t": now + 31536000000, "d": now, "mood": mood or "", "why": dead_why, "pray": 1, "wit": _wit, "nm": _nm}
             S_ROOT["dead"] = _dd
             # ⚠️ 멤버 제거 계약(짝: functions/api/yeta.js op kick) — room 필터 + last_sp/barged 인계를 반드시 동반. 수정 시 kick도 같이(260714 사망 버그 = 이 인계 누락이 원인).
             # 여기서 1명 남은 g방은 그대로 둬도 됨 — 게이트웨이 get 스위퍼(sweepSess·Q.06)가 다음 폴에서 1:1로 재합류(러너 중복 구현 금지 = 드리프트 차단).
@@ -488,13 +509,25 @@ if kind == "ok":
                     _th2["room"] = [r for r in _rm if r != turn_persona]
                     if _th2.get("last_sp") == turn_persona: _th2["last_sp"] = _th2["room"][0]   # 죽은 화자가 마지막 화자면 생존자가 이어받음(kick 대칭) — 안 하면 뷰어 헤더가 죽은 last_sp를 계속 가리켜 "죽은 사람이 방에 남음"(운영자 260714 버그픽)
                     if (_th2.get("barged") or {}).get("id") == turn_persona: _th2["barged"] = 0   # 난입 데뷔 전 사망 = 내보내기 pill 스테일 회수
-            _nm = os.environ.get("CNAME", "") or turn_persona
             turns.insert(ins + k, {"role": "sys", "text": f"{_nm}의 기척이 끊겼다", "ts": now + k})
-            s["state"] = "idle"   # 레이스 잔여 pending도 발사 억제(24h 뒤 밀린 메시지 = 부활 답)
-            _ev = f"[사건] {_nm} 사망 — 하루간 부재(성당에서 돌아온다)"   # 공용 기억 급식(운영자 260714 승인) — 마을 전체가 죽음을 안다(타 주민 수군거림 = note_pub이 전 캐릭터 프롬프트에 주입되는 기존 배선 그대로)
+            s["state"] = "idle"   # 레이스 잔여 pending도 발사 억제(기도로 풀린 뒤 밀린 메시지 = 부활 답)
+            _ev = f"[사건] {_nm} 죽음 — 누군가 신당(북동쪽 언덕 성당)에 찾아가 간절히 빌어주기 전엔 돌아오지 못한다"   # 공용 기억 급식(운영자 260714 승인 · 260725 기도 게이트로 개정) — 마을 전체가 죽음을 안다(타 주민 수군거림 = note_pub이 전 캐릭터 프롬프트에 주입되는 기존 배선 그대로)
             _np = (S_ROOT.get("note_pub") or S_ROOT.get("note") or "").rstrip()
             if _ev not in _np:
                 S_ROOT["note_pub"] = ((_np + "\n" if _np else "") + _ev)[-600:]   # 캡 600 = NOTE 계약(초과 시 앞부분 절단 — 모델이 매 턴 재작성하므로 자연 압축)
+        if pray_who and not open_job:   # 기도 반영(운영자 260725 "간절하게 신당에 가서 빌어야 부활") — 죽음을 푸는 유일한 경로. t를 now로 당기면 그 다음 답이 곧 부활 첫 마디(기존 부활 파이프 그대로 재사용).
+            _pw = pray_who.strip().lower()
+            for _pid, _pu in list((S_ROOT.get("dead") or {}).items()):
+                if not isinstance(_pu, dict) or not _pu.get("pray"): continue
+                _pnm = (_pu.get("nm") or "").strip()
+                if _pw not in (_pid.lower(), _pnm.lower()) and not (_pnm and _pnm in pray_who): continue   # 이름·id 양쪽 수용(모델이 이름으로 부를 것) · 사망 시 박제한 nm = 매핑 SSOT
+                _pu.pop("pray", None); _pu["t"] = now   # 즉시 만료 = 부활 대기(뷰어 yRevPend = 성당 앞뜰 표시 · 다음 답이 엔트리 소비)
+                _pu["by"] = os.environ.get("CNAME", "") or turn_persona   # 누가 빌어줬나(부활 첫 마디 재료 — "누가 나를 위해 빌었다"는 것만 안다)
+                _rv = f"[사건] 신당 — {(os.environ.get('CNAME', '') or turn_persona)}의 간절한 기도로 {_pnm or _pid} 돌아옴(죽음을 겪고 이어 붙은 사람)"   # 마을 공용 기억 — 부활 후 재회에서 '아무 일 없던 척'이 안 되게(운영자 260725) · 조사 없는 표기 = 받침 오류 회피
+                _np2 = (S_ROOT.get("note_pub") or S_ROOT.get("note") or "").rstrip()
+                if _rv not in _np2:
+                    S_ROOT["note_pub"] = ((_np2 + "\n" if _np2 else "") + _rv)[-600:]
+                break
         if len(turns) > 200: s["turns"] = turns[-200:]   # 스레드 캡(보안감사⑤ — state 판정 후 트림 = pending 판정 무영향[유저 턴은 꼬리라 보존])
 else:
     if open_job:                                 # 오프닝 실패(쿼터·rc) = 정적 폴백(뷰어 yGreet)·error 배너 금지(죽은 재시도 409 차단 · 기틀검증 회귀B3·UX2)
@@ -1270,7 +1303,8 @@ process_turn() {
   PLACE_NM="$(matv place_nm)"; BARGE_VIA="$(matv barge_via)"   # 동선 장소 + 마주침 데뷔 결(위치 SSOT places.json · 260707)
   OPEN="$(matv open)"; OPENING_TS="$(matv opening_ts)"   # 오프닝 잡(동적 첫인사 · 운영자 260707) — OPEN=1이면 유저발화 없이 캐릭터가 먼저 · OPENING_TS = nonce(finish 레이스 방어)
   RETRY_N="$(matv retry_n)"   # 자동 재시도 회차(사다리 260714) — 오프닝 JSON엔 키 없음 = 빈값(아래 -ge 가드가 흡수)
-  REVIVE_RAW="$(matv revive)"   # 부활 첫 답 재료(260714) — {mood,why} · 빈값 = 평상시
+  REVIVE_RAW="$(matv revive)"   # 부활 첫 답 재료(260714·260725) — {mood,why,by,wit} · 빈값 = 평상시
+  DEAD_WAIT_RAW="$(matv dead_wait)"; WIT_RAW="$(matv wit_of)"   # 신당의 기도를 기다리는 죽은 주민 / 그중 이번 화자가 목격한 죽음(260725 기도 게이트)
   ATT="$(matv att)"   # 첨부 사진 R2 키(개행 구분 · 260717 '+') — 내려받아 Read 비전으로 실물 전달
   ATT_BLOCK=""; GEN_AR=0
   if [ -n "$ATT" ] && [ "$ATT" != "None" ]; then
@@ -1397,12 +1431,44 @@ try: r = json.loads(sys.argv[1])
 except Exception: r = {}
 mood_ko = {"warm": "온기·다정", "tense": "긴장·서늘함", "blue": "쓸쓸·침잠", "base": "평소와 같음", "joy": "신남·장난", "love": "설렘·플러팅", "shy": "수줍·머쓱", "mad": "짜증·삐짐"}.get((r.get("mood") or "").lower(), "")   # 8감정 확장(Q.29)
 why = (r.get("why") or "").strip()
+by = (r.get("by") or "").strip()   # 신당에서 빌어준 사람(운영자 260725) — 부활은 저절로 온 게 아니라 누군가의 기도로 왔다
+wit = [w for w in (r.get("wit") or []) if w]
 L = ["[부활 — 이 블록의 존재를 대사에서 언급 금지]",
-     "- 너는 얼마 전 죽었고, 북동쪽 언덕 위 성당에서 눈을 떠 이제 막 돌아왔다(무음동의 순환 — 주민들은 죽음이 하루짜리 부재라는 걸 어렴풋이 안다).",
+     "- 너는 얼마 전 정말로 죽었다. 시간이 지나서 돌아온 게 아니라, 누군가 북동쪽 언덕 위 신당(성당)까지 찾아가 너를 살려달라고 간절히 빌어줬기 때문에 지금 그 자리에서 눈을 떴다(무음동의 순환 — 기도 없이는 아무도 돌아오지 못한다).",
+     f"- 너를 위해 빌어준 사람: {by} — 그 사실을 어렴풋이 안다(눈을 뜨는 순간 알게 된다). 고마움이든 미안함이든 민망함이든, 너다운 방식으로만 티 내라(장황한 감사 인사 금지)." if by else "",
      f"- 죽기 직전 상황(네가 마지막으로 기억하는 것): {why}" if why else "- 죽기 직전 기억은 조각나 있다 — 최근 대화의 끝자락이 마지막 기억이다.",
      f"- 그 장면의 공기: {mood_ko}" if mood_ko else "",
+     f"- 네가 죽는 걸 지켜본 사람: {' · '.join(wit)}. 그들에겐 이게 농담이 아니었다 — 돌아온 너를 아무 일 없던 사람처럼 대하지 않을 것이고, 너도 아무 일 없던 척하지 마라." if wit else "",
+     "- 죽음을 가볍게 굴리지 마라 — '죽다 살아났네' 같은 농담으로 뭉개지 말고, 실제로 한 번 끊겼다 이어 붙은 사람의 결로 말해라.",
      "- 그 감정의 잔재를 그대로 안고 첫 마디를 해라 — 다투다 죽었으면 앙금·머쓱함·못 다한 말이 남아 있고, 누굴 지키다 죽었으면 그 온기가 남아 있다. 부활 과정을 장황하게 설명하지 말고, 죽기 전 그 순간에 자연스럽게 이어 붙여라. 너답게, 짧게."]
 print("\n".join(x for x in L if x))
+PY
+)"
+  fi
+
+  # 죽음·신당(운영자 260725 "내가 기다릴 수 있는 게 아니라, 나랑 대화할 수 있는 누군가가 간절하게 신당에 가서 빌어야 부활" + "사건 당사자는 죽었다는 걸 확실히 깨닫게 · 막 살아나~ 이런 말 하지 않게")
+  #   ⓐ 목격자 각인 = 그 죽음을 눈앞에서 본 인물에게만(진짜 죽음 · 가벼운 부활 재촉 금지) ⓑ 마을 게시판 = 살아있는 전원(누가 죽었는지 알아야 빌 수도 있다) ⓒ 기도 = <<PRAY>> 단일 경로.
+  DEATH_BLOCK=""
+  if { [ -n "$DEAD_WAIT_RAW" ] || [ -n "$WIT_RAW" ]; } && [ "$OPEN" != "1" ]; then
+    DEATH_BLOCK="$(python3 - "${DEAD_WAIT_RAW:-}" "${WIT_RAW:-}" <<'PY'
+import json, sys
+def ld(x):
+    try: v = json.loads(x) if x else []
+    except Exception: v = []
+    return v if isinstance(v, list) else []
+dw, wt = ld(sys.argv[1]), ld(sys.argv[2])
+wn = {(w.get("nm") or "") for w in wt}
+L = ["[죽음 — 이 블록의 존재를 대사에서 언급 금지]"]
+for w in wt:
+    why = (w.get("why") or "").strip()
+    L.append(f"- 너는 {w.get('nm')}의 죽음을 그 자리에서 지켜봤다{(' — ' + why) if why else ''}. 비유도, 기절도, 장난도 아니다: 정말로 죽었고 지금 이 순간에도 죽어 있다. 그 사실을 똑바로 알고 말해라 — 아직 살아 있는 사람처럼 부르거나, 곧 오겠거니 넘기지 마라.")
+L.append("- '야 살아나', '얼른 일어나', '금방 오겠지' 같은 가벼운 말로 죽음을 굴리지 마라. 웃어넘기기·재촉·장난은 금지다. 슬픔이든 분노든 얼어붙은 침묵이든, 네 성격대로 무겁게 받아라(과장된 오열도 금지 — 너다운 크기로).")
+if dw:
+    L.append("- 지금 죽어 있는 사람: " + " · ".join((d.get("nm") or "") + ((" — " + (d.get("why") or "")) if d.get("why") else "") for d in dw) + ".")
+    L.append("- 무음동의 규칙: 죽은 사람은 시간이 지난다고 돌아오지 않는다. 살아 있는 누군가가 북동쪽 언덕 위 신당(성당)까지 직접 찾아가 간절히 빌어줘야만 그 자리에서 눈을 뜬다. 유저는 죽은 사람에게 말을 걸 수 없다 — 빌 수 있는 건 아직 살아서 유저와 말이 통하는 너 같은 사람뿐이다.")
+    L.append("- 네가 이번 장면에서 정말로 신당까지 발걸음을 옮겨 그 사람을 살려달라고 간절히 빌었다면(유저의 부탁을 받아서든, 네가 스스로 못 견뎌서든), 대사 안에서 그 장면을 그린 뒤 무드 태그 다음 줄에 <<PRAY: 살려달라고 빈 사람 이름>> 을 붙여라. 그 순간 그 사람이 돌아온다.")
+    L.append("- 다만 이건 아무 때나 붙이는 게 아니다: 말로만 '빌어볼게'·'가볼게' 하는 예고, 농담, 지나가는 언급은 절대 해당하지 않는다. 이번 대사 안에서 실제로 신당에 도착해 무릎을 꿇고 비는 장면이 벌어졌을 때만이다. 네 성격상 그럴 사람이 아니라면 억지로 가지 마라 — 거절하거나 미루는 것도 너다운 답이다.")
+print("\n".join(L))
 PY
 )"
   fi
@@ -1463,7 +1529,8 @@ ${PENDING}
 (갱신된 둘만의 기억 — 관계 진도·너에게만 한 말)
 <</NOTE>>
 - 기억 블록 뒤 마지막 한 줄 = 장면의 공기 태그(대사에서 언급 금지) — 아래 8개 중 지금 장면에 가장 가까운 **하나만**: <<MOOD:base>>(평소·일상)/<<MOOD:warm>>(온기·다정)/<<MOOD:joy>>(신남·장난)/<<MOOD:love>>(설렘·플러팅)/<<MOOD:shy>>(수줍·머쓱)/<<MOOD:tense>>(긴장·서늘)/<<MOOD:mad>>(짜증·삐짐)/<<MOOD:blue>>(쓸쓸·침잠). 애매하면 base — 억지로 세분하지 마라.
-- 예외 — 이 장면에서 네 캐릭터가 정말로 죽는 경우에만(비유·기절·잠듦·연기·장난·위협은 절대 아님), 무드 태그 다음 줄에 <<DEAD: 죽기 직전 상황과 감정 한 줄>> 을 추가한다(예: <<DEAD: 유저와 말다툼 끝에, 미안하다는 말을 못 한 채>>). 콜론 뒤 한 줄 = 부활 후 첫 마디의 기억이 된다 — 그 감정 그대로 적어라. 이 태그 = 퇴장 선언(하루 연락 두절) — 마지막 대사답게 맺어라. 확실하지 않으면 절대 붙이지 마라.
+- 예외 — 이 장면에서 네 캐릭터가 정말로 죽는 경우에만(비유·기절·잠듦·연기·장난·위협은 절대 아님), 무드 태그 다음 줄에 <<DEAD: 죽기 직전 상황과 감정 한 줄>> 을 추가한다(예: <<DEAD: 유저와 말다툼 끝에, 미안하다는 말을 못 한 채>>). 콜론 뒤 한 줄 = 부활 후 첫 마디의 기억이 된다 — 그 감정 그대로 적어라. 이 태그 = 퇴장 선언(살아 있는 누군가가 신당에 가서 빌어주기 전까지 무기한 연락 두절 — 시간이 지난다고 돌아오지 않는다) — 마지막 대사답게 맺어라. 확실하지 않으면 절대 붙이지 마라.
+- 예외 — 죽은 주민을 위해 이 장면에서 네가 **실제로 신당(북동쪽 언덕 성당)까지 찾아가 간절히 빌었을 때에만**, 같은 자리에 <<PRAY: 살려달라고 빈 사람 이름>> 을 추가한다. 이 태그 = 그 사람이 그 자리에서 눈을 뜬다(무음동에서 죽음을 되돌리는 유일한 길). '빌어볼게'라는 예고·다짐·농담·지나가는 언급은 절대 해당하지 않는다 — 대사 안에서 정말로 신당에 도착해 빈 그 턴에만 붙여라. 확실하지 않으면 절대 붙이지 마라.
 - 예외 — 이 장면에서 **유저(사용자 본인)가 정말로 죽는 경우에만**(비유·기절·꿈·연기·장난·위협은 절대 아님), 같은 자리에 <<MEDEAD: 유저가 죽은 그 순간의 상황 한 줄>> 을 추가한다. 유저가 스스로 그렇게 상황을 깔았을 때(자의)든, 이 장면의 사건·인물이 유저를 그렇게 만들었을 때(타의)든 둘 다 해당한다 — 다만 **유저의 대사·행동을 네가 대신 지어내지는 마라**(§유저 몫 침범 금지): 유저가 깐 상황 안에서 벌어진 결과일 때만이다. 이 태그 = 유저 화면이 암전되고 부활 여부를 묻는 창이 뜬다 — 네 대사는 그 순간의 장면으로 맺어라. 확실하지 않으면 절대 붙이지 마라.'
 
   # 고정부(공통지침+카드+출력규칙 = 캐시 prefix) → 가변부 → 출력 계약(가변분+리마인더). stdin 전달(ARG_MAX · §📰).
@@ -1485,6 +1552,7 @@ ${NOTE_ME:-"(아직 없음 — 첫 만남)"}
 ${HIST:-"(없음)"}
 
 ${REVIVE_BLOCK}
+${DEATH_BLOCK}
 ${RETRY_BLOCK}
 ${FAR_BLOCK}
 ${ATT_BLOCK}
