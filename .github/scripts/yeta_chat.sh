@@ -221,6 +221,9 @@ hist = "\n".join(line(t, persona) for t in recent)
 last_u = turns[pend_idx[-1]]
 pref = s.get("pref") or {}
 last_mood = next((t.get("mood") for t in reversed(turns[:pend_idx[0]]) if t.get("role") == "assistant" and t.get("mood")), "")   # 직전 공기(감정 관성 · 260707)
+# 직전에 삼킨 것(감정선 캐리어 · 평의회 260725) — MOOD가 '겉 공기' 라벨이라면 이건 '속'이다.
+# 왜: 감정이 매 턴 리셋되면 캐릭터가 매듭(그렇구나·힘들었겠다)으로 화제를 닫고, 유저는 새 화제를 발명해야 한다 = 운영자가 말한 "다음 할 말이 애매해짐"(대화분석 SC3).
+last_open = next((t.get("open") for t in reversed(turns[:pend_idx[0]]) if t.get("role") == "assistant" and t.get("open")), "")
 gap_h = 0                                                # 휴면(T1 · 260707) — 이번 메시지와 직전 활동의 공백(시간)
 if pend_idx[0] > 0:
     try: gap_h = max(0, (turns[pend_idx[0]].get("ts", 0) - turns[pend_idx[0] - 1].get("ts", 0)) / 3600000)
@@ -251,7 +254,7 @@ print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": 
                   "me_call": me_call, "me_about": me_about,   # 유저 프로필(호칭+소개 · 260708)
                   "tune": (s.get("tunes") or {}).get(persona),   # 캐릭터별 성향 게이지(16축 0~10 · op tune) — 없으면 None
                   "policy": json.dumps(s.get("policy"), ensure_ascii=False) if isinstance(s.get("policy"), dict) else "",
-                  "last_mood": last_mood, "cast": " · ".join(v for v in names.values() if v),   # 상태 블록 재료(260707)
+                  "last_mood": last_mood, "last_open": last_open, "cast": " · ".join(v for v in names.values() if v),   # 상태 블록 재료(260707 · last_open = 감정선 캐리어 260725)
                   "gap_h": round(gap_h, 1), "rel_lv": rel_lv, "riv": riv, "handoff": handoff,   # T1 재료(휴면·관계LV·질투메타·인계 · 260707)   # 시즌 수위·금기(L1 · op policy) — 문구 조립은 apps/yeta/policy.json 정본
                   "co": co, "co_name": (names.get(co) or co) if co else "", "barge_debut": barge_debut,   # 단톡 재료(합석 260707) — co = 이번 턴 비화자 동행
                   "barge_via": (s.get("barged") or {}).get("via") or "",   # 난입 경로(place=지나다 마주침 · 데뷔 결 분기 · 마주침 260707)
@@ -335,6 +338,7 @@ text = os.environ.get("REPLY_TEXT", "")
 persona_env = os.environ.get("PERSONA", "")
 empty = False
 mood = ""
+open_txt = ""                                          # 삼킨 것(감정선 캐리어 260725) — mood 동형: error 경로에서도 정의돼 있어야 아래 턴 조립이 안 깨진다
 if kind == "ok":
     # 무드 태그(배경 연출 · 260703) — 위치 무관 추출 후 전부 제거(화이트리스트 밖 = 무시)
     mm = re.search(r'<<\s*MOOD\s*:\s*([a-zA-Z]+)\s*>>', text, flags=re.I)
@@ -346,6 +350,11 @@ if kind == "ok":
     dead_tag = bool(dm)
     dead_why = ((dm.group(1) or "").strip()[:120]) if dm else ""
     text = re.sub(r'<<\s*/?\s*DEAD(?:\s*:[^>]*)?\s*>>', '', text, flags=re.I)
+    # 삼킨 것 태그(감정선 캐리어 · 평의회 260725) — MOOD·DEAD 동형 계보: 추출 후 제거(대사 유출 0).
+    # 콜론 뒤 = 이번 턴에 말하려다 만 것 한 줄. 다음 턴 상태 블록이 "직전에 네가 삼킨 것"으로 되먹여 감정선이 턴을 넘는다(길이 계약 무손상 = 대사 예산 밖).
+    om = re.search(r'<<\s*OPEN\s*:\s*([^>]{1,120})\s*>>', text, flags=re.I)
+    open_txt = ((om.group(1) or "").strip()[:80]) if om else ""
+    text = re.sub(r'<<\s*/?\s*OPEN(?:\s*:[^>]*)?\s*>>', '', text, flags=re.I)
     # 이중 기억 파서(v3 · 아이데이션③): <<NOTE:PUB>>=공용 / <<NOTE:ME>>=페르소나별 사적 · 마커 변형 관대 · 누락 = 기존값 보존
     notes_found = {}
     parts = re.split(r'<<\s*NOTE(?:\s*:\s*(\w+))?\s*>>', text, flags=re.I)
@@ -426,6 +435,8 @@ if kind == "ok":
                 if lat: turn["lat"] = lat
             if mood and ci == len(chunks) - 1:
                 turn["mood"] = mood                    # 장면 공기 = 마지막 버블(yLastMood = 최신 턴 스캔과 짝)
+            if open_txt and ci == len(chunks) - 1:
+                turn["open"] = open_txt                # 삼킨 것 = 마지막 버블(mood 동형 · 다음 턴 state_block이 소비)
             turns.insert(ins + ci, turn)
         k = len(chunks)
         if co_text and co_id:
@@ -609,7 +620,7 @@ print((t[:70]+'…') if len(t)>70 else (t or '새 메시지'))")"
 # ── 상태 블록(공용 — 본답장 + 초대 판정 · env: PERSONA LAST_MOOD CAST GAP_H REL_LV RIV HANDOFF TUNE CO_NAME BARGE_DEBUT) ──
 # 시각·계절·달·데일리 무드 시드(sha256 = 같은 날 같은 기분·무저장) + 직전 공기(감정 관성) + 동네 로스터(주민 창작 방지) + 단톡 동행·난입 데뷔.
 state_block() {
-  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" <<'PY'
+  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" "${LAST_OPEN:-}" <<'PY'
 import sys, hashlib, json, time
 from datetime import datetime, timezone, timedelta
 persona, last_mood, cast, gap_h, rel_lv, riv, handoff = sys.argv[1:8]
@@ -617,6 +628,7 @@ co_name = sys.argv[9] if len(sys.argv) > 9 else ""
 barge_debut = sys.argv[10] if len(sys.argv) > 10 else "0"
 place_nm = sys.argv[11] if len(sys.argv) > 11 else ""
 barge_via = sys.argv[12] if len(sys.argv) > 12 else ""
+last_open = sys.argv[13] if len(sys.argv) > 13 else ""   # 직전에 삼킨 것(감정선 캐리어 260725 · 초대 판정 등 미전달 경로 = 빈값 = 블록 생략)
 try: tune = json.loads(sys.argv[8]) if sys.argv[8] and sys.argv[8] != "None" else []
 except Exception: tune = []
 now = datetime.now(timezone(timedelta(hours=9)))                       # KST 고정(§표기표준 — 러너 UTC) · 계절·요일·무드 시드 = 실제 달력(가속 안 함)
@@ -635,6 +647,7 @@ L = [f"- 지금: {season} · {wd}요일 {slot}({h:02d}시경) — 시각·상태
 L.append(f"- 오늘의 너: {daily} — 사건 없는 그날 기분, 미묘하게만.")
 if moon: L.append("- 오늘 밤 달이 차오른다 — 본능이 증폭되는 며칠(해당 없는 캐릭터는 무시).")
 if mood_ko: L.append(f"- 직전 장면의 공기: {mood_ko}. 감정은 스위치가 아니라 곡선이다 — 급변하지 말고 이 공기에서 자연스럽게 이어가라(유지·심화·서서히 이완). 단 진짜 계기(진심 어린 사과·충격·제대로 꽂힌 농담)가 오면 곡선을 꺾어도 된다.")
+if last_open: L.append(f"- 직전에 네가 삼킨 것: {last_open} — 아직 안 끝났다. 이번 턴 어딘가에서 티가 나게 하라(설명·재론 금지 · 말끝·행동·딴소리로 새어나오는 정도). 유저가 화제를 옮겼으면 억지로 끌고 오지 말고 그냥 흘려보내라.")   # 감정선 캐리어(평의회 260725) — MOOD가 겉 공기라면 이건 속. 질문으로 넘기지 않고 대화가 이어지는 재료(대화분석 SC3 회피 · 운영자 "묻자는 건 아니고")
 if cast: L.append(f"- 이 동네 사람들: {cast}. 이 밖의 주민을 창작하지 마라 — 최근 대화에 이름표로 등장한 다른 주민의 말은 그 사람 얘기로 자연스럽게 인용해도 된다.")
 if place_nm: L.append(f"- 네 평소 동선상 지금 너는 {place_nm} 언저리다 — 배경으로만 깔아라(장소 낭독 금지). 단 대화 흐름이 이미 다른 곳을 가리키면 그쪽이 우선이다.")
 if co_name: L.append(f"- 지금 이 자리엔 {co_name}도 같이 있다(합석). 대화는 셋이서다 — 유저 말이 {co_name}를 향한 것 같으면 짧게 반응만 얹거나 물러나도 된다.")
@@ -1244,7 +1257,7 @@ process_turn() {
   NOTE_PUB="$(matv note_pub)"; NOTE_ME="$(matv note_me)"; HIST="$(matv hist)"; PENDING="$(matv pending)"; SCENE_TXT="$(matv scene)"   # scene = 상황 설명 턴(260714 '#')
   INS="$(matv ins)"; ANCHOR_TS="$(matv anchor_ts)"; PERSONA="$(matv persona)"; PTT="$(matv ptt)"; FAR="$(matv far)"   # FAR = 원거리(다른 장소 · 260714)
   ME_CALL="$(matv me_call)"; ME_ABOUT="$(matv me_about)"   # 유저 프로필(호칭+소개 · "AI가 나를 부르는 법" · 260708)
-  RAW_MODEL="$(matv model)"; RAW_EFF="$(matv effort)"; TUNE="$(matv tune)"; POL="$(matv policy)"; LAST_MOOD="$(matv last_mood)"; CAST="$(matv cast)"; GAP_H="$(matv gap_h)"; REL_LV="$(matv rel_lv)"; RIV="$(matv riv)"; HANDOFF="$(matv handoff)"
+  RAW_MODEL="$(matv model)"; RAW_EFF="$(matv effort)"; TUNE="$(matv tune)"; POL="$(matv policy)"; LAST_MOOD="$(matv last_mood)"; LAST_OPEN="$(matv last_open)"; CAST="$(matv cast)"; GAP_H="$(matv gap_h)"; REL_LV="$(matv rel_lv)"; RIV="$(matv riv)"; HANDOFF="$(matv handoff)"   # LAST_OPEN = 직전에 삼킨 것(감정선 캐리어 260725)
   CO_ID="$(matv co)"; CO_NAME="$(matv co_name)"; BARGE_DEBUT="$(matv barge_debut)"   # 단톡 동행·난입 데뷔(합석 260707)
   PLACE_NM="$(matv place_nm)"; BARGE_VIA="$(matv barge_via)"   # 동선 장소 + 마주침 데뷔 결(위치 SSOT places.json · 260707)
   OPEN="$(matv open)"; OPENING_TS="$(matv opening_ts)"   # 오프닝 잡(동적 첫인사 · 운영자 260707) — OPEN=1이면 유저발화 없이 캐릭터가 먼저 · OPENING_TS = nonce(finish 레이스 방어)
