@@ -358,7 +358,8 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     background:linear-gradient(var(--glass),var(--glass)),rgba(18,18,18,.75); backdrop-filter:blur(var(--blur-l)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-l)) saturate(1); border:1px solid var(--glass-line); box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card); }   /* 글래스 = 헤더 .yeta-h 정본 계승(운영자 260712 "기틀 배껴서" — .yeta-pick 불투명 rgba(.94) override) · 크롬 계승 · 헤더 알약 바로 아래 · 등장 .44s */
   #yetaPdc:not(.on):not(.drag) { pointer-events:none; }
   #yetaPdc.drag { transition:none; opacity:1; transform:none; }   /* 드래그 추종 = 손 따라 즉시 */
-  #yetaPdc.on { height:285px; opacity:1; transform:none; }   /* 카드 높이 285(선택값) */
+  #yetaPdc.on { height:285px; opacity:1; transform:none; }   /* 285 = JS 미동작 폴백 — 실제 열림 높이는 yPdH() 내용 실측이 인라인으로 덮는다(운영자 260725 "잘리는 부분": 고정 285 + overflow:hidden에서 생각 2줄 = 306px → 액션 라벨 하단 21.6px 절단 실측) */
+  #yetaPdc.ypd-fit { overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }   /* 내용이 화면 잔여를 넘는 극단(가로모드·초소형)만 = 자르지 말고 안에서 스크롤 */
   #yetaPdc .pin { display:flex; flex-direction:column; align-items:center; text-align:center; gap:7px; padding:var(--sp-3) var(--sp-2); }
   #yetaPdc .pin > * { opacity:0; transform:translateY(6px); }
   #yetaPdc.on .pin > * { opacity:1; transform:none; transition:opacity .3s var(--ease), transform .3s var(--ease); }
@@ -3642,14 +3643,22 @@ function yPdRender() {   // 카드 내용 = 프사 팝오버 파생 축 동일(�
     + `<button type="button" class="ypd-act" data-pda="prof"><i>${YICO.user}</i><span>프로필</span></button></span>`;
   return true;
 }
+function yPdH() {   // 열림 높이 = 내용 실측(운영자 260725 "잘리는 부분" — 고정 285는 생각 2줄·긴 이름·큰 글꼴에서 하단 액션 라벨을 잘랐다)
+  const pdc = $('#yetaPdc'), pin = $('#yetaPdcIn'); if (!pdc || !pin) return 285;
+  const op = pdc.offsetParent, top = pdc.offsetTop + (op ? op.getBoundingClientRect().top : 0);   // 레이아웃 기준 위치 = 등장 transform(-8px) 이동 중에도 불변(rect.top은 애니메이션 중간값이 섞여 상한을 부풀린다)
+  const cap = Math.max(160, innerHeight - top - 12);   // 상한 = 화면 잔여(하단 여백 12 = --sp-2 · 기하 계산축)
+  const h = pin.scrollHeight + 2;   // +2 = 상하 테두리 1px(box-sizing:border-box 전역)
+  pdc.classList.toggle('ypd-fit', h > cap);   // 상한 초과 = 절단 대신 내부 스크롤
+  return Math.min(h, cap);
+}
 function yPdOpen() {
   if (!yPdRender()) return;
   yProfPop(false); yPickToggle(false); yInvToggle(false);   // 팝오버 상호배타
-  const pdc = $('#yetaPdc'); pdc.classList.remove('drag'); pdc.style.height = ''; pdc.classList.add('on'); pdc.inert = false;   // 열림 = inert 해제(키보드·SR 진입 가능 — 평의회D)
+  const pdc = $('#yetaPdc'); pdc.classList.remove('drag'); pdc.style.height = yPdH() + 'px'; pdc.classList.add('on'); pdc.inert = false;   // 열림 = inert 해제(키보드·SR 진입 가능 — 평의회D) · 높이 = 실측(고정 285 폐지)
   yetadlg.classList.add('ypd-on');
   if (!YMAPD) yMeMap();   // 장소 SSOT 지연 로드(다음 열기에 장소명 채움 — 프사 팝오버 동일)
 }
-function yPdClose() { const pdc = $('#yetaPdc'); if (!pdc) return; pdc.classList.remove('on', 'drag'); pdc.style.height = ''; pdc.inert = true; yetadlg.classList.remove('ypd-on'); }   // 접힘 = inert(보이지 않는 4버튼이 탭 순서·SR에 잔존하던 것 차단 — 평의회D WCAG 2.4.3)
+function yPdClose() { const pdc = $('#yetaPdc'); if (!pdc) return; pdc.classList.remove('on', 'drag', 'ypd-fit'); pdc.style.height = ''; pdc.inert = true; yetadlg.classList.remove('ypd-on'); }   // 접힘 = inert(보이지 않는 4버튼이 탭 순서·SR에 잔존하던 것 차단 — 평의회D WCAG 2.4.3)
 (() => {   // 드래그 추종(높이 = 손 위치) + 임계 40 판정 + 탭(<6px) 토글 — 포인터 캡처 · 마우스/터치 공용
   const who = $('#yetaWho'), pdc = $('#yetaPdc'); if (!who || !pdc) return;
   let dr = null;
@@ -3658,8 +3667,8 @@ function yPdClose() { const pdc = $('#yetaPdc'); if (!pdc) return; pdc.classList
     if (!dr) return;
     const dy = Math.max(0, e.clientY - dr.y0); dr.m = Math.max(dr.m, dy); dr.mx = Math.max(dr.mx, Math.abs(e.clientX - dr.x0));
     if (dy > 4 && !pdc.classList.contains('on')) {
-      if (!dr.on) { if (!yPdRender()) { dr = null; return; } yProfPop(false); yPickToggle(false); yInvToggle(false); dr.on = 1; }
-      pdc.classList.add('drag'); pdc.style.height = Math.min(dy, 285) + 'px';
+      if (!dr.on) { if (!yPdRender()) { dr = null; return; } yProfPop(false); yPickToggle(false); yInvToggle(false); dr.on = 1; dr.h = yPdH(); }   // 상한 = 그 인물 카드 실측(드래그 중 1회 = 리플로우 억제)
+      pdc.classList.add('drag'); pdc.style.height = Math.min(dy, dr.h) + 'px';
     }
   });
   who.addEventListener('pointerup', () => {
@@ -3670,6 +3679,8 @@ function yPdClose() { const pdc = $('#yetaPdc'); if (!pdc) return; pdc.classList
   });
   who.addEventListener('pointercancel', () => { if (dr) { dr = null; pdc.classList.remove('drag'); pdc.style.height = ''; } });
   who.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pdc.classList.contains('on') ? yPdClose() : yPdOpen(); } });   // 키보드(role=button · WCAG 2.1.1)
+  const pin = $('#yetaPdcIn');   // 열린 뒤 내용 높이가 변해도 추종(웹폰트 도착·아바타 로드·회전·글꼴 크기 변경) — 재계산 없이 두면 그때부터 다시 잘린다
+  if (pin && window.ResizeObserver) new ResizeObserver(() => { if (pdc.classList.contains('on')) pdc.style.height = yPdH() + 'px'; }).observe(pin);
 })();
 $('#yetaPdc').addEventListener('click', e => {   // 액션 4 = 통화(유료 2탭 가드 보존)·초대(2차 팝업)·성향·프로필(시트 = dialog 아래층이라 챗 회수 후 개방 = ydock 결)
   const b = e.target.closest('.ypd-act[data-pda]'); if (!b) return;
