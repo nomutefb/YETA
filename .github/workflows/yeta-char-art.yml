@@ -26,6 +26,10 @@ on:
         description: '얼빡 확대 배율(기본 0.72 · 작을수록 더 확대)'
         required: false
         default: ''
+      takes:
+        description: '얼빡 여벌 테이크 수(기본 1 · 최대 6 · 2장째부터 av/<id>_v2.webp… 로만 떨어지고 roster 미주입)'
+        required: false
+        default: ''
 
 concurrency:
   group: yeta-char-art
@@ -56,6 +60,7 @@ jobs:
           YETA_AV_MODE: ${{ inputs.avmode }}   # 1 = 얼빡 프사 축(운영자 260725)
           YETA_AV_REBUILD: ${{ inputs.rebuild }}   # 1 = 크롭만 다시(무과금)
           YETA_AV_ZOOM: ${{ inputs.zoom }}
+          YETA_AV_TAKES: ${{ inputs.takes }}   # N장 여벌(운영자 260726 "지피티로 한 4장")
         run: python3 .github/scripts/yeta_char_art.py
 
       - name: 커밋 (신규 있을 때만)
