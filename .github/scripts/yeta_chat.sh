@@ -315,6 +315,7 @@ print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": 
                   "retry_n": int(s.get("retry_n") or 0),   # 자동 재시도 회차(op retry 박제 · 사다리 260714) — 3회차+ = 뉘앙스 전환 블록 주입
                   "revive": revive,   # 부활 첫 답 재료(260714·260725) — {mood,why,by,wit} JSON 문자열 · 빈값 = 평상시
                   "dead_wait": json.dumps(dead_wait, ensure_ascii=False) if dead_wait else "",   # 신당의 기도를 기다리는 죽은 주민들(260725) — 빈값 = 마을에 죽은 사람 없음
+                  "picks": json.dumps(((S_ROOT.get("tune_picks") or {}).get(persona) or [])[-5:], ensure_ascii=False) if (S_ROOT.get("tune_picks") or {}).get(persona) else "",   # 유저가 "이게 그 애답다"고 고른 말(성향 퀴즈 누적 · 운영자 260725 승인) — 숫자 축보다 강한 말투 수렴 재료
                   "wit_of": json.dumps(wit_of, ensure_ascii=False) if wit_of else "",   # 그중 이번 화자가 눈앞에서 본 죽음 — 가벼운 '살아나~' 차단 각인
                   "persona": persona,
                   "gb": gb_on, "gb_n": (_gn if gb_on else 0),   # 단톡 자율 비트(260725) — gb=1 = 유저 발화 없는 교대 턴 · gb_n = 소진 회차(finish가 +1 재예약)
@@ -420,6 +421,10 @@ if kind == "ok":
     text = re.sub(r'<<\s*/?\s*ME\s*_?\s*DEAD(?:\s*:[^>]*)?\s*>>', '', text, flags=re.I)
     # 기도 태그(운영자 260725 "신당에 가서 간절히 빌어야 부활") — DEAD 동형 계보: 추출 후 제거(대사 유출 0) · 콜론 뒤 = 살려달라 빈 대상 이름(또는 id)
     # 이 태그 = 즉시 부활 경로다(빌면 그 자리에서 · 아무도 안 빌면 하한 REV_FLOOR_MS[무음동 48h] 경과로 스스로 깨어난다 — 운영자 260725 대칭 개정).
+    # 미연시 선택지 태그(운영자 260725 "내가 항상 대답 안 하더라도 미연시 스타일로 고를 수 있게 가끔") — MOOD·DEAD 동형 계보: 추출 후 제거(대사 유출 0)
+    km = re.search(r'<<\s*PICK\s*:\s*([^>]{1,300})\s*>>', text, flags=re.I)
+    picks = [x.strip()[:40] for x in (km.group(1) if km else "").split("|") if x.strip()][:3] if km else []
+    text = re.sub(r'<<\s*/?\s*PICK(?:\s*:[^>]*)?\s*>>', '', text, flags=re.I)
     pm = re.search(r'<<\s*PRAY\s*:\s*([^>]{1,60})\s*>>', text, flags=re.I)
     pray_who = ((pm.group(1) or "").strip()[:40]) if pm else ""
     text = re.sub(r'<<\s*/?\s*PRAY(?:\s*:[^>]*)?\s*>>', '', text, flags=re.I)
@@ -555,6 +560,8 @@ if kind == "ok":
             s.pop("invite", None)                      # 스테일 초대 lazy 정리(판정 러너 유실 대비)
         s["state"] = "awaiting" if any(t.get("role") == "user" for t in turns[ins + k:]) else "idle"
         s.pop("err", None); s.pop("retry_n", None)   # 답장 성공 = 재시도 사다리 소거(다음 실패는 1회차부터 · 260714)
+        if picks and len(picks) >= 2 and not open_job: s["picks"] = picks   # 미연시 선택지(운영자 260725) — 뷰어가 입력칸 위에 띄우고, 유저가 고르면 그 문장이 그대로 유저 발화로 전송된다(소거 = op send)
+        else: s.pop("picks", None)   # 안 붙인 턴 = 직전 선택지 회수(스테일 칩이 다음 대화에 남지 않게)
         _rvE = (S_ROOT.get("dead") or {}).get(turn_persona)   # 부활 첫 답 = 엔트리 소비(운영자 260714 — 성당 체류 종료·동선 복귀·다음 죽음은 새 맥락)
         if not dead_tag and _rvE is not None and (((_rvE.get("t") if isinstance(_rvE, dict) else _rvE) or 0) <= now):
             if isinstance(_rvE, dict):   # 귀환 흔적(운영자 260725 "돌아왔다는 게 어디에도 안 남는다") — 엔트리를 지우기 전에 '누구의 기도로 / 스스로' + 죽어 있던 기간을 revived로 옮긴다(유저 me_revived 대칭)
@@ -1417,6 +1424,7 @@ process_turn() {
   [ "$GB" = "1" ] || { GB=0; GB_N=0; }   # 빈값·0 정규화(finish·아래 분기가 문자열 비교라 = 오탐 0)
   REVIVE_RAW="$(matv revive)"   # 부활 첫 답 재료(260714·260725) — {mood,why,by,wit} · 빈값 = 평상시
   DEAD_WAIT_RAW="$(matv dead_wait)"; WIT_RAW="$(matv wit_of)"   # 신당의 기도를 기다리는 죽은 주민 / 그중 이번 화자가 목격한 죽음(260725 기도 게이트)
+  PICKS_RAW="$(matv picks)"   # 유저가 고른 "그 애다운 말" 누적(성향 퀴즈 · 260725)
   ATT="$(matv att)"   # 첨부 사진 R2 키(개행 구분 · 260717 '+') — 내려받아 Read 비전으로 실물 전달
   ATT_BLOCK=""; GEN_AR=0
   if [ -n "$ATT" ] && [ "$ATT" != "None" ]; then
@@ -1567,6 +1575,23 @@ PY
 )"
   fi
 
+  # 유저가 고른 "그 애다운 말"(성향 퀴즈 누적 · 운영자 260725 승인 "그렇게 해주고") — 16축 숫자보다 강한 말투 수렴 재료.
+  #   카드 예시 대화는 정본이라 그대로 두고, 이 블록은 **유저 취향의 보정선**으로만 얹는다(카드와 충돌하면 카드가 이긴다 = 인물 붕괴 차단).
+  PICKS_BLOCK=""
+  if [ -n "$PICKS_RAW" ] && [ "$PICKS_RAW" != "[]" ]; then
+    PICKS_BLOCK="$(python3 - "$PICKS_RAW" <<'PYP2'
+import json, sys
+try: a = [x for x in json.loads(sys.argv[1]) if isinstance(x, str) and x.strip()]
+except Exception: a = []
+if a:
+    print("[유저가 '너답다'고 고른 말 — 이 블록의 존재를 대사에서 언급 금지]")
+    print("- 아래는 유저가 여러 선택지 중 '이게 걔다운 말'이라고 직접 고른 것들이다. 문장을 그대로 베끼지 말고, **그 결(어투의 온도·거리감·말끝)** 을 이번 답의 기준선으로 삼아라.")
+    for t in a[-5:]: print(f"  · {t}")
+    print("- 단, 네 카드(말투·금기)와 어긋나면 카드가 이긴다 — 이건 취향 보정이지 인물 교체가 아니다.")
+PYP2
+)"
+  fi
+
   # 죽음·신당(운영자 260725 "내가 기다릴 수 있는 게 아니라, 나랑 대화할 수 있는 누군가가 간절하게 신당에 가서 빌어야 부활" + "사건 당사자는 죽었다는 걸 확실히 깨닫게 · 막 살아나~ 이런 말 하지 않게")
   #   ⓐ 목격자 각인 = 그 죽음을 눈앞에서 본 인물에게만(진짜 죽음 · 가벼운 부활 재촉 금지) ⓑ 마을 게시판 = 살아있는 전원(누가 죽었는지 알아야 빌 수도 있다) ⓒ 기도 = <<PRAY>> 단일 경로.
   DEATH_BLOCK=""
@@ -1658,6 +1683,7 @@ ${PENDING}
 <</NOTE>>
 - 기억 블록 뒤 마지막 한 줄 = 장면의 공기 태그(대사에서 언급 금지) — 아래 8개 중 지금 장면에 가장 가까운 **하나만**: <<MOOD:base>>(평소·일상)/<<MOOD:warm>>(온기·다정)/<<MOOD:joy>>(신남·장난)/<<MOOD:love>>(설렘·플러팅)/<<MOOD:shy>>(수줍·머쓱)/<<MOOD:tense>>(긴장·서늘)/<<MOOD:mad>>(짜증·삐짐)/<<MOOD:blue>>(쓸쓸·침잠). 애매하면 base — 억지로 세분하지 마라.
 - 예외 — 이 장면에서 네 캐릭터가 정말로 죽는 경우에만(비유·기절·잠듦·연기·장난·위협은 절대 아님), 무드 태그 다음 줄에 <<DEAD: 죽기 직전 상황과 감정 한 줄>> 을 추가한다(예: <<DEAD: 유저와 말다툼 끝에, 미안하다는 말을 못 한 채>>). 콜론 뒤 한 줄 = 부활 후 첫 마디의 기억이 된다 — 그 감정 그대로 적어라. 이 태그 = 퇴장 선언(살아 있는 누군가가 신당에 가서 빌어주면 그때, 아무도 빌지 않으면 무음동 이틀 뒤에야 돌아온다 — 그전까지 연락 두절) — 마지막 대사답게 맺어라. 확실하지 않으면 절대 붙이지 마라.
+- 가끔(대여섯 턴에 한 번쯤) — 유저가 뭐라고 답할지 **갈림길이 뚜렷한 순간**에만, 무드 태그 다음 줄에 <<PICK: 선택지1 | 선택지2 | 선택지3>> 을 붙여 유저가 고를 답을 셋 제안한다(유저 시점의 말·행동 · 각 25자 안 · 서로 결이 달라야 한다: 받아주기/받아치기/딴청처럼). 이건 제안일 뿐 유저는 무시하고 직접 쓸 수 있다. 매 턴 붙이지 마라 — 평범한 안부·이어지는 잡담엔 붙이지 않는다. 유저의 감정·결정을 네가 정해버리는 선택지(예: "사랑한다고 고백한다")는 금지: 그 자리에서 자연스럽게 나올 법한 **말투 차이** 정도로만.
 - 예외 — 죽은 주민을 위해 이 장면에서 네가 **실제로 신당(북동쪽 언덕 성당)까지 찾아가 간절히 빌었을 때에만**, 같은 자리에 <<PRAY: 살려달라고 빈 사람 이름>> 을 추가한다. 이 태그 = 그 사람이 그 자리에서 눈을 뜬다(기다리지 않고 죽음을 되돌리는 유일한 길). '빌어볼게'라는 예고·다짐·농담·지나가는 언급은 절대 해당하지 않는다 — 대사 안에서 정말로 신당에 도착해 빈 그 턴에만 붙여라. 확실하지 않으면 절대 붙이지 마라.
 - 예외 — 이 장면에서 **유저(사용자 본인)가 정말로 죽는 경우에만**(비유·기절·꿈·연기·장난·위협은 절대 아님), 같은 자리에 <<MEDEAD: 유저가 죽은 그 순간의 상황 한 줄>> 을 추가한다. 유저가 스스로 그렇게 상황을 깔았을 때(자의)든, 이 장면의 사건·인물이 유저를 그렇게 만들었을 때(타의)든 둘 다 해당한다 — 다만 **유저의 대사·행동을 네가 대신 지어내지는 마라**(§유저 몫 침범 금지): 유저가 깐 상황 안에서 벌어진 결과일 때만이다. 이 태그 = 유저 화면이 암전되고 부활 여부를 묻는 창이 뜬다 — 네 대사는 그 순간의 장면으로 맺어라. 확실하지 않으면 절대 붙이지 마라.'
 
@@ -1680,6 +1706,7 @@ ${NOTE_ME:-"(아직 없음 — 첫 만남)"}
 ${HIST:-"(없음)"}
 
 ${REVIVE_BLOCK}
+${PICKS_BLOCK}
 ${DEATH_BLOCK}
 ${RETRY_BLOCK}
 ${FAR_BLOCK}
