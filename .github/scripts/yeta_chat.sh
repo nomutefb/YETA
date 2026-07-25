@@ -1061,8 +1061,7 @@ except Exception: sys.exit(0)
 s = (S.get("threads") or {}).get(os.environ.get("THREAD", ""))
 if not s: sys.exit(0)
 T = A.get("tuning") or {}
-batch = int(T.get("batch") or 5)
-if len(s.get("evq") or []) >= int(T.get("queue_min") or 2): sys.exit(0)   # 큐 충분 = 생성 안 함(호출 절약)
+batch = int(T.get("batch") or 3)
 ax = A.get("axes") or {}
 who, what, sense, deep = ax.get("who") or [], ax.get("what") or [], ax.get("sense") or [], ax.get("deep") or []
 if not (who and what and sense): sys.exit(0)
@@ -1074,21 +1073,41 @@ pnm = place_name(PL, pl) if pl else "무음동 골목"
 season = ["겨울","겨울","봄","봄","봄","여름","여름","여름","가을","가을","가을","겨울"][datetime.now(timezone(timedelta(hours=9))).month - 1]   # 계절 = 현실 축(10_세계관.md "계절·날짜·요일은 현실") · 경계 = state_block 정본 배열 그대로 계승(사본 드리프트 금지) · KST 강제([12])
 h0, h1 = (T.get("deep_hours") or [0, 3])[:2]
 deep_on = deep and (h0 <= wh < h1)                   # 경계가 얇아지는 시간대에만 어반 판타지 결 추첨(10_세계관.md 정합)
+# 스테일 = 뜬금없음의 두 번째 원인(260725) — 맥락에 맞춰 만들어도 몇 턴 묵혀 터뜨리면 그땐 이미 딴 얘기다.
+# 생성 시점(evq_ctx=유저 턴 수 · evq_pl=장소)을 스탬프해두고, 대화가 stale_turns만큼 굴렀거나 장소가 바뀌면 큐가 남아 있어도 새로 뽑는다(ambient_store가 교체 적재).
+uc = len([t for t in (s.get("turns") or []) if (t or {}).get("role") == "user"])
+_c0 = s.get("evq_ctx"); _p0 = s.get("evq_pl") or ""
+stale = (isinstance(_c0, int) and uc - _c0 > int(T.get("stale_turns") or 3)) or bool(_p0 and pl and _p0 != pl)
+if len(s.get("evq") or []) >= int(T.get("queue_min") or 2) and not stale: sys.exit(0)   # 큐 충분 + 신선 = 생성 안 함(호출 절약)
+pool = max(batch, batch * int(T.get("seed_pool") or 3))   # 씨앗을 batch보다 넉넉히 뽑아 **후보**로 던진다(운영자 260725 "그 상황에 맞는 걸 넣어줘") — 강제 소진이면 안 맞는 소재도 문장이 되어 뜬금없어진다. 골라 쓰게 하는 게 관련도 축의 핵심.
 seeds = []
-for i in range(batch):
+for i in range(pool):
     if deep_on and random.random() < 0.35: seeds.append(f"{random.choice(deep)} / {random.choice(sense)}")
     else: seeds.append(f"{random.choice(who)} / {random.choice(what)} / {random.choice(sense)}")
+# 지금 대화 = 관련도의 원천(260725 수정 전엔 장소·시각·계절만 줬다 = 모델이 대화를 몰라 무관한 사건이 나왔다).
+# 화자 표기 = line() sys 문법 계승하되 캐릭터 **이름은 일부러 빼고** '상대'로 익명화 — 이름을 주면 "이름 있는 주민 금지" 규칙을 스스로 깨기 쉬워진다.
+ctx = []
+for t in (s.get("turns") or [])[-int(T.get("ctx_turns") or 8):]:
+    r, x = (t or {}).get("role"), ((t or {}).get("text") or "").replace("\n", " ").strip()
+    if not x: continue
+    if r == "user": ctx.append("유저: " + x[:120])
+    elif r == "assistant": ctx.append("상대: " + x[:120])
+    else: ctx.append("— " + x[:120] + " —")
 L = [f"무음동 골목의 '지금 이 순간' 주변에서 벌어지는 짧은 사건 {batch}개를 만들어라.", "",
      "[무대] 서울 변두리, 밤이 유난히 긴 동네 무음동. 낮보다 밤에 살아나는 골목이다.",
-     f"[지금] {pnm} · 세계시각 {wh}시 · {season}", "",
-     "[씨앗] 줄마다 하나씩. 이 씨앗은 소재일 뿐이다 — 그대로 옮기지 말고 구체적인 장면으로 굴려라:"]
+     f"[지금] {pnm} · 세계시각 {wh}시 · {season}", ""]
+if ctx:
+    L += ["[지금 대화] 유저와 상대가 방금까지 나눈 말. 사건은 **이 장면 옆에서** 터진다:"] + ctx + [""]
+L += [f"[씨앗 후보] 줄마다 하나씩 · {pool}개. **의무가 아니라 재료다** — 위 대화 결에 걸리는 것만 골라 쓰고, 안 걸리면 통째로 버려라(다 쓸 필요 없다):"]
 for i, sd in enumerate(seeds, 1): L.append(f"{i}) {sd}")
 L += ["", "[규칙]",
       f"- 한 줄 = 사건 하나. 정확히 {batch}줄. 번호·불릿·따옴표·설명 금지(줄만 뱉어라).",
+      "- **지금 대화와 이어져야 한다**: 방금 나온 화제·감정·행동·사물 중 하나를 사건이 물고 들어와라(반복이 아니라 옆에서 메아리치는 결 — 슬픈 얘기 중이면 소란도 그 온도로, 웃던 중이면 그 결로).",
+      "- 대화에 걸리는 게 하나도 없으면 지금 **장소에서 눈앞에 보일 법한 것**으로 가라. 대화·장소 어디에도 안 붙는 소재는 쓰지 마라(뜬금없는 사건 = 실패).",
       "- 주인공은 유저도 대화 상대도 아닌 **제3자·주변**이다. 이름 있는 주민(캐릭터)은 절대 등장시키지 마라.",
-      "- 유저에게 말을 걸거나 대화를 요구하지 마라. 옆에서 그냥 벌어질 뿐이다.",
+      "- 유저에게 말을 걸거나 대화를 요구하지 마라. 옆에서 그냥 벌어질 뿐이다. 대화 내용을 그대로 되풀이하거나 요약하지도 마라.",
       "- 25~55자. 현재형 지문체. 소리·냄새·빛 중 최소 하나를 감각으로 박아라.",
-      "- 5줄이 서로 다른 사건이어야 한다(같은 소재·같은 구조 반복 금지).",
+      f"- {batch}줄이 서로 다른 사건이어야 한다(같은 소재·같은 구조 반복 금지).",
       "- 유혈·사망 같은 큰 사고 말고, 골목에서 실제로 일어날 법한 소란 위주로(가끔 하나쯤은 기묘해도 좋다)."]
 print("\n".join(L))
 PY
@@ -1112,10 +1131,21 @@ for ln in (os.environ.get("AMB_RAW") or "").splitlines():
     ln = re.sub(r'^\s*(?:[-*·]|\d+[.)])\s*', '', ln).strip().strip('"“”\'')   # 번호·불릿·따옴표 방어(형식 이탈 흡수)
     if 8 <= len(ln) <= 90 and not ln.startswith("[") and ln not in out: out.append(ln)
 if not out: sys.exit(1)
-q = [x for x in (s.get("evq") or []) if isinstance(x, str)]
+try:                                                 # 장소 스탬프(fail-soft — 실패해도 적재는 계속 · 계산식 = ambient_prompt와 동형)
+    from yeta_place import load_places, place_of, world_dh
+    _wd, _wh = world_dh()
+    _sp = s.get("last_sp") or os.environ.get("THREAD", "")
+    _pl = place_of(load_places(), _sp, _wd, _wh) if _sp else ""
+except Exception: _pl = ""
+uc = len([t for t in (s.get("turns") or []) if (t or {}).get("role") == "user"])
+_c0 = s.get("evq_ctx"); _p0 = s.get("evq_pl") or ""
+stale = (isinstance(_c0, int) and uc - _c0 > int((A.get("tuning") or {}).get("stale_turns") or 3)) or bool(_p0 and _pl and _p0 != _pl)
+q = [] if stale else [x for x in (s.get("evq") or []) if isinstance(x, str)]   # 묵은 큐 = 폐기 후 교체(옛 맥락 사건이 새 장면에 섞여 터지는 것 차단 · 신선분은 보존)
 q += out
 s["evq"] = q[-12:]                                   # 큐 상한 = 무한적재·스테일 누적 차단
 s["evq_ts"] = int(time.time() * 1000)
+s["evq_ctx"] = uc                                    # 생성 시점 대화 위치·장소 = 다음 턴 스테일 판정의 기준점
+s["evq_pl"] = _pl
 json.dump(S, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False)
 PY
   then r2put >/dev/null 2>&1 && echo "  🎲 주변 사건 적재(큐 보충 · 다음 턴부터 사용)" || true; fi
@@ -1446,7 +1476,7 @@ ${CONTRACT1}${GROUP_RULE}${ME_RULE}
   export LAT_W_MS LAT_F_MS
   finish ok "$OUT" || { echo "::error::세션 반영 실패(R2 put)"; draft_clear; return 1; }
   draft_clear   # 확정 반영 뒤 회수(뷰어 = 세션 변경 먼저 픽업 → 버블 스왑 → 잔여 draft 소거)
-  [ "$_did_reply" = 1 ] && { echo "yeta: 답장 완료(${#OUT}자 · ${GEN_S}s)"; push_reply "$OUT"; [ "$PTT" = "1" ] && ptt_voice "$OUT"; barge_check; ambient_fire; ambient_refill; }   # 주변 사건(260725) — 심기(다음 턴 반영) → 큐 보충(운영자 "대화가 한번 시작되면 준비해놓기" · 답장 이후라 사용자 대기 0 · 큐가 마를 때만 = 배치 5턴에 1회)
+  [ "$_did_reply" = 1 ] && { echo "yeta: 답장 완료(${#OUT}자 · ${GEN_S}s)"; push_reply "$OUT"; [ "$PTT" = "1" ] && ptt_voice "$OUT"; barge_check; ambient_refill; ambient_fire; }   # 주변 사건(260725) — 보충 먼저 → 심기(운영자 "대화가 한번 시작되면 준비해놓기" · 답장 이후라 사용자 대기 0). 순서 = refill→fire(260725 관련도 수정): 이번 턴 대화까지 반영해 뽑은 사건이 곧바로 심긴다(fire 선행이면 직전 맥락의 묵은 사건이 한 발 새어나갔다)
   return 0
 }
 
