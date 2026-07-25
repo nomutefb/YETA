@@ -517,9 +517,39 @@ export async function onRequestPost({ request, env }) {
     const { sess, abort } = await casPut(s => {
       if (!s.me_dead) return { abort: { noop: 1 } };   // 이미 살아있음 = 무변경(중복 탭·재진입 멱등)
       const md = s.me_dead;
-      if (!md.pray && Date.now() < (md.d || 0) + MEREV_MS) return { abort: { error: '아직 돌아갈 수 없어 — 누가 신당에서 빌어주거나, 무음동의 밤이 더 흘러야 해' } };
+      if (!md.pray && Date.now() < (md.d || 0) + MEREV_MS - (md.cut || 0)) return { abort: { error: '아직 돌아갈 수 없어 — 누가 신당에서 빌어주거나, 무음동의 밤이 더 흘러야 해' } };   // cut = 성향 퀴즈로 당긴 만큼(뷰어 yMeRevAt과 같은 식)
       s.me_revived = { d: md.d || 0, why: md.why || '', at: Date.now(), pray: md.pray || null };   // 직전 죽음 + 그 기도 = 부활 맥락으로 1세대 보존(러너가 다음 턴에 "돌아왔네" 결로 쓸 재료)
       delete s.me_dead;
+    });
+    if (abort && abort.error) return json(abort, 409);
+    return json({ ok: true, sess: sess || null });
+  }
+
+  if (op === 'quizpick') {   // 성향 퀴즈 선택(운영자 260725 "내가 고르면 그걸 계속 누적시켜서 캐릭터 성격 일원화 · 주기적으로 반영되게 내가 터치안해도 자동으로")
+    // 한 문항 = 무음동 2시간 단축(현실 20분) · 선택지가 가리키는 축을 tune_votes에 쌓고, 같은 캐릭터로 3표가 모이면 **그 자리에서** tunes에 ±1 반영(별도 크론·유저 조작 0).
+    const QI = Math.max(0, parseInt(body.i, 10) || 0), OI = Math.max(0, parseInt(body.o, 10) || 0);
+    const CUT_MS = 2 / 6 * 3600e3, VOTE_N = 3;
+    const { sess, abort } = await casPut(s => {
+      const md = s.me_dead;
+      if (!md || !Array.isArray(md.quiz)) return { abort: { error: '지금은 떠올릴 게 없어' } };
+      const done = Array.isArray(md.done) ? md.done : (md.done = []);
+      if (QI !== done.length) return { abort: { noop: 1 } };   // 순서 밖 = 무시(중복 탭·연타 멱등 — 단축 중복 적립 차단)
+      const q = md.quiz[QI], o = q && Array.isArray(q.o) ? q.o[OI] : null;
+      if (!q || !o) return { abort: { error: '그 선택지는 없어' } };
+      done.push(OI);
+      md.cut = (md.cut || 0) + CUT_MS;
+      const ax = parseInt(o.ax, 10), d = (parseInt(o.d, 10) || 0) >= 0 ? 1 : -1;
+      if (q.p && ax >= 0 && ax <= 15) {
+        const V = (s.tune_votes = s.tune_votes || {}), arr = (V[q.p] = V[q.p] || []);
+        arr.push({ ax, d, ts: Date.now() });
+        if (arr.length >= VOTE_N) {   // 자동 반영 — 축별 표를 합산해 ±1씩만 움직인다(한 번에 튀지 않게) · 반영분은 비우고 다음 3표를 새로 모은다
+          const sum = {};
+          for (const v of arr) sum[v.ax] = (sum[v.ax] || 0) + v.d;
+          const T = (s.tunes = s.tunes || {}), cur = Array.isArray(T[q.p]) && T[q.p].length === 16 ? T[q.p].slice() : Array(16).fill(5);
+          for (const k of Object.keys(sum)) { if (!sum[k]) continue; cur[k] = Math.max(0, Math.min(10, (cur[k] || 5) + (sum[k] > 0 ? 1 : -1))); }
+          T[q.p] = cur; V[q.p] = [];
+        }
+      }
     });
     if (abort && abort.error) return json(abort, 409);
     return json({ ok: true, sess: sess || null });
