@@ -1295,6 +1295,11 @@ PY
 AMB_JSON="$ROOT/apps/yeta/ambient.json"
 AMB_MODEL="${YETA_AMB_MODEL:-claude-opus-5}"   # 운영자 260725 지정("무진장 랜덤일테니까 opus 5.0") · env = 회귀 노브
 AMB_EFF="${YETA_AMB_EFF:-max}"                 # 운영자 260725 지정("--effort max")
+# 축 온/오프(운영자 260726 "일단 저 사건 안뜨게 할게") — 러너 기동 시 1회 판정. 꺼져 있으면 호출부에서 두 함수를 아예 안 부른다
+# = 매 턴 R2 왕복·python 기동 0(파이썬 초입 가드만 두면 끈 상태에서도 세션을 읽는다). 되살리기 = ambient.json tuning.enabled → true(코드 무수정).
+AMB_ON="$(python3 -c 'import json,sys
+try: print("1" if (json.load(open(sys.argv[1],encoding="utf-8")).get("tuning") or {}).get("enabled", True) else "0")
+except Exception: print("1")' "$AMB_JSON" 2>/dev/null)"; [ "$AMB_ON" = "0" ] || AMB_ON=1   # 파싱 실패·키 없음 = 종전대로 켬(fail-open = 노브 오타로 축이 조용히 죽는 사고 차단)
 
 # 큐가 마르면 프롬프트를 stdout에 뱉는다(충분하면 빈 출력 = 생성 스킵). 씨앗 추첨 = 진짜 랜덤(운영자 "그 순간에 자연스럽게 랜덤하게" — barge의 결정적 시드와 반대 축).
 ambient_prompt() {
@@ -1311,6 +1316,7 @@ except Exception: sys.exit(0)
 s = (S.get("threads") or {}).get(os.environ.get("THREAD", ""))
 if not s: sys.exit(0)
 T = A.get("tuning") or {}
+if not T.get("enabled", True): sys.exit(0)           # 축 정지(운영자 260726) = 빈 출력 → refill이 LLM을 안 탄다(호출부 AMB_ON과 이중 안전 · fail-open = 키 없으면 켬)
 batch = int(T.get("batch") or 3)
 PL = load_places()
 wd, wh = world_dh()                                  # 무음동 세계 시각(6배속 · 지도·동선과 동일 정본)
@@ -1495,6 +1501,7 @@ except Exception: sys.exit(0)
 s = (S.get("threads") or {}).get(os.environ.get("THREAD", ""))
 if not s: sys.exit(0)
 T = A.get("tuning") or {}
+if not T.get("enabled", True): sys.exit(0)           # 축 정지(운영자 260726) = 큐가 남아 있어도 안 심는다(호출부 AMB_ON과 이중 안전)
 q = [x for x in (s.get("evq") or []) if isinstance(x, str)]
 if not q: sys.exit(0)
 turns = s.get("turns") or []
@@ -1847,7 +1854,7 @@ ${PENDING}
   # 종전엔 답장 push 뒤(1867행)라 지문 한 줄이 고아로 남았다 = 운영자가 본 "딴소리". LLM 호출 0(큐 소진만)이라 답장 지연도 0.
   # 미발동(큐 빔·게이트·warmup·간격) = 파일 없음 = 블록 없음 = 종전 프롬프트 그대로. 자율 비트(GB=1)·오프닝은 유저 턴이 부른 답이 아니므로 제외.
   AMB_BLOCK=""
-  if [ "$GB" != "1" ] && [ "${OPEN:-}" != "1" ]; then
+  if [ "$AMB_ON" = "1" ] && [ "$GB" != "1" ] && [ "${OPEN:-}" != "1" ]; then
     ambient_fire
     if [ -s /tmp/yeta_amb_now ]; then
       AMB_BLOCK="[옆에서 지금 — 방금 네 눈앞에서 실제로 벌어진 일]
@@ -1928,7 +1935,7 @@ ${CONTRACT1}${GROUP_RULE}${ME_RULE}
   draft_clear   # 확정 반영 뒤 회수(뷰어 = 세션 변경 먼저 픽업 → 버블 스왑 → 잔여 draft 소거)
   # 자율 비트(GB=1) = 유저가 부른 답이 아니다 → 푸시·PTT(유료 TTS)·난입·주변사건 전부 생략(알림 도배·과금·연출 겹침 차단). 유저 턴이 부른 답만 종전 후처리를 태운다.
   [ "$_did_reply" = 1 ] && [ "$GB" = "1" ] && echo "yeta: 자율 비트 반영(${#OUT}자 · ${GEN_S}s · ${GB_N}/${GB_BEATS})"
-  [ "$_did_reply" = 1 ] && [ "$GB" != "1" ] && { echo "yeta: 답장 완료(${#OUT}자 · ${GEN_S}s)"; push_reply "$OUT"; [ "$PTT" = "1" ] && ptt_voice "$OUT"; barge_check; ambient_refill; }   # 주변 사건 보충만(260726) — 심기(ambient_fire)는 답장 **생성 전**으로 이관해 사건이 답장에 받쳐지게 했다. 보충은 종전대로 답장 뒤(이번 턴 대화까지 반영해 뽑고, 사용자 대기 0)
+  [ "$_did_reply" = 1 ] && [ "$GB" != "1" ] && { echo "yeta: 답장 완료(${#OUT}자 · ${GEN_S}s)"; push_reply "$OUT"; [ "$PTT" = "1" ] && ptt_voice "$OUT"; barge_check; [ "$AMB_ON" = "1" ] && ambient_refill; }   # 주변 사건 보충만(260726 · 축이 꺼져 있으면 생성 자체를 안 탄다 = LLM 쿼터 0) — 심기(ambient_fire)는 답장 **생성 전**으로 이관해 사건이 답장에 받쳐지게 했다. 보충은 종전대로 답장 뒤(이번 턴 대화까지 반영해 뽑고, 사용자 대기 0)
   return 0
 }
 
