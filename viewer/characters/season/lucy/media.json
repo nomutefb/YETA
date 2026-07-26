@@ -1,8 +1,6 @@
 {
- "_comment": "시즌 감정 미디어 manifest(루시) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. base 선두 클립=대화 시작배경(muted 비디오). 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — 사진 = 모드 폴더의 감정 하위폴더에 붓기만(예 android/joy/) · 모드 루트 미분류 = android→base · dokkaebi→warm·tense 흡수. mode_dir=도깨비 폴더 — viewer 모드 게이트(yModeOn)가 활성 시 이 폴더만, 평시 제외로 필터(무드보다 우선). 정본=viewer/characters/season/lucy/{android,dokkaebi}/<감정>/.",
+ "_comment": "시즌 감정 미디어 manifest(루시) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 클립(muted 비디오) = joy 버킷 · clip_w=3 = 다른 사진 대비 3배 빈도(등간격). 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — 사진 = 모드 폴더의 감정 하위폴더에 붓기만(예 android/joy/) · 모드 루트 미분류 = android→base · dokkaebi→warm·tense 흡수. mode_dir=도깨비 폴더 — viewer 모드 게이트(yModeOn)가 활성 시 이 폴더만, 평시 제외로 필터(무드보다 우선). 정본=viewer/characters/season/lucy/{android,dokkaebi}/<감정>/.",
  "base": [
-  "characters/season/lucy/lucy_clip_01.mp4",
-  "characters/season/lucy/lucy_clip_02.mp4",
   "characters/season/lucy/android/base/android_04.jpg",
   "characters/season/lucy/android/base/android_08.jpg",
   "characters/season/lucy/android/base/android_10.jpg",
@@ -16,11 +14,14 @@
   "characters/season/lucy/android/base/android_43.jpg",
   "characters/season/lucy/android/base/android_44.jpg",
   "characters/season/lucy/android/base/android_45.jpg",
+  "characters/season/lucy/android/base/android_56.jpg",
   "characters/season/lucy/dokkaebi/base/dokkaebi_04.jpg",
   "characters/season/lucy/dokkaebi/base/dokkaebi_10.jpg",
   "characters/season/lucy/dokkaebi/base/dokkaebi_21.jpg",
   "characters/season/lucy/dokkaebi/base/dokkaebi_22.jpg",
-  "characters/season/lucy/dokkaebi/base/dokkaebi_38.jpg"
+  "characters/season/lucy/dokkaebi/base/dokkaebi_38.jpg",
+  "characters/season/lucy/dokkaebi/base/dokkaebi_40.jpg",
+  "characters/season/lucy/dokkaebi/base/dokkaebi_46.jpg"
  ],
  "warm": [
   "characters/season/lucy/android/warm/android_02.jpg",
@@ -33,20 +34,30 @@
   "characters/season/lucy/dokkaebi/warm/dokkaebi_14.jpg",
   "characters/season/lucy/dokkaebi/warm/dokkaebi_16.jpg",
   "characters/season/lucy/dokkaebi/warm/dokkaebi_24.jpg",
-  "characters/season/lucy/dokkaebi/warm/dokkaebi_39.jpg"
+  "characters/season/lucy/dokkaebi/warm/dokkaebi_39.jpg",
+  "characters/season/lucy/dokkaebi/warm/dokkaebi_43.jpg"
  ],
  "joy": [
+  "characters/season/lucy/android/joy/lucy_clip_02.mp4",
   "characters/season/lucy/android/joy/android_26.jpg",
+  "characters/season/lucy/android/joy/lucy_clip_02.mp4",
   "characters/season/lucy/android/joy/android_31.jpg",
+  "characters/season/lucy/android/joy/lucy_clip_02.mp4",
   "characters/season/lucy/android/joy/android_40.jpg",
+  "characters/season/lucy/android/joy/android_54.jpg",
+  "characters/season/lucy/dokkaebi/joy/lucy_clip_01.mp4",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_01.jpg",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_07.jpg",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_11.jpg",
+  "characters/season/lucy/dokkaebi/joy/lucy_clip_01.mp4",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_13.jpg",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_15.jpg",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_23.jpg",
+  "characters/season/lucy/dokkaebi/joy/lucy_clip_01.mp4",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_29.jpg",
-  "characters/season/lucy/dokkaebi/joy/dokkaebi_37.jpg"
+  "characters/season/lucy/dokkaebi/joy/dokkaebi_37.jpg",
+  "characters/season/lucy/dokkaebi/joy/dokkaebi_42.jpg",
+  "characters/season/lucy/dokkaebi/joy/dokkaebi_44.jpg"
  ],
  "love": [
   "characters/season/lucy/android/love/android_11.jpg",
@@ -56,6 +67,8 @@
   "characters/season/lucy/android/love/android_32.jpg",
   "characters/season/lucy/android/love/android_36.jpg",
   "characters/season/lucy/android/love/android_47.jpg",
+  "characters/season/lucy/android/love/android_53.jpg",
+  "characters/season/lucy/android/love/android_61.jpg",
   "characters/season/lucy/dokkaebi/love/dokkaebi_12.jpg",
   "characters/season/lucy/dokkaebi/love/dokkaebi_17.jpg",
   "characters/season/lucy/dokkaebi/love/dokkaebi_19.jpg",
@@ -75,6 +88,11 @@
   "characters/season/lucy/android/blue/android_38.jpg",
   "characters/season/lucy/android/blue/android_39.jpg",
   "characters/season/lucy/android/blue/android_48.jpg",
+  "characters/season/lucy/android/blue/android_52.jpg",
+  "characters/season/lucy/android/blue/android_55.jpg",
+  "characters/season/lucy/android/blue/android_57.jpg",
+  "characters/season/lucy/android/blue/android_58.jpg",
+  "characters/season/lucy/android/blue/android_59.jpg",
   "characters/season/lucy/dokkaebi/blue/dokkaebi_20.jpg",
   "characters/season/lucy/dokkaebi/blue/dokkaebi_26.jpg",
   "characters/season/lucy/dokkaebi/blue/dokkaebi_30.jpg"
@@ -86,13 +104,15 @@
   "characters/season/lucy/android/tense/android_23.jpg",
   "characters/season/lucy/android/tense/android_24.jpg",
   "characters/season/lucy/android/tense/android_37.jpg",
+  "characters/season/lucy/android/tense/android_60.jpg",
   "characters/season/lucy/dokkaebi/tense/dokkaebi_02.jpg",
   "characters/season/lucy/dokkaebi/tense/dokkaebi_08.jpg",
   "characters/season/lucy/dokkaebi/tense/dokkaebi_18.jpg",
   "characters/season/lucy/dokkaebi/tense/dokkaebi_25.jpg",
   "characters/season/lucy/dokkaebi/tense/dokkaebi_28.jpg",
   "characters/season/lucy/dokkaebi/tense/dokkaebi_34.jpg",
-  "characters/season/lucy/dokkaebi/tense/dokkaebi_36.jpg"
+  "characters/season/lucy/dokkaebi/tense/dokkaebi_36.jpg",
+  "characters/season/lucy/dokkaebi/tense/dokkaebi_41.jpg"
  ],
  "mad": [
   "characters/season/lucy/android/mad/android_01.jpg",
@@ -105,7 +125,8 @@
   "characters/season/lucy/android/mad/android_51.jpg",
   "characters/season/lucy/dokkaebi/mad/dokkaebi_27.jpg",
   "characters/season/lucy/dokkaebi/mad/dokkaebi_32.jpg",
-  "characters/season/lucy/dokkaebi/mad/dokkaebi_35.jpg"
+  "characters/season/lucy/dokkaebi/mad/dokkaebi_35.jpg",
+  "characters/season/lucy/dokkaebi/mad/dokkaebi_45.jpg"
  ],
  "mode_dir": "dokkaebi"
 }
