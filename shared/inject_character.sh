@@ -18,13 +18,21 @@ _yc_files() {
 }
 
 character_block() {
-  local id="$1" f
+  local id="$1" f _narr=0
+  # 나레이션 절 조건부 주입(260726 토큰 실측) — 지침의 「🎬 나레이션 품질」은 스스로 「narration: true 카드에만」이라 적어두고도
+  # 전 캐릭터에 무조건 실려 왔다. 실측 = false 카드가 10/18인데 그들에겐 679자가 매 요청 순수 낭비(라이브 22,366토큰/회 중 ~4.8%).
+  # 카드가 그 문법을 안 쓰므로 빼도 답변 규칙이 바뀌지 않는다 — 파일은 그대로 두고 '주입 시점'에만 거른다(정본 무변경).
+  [ -f "apps/yeta/characters/${id}.md" ] && grep -qE '^narration:[[:space:]]*true' "apps/yeta/characters/${id}.md" && _narr=1
   echo "===== [캐릭터 지침 — 아래 내용이 너의 전부다. 별도 파일을 읽을 필요 없다] ====="
   while IFS= read -r f; do
     [ -f "$f" ] || { echo "⚠️ inject_character: 파일 없음 $f" >&2; return 1; }
     echo ""
     echo "----- ${f} -----"
-    cat "$f"
+    if [ "$_narr" = 0 ] && [ "$f" = "apps/yeta/00_지침_캐릭터챗.md" ]; then
+      awk 'BEGIN{skip=0} /^## /{skip=($0 ~ /나레이션 품질/) ? 1 : 0} !skip' "$f"   # 그 절만 건너뛴다(다음 ## 헤딩에서 자동 복귀)
+    else
+      cat "$f"
+    fi
   done < <(_yc_files "$id")
   echo ""
   echo "===== [캐릭터 지침 끝] ====="

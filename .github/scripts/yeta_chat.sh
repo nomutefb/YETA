@@ -803,6 +803,7 @@ except Exception: print(sys.argv[1])" "$PERSONA")"   # 제목 = 화자 이름(�
   prev="$(printf '%s' "${1:-}" | python3 -c "
 import sys,re
 t=sys.stdin.read()
+t=re.sub(r'^\s*<<\s*MOOD\s*:\s*\w+\s*>>\s*', '', t, flags=re.I)   # 선두 MOOD(Q.81 출력 계약 첫 줄) 선벗김 — 안 벗기면 아래 마커 split[0]이 빈 문자열 = 알림이 전부 '새 메시지'로 뭉개진다
 t=re.split(r'^\s*\[[^\]\n]{1,24}\]\s', t, maxsplit=1, flags=re.M)[0]   # 단톡 교대 대본([이름] 이하) 잘라내기 = 알림엔 첫 화자 대사만(ptt_voice 동형 규칙 · 260725)
 t=re.split(r'<<', t, 1)[0]   # 첫 << 이전 = 대사만(Q.83) — 종전 열거(NOTE|MOOD|DEAD)는 260725 신설 MEDEAD·PICK·PRAY·OPEN이 빠져 짧은 답장 미리보기로 샜다. <<는 마커 예약 문법이라 전방 컷 = 현재·미래 마커 전부 봉인(마커-온리 원문 = 아래 '새 메시지' 폴백)
 t=re.sub(r'\*[^*]*\*','',t)                # 지문 제거 = 대사만(미리보기)
