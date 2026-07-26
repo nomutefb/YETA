@@ -875,7 +875,7 @@ def check_guideline_log():
     return 0   # WARN-only
 
 
-# ── 루트 청결 게이트(WARN-only · 운영자 260726 승인 "게이트 ㄱㄱ" · Q.96) ──
+# ── 루트 청결 게이트(WARN-only · 운영자 260726 승인 "게이트 ㄱㄱ" · Q.97) ──
 # 웹·앱에서 파일을 올리면 기본 착지점이 **레포 루트**다. 그래서 미가공 이미지·영상·중복 압축본이
 # 루트에 쌓인다(260726 실측 = 6파일 17.3MB · 그중 3건은 docs/reports 사본과 바이트 동일한 중복).
 # 화이트리스트 밖 루트 '파일'이 보이면 어디로 옮길지 알려준다. 비차단 = 업로드를 막지 않는다(정리 시점 = 운영자 선택).
@@ -1135,7 +1135,7 @@ def main():
     except Exception as e:
         print('⚠️ SAFETY-LOCK 게이트 스킵:', e)
     try:
-        check_root_clean()   # 루트 잡파일 재오염 리마인더(WARN-only · 운영자 260726 "게이트 ㄱㄱ" · Q.96 — 웹 업로드 착지점이 루트라 또 쌓인다)
+        check_root_clean()   # 루트 잡파일 재오염 리마인더(WARN-only · 운영자 260726 "게이트 ㄱㄱ" · Q.97 — 웹 업로드 착지점이 루트라 또 쌓인다)
     except Exception as e:
         print('⚠️ 루트 청결 게이트 스킵:', e)
     try:
