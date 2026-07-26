@@ -94,8 +94,12 @@ SEASONS = {
     "lucy": {
         "modes": {"android": ["base"], "dokkaebi": ["warm", "tense"]},
         "mode_dir": "dokkaebi",
+        # 클립 = 파일 자체를 감정 폴더에 뒀다(260727) — android/joy/lucy_clip_02(루시·우주) · dokkaebi/joy/lucy_clip_01(레베카·미소).
+        #   ⚠ 왜 갈랐나: 모드 필터가 경로로 자르므로 **캐릭터 루트에 두면 도깨비 창(21~03시)엔 절대 안 걸린다**(260727 실측).
+        #   모드별로 얼굴이 다른 캐릭터라 각 모드 폴더에 그 얼굴의 클립을 둔다 = 낮·밤 양쪽에서 재생.
+        "clip_w": 3,
         "comment": ("시즌 감정 미디어 manifest(루시) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. base 선두 클립=대화 시작배경(muted 비디오). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 클립(muted 비디오) = joy 버킷 · clip_w=3 = 다른 사진 대비 3배 빈도(등간격). "
                     "버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — 사진 = 모드 폴더의 감정 하위폴더에 붓기만(예 android/joy/) · "
                     "모드 루트 미분류 = android→base · dokkaebi→warm·tense 흡수. "
                     "mode_dir=도깨비 폴더 — viewer 모드 게이트(yModeOn)가 활성 시 이 폴더만, 평시 제외로 필터(무드보다 우선). "
@@ -236,6 +240,10 @@ SEASONS = {
     "winter": {
         # 평면 축(flat) — 감정 하위폴더 없이 파일명 토큰으로 분류. 파일을 안 옮기는 이유 = build_flat 독스트링.
         "flat": "characters/idol/winter",
+        # 클립 노브(운영자 260727 "애정, 설렘 감정이 들때 나오게" + "다른것에 3배") — 평면 축이라 파일을 못 옮긴다(경로 불변이 이 캐릭터의 계약)
+        #   → clip_to로 버킷을 지정한다. 종전 = base 66장 선두 = 66턴에 1번(사실상 안 보임).
+        "clip_to": ["love", "shy"],
+        "clip_w": 3,
         # ⚠ 위에서부터 첫 일치 승 — 좁은 토큰을 먼저. (예: glaring_cut → shy 가 glaring → mad 보다 위)
         "rules": [
             ("shy",   ["glaring_cut", "glaring_cuty", "tsundere", "hesitant_to_speak", "flustered", "giggle_bashfully", "act_cute", "play_cute", "playful_cute"]),
@@ -249,6 +257,7 @@ SEASONS = {
         ],
         "comment": ("시즌 감정 미디어 manifest(윈터) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
                     "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29). "
+                    "클립 3종(go_for_a_walk_date) = love·shy 버킷 · clip_w=3 = 다른 사진 대비 3배 빈도(등간격 · 260727). "
                     "⚠ 다른 인물과 축이 다르다 = **평면(flat) 폴더** — 사진이 감정 하위폴더가 아니라 `characters/idol/winter/`에 "
                     "감정이 적힌 파일명(happy_01 · are_u_kidding_02 · glaring_cutely_03 …)으로 모여 있고, SEASONS['winter']['rules']의 "
                     "토큰 규칙이 그걸 읽어 버킷에 넣는다(파일 이동 0 = roster avatar·bg·카드 폴백 경로 불변). "
@@ -274,6 +283,48 @@ def rel(p: Path) -> str:
     return p.relative_to(ROOT / "viewer").as_posix()  # viewer 서빙 루트 기준(로스터 bg 경로 규약과 동일)
 
 
+# ── 클립 노브 2종(운영자 260727) — 「영상이 너무 안 나온다」 ────────────────────────────
+# 배경 로테이션은 viewer yStage의 `pool[n % len]`(답장수 결정적 순회)이라, 풀에 1번 실린 클립은
+# **한 바퀴에 딱 한 번**만 걸린다(윈터 base 66장 = 66턴에 1번). 노브는 그 확률을 푸는 두 축이다.
+#   · clip_to = 클립이 실릴 버킷들(미지정 = base = 종전 계약) — 감정 폴더로 파일을 못 옮기는
+#     평면(flat) 캐릭터에서 「이 감정일 때 영상」을 지정하는 유일한 수단(윈터 = love·shy).
+#     감정 폴더 축(build_one)은 파일을 그 폴더에 두면 되므로 보통 불요.
+#   · clip_w  = 클립 1개가 한 바퀴에 실리는 횟수 = **다른 사진 대비 배수**(3 = 3배).
+# ⚠ 반복분을 뒤에 몰아 붙이면 같은 영상이 연속 턴에 연타된다 → weave가 **등간격 슬롯**에 꽂는다.
+def weave(items: list, extra: list) -> list:
+    """extra(클립 반복분)를 items 사이 등간격에 끼운다 — 연타 방지 · 총 길이 = len(items)+len(extra)."""
+    if not extra:
+        return list(items)
+    total = len(items) + len(extra)
+    step = total / len(extra)                       # total ≥ len(extra) → step ≥ 1 → 슬롯 충돌 없음
+    slots = {int(i * step) for i in range(len(extra))}
+    out, ii, ei = [], 0, 0
+    for i in range(total):
+        if i in slots and ei < len(extra):
+            out.append(extra[ei]); ei += 1
+        else:
+            out.append(items[ii]); ii += 1
+    return out
+
+
+def clip_buckets(cfg: dict) -> list:
+    """클립이 실릴 버킷 — 미지정 = base(종전 계약 · 대화 시작 배경)."""
+    return [b for b in (cfg.get("clip_to") or ["base"]) if b in EMOS]
+
+
+def apply_clip_weight(buckets: dict, cfg: dict) -> None:
+    """버킷 안의 클립을 clip_w배로 늘려 등간격 재배치(제자리 수정). 감정 폴더 축·평면 축 공용."""
+    w = int(cfg.get("clip_w") or 1)
+    if w <= 1:
+        return
+    for e, lst in buckets.items():
+        clips = [p for p in lst if p.suffix.lower() in CLIP_EXT]
+        if not clips:
+            continue
+        imgs = [p for p in lst if p.suffix.lower() not in CLIP_EXT]
+        buckets[e] = weave(imgs, clips * w)
+
+
 def build_flat(cid: str, cfg: dict) -> dict:
     """평면 폴더 축(260726 윈터) — 감정 하위폴더 없이 **파일명에 감정이 적혀 있는** 수집분을 규칙으로 분류.
 
@@ -288,8 +339,10 @@ def build_flat(cid: str, cfg: dict) -> dict:
         raise SystemExit(f"평면 폴더 없음: {fdir}")
     buckets = {e: [] for e in EMOS}
     rules = cfg["rules"]
-    # 클립(mp4/webm) = base 선두 계약 — build_one과 동형(260726 실측: 이 처리가 빠져 있어 운영자가 넣은 영상 3개가 통째로 무시됐다).
-    buckets["base"].extend(sorted(p for p in fdir.iterdir() if p.is_file() and p.suffix.lower() in CLIP_EXT))
+    # 클립(mp4/webm) = clip_to 버킷 선두(미지정 = base) — build_one과 동형(260726 실측: 이 처리가 빠져 있어 운영자가 넣은 영상 3개가 통째로 무시됐다).
+    _clips = sorted(p for p in fdir.iterdir() if p.is_file() and p.suffix.lower() in CLIP_EXT)
+    for _b in clip_buckets(cfg):
+        buckets[_b].extend(_clips)
     for p in sorted(fdir.iterdir()):
         if not p.is_file() or p.suffix.lower() not in IMG_EXT:
             continue
@@ -300,6 +353,7 @@ def build_flat(cid: str, cfg: dict) -> dict:
                 break
         else:
             buckets["base"].append(p)
+    apply_clip_weight(buckets, cfg)   # 클립 가중치(clip_w) = 등간격 반복
     out = {"_comment": cfg["comment"]}
     for e in EMOS:
         if buckets[e]:
@@ -314,8 +368,11 @@ def build_one(cid: str, cfg: dict) -> dict:
     if not cdir.is_dir():
         raise SystemExit(f"캐릭터 폴더 없음: {cdir}")
     buckets = {e: [] for e in EMOS}
+    rootb = {e: [] for e in EMOS}
     clips = sorted(p for p in cdir.iterdir() if p.suffix.lower() in CLIP_EXT)
-    buckets["base"].extend(clips)  # 클립 = base 선두 계약
+    for b in clip_buckets(cfg):
+        rootb[b].extend(clips)  # 캐릭터 루트 클립 = clip_to 버킷 선두(미지정 = base 선두 계약)
+    apply_clip_weight(rootb, cfg)
 
     def collect(d: Path) -> list:
         """배경 풀 수집 — 프사는 파일명으로 제외하고 **로그로 알린다**(조용한 누락 = 다음 사고).
@@ -335,17 +392,26 @@ def build_one(cid: str, cfg: dict) -> dict:
             out.append(p)
         return out
 
+    # ⚠ 가중치는 **모드 단위로** 건다(260727 실측). viewer 모드 필터는 완성된 풀을 경로로 잘라내므로,
+    #   섞인 풀에 등간격을 잡아두면 잘린 뒤 간격이 무너져 클립이 연타로 붙는다(평시 joy ▶····▶▶).
+    #   모드별로 짠 뒤 이어 붙이면 어느 쪽으로 잘려도 그 안의 등간격이 그대로 남는다.
+    for e in EMOS:
+        buckets[e].extend(rootb[e])
     for mode, root_to in cfg["modes"].items():
         mdir = cdir / mode
         if not mdir.is_dir():
             continue
+        mb = {e: [] for e in EMOS}
         for b in root_to:  # 모드 루트 미분류 = 지정 버킷 흡수(신규 수집 안전망)
-            buckets[b].extend(collect(mdir))
+            mb[b].extend(collect(mdir))
         for sub in sorted(d for d in mdir.iterdir() if d.is_dir()):
             if sub.name not in EMOS:
                 print(f"⚠️ {cid}: 규약 밖 폴더 무시 — {mode}/{sub.name}/ (허용 = {'/'.join(EMOS)})")
                 continue
-            buckets[sub.name].extend(collect(sub))
+            mb[sub.name].extend(collect(sub))
+        apply_clip_weight(mb, cfg)   # 클립 가중치(clip_w) = 그 모드 안에서 등간격 반복
+        for e in EMOS:
+            buckets[e].extend(mb[e])
     out = {"_comment": cfg["comment"]}
     for e in EMOS:
         if buckets[e]:
