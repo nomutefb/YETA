@@ -15,6 +15,8 @@
       python3 shared/build_season_media.py --check    # 재생성 없이 드리프트 검사(rc=1)
 """
 import json
+import re
+import struct
 import sys
 from pathlib import Path
 
@@ -22,7 +24,70 @@ ROOT = Path(__file__).resolve().parent.parent
 SEASON_DIR = ROOT / "viewer" / "characters" / "season"
 IMG_EXT = {".jpg", ".jpeg", ".jfif", ".png", ".webp", ".gif", ".avif"}   # .jfif(260726) = 브라우저 저장 JPEG 변종 — 운영자 업로드에 그대로 섞여 들어온다. ⚠ 서빙 MIME이 호스트에 따라 octet-stream이 될 수 있어 **가능하면 .jpg로 개명해 두는 게 안전**(바이트 동일 = 무손실). 여기 등재는 누락 방지용 안전망.
 CLIP_EXT = {".mp4", ".webm"}
+# ⚠ 260726: 종전엔 감정 폴더에서 IMG_EXT만 읽어 **감정 폴더에 넣은 영상이 통째로 무시**됐다(운영자 "고죠 기분좋을때 나오는 영상").
+#   클립은 캐릭터 루트(=base 선두)에만 놓을 수 있었던 셈 — 감정 지정이 불가능했다. IMG_EXT|CLIP_EXT로 확장해
+#   **아무 감정 버킷에나 영상을 넣을 수 있게** 한다(뷰어 yStage는 이미 확장자로 클립을 판별하므로 무수정).
+MEDIA_EXT = IMG_EXT | CLIP_EXT
 EMOS = ["base", "warm", "joy", "love", "shy", "blue", "tense", "mad"]  # viewer Y_MOODS(+base)·러너 화이트리스트와 짝
+
+# ── 얼빡(프사) 배경 차단 — 운영자 260726 「얼빡은 배경에 깔지마」 ────────────────────────
+# 왜 필요한가: 얼빡 = 정사각 프사 크롭이라 420×900 세로 무대에 cover로 깔면 얼굴만 확대·잘린다.
+#   두 번 샜다 — ① 5인 `_face01`(파일명으로 잡음) ② 세라 `sera_k01`(이름이 평범해 그물 통과).
+# 판별 축 2개(운영자 260726 "프로필사진은 내가 프로필 사진이라고 따로 명명해서 줄건데,
+#   사실 정확히 구분하긴 어렵고 내가 명명해서 줄거임"):
+#   ① **파일명 = 정본**(하드) — 운영자가 명명한다. 아래 패턴이면 배경 풀에서 자동 제외.
+#   ② 종횡비 = **보조 경고**(자동 제외 안 함) — 정사각이어도 전신 풍경이면 배경으로 멀쩡하다
+#      (실측: gojo_n09 736×736 헬스장 전신 · dokkaebi_11 1600×1600 여백 큰 일러스트).
+#      기계가 못 가리므로 **사람이 보라고 띄우기만** 한다. 차단은 check_refs 게이트가 baseline으로.
+FACE_PAT = re.compile(r"프로필|프사|profile|face", re.I)
+FACE_RATIO = 0.85   # w/h > 이 값 = 정사각~가로형 = 세로 무대 부적합 의심(경고선)
+
+
+def is_face(p: Path) -> bool:
+    """운영자가 명명한 프사인가 — 파일명 하나로 판정(정본 축)."""
+    return bool(FACE_PAT.search(p.stem))
+
+
+def img_size(p: Path):
+    """이미지 헤더만 읽어 (w, h). 실패·미지원이면 None (외부 의존 0 = 게이트가 환경 타지 않게)."""
+    try:
+        with p.open("rb") as f:
+            head = f.read(32)
+            if head[:2] == b"\xff\xd8":                      # JPEG(.jpg/.jpeg/.jfif)
+                f.seek(2)
+                while True:
+                    b = f.read(1)
+                    if not b:
+                        return None
+                    if b != b"\xff":
+                        continue
+                    m = f.read(1)
+                    while m == b"\xff":
+                        m = f.read(1)
+                    if not m:
+                        return None
+                    if m[0] in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+                        f.read(3)
+                        h, w = struct.unpack(">HH", f.read(4))
+                        return w, h
+                    ln = struct.unpack(">H", f.read(2))[0]
+                    f.read(ln - 2)
+            if head[:8] == b"\x89PNG\r\n\x1a\n":             # PNG
+                return struct.unpack(">II", head[16:24])
+            if head[:4] == b"RIFF" and head[8:12] == b"WEBP":  # WebP 3변종
+                f.seek(0)
+                d = f.read(40)
+                tag = d[12:16]
+                if tag == b"VP8X":
+                    return int.from_bytes(d[24:27], "little") + 1, int.from_bytes(d[27:30], "little") + 1
+                if tag == b"VP8 ":
+                    return int.from_bytes(d[26:28], "little") & 0x3FFF, int.from_bytes(d[28:30], "little") & 0x3FFF
+                if tag == b"VP8L":
+                    bits = int.from_bytes(d[21:25], "little")
+                    return (bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1
+    except Exception:
+        return None
+    return None
 
 # 캐릭터별 구성 — modes: {모드폴더: 루트(미분류) 파일이 흡수될 버킷들} · mode_dir: 변신 모드 폴더(viewer 게이트 축)
 SEASONS = {
@@ -251,21 +316,36 @@ def build_one(cid: str, cfg: dict) -> dict:
     buckets = {e: [] for e in EMOS}
     clips = sorted(p for p in cdir.iterdir() if p.suffix.lower() in CLIP_EXT)
     buckets["base"].extend(clips)  # 클립 = base 선두 계약
+
+    def collect(d: Path) -> list:
+        """배경 풀 수집 — 프사는 파일명으로 제외하고 **로그로 알린다**(조용한 누락 = 다음 사고).
+        정사각~가로형은 제외하지 않고 경고만 — 전신 풍경도 정사각일 수 있어 기계가 못 가린다."""
+        out = []
+        for p in sorted(d.iterdir()):
+            if not (p.is_file() and p.suffix.lower() in MEDIA_EXT):
+                continue
+            if is_face(p):
+                print(f"⏭️  {cid}: 프사 제외 — {p.relative_to(cdir)} (파일명 규약 · 배경 풀 미편입)")
+                continue
+            wh = img_size(p)
+            if wh and wh[1] and wh[0] / wh[1] > FACE_RATIO:
+                print(f"⚠️  {cid}: 정사각~가로형 {wh[0]}×{wh[1]} — {p.relative_to(cdir)} "
+                      f"(세로 무대 cover 시 좌우 잘림 · 얼빡이면 파일명에 'face'를 넣어 제외 "
+                      f"· 배경으로 쓸 거면 check_refs _FACE_RATIO_OK에 등재)")
+            out.append(p)
+        return out
+
     for mode, root_to in cfg["modes"].items():
         mdir = cdir / mode
         if not mdir.is_dir():
             continue
-        # ⚠ 260726: 종전엔 여기서 IMG_EXT만 읽어 **감정 폴더에 넣은 영상이 통째로 무시**됐다(운영자 "고죠 기분좋을때 나오는 영상").
-        #   클립은 캐릭터 루트(=base 선두)에만 놓을 수 있었던 셈 — 감정 지정이 불가능했다. IMG_EXT|CLIP_EXT로 확장해
-        #   **아무 감정 버킷에나 영상을 넣을 수 있게** 한다(뷰어 yStage는 이미 확장자로 클립을 판별하므로 무수정).
-        MEDIA_EXT = IMG_EXT | CLIP_EXT
         for b in root_to:  # 모드 루트 미분류 = 지정 버킷 흡수(신규 수집 안전망)
-            buckets[b].extend(sorted(p for p in mdir.iterdir() if p.is_file() and p.suffix.lower() in MEDIA_EXT))
+            buckets[b].extend(collect(mdir))
         for sub in sorted(d for d in mdir.iterdir() if d.is_dir()):
             if sub.name not in EMOS:
                 print(f"⚠️ {cid}: 규약 밖 폴더 무시 — {mode}/{sub.name}/ (허용 = {'/'.join(EMOS)})")
                 continue
-            buckets[sub.name].extend(sorted(p for p in sub.iterdir() if p.is_file() and p.suffix.lower() in MEDIA_EXT))
+            buckets[sub.name].extend(collect(sub))
     out = {"_comment": cfg["comment"]}
     for e in EMOS:
         if buckets[e]:
