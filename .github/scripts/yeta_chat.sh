@@ -487,6 +487,7 @@ if kind == "ok":
             out = []
             for para in [p.strip() for p in re.split(r'\n\s*\n', t) if p.strip()]:
                 if re.fullmatch(r'\*[^*\n]{1,200}\*', para): out.append(para); continue
+                if re.search(r'[぀-ヿ]', para): out.append(para); continue   # 일본어 문단(가나 포함) = 통째 한 버블 — 위 *지문* 원자화 100% 계승. 「일본어\n번역」 쌍이 반각 !?~로 끝나면 문장 경계에 걸려 쪼개지고 ' '.join이 개행을 뭉개 2단 표기가 붕괴한다(260726 실측 7중 4붕괴) · 뷰어 yBubbles와 동형
                 sents = [x.strip() for x in re.split(r'(?<=[.!?…~])\s+', para) if x.strip()]
                 cur = []
                 for x in sents:
