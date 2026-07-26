@@ -1,5 +1,5 @@
 {
- "_comment": "시즌 감정 미디어 manifest(루시) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 클립(muted 비디오) = joy 버킷 · clip_w=3 = 다른 사진 대비 3배 빈도(등간격). 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — 사진 = 모드 폴더의 감정 하위폴더에 붓기만(예 android/joy/) · 모드 루트 미분류 = android→base · dokkaebi→warm·tense 흡수. mode_dir=도깨비 폴더 — viewer 모드 게이트(yModeOn)가 활성 시 이 폴더만, 평시 제외로 필터(무드보다 우선). 정본=viewer/characters/season/lucy/{android,dokkaebi}/<감정>/.",
+ "_comment": "시즌 감정 미디어 manifest(루시) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 클립(muted 비디오) = joy 버킷 · clip_w=3 = 다른 사진 대비 3배 빈도(등간격). 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — 사진 = 모드 폴더의 감정 하위폴더에 붓기만(예 android/joy/) · 모드 루트 미분류 = android→base · dokkaebi→warm·tense 흡수. mode_dir=도깨비 폴더 — viewer 모드 게이트(yModeOn)가 활성 시 이 폴더만, 평시 제외로 필터(무드보다 우선). 정본=viewer/characters/season/lucy/{android,dokkaebi}/<감정>/.",
  "base": [
   "characters/season/lucy/android/base/android_04.jpg",
   "characters/season/lucy/android/base/android_08.jpg",
@@ -75,8 +75,7 @@
   "characters/season/lucy/dokkaebi/love/dokkaebi_33.jpg"
  ],
  "shy": [
-  "characters/season/lucy/android/shy/android_17.jpg",
-  "characters/season/lucy/dokkaebi/shy/dokkaebi_03.jpg"
+  "characters/season/lucy/android/shy/android_17.jpg"
  ],
  "blue": [
   "characters/season/lucy/android/blue/android_03.jpg",
@@ -115,18 +114,21 @@
   "characters/season/lucy/dokkaebi/tense/dokkaebi_41.jpg"
  ],
  "mad": [
-  "characters/season/lucy/android/mad/android_01.jpg",
-  "characters/season/lucy/android/mad/android_06.jpg",
-  "characters/season/lucy/android/mad/android_09.jpg",
   "characters/season/lucy/android/mad/android_19.jpg",
-  "characters/season/lucy/android/mad/android_35.jpg",
   "characters/season/lucy/android/mad/android_49.jpg",
-  "characters/season/lucy/android/mad/android_50.jpg",
-  "characters/season/lucy/android/mad/android_51.jpg",
   "characters/season/lucy/dokkaebi/mad/dokkaebi_27.jpg",
-  "characters/season/lucy/dokkaebi/mad/dokkaebi_32.jpg",
   "characters/season/lucy/dokkaebi/mad/dokkaebi_35.jpg",
   "characters/season/lucy/dokkaebi/mad/dokkaebi_45.jpg"
+ ],
+ "sulky": [
+  "characters/season/lucy/android/sulky/android_01.jpg",
+  "characters/season/lucy/android/sulky/android_06.jpg",
+  "characters/season/lucy/android/sulky/android_09.jpg",
+  "characters/season/lucy/android/sulky/android_35.jpg",
+  "characters/season/lucy/android/sulky/android_50.jpg",
+  "characters/season/lucy/android/sulky/android_51.jpg",
+  "characters/season/lucy/dokkaebi/sulky/dokkaebi_03.jpg",
+  "characters/season/lucy/dokkaebi/sulky/dokkaebi_32.jpg"
  ],
  "mode_dir": "dokkaebi"
 }

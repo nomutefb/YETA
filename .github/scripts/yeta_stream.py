@@ -29,7 +29,7 @@ result = None
 raw_lines = []
 head_fired = False
 
-MOODS = ("base", "warm", "tense", "blue", "joy", "love", "shy", "mad")   # finish 화이트리스트와 짝(yeta_chat.sh 8감정 · Q.29)
+MOODS = ("base", "warm", "tense", "blue", "joy", "love", "shy", "mad", "sulky")   # finish 화이트리스트와 짝(yeta_chat.sh 9감정 · Q.29 + 260726 삐짐 독립)
 mood = ""   # 선두 <<MOOD:x>> 캡처분(출력 계약 첫 줄 · Q.81) — draft 동봉 = 뷰어가 생성 중에도 감정 글자 리졸브
 
 def clean(t):

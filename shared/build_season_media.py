@@ -6,7 +6,9 @@
   이 스크립트를 돌리면 끝. 하위폴더 없이 모드 루트에 부으면 그 모드의 기본 버킷으로 흡수(미분류 안전망).
 
 규약:
-  · 감정 버킷 = EMOS 8종(base/warm/joy/love/shy/blue/tense/mad) — viewer Y_MOODS·러너 <<MOOD>> 화이트리스트와 짝(불변 계약)
+  · 감정 버킷 = EMOS 9종(base/warm/joy/love/shy/blue/tense/mad/sulky) — viewer Y_MOODS·러너 <<MOOD>> 화이트리스트와 짝(불변 계약)
+    ⚠ sulky(삐짐) = 260726 운영자 「삐짐은 mad도 shy도 아니다」로 mad에서 독립. 구분선 = mad는 정말 화난 것(angry/furious/annoyed),
+      sulky는 상대에게 **서운해서** 토라진 것(sulky/pouty/offended/grumpy/cold_shoulder/귀엽게 째려봄) — 풀어주면 풀리는 쪽.
   · mode_dir = 변신 모드 전용 폴더명 — viewer yStage 모드 게이트(yModeOn)가 경로(/dokkaebi/)로 필터(하위폴더 깊이 무관)
   · 클립(mp4/webm · 캐릭터 루트) = base 선두(대화 시작 배경 계약)
   · 산출물 media.json = 기계 산출물(CLAUDE.md [0] ⚙ · check_refs 하드 게이트) — 손편집 금지, 값 변경 = 이 스크립트 수정.
@@ -28,7 +30,7 @@ CLIP_EXT = {".mp4", ".webm"}
 #   클립은 캐릭터 루트(=base 선두)에만 놓을 수 있었던 셈 — 감정 지정이 불가능했다. IMG_EXT|CLIP_EXT로 확장해
 #   **아무 감정 버킷에나 영상을 넣을 수 있게** 한다(뷰어 yStage는 이미 확장자로 클립을 판별하므로 무수정).
 MEDIA_EXT = IMG_EXT | CLIP_EXT
-EMOS = ["base", "warm", "joy", "love", "shy", "blue", "tense", "mad"]  # viewer Y_MOODS(+base)·러너 화이트리스트와 짝
+EMOS = ["base", "warm", "joy", "love", "shy", "blue", "tense", "mad", "sulky"]  # viewer Y_MOODS(+base)·러너 화이트리스트와 짝 · sulky = 뒤에 추가(기존 버킷 순서 불변 = manifest diff 최소)
 
 # ── 얼빡(프사) 배경 차단 — 운영자 260726 「얼빡은 배경에 깔지마」 ────────────────────────
 # 왜 필요한가: 얼빡 = 정사각 프사 크롭이라 420×900 세로 무대에 cover로 깔면 얼굴만 확대·잘린다.
@@ -100,7 +102,7 @@ SEASONS = {
         "clip_w": 3,
         "comment": ("시즌 감정 미디어 manifest(루시) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
                     "yStage 답장수 n 결정적 로테이션 pool[n%len]. 클립(muted 비디오) = joy 버킷 · clip_w=3 = 다른 사진 대비 3배 빈도(등간격). "
-                    "버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — 사진 = 모드 폴더의 감정 하위폴더에 붓기만(예 android/joy/) · "
+                    "버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — 사진 = 모드 폴더의 감정 하위폴더에 붓기만(예 android/joy/) · "
                     "모드 루트 미분류 = android→base · dokkaebi→warm·tense 흡수. "
                     "mode_dir=도깨비 폴더 — viewer 모드 게이트(yModeOn)가 활성 시 이 폴더만, 평시 제외로 필터(무드보다 우선). "
                     "정본=viewer/characters/season/lucy/{android,dokkaebi}/<감정>/."),
@@ -109,7 +111,7 @@ SEASONS = {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → 시간대 필터 비활성
         "modes": {"main": ["base"]},
         "comment": ("시즌 감정 미디어 manifest(조지 로이스) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
                     "정본=viewer/characters/season/desk/main/<감정>/."),
     },
@@ -117,7 +119,7 @@ SEASONS = {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → 시간대 필터 비활성
         "modes": {"main": ["base"]},
         "comment": ("시즌 감정 미디어 manifest(세라) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
                     "⚠ 260726 얼빡 제외: base에 있던 sera_k01.jpg(640×640 정사각 프사 크롭)를 캐릭터 루트 sera_face01.jpg로 옮겼다 "
                     "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(sera_face.webp 선례 계승). "
@@ -129,7 +131,7 @@ SEASONS = {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
         "modes": {"main": ["base"]},
         "comment": ("시즌 감정 미디어 manifest(고죠) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음(mode_dir 없음 = 시간대 필터 비활성). "
                     "정본=viewer/characters/season/gojo/main/<감정>/."),
     },
@@ -137,7 +139,7 @@ SEASONS = {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
         "modes": {"main": ["base"]},
         "comment": ("시즌 감정 미디어 manifest(레제) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음(mode_dir 없음 = 시간대 필터 비활성). "
                     "정본=viewer/characters/season/reze/main/<감정>/."),
     },
@@ -145,7 +147,7 @@ SEASONS = {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
         "modes": {"main": ["base"]},
         "comment": ("시즌 감정 미디어 manifest(서예은) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음(mode_dir 없음 = 시간대 필터 비활성). "
                     "정본=viewer/characters/season/seyeun/main/<감정>/."),
     },
@@ -153,7 +155,7 @@ SEASONS = {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
         "modes": {"main": ["base"]},
         "comment": ("시즌 감정 미디어 manifest(홍석천) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
                     "⚠ 260726 현재 = 사람 없는 찻집 장소 씬 3장(yeta_bg_var 산출 var_mudi_* 사본 — 원본은 생성기 소관이라 여긴 사본이 정본). "
                     "배치 = 주방(불·주전자)→base · 뒷문(넘어진 스툴+발자국 = 도주 직후)→tense · 새벽 지붕(발자국이 넘어감)→blue. "
@@ -163,7 +165,7 @@ SEASONS = {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
         "modes": {"main": ["base"]},
         "comment": ("시즌 감정 미디어 manifest(본) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
                     "⚠ 260726 현재 = 사람 없는 체육관 장소 씬만(운영자 '페르소나 구축 안 된 애들은 익명으로 넣고 나중에 보강') — 인물 초상은 미수집. "
                     "정본=viewer/characters/season/von/main/<감정>/."),
@@ -172,7 +174,7 @@ SEASONS = {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
         "modes": {"main": ["base"]},
         "comment": ("시즌 감정 미디어 manifest(류) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
                     "⚠ 260726 현재 = 얼굴 없는 검도 실루엣 1장뿐(운영자 '익명으로 넣고 나중에 보강') — 인물 확정 아님 · tense 국면 전용. "
                     "정본=viewer/characters/season/ryu/main/<감정>/."),
@@ -181,7 +183,7 @@ SEASONS = {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
         "modes": {"main": ["base"]},
         "comment": ("시즌 감정 미디어 manifest(하서연) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
                     "⚠ 260726 현재 = **배경 풀 0장**(manifest 빈 껍데기 = 뷰어 시그니처 폴백 유지). 얼빡 프사 1장은 캐릭터 루트 `<id>_face01.webp`에 둔다 "
                     "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라 sera_face.webp 선례 계승). "
@@ -193,7 +195,7 @@ SEASONS = {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
         "modes": {"main": ["base"]},
         "comment": ("시즌 감정 미디어 manifest(백) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
                     "⚠ 260726 현재 = **배경 풀 0장**(manifest 빈 껍데기 = 뷰어 시그니처 폴백 유지). 얼빡 프사 1장은 캐릭터 루트 `<id>_face01.webp`에 둔다 "
                     "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라 sera_face.webp 선례 계승). "
@@ -205,7 +207,7 @@ SEASONS = {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
         "modes": {"main": ["base"]},
         "comment": ("시즌 감정 미디어 manifest(윤) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
                     "⚠ 260726 현재 = **배경 풀 0장**(manifest 빈 껍데기 = 뷰어 시그니처 폴백 유지). 얼빡 프사 1장은 캐릭터 루트 `<id>_face01.webp`에 둔다 "
                     "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라 sera_face.webp 선례 계승). "
@@ -217,7 +219,7 @@ SEASONS = {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
         "modes": {"main": ["base"]},
         "comment": ("시즌 감정 미디어 manifest(카피) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
                     "⚠ 260726 현재 = **배경 풀 0장**(manifest 빈 껍데기 = 뷰어 시그니처 폴백 유지). 얼빡 프사 1장은 캐릭터 루트 `<id>_face01.webp`에 둔다 "
                     "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라 sera_face.webp 선례 계승). "
@@ -229,7 +231,7 @@ SEASONS = {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
         "modes": {"main": ["base"]},
         "comment": ("시즌 감정 미디어 manifest(애리) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
                     "⚠ 260726 현재 = **배경 풀 0장**(manifest 빈 껍데기 = 뷰어 시그니처 폴백 유지). 얼빡 프사 1장은 캐릭터 루트 `<id>_face01.webp`에 둔다 "
                     "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라 sera_face.webp 선례 계승). "
@@ -244,19 +246,23 @@ SEASONS = {
         #   → clip_to로 버킷을 지정한다. 종전 = base 66장 선두 = 66턴에 1번(사실상 안 보임).
         "clip_to": ["love", "shy"],
         "clip_w": 3,
-        # ⚠ 위에서부터 첫 일치 승 — 좁은 토큰을 먼저. (예: glaring_cut → shy 가 glaring → mad 보다 위)
+        # ⚠ 위에서부터 첫 일치 승 — 좁은 토큰을 먼저. (예: glaring_cut → sulky 가 glaring → mad 보다 위 · faux_furious → sulky 가 furious → mad 보다 위)
         "rules": [
-            ("shy",   ["glaring_cut", "glaring_cuty", "tsundere", "hesitant_to_speak", "flustered", "giggle_bashfully", "act_cute", "play_cute", "playful_cute"]),
+            ("shy",   ["tsundere", "hesitant_to_speak", "flustered", "giggle_bashfully", "act_cute", "play_cute", "playful_cute"]),
             ("love",  ["seduce", "flirty", "love_u", "how_do_i_look", "miss_someone", "fond_look"]),
             ("blue",  ["sob", "crying", "heartbroken", "worried", "brooding", "sleepy", "asleep", "dozing", "heavy_eyes", "gotosleep", "go_sleep", "helpless", "at_a_loss", "let_down", "overwhelmed", "sad"]),
-            ("mad",   ["angry", "furious", "annoy", "irritat", "offend", "pouty", "sulky", "grumpy", "upset", "low_key_mad", "feigning_mad", "disgusting", "cold_shoulder", "glaring", "curt"]),
+            # 삐짐(260726 독립) — 서운해서 토라진 결. mad보다 **위**여야 좁은 토큰이 먼저 잡힌다.
+            #   glaring_cut* = "귀엽게 째려봄" = 삐짐 표정 그 자체(종전 shy에 있었으나 볼 붉힘 축과 다르다 · tsundere만 shy 잔류)
+            #   faux_furious·feigning_mad·low_key_mad = 화난 '척'·은근한 화 = 대놓고 화난 mad와 반대쪽 결
+            ("sulky", ["sulky", "pouty", "offend", "grumpy", "upset", "low_key_mad", "feigning_mad", "faux_furious", "cold_shoulder", "curt", "glaring_cut", "glaring_cuty"]),
+            ("mad",   ["angry", "furious", "annoy", "irritat", "disgusting", "glaring"]),
             ("tense", ["suspicious", "taken_aback", "confused", "clueless", "dumbfounded", "panick", "freaking", "is_this_happening", "no_way", "for_real", "oh_really", "are_u_kidding", "what_now", "speechless", "so_cold", "poker_face", "fake_smile", "i_told_you_so", "smirk", "distracted"]),
             ("joy",   ["happy", "excited", "eureka", "goofy", "proud", "full_of_oneself", "playful", "hopeful"]),
             ("warm",  ["smile", "chuckle", "cheerup", "hi_", "its_you", "love"]),
             # 나머지(무대·연습·일상·배경·모델컷 등) = base 폴백
         ],
         "comment": ("시즌 감정 미디어 manifest(윈터) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립). "
                     "클립 3종(go_for_a_walk_date) = love·shy 버킷 · clip_w=3 = 다른 사진 대비 3배 빈도(등간격 · 260727). "
                     "⚠ 다른 인물과 축이 다르다 = **평면(flat) 폴더** — 사진이 감정 하위폴더가 아니라 `characters/idol/winter/`에 "
                     "감정이 적힌 파일명(happy_01 · are_u_kidding_02 · glaring_cutely_03 …)으로 모여 있고, SEASONS['winter']['rules']의 "
@@ -271,7 +277,7 @@ SEASONS = {
         "modes": {"main": ["base"], "gojo": ["base"]},
         "mode_dir": "gojo",
         "comment": ("시즌 감정 미디어 manifest(드루실라) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. "
                     "mode_dir=고죠 흉내 폴더 — viewer 모드 게이트(yModeOn 동석축 roster mode.with=[\"gojo\"])가 활성 시 이 폴더만, 평시 제외로 필터. "
                     "정본=viewer/characters/season/drusilla/{main,gojo}/<감정>/."),

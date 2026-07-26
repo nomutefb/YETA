@@ -2308,7 +2308,7 @@ function ySsnHtml() {   // 시즌 표기 정본(대화·캐릭터 탭 공용 —
   return `<div class="yssn-hd"><span class="yssn-tag">SEASON ${String(YWORLD.n || 1).padStart(2, '0')}</span><span class="yssn-nm">${esc(YWORLD.name || '')}${YWORLD.hanja ? `<small>(${esc(YWORLD.hanja)})</small>` : ''}</span><span class="yssn-tl">${esc(YWORLD.tagline || '')}</span></div>`;
 }
 // ── 내 상태 행(운영자 260707 항목22·23) — 위치·감정 = 클라 로컬 전용(localStorage yeta_me_place/yeta_me_mood · 게이트웨이 미전송 = 무인증 공개 주입면 0) ──
-const YME_MOODS = { warm: '따뜻함', tense: '긴장', blue: '가라앉음', joy: '신남', love: '설렘', shy: '수줍음', mad: '짜증' };   // 무대 무드(러너 <<MOOD>> 배경 축 · Y_MOODS와 짝 — 8감정 확장 Q.29)
+const YME_MOODS = { warm: '따뜻함', tense: '긴장', blue: '가라앉음', joy: '신남', love: '설렘', shy: '수줍음', mad: '짜증', sulky: '삐짐' };   // 무대 무드(러너 <<MOOD>> 배경 축 · Y_MOODS와 짝 — 9감정 Q.29 + 260726 삐짐 독립)
 const YME_FEEL = { warm: ['🙂', '따뜻함'], joy: ['😄', '신남'], calm: ['😌', '평온'], tired: ['😪', '나른함'], think: ['🤔', '생각 많음'], hungry: ['🍜', '출출함'], love: ['🥰', '설렘'], tense: ['😰', '긴장'], blue: ['🌧️', '가라앉음'], night: ['🌙', '밤샘 각'] };   // 내 기분 세트(운영자 260709 "다양한 상황 + 이모지") — 로컬 표시 전용(무대 무드와 별개 축 · warm/tense/blue 키는 yLastMood 폴백 호환)
 function yMoodLog() { try { return JSON.parse(localStorage.getItem('yeta_me_moodlog') || '[]'); } catch { return []; } }   // 기분 지문 로그(운영자 260716 수렴 · 평의회 A안) — {ts, md, t:그때 현재 방} · 로컬 표시 전용(서버 미전송 = 무인증 주입면 0 유지) · yeta_ 접두 = 캐시 비우기 커버
 async function yMeMap() {   // YMAPD 보장(지도 탭 미방문 대비 · 맵 로더와 동일 raw URL · 실패 = null 수용)
@@ -3550,8 +3550,8 @@ function yPaintBg(bgUrl, tint, season) {   // 레이어 페인트(페르소나 �
   next.classList.toggle('wdim', !!season && wd);   // 윈터 시즌 클립 딤 짝(.ybg.wdim video) — 타 캐릭터 레이어 재사용 시 자동 해제
   next.classList.add('on'); curL.classList.remove('on'); _ybgCur = 1 - _ybgCur;
 }
-const Y_MOODS = ['warm', 'tense', 'blue', 'joy', 'love', 'shy', 'mad'];   // 답장 <<MOOD>> 화이트리스트(base=기본 무대) — 8감정 확장(운영자 260717 Q.29 "다채롭게" · 윈터 파일명 어휘 수렴 · 러너 finish 화이트리스트와 짝)
-const Y_GRP = { joy: 'warm', love: 'warm', shy: 'blue', mad: 'tense' };   // 세부 감정 → 3무드 그룹 폴백(해당 버킷 없는 캐릭터·비시즌 씬 풀용 — 구 캐릭터 무영향)
+const Y_MOODS = ['warm', 'tense', 'blue', 'joy', 'love', 'shy', 'mad', 'sulky'];   // 답장 <<MOOD>> 화이트리스트(base=기본 무대) — 9감정(운영자 260717 Q.29 "다채롭게" + 260726 "삐짐은 mad도 shy도 아니다" 독립 · 윈터 파일명 어휘 수렴 · 러너 finish 화이트리스트와 짝)
+const Y_GRP = { joy: 'warm', love: 'warm', shy: 'blue', mad: 'tense', sulky: 'blue' };   // 세부 감정 → 3무드 그룹 폴백(해당 버킷 없는 캐릭터·비시즌 씬 풀용 — 구 캐릭터 무영향) · sulky→blue = 삐짐의 등 돌림·말수 줄음이 가라앉음 결에 가깝다(mad의 격앙과 다른 축)
 function yMoodUrl(bg, mood) {   // base URL → 배리언트 규약 파생(…/tea.png?v=x → …/tea_warm.png) · 쿼리 제거
   if (!bg || !mood) return bg || '';
   return bg.split('?')[0].replace(/\.png$/, `_${mood}.png`);
@@ -3837,7 +3837,7 @@ yetadlg.addEventListener('click', e => {
   if (!pk.hidden && !pk.contains(e.target)) yProfPop(false);   // 바깥 탭 = 닫힘(픽커 정본 패턴)
 });
 // ── 이름부 풀다운 프로필 시트(운영자 260712 — 헤더 이름을 잡고 아래로 = 인물 카드[감정·생각·위치·액션 4] · 트리거 = 드래그+탭 · 임계 40 · 높이 285 · 등장 .44s = 전후비교 선택값) ──
-const YPD_EMO = { '': '😌', warm: '😊', tense: '😨', blue: '😔', joy: '😄', love: '🥰', shy: '😳', mad: '😠' };   // 무드 픽토(.yme-mood em 선례 축) — 라벨 = YME_MOODS와 짝(base = 고요 · 8감정 Q.29)
+const YPD_EMO = { '': '😌', warm: '😊', tense: '😨', blue: '😔', joy: '😄', love: '🥰', shy: '😳', mad: '😠', sulky: '😒' };   // 무드 픽토(.yme-mood em 선례 축) — 라벨 = YME_MOODS와 짝(base = 고요 · 9감정 Q.29 + 260726 삐짐 독립 · 😒 = 시큰둥 = 😠 화남과 시각 구분)
 function yPdRender() {   // 카드 내용 = 프사 팝오버 파생 축 동일(생각 = 마지막 발화 결 · 위치 = 무대 캐시 · 공기 = MOOD) + 무드칩 + 액션 4
   if (!YCUR || _yView !== 'chat') return false;
   const th0 = YTH() || {}, turns = th0.turns || [], grp = ((th0.room || []).length >= 2);
@@ -4193,7 +4193,7 @@ function yTime(ts) {   // 메시지 시각 = 무음동 세계 시각 "오전/오
   const t = wm(ts), h = (t / 60) | 0, m = String(t % 60).padStart(2, '0');
   return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${m}`;
 }
-const Y_EMO_HI = { tense: 1, mad: 1, joy: 1, love: 1 };   // 감정 글자 등장(Q.80)의 격정(고각성) 그룹 — 잔잔(warm/blue/shy)과 진폭 분리 · Y_GRP(배경 씬 폴백)과는 다른 축이라 별도 상수
+const Y_EMO_HI = { tense: 1, mad: 1, joy: 1, love: 1 };   // 감정 글자 등장(Q.80)의 격정(고각성) 그룹 — 잔잔(warm/blue/shy/sulky)과 진폭 분리 · Y_GRP(배경 씬 폴백)과는 다른 축이라 별도 상수 · sulky 미등재 = 삐짐은 저각성(말수가 줄어드는 쪽)이라 mad와 진폭이 다르다
 function yEmoWrap(html, dc) {   // yFmt 산출 HTML → 글자 단위 .ye 스팬(--i = 스태거 번호) — 태그·&엔티티 = 통짜 보존 · 라틴/숫자 연속 = 단어 1유닛(inline-block 단어 중간 개행 차단) · 공백·개행 = 미포장(pre-wrap 결 유지) · dc(Q.81 스트리밍 델타) = {g:전역 유닛 커서, b:이미 보인 수} — b 미만 유닛은 스팬 없이 통과(정착분 re-whoosh 0), 새 유닛만 --i 0부터
   let h = '', n = 0;
   for (let i = 0; i < html.length;) {
