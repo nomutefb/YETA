@@ -299,7 +299,12 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yeta-log .in { animation:ybIn .3s cubic-bezier(.22,.61,.36,1) both; transform-origin:bottom left; }
   .yeta-log .ymrow.me.in { transform-origin:bottom right; }   /* 내 메시지 = 래퍼(ymrow)가 애니 노드(시각 포함 함께 촤르륵) */
   .yeta-log .out { animation:ybOut .2s var(--ease) both; pointer-events:none; }
-  @media (prefers-reduced-motion:reduce) { .yeta-log .in, .yeta-log .out, .ytdots i { animation:none; } }
+  /* 감정 대사 = 글자 등장(운영자 260726 Q.80 · 레퍼런스 = beui.dev/components/motion/text-animation TextReveal — 스크램블 로더[beui 차용 260708] 선례 축) — 답장에 <<MOOD>> 감정이 실린 "신규" 버블만 글자 단위 블러 리졸브 스태거(히스토리·재렌더·스트리밍 재스왑 = 종전 무애니 그대로) · 잔잔 warm/blue/shy = 은은 / 격정 tense·mad·joy·love = .yemo-hi 증폭 · 커브 = --ease · 흐림 = --blur-l 사다리 계승(raw 0) · em 오프셋 = 기하(raw 예외) · 스태거 간격 = yAiMsg가 길이 보정 주입(장문도 총 지연 ≤1.1s) */
+  .yb.ai.yemo { --emo-d:.5s; --emo-b:calc(var(--blur-l) * .45); --emo-y:.3em; }
+  .yb.ai.yemo.yemo-hi { --emo-d:.62s; --emo-b:var(--blur-l); --emo-y:.55em; }
+  .yb.ai.yemo .ye { display:inline-block; animation:yEmoIn var(--emo-d) var(--ease) both; animation-delay:calc(var(--i, 0) * var(--emo-s, 14ms)); }
+  @keyframes yEmoIn { from { opacity:0; filter:blur(var(--emo-b)); transform:translateY(var(--emo-y)); } }
+  @media (prefers-reduced-motion:reduce) { .yeta-log .in, .yeta-log .out, .ytdots i, .yb.ai.yemo .ye { animation:none; } }
   .yeta-setup { padding:var(--sp-3); color:var(--mut); font-size:var(--fs-label); line-height:1.7; }
   .yeta-setup.yempty { color:var(--fg); text-align:center; max-width:280px; margin-inline:auto; }   /* 빈 대화 목록 = 흰색·중앙(운영자) — 가로중앙+흰색은 여기, 세로중앙은 .ylist.list-empty 컨테이너가 담당 */
   /* 입력행 = 플로팅 알약 캡슐(운영자 260705 "네비처럼 감싸서 띄워" · 레퍼런스 결) — [마이크][입력][+][전송] 중앙정렬 */
@@ -4128,10 +4133,27 @@ function yTime(ts) {   // 메시지 시각 = 무음동 세계 시각 "오전/오
   const t = wm(ts), h = (t / 60) | 0, m = String(t % 60).padStart(2, '0');
   return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${m}`;
 }
+const Y_EMO_HI = { tense: 1, mad: 1, joy: 1, love: 1 };   // 감정 글자 등장(Q.80)의 격정(고각성) 그룹 — 잔잔(warm/blue/shy)과 진폭 분리 · Y_GRP(배경 씬 폴백)과는 다른 축이라 별도 상수
+function yEmoWrap(html) {   // yFmt 산출 HTML → 글자 단위 .ye 스팬(--i = 스태거 번호) — 태그·&엔티티 = 통짜 보존 · 라틴/숫자 연속 = 단어 1유닛(inline-block 단어 중간 개행 차단) · 공백·개행 = 미포장(pre-wrap 결 유지)
+  let h = '', n = 0;
+  for (let i = 0; i < html.length;) {
+    const c = html[i];
+    if (c === '<') { const j = html.indexOf('>', i); if (j < 0) { h += html.slice(i); break; } h += html.slice(i, j + 1); i = j + 1; continue; }
+    let u = c;
+    if (c === '&') { const j = html.indexOf(';', i); if (j > i && j - i <= 9) u = html.slice(i, j + 1); }
+    else if (/[A-Za-z0-9]/.test(c)) { let j = i + 1; while (j < html.length && /[A-Za-z0-9]/.test(html[j])) j++; u = html.slice(i, j); }
+    i += u.length;
+    if (u.trim()) h += `<span class="ye" style="--i:${n++}">${u}</span>`; else h += u;
+  }
+  return { h, n };
+}
 function yAiMsg(t, fresh, cont) {   // 캐릭터 메시지 = 아바타 + 이름 + [버블|시각](버블 밖 우하단 = 카톡 결) · fresh=신규만 촤르륵 · cont=직전과 같은 화자(아바타·이름 생략 = 톡방 그룹핑)
   const p = yPersona(t.persona) || YCUR || {};
   const tm = yTime(t.ts);
-  return `<div class="ymsg${fresh ? ' in' : ''}${cont ? ' cont' : ''}" data-k="a|${esc(t.persona || '')}|${cont ? 1 : 0}|${t.ov ? 1 : 0}|${yModeOn(p) ? 1 : 0}|${esc(t.text || '')}">${yAva(p)}<span class="ycol"><span class="yname">${esc(p.name || '')}</span><span class="ybrow"><div class="yb ai${t.ov ? ' ov' : ''}">${yFmt(t.text)}</div>${tm ? `<time class="ytime">${tm}</time>` : ''}</span></span></div>`;   // data-k = 번호표(persona·그룹핑·ov·**모드**·텍스트) — time 제외 = 낙관/확정 재사용(분경계 무관) · 모드 자리(운영자 260725 "도깨비 모드면 도깨비 프사") = 변신 경계에서 번호표가 달라져야 이미 그린 말풍선의 프사가 교체된다(없으면 yReconcile이 옛 노드를 영구 재사용 = 프사 고착)
+  const emo = fresh && !t.ov && Y_MOODS.includes(t.mood) && (t.text || '').length <= 600 ? t.mood : '';   // 감정 글자 등장(Q.80) — <<MOOD>> 실린 신규 등장분만(히스토리·재렌더 fresh=false, 겹침 ov = mut 톤 유지, 600자 캡 = 스팬 폭주 안전벨트) · draft 스트리밍엔 mood가 없어 자연 제외(확정 스왑 = _yNoAnim이라 re-whoosh 0)
+  let body = yFmt(t.text), est = '';
+  if (emo) { const w = yEmoWrap(body); if (w.n) { body = w.h; est = ` style="--emo-s:${Math.min(Y_EMO_HI[emo] ? 22 : 14, Math.max(6, Math.round(1100 / w.n)))}ms"`; } }   // 스태거 간격 = 기본 14/22ms(beui TextCascade 25ms 결 · 격정이 더 또박또박), 장문은 총 지연 ≤1.1s로 압축
+  return `<div class="ymsg${fresh ? ' in' : ''}${cont ? ' cont' : ''}" data-k="a|${esc(t.persona || '')}|${cont ? 1 : 0}|${t.ov ? 1 : 0}|${yModeOn(p) ? 1 : 0}|${esc(t.text || '')}">${yAva(p)}<span class="ycol"><span class="yname">${esc(p.name || '')}</span><span class="ybrow"><div class="yb ai${t.ov ? ' ov' : ''}${emo ? ` yemo${Y_EMO_HI[emo] ? ' yemo-hi' : ''}` : ''}"${est}>${body}</div>${tm ? `<time class="ytime">${tm}</time>` : ''}</span></span></div>`;   // data-k = 번호표(persona·그룹핑·ov·**모드**·텍스트) — time 제외 = 낙관/확정 재사용(분경계 무관) · 모드 자리(운영자 260725 "도깨비 모드면 도깨비 프사") = 변신 경계에서 번호표가 달라져야 이미 그린 말풍선의 프사가 교체된다(없으면 yReconcile이 옛 노드를 영구 재사용 = 프사 고착) · emo 마크업은 번호표 무관(같은 턴 재렌더 = 노드 재사용이라 애니 1회 보장)
 }
 let _yLastN = -1, _yTypOn = false, _yFailOn = false, _yTypHold = 0, _yTypT = null;   // 촤르륵 키드 + 타이핑 지연 홀드(읽는 시간 · 운영자 260707)
 let _yCurT = '';   // 마지막 렌더한 방 id — 서버발 cur 이동(단톡 재합류·휘발 소멸 · Q.06) 감지용(yThreadSwitch 미경유 전환도 방 경계로 취급)
