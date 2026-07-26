@@ -98,26 +98,26 @@
  ],
  "tense": [
   "characters/season/lucy/android/tense/android_07.jpg",
-  "characters/season/lucy/android/tense/android_15.jpg",
   "characters/season/lucy/android/tense/android_20.jpg",
   "characters/season/lucy/android/tense/android_23.jpg",
   "characters/season/lucy/android/tense/android_24.jpg",
   "characters/season/lucy/android/tense/android_37.jpg",
   "characters/season/lucy/android/tense/android_60.jpg",
-  "characters/season/lucy/dokkaebi/tense/dokkaebi_02.jpg",
-  "characters/season/lucy/dokkaebi/tense/dokkaebi_08.jpg",
-  "characters/season/lucy/dokkaebi/tense/dokkaebi_18.jpg",
   "characters/season/lucy/dokkaebi/tense/dokkaebi_25.jpg",
   "characters/season/lucy/dokkaebi/tense/dokkaebi_28.jpg",
   "characters/season/lucy/dokkaebi/tense/dokkaebi_34.jpg",
-  "characters/season/lucy/dokkaebi/tense/dokkaebi_36.jpg",
-  "characters/season/lucy/dokkaebi/tense/dokkaebi_41.jpg"
+  "characters/season/lucy/dokkaebi/tense/dokkaebi_36.jpg"
  ],
  "mad": [
+  "characters/season/lucy/android/mad/android_15.jpg",
   "characters/season/lucy/android/mad/android_19.jpg",
   "characters/season/lucy/android/mad/android_49.jpg",
+  "characters/season/lucy/dokkaebi/mad/dokkaebi_02.jpg",
+  "characters/season/lucy/dokkaebi/mad/dokkaebi_08.jpg",
+  "characters/season/lucy/dokkaebi/mad/dokkaebi_18.jpg",
   "characters/season/lucy/dokkaebi/mad/dokkaebi_27.jpg",
   "characters/season/lucy/dokkaebi/mad/dokkaebi_35.jpg",
+  "characters/season/lucy/dokkaebi/mad/dokkaebi_41.jpg",
   "characters/season/lucy/dokkaebi/mad/dokkaebi_45.jpg"
  ],
  "sulky": [

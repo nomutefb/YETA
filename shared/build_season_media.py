@@ -7,8 +7,11 @@
 
 규약:
   · 감정 버킷 = EMOS 9종(base/warm/joy/love/shy/blue/tense/mad/sulky) — viewer Y_MOODS·러너 <<MOOD>> 화이트리스트와 짝(불변 계약)
-    ⚠ sulky(삐짐) = 260726 운영자 「삐짐은 mad도 shy도 아니다」로 mad에서 독립. 구분선 = mad는 정말 화난 것(angry/furious/annoyed),
-      sulky는 상대에게 **서운해서** 토라진 것(sulky/pouty/offended/grumpy/cold_shoulder/귀엽게 째려봄) — 풀어주면 풀리는 쪽.
+    ⚠ sulky(삐짐) = 260726 운영자 「삐짐은 mad도 shy도 아니다」로 mad에서 독립. 구분선 = mad는 화가 밖으로 나가는 쪽
+      (angry/furious/annoyed + **익살스러운 화남** = 신나게 총 쏘는 도발·이빨 드러낸 웃음 · 운영자 260726 "진짜 화난 게 아니라
+      익살스러운 화남이 그거인 거야 화남이 맞음"), sulky는 상대에게 **서운해서** 안으로 토라진 것(sulky/pouty/offended/grumpy/
+      cold_shoulder/귀엽게 째려봄) — 풀어주면 풀리는 쪽. ⚠ 호전적 도발을 tense(긴장·서늘)로 보내지 마라 — 260726에 5장이
+      거기 묶여 있었다(dokkaebi 02·08·18·41 · android 15). tense = 표정 없는 서늘·압박이고, 웃으며 쏘는 건 mad다.
   · mode_dir = 변신 모드 전용 폴더명 — viewer yStage 모드 게이트(yModeOn)가 경로(/dokkaebi/)로 필터(하위폴더 깊이 무관)
   · 클립(mp4/webm · 캐릭터 루트) = base 선두(대화 시작 배경 계약)
   · 산출물 media.json = 기계 산출물(CLAUDE.md [0] ⚙ · check_refs 하드 게이트) — 손편집 금지, 값 변경 = 이 스크립트 수정.
