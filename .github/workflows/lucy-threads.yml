@@ -1,0 +1,86 @@
+name: lucy-threads
+
+# 루시 스레드(Threads) 자동 발행(운영자 260726 "api 붙여서 자동으로" · Q.88) — 설계 = docs/reports/260726_루시_스레드운영_설계.md
+# KST 09:00 = 시크 글 1 · KST 23:00 = 도깨비 글 1 + 답글 스윕(§1 매핑 · 03~07시 침묵 = 크론 없음 자체가 방전 설정).
+# 생성 = 구독 OAuth 폴오버 SSOT(신규 과금 0) · 발행 = 공식 graph.threads.net(무료 · 글 250/일·답글 1,000/일 한도의 안전 마진 = 글≤2·답글≤10/런).
+# ⚠ THREADS_ACCESS_TOKEN 미설정이면 러너가 claude 호출 전 즉시 종료(쿼터 0) — 머지만으로는 아무것도 안 나감.
+#
+# ── 가동 절차(운영자 1회 · Meta가 API로 계정 생성을 안 열어놔서 여기만 수동) ──
+#  ① 스레드 계정: 인스타 부계 → Threads 앱 로그인(프로필 = 설계서 §2 문안. 기존 계정에 입히려면 이 단계 생략)
+#  ② developers.facebook.com → 내 앱 → 만들기 → 유스케이스 「Threads API 액세스」
+#  ③ 앱 대시보드 → Threads → 역할(Threads 테스터)에 루시 계정 추가 → 루시 쪽 스레드 앱(설정 > 계정 > 웹사이트 권한 > 초대)에서 수락
+#  ④ 대시보드 권한 = threads_basic + threads_content_publish + threads_read_replies + threads_manage_replies → 장기(60일) 액세스 토큰 생성
+#  ⑤ 이 레포 Settings → Secrets and variables → Actions → New repository secret: THREADS_ACCESS_TOKEN
+#  ⑥ 갱신(60일): curl "https://graph.threads.net/refresh_access_token?grant_type=th_refresh_token&access_token=<현재토큰>" → 새 값으로 secret 교체(만료되면 러너가 「토큰 만료」로 빨간불)
+#  테스트 = Actions → lucy-threads → Run workflow → dry_run=true(발행 없이 생성문만 로그 확인) · slot 강제 선택 가능.
+on:
+  schedule:
+    - cron: '0 0 * * *'    # KST 09:00 — 시크(자동인형) 글
+    - cron: '0 14 * * *'   # KST 23:00 — 도깨비 글 + 답글 스윕
+  workflow_dispatch:
+    inputs:
+      slot:
+        description: '슬롯(auto = KST 시각으로 판정)'
+        type: choice
+        options: [auto, day, night]
+        default: auto
+      dry_run:
+        description: '생성만(발행 안 함)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: lucy-threads
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout (shallow+sparse)
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github
+            shared
+            viewer/characters/season/lucy
+            docs/reports
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: CLI 캐시 키(ISO 주 단위 — yeta-chat/nudge 동일 키 공유 = 캐시 재사용)
+        id: week
+        run: echo "week=$(date +%G%V)" >> "$GITHUB_OUTPUT"
+      - name: Cache claude CLI
+        id: clicache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm-global
+          key: claude-cli-${{ runner.os }}-${{ steps.week.outputs.week }}
+      - name: Install Claude Code CLI (캐시 미스 시만)
+        if: steps.clicache.outputs.cache-hit != 'true'
+        run: npm install -g --prefix "$HOME/.npm-global" @anthropic-ai/claude-code
+      - name: CLI PATH
+        run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
+
+      - name: 루시 발행(슬롯 자동판정 + 밤 = 답글 스윕)
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets[format('CLAUDE_CODE_OAUTH_TOKEN_{0}', vars.ACTIVE_ACCOUNT || 'MUTENO')] }}
+          CLAUDE_CODE_OAUTH_TOKEN_ALT: ${{ (vars.ACTIVE_ACCOUNT || 'MUTENO') == 'NOMUTEFB' && secrets.CLAUDE_CODE_OAUTH_TOKEN_EMS1130G || secrets.CLAUDE_CODE_OAUTH_TOKEN_NOMUTEFB }}
+          CLAUDE_CODE_OAUTH_TOKEN_ALT2: ${{ (vars.ACTIVE_ACCOUNT || 'MUTENO') == 'MUTENO' && secrets.CLAUDE_CODE_OAUTH_TOKEN_EMS1130G || secrets.CLAUDE_CODE_OAUTH_TOKEN_MUTENO }}
+          CLAUDE_CODE_OAUTH_TOKEN_ALT3: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_MUTENONA }}
+          ACTIVE_ACCOUNT: ${{ vars.ACTIVE_ACCOUNT || 'MUTENO' }}
+          THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+          LUCY_SLOT: ${{ inputs.slot || 'auto' }}
+          LUCY_DRY_RUN: ${{ inputs.dry_run == true && '1' || '0' }}
+          LUCY_MODEL: ${{ vars.LUCY_MODEL || 'claude-sonnet-5' }}
+          LUCY_REPLY_CAP: ${{ vars.LUCY_REPLY_CAP || 10 }}
+        run: bash .github/scripts/lucy_threads.sh
