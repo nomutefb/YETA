@@ -270,6 +270,13 @@ gap_h = 0                                                # 휴면(T1 · 260707) 
 if pend_idx and _p0 > 0:
     try: gap_h = max(0, (turns[_p0].get("ts", 0) - turns[_p0 - 1].get("ts", 0)) / 3600000)
     except Exception: gap_h = 0
+late_h = 0                                               # 지각(운영자 260726 Q.70 한수) — 이 pending 유저 턴이 들어온 뒤 **지금까지** 흐른 시간.
+# 왜 필요한가(실측): 러너가 SIGTERM으로 죽으면 답이 통째로 증발하는데, 앱을 닫아두면 게이트웨이 리퍼(op get 경유)도 안 돌아
+# 그 pending 이 몇 시간~하루를 살아남는다(260726 실측 = 11시간). 앱을 다시 열면 리퍼가 자동 재발사해 그 답이 되살아나는데,
+# 종전엔 **그때 맥락 그대로** 방금 온 말처럼 답했다 = "아까 그 얘긴데…"가 뜬금없이 도착. 나이를 재료로 줘서 늦게 본 사람답게 받게 한다.
+if pend_idx:
+    try: late_h = max(0, (now_ms - (turns[_p0].get("ts") or 0)) / 3600000)
+    except Exception: late_h = 0
 _m = _re.match(r"\s*\[LV\s*(\d)\]", (s.get("notes") or {}).get(persona) or "")
 rel_lv = _m.group(1) if _m else ""                       # 관계 단계(NOTE:ME 첫 줄 · §🔓 게이트 명시 주입용)
 _recent_a = [t.get("persona") for t in turns[max(0, _p0 - 40):_p0] if t.get("role") == "assistant" and t.get("persona")]
@@ -306,7 +313,7 @@ print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": 
                   "tune": (s.get("tunes") or {}).get(persona),   # 캐릭터별 성향 게이지(16축 0~10 · op tune) — 없으면 None
                   "policy": json.dumps(s.get("policy"), ensure_ascii=False) if isinstance(s.get("policy"), dict) else "",
                   "last_mood": last_mood, "last_open": last_open, "cast": " · ".join(v for v in names.values() if v),   # 상태 블록 재료(260707 · last_open = 감정선 캐리어 260725)
-                  "gap_h": round(gap_h, 1), "rel_lv": rel_lv, "riv": riv, "handoff": handoff,   # T1 재료(휴면·관계LV·질투메타·인계 · 260707)   # 시즌 수위·금기(L1 · op policy) — 문구 조립은 apps/yeta/policy.json 정본
+                  "gap_h": round(gap_h, 1), "late_h": round(late_h, 1), "rel_lv": rel_lv, "riv": riv, "handoff": handoff,   # T1 재료(휴면·지각[260726 Q.70]·관계LV·질투메타·인계 · 260707)   # 시즌 수위·금기(L1 · op policy) — 문구 조립은 apps/yeta/policy.json 정본
                   "co": co, "co_name": (names.get(co) or co) if co else "", "barge_debut": barge_debut,   # 단톡 재료(합석 260707) — co = 이번 턴 비화자 동행
                   "barge_via": (s.get("barged") or {}).get("via") or "",   # 난입 경로(place=지나다 마주침 · 데뷔 결 분기 · 마주침 260707)
                   "place_nm": place_name(PL, place_of(PL, persona, _kdate, _khour)),   # 화자의 지금 장소(동선 SSOT — 배경 정합 + 마주침 sys와 앞뒤)
@@ -769,7 +776,7 @@ print((t[:70]+'…') if len(t)>70 else (t or '새 메시지'))")"
 # ── 상태 블록(공용 — 본답장 + 초대 판정 · env: PERSONA LAST_MOOD CAST GAP_H REL_LV RIV HANDOFF TUNE CO_NAME BARGE_DEBUT) ──
 # 시각·계절·달·데일리 무드 시드(sha256 = 같은 날 같은 기분·무저장) + 직전 공기(감정 관성) + 동네 로스터(주민 창작 방지) + 단톡 동행·난입 데뷔.
 state_block() {
-  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" "${LAST_OPEN:-}" <<'PY'
+  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" "${LAST_OPEN:-}" "${LATE_H:-0}" <<'PY'
 import sys, hashlib, json, time
 from datetime import datetime, timezone, timedelta
 persona, last_mood, cast, gap_h, rel_lv, riv, handoff = sys.argv[1:8]
@@ -778,6 +785,7 @@ barge_debut = sys.argv[10] if len(sys.argv) > 10 else "0"
 place_nm = sys.argv[11] if len(sys.argv) > 11 else ""
 barge_via = sys.argv[12] if len(sys.argv) > 12 else ""
 last_open = sys.argv[13] if len(sys.argv) > 13 else ""   # 직전에 삼킨 것(감정선 캐리어 260725 · 초대 판정 등 미전달 경로 = 빈값 = 블록 생략)
+late_h = sys.argv[14] if len(sys.argv) > 14 else "0"     # 지각(260726 Q.70) — 이 pending 이 들어온 뒤 흐른 시간 · 미전달 경로(오프닝·초대 판정) = "0" = 블록 생략
 try: tune = json.loads(sys.argv[8]) if sys.argv[8] and sys.argv[8] != "None" else []
 except Exception: tune = []
 now = datetime.now(timezone(timedelta(hours=9)))                       # KST 고정(§표기표준 — 러너 UTC) · 계절·요일·무드 시드 = 실제 달력(가속 안 함)
@@ -806,6 +814,14 @@ elif barge_debut == "1": L.append("- 너는 방금 이 자리에 불쑥 끼어�
 try: g = float(gap_h)
 except Exception: g = 0
 if g >= 48: L.append(f"- 유저가 약 {int(g // 24)}일 만에 돌아왔다 — 공백에 성향대로 반응하라(서운함·무심한 척·반가움 — 공백 길이에 비례, 취조 금지).")
+try: lt = float(late_h)
+except Exception: lt = 0
+# 지각(운영자 260726 Q.70 한수) — 러너 사망으로 증발했다 리퍼 재발사로 되살아난 답이 '그때 맥락 그대로' 도착하던 것 차단.
+# 임계 1h = 정상 답장(수십 초~수분)은 절대 안 걸리고, 사고로 몇 시간 묵은 것만 걸린다. 4벽(서버·오류) 언급은 명시 금지 — 늦음은 네 사정으로만 소화한다.
+if lt >= 1:
+    L.append(f"- 유저의 이 말은 약 {int(lt // 24)}일 전에 왔고, 너는 지금에서야 본다 — 방금 온 말처럼 받지 마라." if lt >= 24
+             else f"- 유저의 이 말은 약 {int(lt)}시간 전에 왔고, 너는 지금에서야 본다 — 방금 온 말처럼 받지 마라.")
+    L.append("  그 사이 공백을 네 성향대로 **딱 한 번만** 짚고 본론으로 가라(늦게 본 이유는 네 사정·네 하루로 자연스럽게 — 시스템·서버·오류·연결 얘기는 절대 금지). 사과 반복·변명 나열 금지.")
 if rel_lv: L.append(f"- 현재 관계 단계: LV {rel_lv} — 카드의 해금 에피소드 게이트(§🔓) 판정 기준이다.")
 if handoff: L.append(f"- 방금까지 유저는 {handoff}(와)과 있었다 — 인수인계하듯 그 존재를 아는 척 등장해도 좋다(단 그 둘만의 비밀[ME]은 모른다).")
 jeal = 0
@@ -1437,7 +1453,7 @@ process_turn() {
   NOTE_PUB="$(matv note_pub)"; NOTE_ME="$(matv note_me)"; HIST="$(matv hist)"; PENDING="$(matv pending)"; SCENE_TXT="$(matv scene)"   # scene = 상황 설명 턴(260714 '#')
   INS="$(matv ins)"; ANCHOR_TS="$(matv anchor_ts)"; PERSONA="$(matv persona)"; PTT="$(matv ptt)"; FAR="$(matv far)"   # FAR = 원거리(다른 장소 · 260714)
   ME_CALL="$(matv me_call)"; ME_ABOUT="$(matv me_about)"   # 유저 프로필(호칭+소개 · "AI가 나를 부르는 법" · 260708)
-  RAW_MODEL="$(matv model)"; RAW_EFF="$(matv effort)"; TUNE="$(matv tune)"; POL="$(matv policy)"; LAST_MOOD="$(matv last_mood)"; LAST_OPEN="$(matv last_open)"; CAST="$(matv cast)"; GAP_H="$(matv gap_h)"; REL_LV="$(matv rel_lv)"; RIV="$(matv riv)"; HANDOFF="$(matv handoff)"   # LAST_OPEN = 직전에 삼킨 것(감정선 캐리어 260725)
+  RAW_MODEL="$(matv model)"; RAW_EFF="$(matv effort)"; TUNE="$(matv tune)"; POL="$(matv policy)"; LAST_MOOD="$(matv last_mood)"; LAST_OPEN="$(matv last_open)"; CAST="$(matv cast)"; GAP_H="$(matv gap_h)"; LATE_H="$(matv late_h)"; REL_LV="$(matv rel_lv)"; RIV="$(matv riv)"; HANDOFF="$(matv handoff)"   # LAST_OPEN = 직전에 삼킨 것(감정선 캐리어 260725) · LATE_H = 지각(260726 Q.70)
   CO_ID="$(matv co)"; CO_NAME="$(matv co_name)"; BARGE_DEBUT="$(matv barge_debut)"   # 단톡 동행·난입 데뷔(합석 260707)
   PLACE_NM="$(matv place_nm)"; BARGE_VIA="$(matv barge_via)"   # 동선 장소 + 마주침 데뷔 결(위치 SSOT places.json · 260707)
   OPEN="$(matv open)"; OPENING_TS="$(matv opening_ts)"   # 오프닝 잡(동적 첫인사 · 운영자 260707) — OPEN=1이면 유저발화 없이 캐릭터가 먼저 · OPENING_TS = nonce(finish 레이스 방어)
