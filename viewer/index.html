@@ -193,6 +193,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yh-inv.off { opacity:.3; pointer-events:none; }   /* 만석·대기 = 비활성 픽토(자리 유지·들쭉날쭉 방지) */
   .yh-inv.able { color:var(--think); }   /* 가능 = 터콰이즈 강조(대면·문자·전화 닿는 상태 · 운영자 260717) */
   .yh-inv.dim { opacity:.34; pointer-events:none; }   /* 불가 = 흐림 비활성(대화 안 되는 상태) */
+  .yh-pair { flex:none; display:inline-flex; align-items:center; border-radius:var(--r-pill); background:var(--glass-0); box-shadow:inset 0 0 0 1px var(--glass-line-0); }   /* 연락처→문자 진전 쌍(운영자 260726 "같은 쌍으로") — 최저층 글래스 토큰만 계승(신규 값 0) · 레이아웃 불변(인셋 링 = 높이 증가 0) */
   .yh-inv.slash { position:relative; }
   .yh-inv.slash::after { content:''; position:absolute; left:6px; right:6px; top:50%; height:2px; background:var(--danger); transform:translateY(-50%) rotate(-32deg); border-radius:2px; box-shadow:0 0 0 1.5px var(--bg); }   /* 빗금 = 배선 없음(전화 미연결 상대 · 운영자 260717) */
   .yeta-h b { font-size:var(--fs-h2); font-weight:var(--fw-x); white-space:nowrap; flex:none; }   /* 이름 세로 줄바꿈 방지(좁은 헤더) — 태그가 ellipsis로 양보 */
@@ -221,7 +222,8 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
      filter(grayscale·brightness) = 토큰 없는 축(§🎨 raw 허용) · 신규 색 토큰 0. 260725 사망 표기(프사 채색 소거)와 층이 다르다 — 저건 인물, 이건 방. */
   #yetadlg.ymourn .ybg { filter:grayscale(1) brightness(.6); transition:filter 1.2s var(--ease), opacity .6s var(--ease); }
   #yetadlg.ymourn .ybg video { filter:grayscale(1) brightness(.32); }   /* 클립도 탈색(밝기 .32 = 시즌 스크림 유지) */   /* 좌우 드래그 패닝(항목5) = position-x 즉응 */
-  .ybg video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:brightness(.32); }   /* 시즌 클립 = muted 상시(운영자 "소리만 빼고") · 밝기 필터 = 이미지 스크림 등가(.45 × 30% 추가 딤 = .32 — 운영자 260709 재검수 "캐릭터 배경 +30% 더 · 대화창 집중") · 시즌 표시농도 = 전경화 .92 상속 */
+  .ybg video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:brightness(.32); }
+  .ybg.wdim video { filter:brightness(.16); }   /* 윈터 클립 = 블라인드 +50% 등가(운영자 260726 "윈터꺼는 배경 앞에 블라인드 투명도 50% 더" — .32 × 50% 추가 딤 = .16 · .45→.32 30% 딤과 같은 합성 공식 · 이미지 스크림 .84/.89와 짝 = yPaintBg) */   /* 시즌 클립 = muted 상시(운영자 "소리만 빼고") · 밝기 필터 = 이미지 스크림 등가(.45 × 30% 추가 딤 = .32 — 운영자 260709 재검수 "캐릭터 배경 +30% 더 · 대화창 집중") · 시즌 표시농도 = 전경화 .92 상속 */
   @media (prefers-reduced-motion:reduce) { .ybg { transition:none; } }
   .yeta-log { position:relative; flex:1; min-width:0; overflow-y:auto; padding:calc(88px + env(safe-area-inset-top)) var(--sp-2) calc(76px + env(safe-area-inset-bottom)) 6px; display:flex; flex-direction:column; gap:10px;
     -webkit-mask-image:linear-gradient(to bottom, transparent 0, transparent calc(51px + env(safe-area-inset-top)), #000 calc(83px + env(safe-area-inset-top)));
@@ -1407,8 +1409,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     <div class="yeta-h">   <!-- 플로팅 알약 헤더(운영자 260705) = [←뒤로][상대 전폭][수화기(call.js 주입)] · X 폐지 -->
       <button class="yeta-back" id="yetaBack" type="button" aria-label="뒤로 — 대화 목록으로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
       <div class="yeta-who" id="yetaWho" role="button" tabindex="0" aria-label="인물 프로필 열기 — 아래로 당기거나 탭"><span class="yh-ava" id="yetaAva" aria-hidden="true">y</span><b id="yetaTitle">yeta</b><span class="yh-tag" id="yetaTag"></span><svg class="yw-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>   <!-- 지금 대화하는 상대 = 좌우 한 폭(운영자 260705) · 260712 풀다운 그래버(드래그/탭 = 인물 카드) -->
-      <button class="yh-inv yh-msg dim" id="yetaMsgBtn" type="button" aria-label="문자 — 준비 중"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v12H4z"/><path d="M4 6l8 6 8-6"/></svg></button>   <!-- 문자(초대 좌측 · 미구현 자리표 · 연락처+친밀도 = 터콰이즈 활성 · 운영자 260717) — 팝업은 다음 단계 -->
-      <button class="yh-inv" id="yetaInvBtn" type="button" aria-label="초대 — 근처 인물 부르기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="7" r="4"/><path d="M1 21v-1a6 6 0 0 1 12 0v1M19 8v6M22 11h-6"/></svg></button>   <!-- 초대 픽토 재생·우측 고정(운영자 260712 재배치) — 미만석=활성(후보 없어도 빈 초대 UI) / 만석·대기=비활성 .off(자리 유지·들쭉날쭉 방지) · 아이콘 = 프로필 카드 초대 CII 계승 · 스택은 좌측 이동(yStackSync) -->
+      <span class="yh-pair"><button class="yh-inv" id="yetaInvBtn" type="button" aria-label="연락처·초대 — 근처 인물 부르기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="7" r="4"/><path d="M1 21v-1a6 6 0 0 1 12 0v1M19 8v6M22 11h-6"/></svg></button><button class="yh-inv yh-msg dim" id="yetaMsgBtn" type="button" aria-label="문자 — 연락처를 나누면 열려"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v12H4z"/><path d="M4 6l8 6 8-6"/></svg></button></span>   <!-- 연락처→문자 진전 쌍(운영자 260726 "연락처가 불 켜지면 문자 가능 · 연락처가 문자 자리로 — 더 우선된 액션 진전단계") — 좌=연락처(1단 · 친밀도 도달 = 터콰이즈 점등) 우=문자(2단 · 연락처 켜져야 가능 · 미구현 자리표라 탭 = 준비 중 안내) · 초대 동작·만석 .off·아이콘(프로필 카드 초대 CII 계승)·스택 좌측 이동(yStackSync) 전부 종전 그대로 -->
       <!-- .yh-talk(💬 대면 가능 여부) 제거(운영자 260725 A안 "헤더는 채널만") — 같은 말풍선이 한 화면에 두 번(헤더=상태·하단 도킹=이동) 떠서 문자↔채팅 혼동의 진원이었다. 헤더 우측 = 채널([✉문자][👤+연락처][📞전화])만 · 대면 여부는 이름 옆 태그 문장(yHeadSync)이 말한다 -->   <!-- 대면 대화 가능 상태(가운데 · 같은 장소+관계 양호 = 터콰이즈 활성 / 불가 = 흐림 · 운영자 260717) -->
       <span class="yh-r"></span>   <!-- 수화기 = call.js가 이 래퍼 끝 자리에 주입(옵셔널 축) -->
     </div>
@@ -1432,8 +1433,8 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
       </nav>
       <textarea id="yetaText" rows="1" placeholder="메시지" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="enter"></textarea>
       <input type="file" id="yetaFile" accept="image/*,application/pdf,.txt,.docx" hidden>   <!-- 첨부 파일 선택(항목11) -->
-      <button class="yeta-plus" id="yetaSc" type="button" aria-label="상황 설명 모드 — 상대에게 하는 말이 아니라 장면 설정"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3.5 8 20.5M16 3.5l-1.5 17M4 9h17M3 15h17"/></svg></button>   <!-- # = 상황 설명 모드(운영자 260714) — 탭 = 토글 · 켠 채 전송 = 장면 설정 턴(sc) · 원샷(보내면 해제) · .yeta-plus 정본 계승 -->
-      <button class="yeta-plus" id="yetaTh" type="button" aria-label="머릿속 생각 모드 — 소리 내지 않은 속마음"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5h6a5.5 5.5 0 0 1 0 11H9a5.5 5.5 0 0 1 0-11z"/><circle cx="6.4" cy="18.4" r="1.5" fill="currentColor" stroke="none"/><circle cx="3.2" cy="21.2" r="1" fill="currentColor" stroke="none"/></svg></button>   <!-- 생각 풍선 = 머릿속 생각 모드('*' 운영자 260725 — '+' 자리 대체) · 탭 = 토글(타이핑 '*'와 같은 함수) · .yeta-plus 정본 계승 · 점 2개 = ydock 말풍선 점 문법(fill currentColor·stroke none) 계승 -->
+      <button class="yeta-plus" id="yetaSc" type="button" aria-label="상황 설명 모드 — 상대에게 하는 말이 아니라 장면 설정 · 두 번 탭 = 앞의 말을 상황 설명으로"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3.5 8 20.5M16 3.5l-1.5 17M4 9h17M3 15h17"/></svg></button>   <!-- # = 상황 설명 모드(운영자 260714) — 탭 = 토글 · 켠 채 전송 = 장면 설정 턴(sc) · 원샷(보내면 해제) · .yeta-plus 정본 계승 -->
+      <button class="yeta-plus" id="yetaTh" type="button" aria-label="머릿속 생각 모드 — 소리 내지 않은 속마음 · 두 번 탭 = 앞의 말을 생각으로"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5h6a5.5 5.5 0 0 1 0 11H9a5.5 5.5 0 0 1 0-11z"/><circle cx="6.4" cy="18.4" r="1.5" fill="currentColor" stroke="none"/><circle cx="3.2" cy="21.2" r="1" fill="currentColor" stroke="none"/></svg></button>   <!-- 생각 풍선 = 머릿속 생각 모드('*' 운영자 260725 — '+' 자리 대체) · 탭 = 토글(타이핑 '*'와 같은 함수) · .yeta-plus 정본 계승 · 점 2개 = ydock 말풍선 점 문법(fill currentColor·stroke none) 계승 -->
       <button class="yeta-plus" id="yetaPlus" type="button" aria-label="파일 첨부" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>   <!-- + = 파일 첨부(운영자 260707 항목11) — 260725 **숨김만**(배선·업로드 경로 전량 보존 · hidden 한 글자 제거 = 즉시 부활) -->      <button class="yeta-send" id="yetaSend" type="button" aria-label="전송" data-motion="rise"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2 15 22 11 13 2 9z"/></svg></button>   <!-- 종이비행기 픽토(강조색 · 운영자 260703·260705) -->
     </div>
   </div>
@@ -3358,10 +3359,11 @@ function yHeadSync() {   // 헤더 픽토 상태 동기(운영자 260725) — [�
     const want = why || c.tagline || '';
     if (tag.textContent !== want) tag.textContent = want;   // 무변경 재페인트 차단(시그니처 가드 결)
   }
-  const msg = document.getElementById('yetaMsgBtn');   // 문자 = 대화 불가면 전화처럼 빗금(운영자 260725) · 미구현 자리표라 .dim은 유지
-  if (msg) msg.classList.toggle('slash', !talkOK);
-  const inv = document.getElementById('yetaInvBtn');   // 연락처 = 친목 미달이면 빗금(탭하면 사유 토스트 — .off[만석·대기]와 별개 축이라 공존)
-  if (inv) { inv.classList.toggle('slash', !bondOK); inv.dataset.bond = bondOK ? '' : '1'; }
+  const msgOK = talkOK && bondOK;   // 문자 = 연락처(친목) 선행 조건(운영자 260726 "연락처가 없으면 문자도 안 되는 거잖아 — 불이 켜지면 문자 가능") · 쌍 진전: 연락처(1단)→문자(2단)
+  const msg = document.getElementById('yetaMsgBtn');   // 가능 = 터콰이즈 점등(.able · dim 해제 = 탭하면 준비 중 안내) / 불가 = 흐림+빗금(운영자 260725 문법 유지)
+  if (msg) { msg.classList.toggle('slash', !msgOK); msg.classList.toggle('able', msgOK); msg.classList.toggle('dim', !msgOK); }
+  const inv = document.getElementById('yetaInvBtn');   // 연락처 = 친목 미달이면 빗금(탭하면 사유 토스트 — .off[만석·대기]와 별개 축이라 공존) · 도달 = 터콰이즈 점등(260726 쌍 문법 — 문자 .able과 같은 토큰)
+  if (inv) { inv.classList.toggle('slash', !bondOK); inv.classList.toggle('able', bondOK); inv.dataset.bond = bondOK ? '' : '1'; }
 }
 function yEstranged(c) {   // 소원해짐(운영자 260709 "일정 친밀도 이하 = 다시 대화가 안 되게 — 만났지만 대화는 어려움") — 대화했던 사이가 감쇠 임계(1.5) 미만으로 식음 · 회복 = 마주침·난입 재회(우연 축)
   if (!c || c.locked || yUnmet(c)) return false;
@@ -3523,20 +3525,23 @@ function yBgReset() {   // 두 레이어 전부 소거 — 비디오 정지·제
   });
 }
 function yPaintBg(bgUrl, tint, season) {   // 레이어 페인트(페르소나 전환·무드 전환 공용) — 같은 그림 재페인트는 키 가드가 막음 · season = 감정 미디어 모드(캐릭터 아트 스크림·클립 muted)
+  const wd = !!(YCUR && YCUR.id === 'winter');   // 윈터 = 블라인드 +50% 합성(운영자 260726 "배경 앞에 블라인드 투명도 50% 더") — .68/.78 + (1−x)×.5 = .84/.89(.55/.68→.68/.78 +30% 딤과 같은 공식 · 클립은 .ybg.wdim 필터가 짝 · 노브: 여기 한 곳)
+  const [d1, d2] = wd ? ['.84', '.89'] : ['.68', '.78'];
   const layers = [$('#ybgA'), $('#ybgB')], next = layers[1 - _ybgCur], curL = layers[_ybgCur];
   yBgKillVid(next.querySelector('video'));   // 레이어 재사용 = 이전 클립 결정적 회수
   const curV = curL.querySelector('video'); if (curV) { try { curV.pause(); } catch {} }   // 밀려나는 레이어 클립 = 즉시 정지(불투명 0 뒤 무한 디코드 차단 — 평의회1·7 공통 지적 · 제거는 레이어 재사용/리셋 때)
   if (season && /\.(mp4|webm)(\?|$)/i.test(bgUrl || '')) {   // 시즌 클립 — "소리만 빼고 다"(운영자 260707) = muted 고정
-    next.style.backgroundImage = (YCUR && YCUR.bg) ? `linear-gradient(rgba(18,18,18,.68),rgba(18,18,18,.78)), url("${YCUR.bg}")` : 'none';   // 클립 디코드/자동재생 전까지 시그니처 스틸을 밑에 깔아 무대 암전 차단(분신술 260708 — 비시즌 프리로드 게이트 대응)
+    next.style.backgroundImage = (YCUR && YCUR.bg) ? `linear-gradient(rgba(18,18,18,${d1}),rgba(18,18,18,${d2})), url("${YCUR.bg}")` : 'none';   // 클립 디코드/자동재생 전까지 시그니처 스틸을 밑에 깔아 무대 암전 차단(분신술 260708 — 비시즌 프리로드 게이트 대응) · 딤 = 캐릭터별 d1/d2(윈터 +50%)
     const v = document.createElement('video');
     v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
     if (YCUR && YCUR.bg) v.poster = YCUR.bg;   // 포스터 = 시그니처(자동재생 차단 시에도 암전 대신 스틸)
     v.src = bgUrl; next.appendChild(v); try { v.play().catch(() => {}); } catch {}
   } else next.style.backgroundImage = bgUrl
-    ? (season ? `linear-gradient(rgba(18,18,18,.68),rgba(18,18,18,.78)), url("${bgUrl}")`   // 캐릭터 아트 = 스포티파이 블랙 스크림(운영자 260709 재검수 "+30% 더 — 대화창 집중" · .55/.68 → +30% 등가 .68/.78)
+    ? (season ? `linear-gradient(rgba(18,18,18,${d1}),rgba(18,18,18,${d2})), url("${bgUrl}")`   // 캐릭터 아트 = 스포티파이 블랙 스크림(운영자 260709 재검수 "+30% 더 — 대화창 집중" · .55/.68 → +30% 등가 .68/.78 · 윈터만 +50% 재합성 .84/.89 = 위 d1/d2)
             : `linear-gradient(rgba(18,18,18,.35),rgba(18,18,18,.52)), url("${bgUrl}")`)   // 환경(장소·무드 씬) = 딤 대폭 완화(운영자 260709 재검수 "그대로임" — 1차 .55/.72가 어두운 원화에선 체감 미미 → .35/.52)
     : `radial-gradient(120% 90% at 50% 0%, ${tint}14, transparent 55%)`;                            // 이미지 없으면 페르소나색 은은한 무드 틴트
   next.classList.toggle('season', !!season);
+  next.classList.toggle('wdim', !!season && wd);   // 윈터 시즌 클립 딤 짝(.ybg.wdim video) — 타 캐릭터 레이어 재사용 시 자동 해제
   next.classList.add('on'); curL.classList.remove('on'); _ybgCur = 1 - _ybgCur;
 }
 const Y_MOODS = ['warm', 'tense', 'blue', 'joy', 'love', 'shy', 'mad'];   // 답장 <<MOOD>> 화이트리스트(base=기본 무대) — 8감정 확장(운영자 260717 Q.29 "다채롭게" · 윈터 파일명 어휘 수렴 · 러너 finish 화이트리스트와 짝)
@@ -3958,6 +3963,23 @@ function yScGap(ta) { if (ta.value.trim() && !/\n\n\s*$/.test(ta.value)) ta.valu
 function yScToggle(ta, m) {   // 모드 토글 단일 정본 — 버튼 탭·타이핑이 같은 함수(운영자 260725 "화자가 #을 쓰면 키보드의 #처럼 바로 반응") · 같은 글자 = 닫힘 · 다른 글자 = 그 모드로 갈아탐
   yScSet(_yMode === m ? 0 : m); yScGap(ta); yScMark(_yMode); yScSync();   // 켜기 = 이후 그 모드 구간 · 끄기 = 이후 대사 구간(동일 2줄 규칙) · sync = 갭 삽입이 리베이스에 이중 반영 안 되게
 }
+const YSC_DBL = 350;   // 모드 버튼 더블탭 판정창 ms(운영자 260726 · 노브: 여기 한 곳)
+let _yScTap = { m: 0, t: 0, pre: 0 };   // 직전 탭 스냅샷 — pre = 첫 탭 '직전'의 모드(더블탭 판정 기준)
+function yScRetro(ta, m) {   // 더블탭 소급(운영자 260726 "말을 쓰다가 두 번 누르면 그 말이 — 모드를 먼저 누르고 쓴 것처럼") — 첫 탭이 넣은 갭을 걷고, 마지막 줄바꿈 이후 '앞의 말 전부'를 m 구간으로 재표기
+  const core = ta.value.replace(/\s*$/, '');   // 첫 탭 yScGap이 붙인 꼬리 빈 줄 제거 = "먼저 누르고 쓴" 모양 복원
+  const br = core.lastIndexOf('\n'), at = br + 1;   // 소급 범위 = 마지막 줄바꿈 이후(운영자 "줄바꿈 전에 앞에 말 전부") · 없으면 처음부터
+  ta.value = core; ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px';
+  try { ta.setSelectionRange(core.length, core.length); } catch {}
+  _ySegs = _ySegs.filter(g => g.at < at); _ySegs.push({ at, sc: m | 0 });   // at 이후 경계(첫 탭 마크 포함) 전부 m으로 접수 · at=0이면 전량 교체
+  yScSync();   // 값 변경분이 다음 input 리베이스에 이중 반영 안 되게
+}
+function yScPress(ta, m) {   // 모드 버튼 탭 정본(운영자 260726) — 한 번 = 종전 토글(다음 글부터) · 빠른 두 번 = 앞의 말 소급 · 이미 그 모드였으면(pre===m) 두 번 = 무효(첫 탭 OFF → 둘째 탭 ON 원복 = 효과 0) · 켜진 상태서 다른 버튼 = 종전대로 즉시 전환(yScToggle)
+  const t = Date.now(), dbl = _yScTap.m === m && t - _yScTap.t < YSC_DBL;
+  if (!dbl) { _yScTap = { m, t, pre: _yMode }; yScToggle(ta, m); return; }
+  _yScTap.t = 0;   // 더블탭 소비 — 3연타 = 새 사이클
+  if (_yScTap.pre === m) { yScToggle(ta, m); return; }   // 눌린 상태서 두 번 = 소급 없음(원복만)
+  yScRetro(ta, m);
+}
 const YSC_KEY = { '#': 1, '*': 2 };   // 여는·닫는 글자 정본 — '#' 상황 설명 · '*' 머릿속 생각(운영자 260725)
 function yScKeyAt(v, p) {   // 직전값 p → 현재값 v 델타가 '#'·'*' 한 글자 삽입이면 {i:위치, m:모드}(아니면 null) — beforeinput 취소 불가 IME(안드로이드) 폴백 경로
   if (v.length !== p.length + 1) return null;
@@ -3965,14 +3987,14 @@ function yScKeyAt(v, p) {   // 직전값 p → 현재값 v 델타가 '#'·'*' �
   const m = YSC_KEY[v.charAt(s)];
   return m && p.slice(s) === v.slice(s + 1) ? { i: s, m } : null;
 }
-$('#yetaSc').addEventListener('click', e => {
+$('#yetaSc').addEventListener('click', e => {   // 한 번 = 토글(다음 글부터) · 빠른 두 번 = 앞의 말 소급(운영자 260726) — yScPress 정본
   e.stopPropagation(); const ta = $('#yetaText');
-  yScToggle(ta, 1);
+  yScPress(ta, 1);
   ta.focus();
 });
-$('#yetaTh').addEventListener('click', e => {   // 생각 풍선 = '*' 타이핑과 같은 함수(운영자 260725 "생각 픽토그램을 + 대신에") — # 버튼과 완전 대칭
+$('#yetaTh').addEventListener('click', e => {   // 생각 풍선 = '*' 타이핑과 같은 함수(운영자 260725 "생각 픽토그램을 + 대신에") — # 버튼과 완전 대칭 · 더블탭 소급도 동일(yScPress)
   e.stopPropagation(); const ta = $('#yetaText');
-  yScToggle(ta, 2);
+  yScPress(ta, 2);
   ta.focus();
 });
 $('#yetaText').addEventListener('beforeinput', e => {   // 타이핑 '#'·'*' = 입력행 # 버튼과 동일 반응(운영자 260725) — 한 글자 직접 입력만 가로챈다(붙여넣기·조합 입력 제외 = 본문에 섞여 온 기호는 그대로 남음)
@@ -3980,6 +4002,7 @@ $('#yetaText').addEventListener('beforeinput', e => {   // 타이핑 '#'·'*' = 
   const m = YSC_KEY[e.data]; if (!m) return;
   e.preventDefault(); yScToggle(e.target, m);   // 그 글자는 남기지 않는다 = 버튼 탭과 100% 같은 결과(모드 스위치 · 2줄 갭)
 });
+$('#yetaMsgBtn').addEventListener('click', e => { e.stopPropagation(); miniToast('문자는 준비 중이야 — 곧 열려'); });   // 문자 가능(.able = dim 해제) 상태 탭 = 준비 중 안내(운영자 260726 쌍 진전 · 무반응 금지 결) — 불가 상태는 .dim pointer-events:none이라 여기 안 옴
 $('#yetaInvBtn').addEventListener('click', e => { e.stopPropagation();
   if (e.currentTarget.dataset.bond === '1') { miniToast(`${(YCUR || {}).name || '이 사람'}과는 아직 연락처를 나눌 사이가 아니야 — 좀 더 얘기해봐`); return; }   // 친목 게이트(운영자 260725) — 빗금 픽토 탭 = 사유 안내(무반응 금지)
   yPdClose(); yInvToggle(); });   // 헤더 초대 + = 초대 팝업(운영자 260712 · .off = pointer-events:none이라 만석·대기 시 무반응 = 자리만 유지)
