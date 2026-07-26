@@ -322,6 +322,10 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yeta-in textarea { flex:1; resize:none; background:none; border:none; border-radius:var(--r-pill); color:var(--fg); min-width:0;
     font-size:var(--fs-body); line-height:1.4; padding:8px 6px; max-height:120px; font-family:inherit; text-align:center; }   /* 알약이 표면 = 입력칸 자체는 무도형(운영자 260705) · 중앙정렬 유지 */
   .yeta-in textarea:focus-visible { outline:none; }
+  .yeta-in.mir textarea { color:transparent; caret-color:var(--fg); }   /* 구간 채색 모드(운영자 260726 "상황·속마음·일반 다 채색 다르게") — 실글자 투명·채색은 #yetaMirror가 그린다 · .mir는 JS(yScPaint)가 혼합 구간일 때만 부착 = 실패·평문 시 종전 그대로 폴백 · 모드 캐럿색은 아래 .sc/.th 정본이 이김(소스 순서) */
+  #yetaMirror { position:absolute; pointer-events:none; overflow:hidden; box-sizing:border-box; white-space:pre-wrap; overflow-wrap:break-word; color:var(--fg); }   /* 투명 textarea 밑그림 — 폰트·정렬·패딩 메트릭은 JS가 textarea 계산값을 복사(줄바꿈 1:1 = 캐럿 어긋남 방지) */
+  #yetaMirror .ysg1 { color:var(--think); }   /* 상황 설명 = 터콰이즈(축 분리 정본: 라임=대화·터콰이즈=연출·코발트=속마음 — .yeta-in.th 주석 계보) */
+  #yetaMirror .ysg2 { color:var(--cobalt); }   /* 머릿속 생각 = 코발트(같은 축 · 이탤릭 금지 = 글리프 폭이 달라져 캐럿과 어긋난다) */
   .yeta-send { flex:none; width:var(--btn); height:var(--btn); align-self:center; border:none;
     background:none; color:var(--accent); display:grid; place-items:center; cursor:pointer; touch-action:manipulation; }   /* 전송 = 픽토그램-온리 · 강조색 라임(운영자 260705 #1 · 원형 도형 제거) · touch-action=폰 탭 신뢰성 */
   .yeta-send svg { width:22px; height:22px; }   /* 마이크와 동일 크기(#5) */
@@ -1431,7 +1435,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
         <button type="button" data-go="char" aria-label="캐릭터"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0112 0v1"/></svg></button>
         <button type="button" class="on" aria-label="지금 대화 — 현재 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 01-12 7.7L3 21l1.8-6A8.5 8.5 0 1121 11.5z"/><circle cx="8.6" cy="11.5" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="11.5" r=".9" fill="currentColor" stroke="none"/><circle cx="15.4" cy="11.5" r=".9" fill="currentColor" stroke="none"/></svg></button>
       </nav>
-      <textarea id="yetaText" rows="1" placeholder="메시지" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="enter"></textarea>
+      <textarea id="yetaText" rows="1" placeholder="메시지" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="enter"></textarea><div id="yetaMirror" aria-hidden="true" hidden></div>   <!-- 구간 채색 미러(운영자 260726) — 대사/상황/생각 혼합일 때만 표시(yScPaint) · 평문 = hidden(오버헤드 0) -->
       <input type="file" id="yetaFile" accept="image/*,application/pdf,.txt,.docx" hidden>   <!-- 첨부 파일 선택(항목11) -->
       <button class="yeta-plus" id="yetaSc" type="button" aria-label="상황 설명 모드 — 상대에게 하는 말이 아니라 장면 설정 · 두 번 탭 = 앞의 말을 상황 설명으로"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3.5 8 20.5M16 3.5l-1.5 17M4 9h17M3 15h17"/></svg></button>   <!-- # = 상황 설명 모드(운영자 260714) — 탭 = 토글 · 켠 채 전송 = 장면 설정 턴(sc) · 원샷(보내면 해제) · .yeta-plus 정본 계승 -->
       <button class="yeta-plus" id="yetaTh" type="button" aria-label="머릿속 생각 모드 — 소리 내지 않은 속마음 · 두 번 탭 = 앞의 말을 생각으로"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5h6a5.5 5.5 0 0 1 0 11H9a5.5 5.5 0 0 1 0-11z"/><circle cx="6.4" cy="18.4" r="1.5" fill="currentColor" stroke="none"/><circle cx="3.2" cy="21.2" r="1" fill="currentColor" stroke="none"/></svg></button>   <!-- 생각 풍선 = 머릿속 생각 모드('*' 운영자 260725 — '+' 자리 대체) · 탭 = 토글(타이핑 '*'와 같은 함수) · .yeta-plus 정본 계승 · 점 2개 = ydock 말풍선 점 문법(fill currentColor·stroke none) 계승 -->
@@ -3945,7 +3949,27 @@ $('#yetaPlus').addEventListener('click', e => { e.stopPropagation(); $('#yetaFil
 let _yMode = 0;   // 입력 모드 — 0 대사 · 1 상황 설명('#' 260714) · 2 머릿속 생각('*' 운영자 260725 "상황설명 #, 화자의 머릿속 생각 *"). 연 글자로 다시 닫을 때까지 유지(자동 종결 없음)
 let _ySegs = [{ at: 0, sc: 0 }];   // 모드 타임라인(260714) — {at: 그 오프셋부터, sc: 모드값 0·1·2}. 전송 시 구간 그대로 대사/상황/생각으로 분리(순서 무관 — 상황·생각이 앞이든 뒤든)
 let _ySegPrev = '';   // 직전 입력값(평의회 260715) — 오프셋 리베이스용 기준 스냅샷
-function yScSync() { const ta = $('#yetaText'); _ySegPrev = ta ? ta.value : ''; }   // 프로그램적 값 변경(#버튼 갭·자동 종결·발송·복원) 직후 호출 = 다음 input diff 이중 반영 차단
+function yScSync() { const ta = $('#yetaText'); _ySegPrev = ta ? ta.value : ''; yScPaint(); }   // 프로그램적 값 변경(#버튼 갭·자동 종결·발송·복원) 직후 호출 = 다음 input diff 이중 반영 차단 · 채색 미러 동반 갱신(260726)
+const YSG_CLS = ['', 'ysg1', 'ysg2'];   // 구간 모드 → 미러 채색 클래스(0 대사 = 기본 --fg · 1 상황 = --think · 2 생각 = --cobalt)
+function yScPaint() {   // 입력창 구간 채색(운영자 260726 "상황 설명·속마음·일반 글자 다 채색 다르게") — textarea는 부분 채색 불가 → 투명 글자 + 미러 오버레이 정석 · 혼합 구간일 때만 켠다(평시 = 종전 그대로·오버헤드 0)
+  const ta = $('#yetaText'), mir = $('#yetaMirror'), row = $('#yetaIn');
+  if (!ta || !mir || !row) return;
+  const v = ta.value;
+  const plain = !v || !_ySegs.some((g, i) => (g.sc | 0) && (i + 1 < _ySegs.length ? _ySegs[i + 1].at : v.length) > g.at);   // 유색 구간(빈 구간 제외)이 하나도 없으면 = 평문
+  mir.hidden = plain; row.classList.toggle('mir', !plain);
+  if (plain) { mir.innerHTML = ''; return; }
+  if (!mir._fit) { const cs = getComputedStyle(ta); ['font', 'lineHeight', 'letterSpacing', 'textAlign', 'padding'].forEach(k => { mir.style[k] = cs[k]; }); mir._fit = 1; }   // 메트릭 1회 복사(font 축약 먼저 → lineHeight 재지정 순서 유지) = 줄바꿈 textarea와 1:1
+  mir.style.left = ta.offsetLeft + 'px'; mir.style.top = ta.offsetTop + 'px'; mir.style.width = ta.clientWidth + 'px'; mir.style.height = ta.clientHeight + 'px';   // 오프셋 부모 = .yeta-in(positioned) — 매 페인트 실측 동기(높이 자람·키보드 대응)
+  let h = '';
+  for (let i = 0; i < _ySegs.length; i++) {
+    const a = Math.min(_ySegs[i].at, v.length), b = Math.min(i + 1 < _ySegs.length ? _ySegs[i + 1].at : v.length, v.length);
+    if (b <= a) continue;
+    const x = esc(v.slice(a, b)), c = YSG_CLS[_ySegs[i].sc | 0] || '';
+    h += c ? `<span class="${c}">${x}</span>` : x;
+  }
+  mir.innerHTML = h + (v.endsWith('\n') ? '​' : '');   // 꼬리 줄바꿈 = 제로폭 문자로 높이 보전(pre-wrap 말단 \n 접힘 보정)
+  mir.scrollTop = ta.scrollTop;
+}
 function yScRebase(v) {   // 편집 1회분 prefix/suffix diff → _ySegs 절대 오프셋 이동(평의회 260715 — 앞·중간 삽입/삭제/교체 시 대사↔상황 경계 밀림 오배치 봉인)
   const p = _ySegPrev; if (v === p) return;
   const pl = p.length, vl = v.length, m = Math.min(pl, vl);
@@ -4556,7 +4580,7 @@ async function ySend() {
     if (cx.length <= 4000) parts = [{ x: cx, sc: 0 }];   // 서버 캡(4000) 초과 = 합성 포기·종전 분리 발송 폴백(무언 절단으로 괄호 깨짐 방지 — 평의회 260717)
   }
   ta.value = ''; ta.style.height = ''; _yComposing = false; _yRenderPend = false;   // 입력 비움 = IME 조합 리셋(버튼탭 blur가 compositionend 없이 _yComposing 갇히는 경로 차단 · 평의회 IME F1)
-  _ySegs = [{ at: 0, sc: _yMode }]; _ySegPrev = '';   // 발송 = 타임라인 리셋(입력 리셋과 동형 — 라이브 모드 반영 · 평의회 260715 비대칭 정정)
+  _ySegs = [{ at: 0, sc: _yMode }]; _ySegPrev = ''; yScPaint();   // 발송 = 타임라인 리셋(입력 리셋과 동형 — 라이브 모드 반영 · 평의회 260715 비대칭 정정) + 채색 미러 소등(260726)
   const log = $('#yetaLog');   // 낙관적 표시(확정은 폴이 대체) — 내 버블 즉시 · 타이핑은 "읽는 시간" 뒤(운영자 260707 "보내자마자 1초도 안 돼 입력 중 = 어색")
   const li = parts.reduce((k, p, i) => p.sc ? k : i, -1);   // 마지막 대사 파트 = '1' 단독 부착 대상(평의회 260715 — 파트마다 붙이면 '1' 이중 + 엉뚱한 소멸)
   const _opt = []; let _unEl = null;
@@ -4588,7 +4612,7 @@ async function ySend() {
     if (_typEl) yOut(_typEl); _opt.slice(sent).forEach(yOut); clearTimeout(_yTypT); _yTypOn = false;   // 미전송 파트 낙관 노드만 회수 — 커밋된 앞 파트 버블은 유지(서버에 이미 박힘 · 평의회 260715 중복 재전송 봉인)
     let rv = ''; const rs = [];
     for (let i = sent; i < parts.length; i++) { if (rv) rv += '\n\n'; rs.push({ at: rv.length, sc: parts[i].sc }); rv += parts[i].x; }   // 복원 = 미전송 파트만 + 타임라인 재구성(전문 복원이면 커밋분이 재전송 시 중복 적재)
-    ta.value = rv; _ySegs = rs.length ? rs : [{ at: 0, sc: 0 }]; _ySegPrev = rv; ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px';
+    ta.value = rv; _ySegs = rs.length ? rs : [{ at: 0, sc: 0 }]; _ySegPrev = rv; ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px'; yScPaint();   // 복원분 채색 재동기(260726)
     yScSet(rs.length ? rs[rs.length - 1].sc : 0);   // 모드 래치 = 복원 타임라인과 동기(합성 실패 후 모드 표시·구간 불일치 봉합 · 평의회 260717) · 생각 구간은 이미 *…*로 봉해져 텍스트에 남는다
     if (!sent) _yDrKeep = false;   // 전송 전체 실패 = 겹침 draft 래치 롤백(서버에 겹침 턴 없음 → mut 오염 방지 · 평의회 260717)
     log.insertAdjacentHTML('beforeend', `<div class="yb fail in">${esc(r.error || '전송 실패')}</div>`); _yFailOn = true; log.scrollTop = log.scrollHeight; yDcPush('send', `s:${Date.now()}`);   // 전송 실패 적립(260725) — 발신 자체가 안 나간 축(답장 두절과 별개 원인이라 분류를 나눈다)
@@ -4609,10 +4633,12 @@ $('#yetaText').addEventListener('input', e => { const t = e.target;
   const hk = yScKeyAt(t.value, _ySegPrev);   // 타이핑된 '#'·'*' 회수 → 버튼과 동일 토글(beforeinput 취소 불가 IME 폴백 · 텍스트에는 그 글자를 남기지 않는다)
   if (hk) { t.value = t.value.slice(0, hk.i) + t.value.slice(hk.i + 1); yScSync(); yScToggle(t, hk.m); return; }
   t.style.height = 'auto'; t.style.height = Math.min(120, t.scrollHeight) + 'px';
-  if (!t.value) { _ySegs = [{ at: 0, sc: _yMode }]; _ySegPrev = ''; return; }   // 입력 전량 삭제 = 타임라인 리셋(오프셋 어긋남 방지)
+  if (!t.value) { _ySegs = [{ at: 0, sc: _yMode }]; _ySegPrev = ''; yScPaint(); return; }   // 입력 전량 삭제 = 타임라인 리셋(오프셋 어긋남 방지) + 미러 소등
   yScRebase(t.value);   // 편집 델타 → 오프셋 리베이스(평의회 260715 — 앞·중간 편집 시 경계 밀림 봉인)
+  yScPaint();   // 타이핑마다 구간 채색 동기(혼합 없으면 내부에서 즉시 hidden = 평문 무비용 · 260726)
   // 상황문 자동 종결(구 260714) 폐지 — 운영자 260725 "#으로 닫을 때까지 그 #(상황 설명)이 유지되게". 문장부호·엔터로 저절로 꺼지던 축을 걷어내고 종료 = '#'(타이핑·버튼) 단일 트리거.
 });
+$('#yetaText').addEventListener('scroll', e => { const m = $('#yetaMirror'); if (m && !m.hidden) m.scrollTop = e.target.scrollTop; });   // 긴 입력(max-height 120 스크롤) = 미러 스크롤 동기(채색 어긋남 방지 · 260726)
 $('#yetaText').addEventListener('focus', yWarm);   // 쓰기 시작 = 러너 선부팅(콜드 부팅 30~40s를 타이핑 시간과 겹침 — 유휴 복귀 첫 답장 단축 · 4.5분 디바운스는 yWarm 내장)
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && yetadlg.open && !_yWatchTk && !_yPoll) yLoad(); });   // 최종 안전망(운영자 260725) — 폴이 꺼진 상태(게이트웨이 10분 리퍼가 state=error로 내린 뒤)에서 러너가 뒤늦게 답을 붙이면 종전엔 앱을 껐다 켜야만 보였다. 탭 복귀 시 1회 재조회로 픽업 · 폴이 살아있으면 watch가 이미 커버하므로 미발사(중복 0)
 $('#yetaText').addEventListener('compositionstart', () => { _yComposing = true; });   // 한글 조합 시작 = 로그 리페인트 유예 개시(입력 유실 차단 · 운영자 260717)
