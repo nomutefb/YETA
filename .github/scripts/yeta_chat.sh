@@ -1456,6 +1456,7 @@ q = [] if stale else [x for x in (s.get("evq") or []) if isinstance(x, str)]   #
 q += out
 s["evq"] = q[-12:]                                   # 큐 상한 = 무한적재·스테일 누적 차단
 s["evq_ts"] = int(time.time() * 1000)
+s["evq_hook"] = hook[:80]                            # 이 배치가 무엇에 걸었다고 **선언**했는지(260726 한 수) — 종전엔 러너 로그에만 찍고 버려서, 정작 재발을 보는 운영자가 원인을 못 갈랐다. fire가 턴에 복사 → 뷰어 QA에 노출
 s["evq_ctx"] = uc                                    # 생성 시점 대화 위치·장소 = 다음 턴 스테일 판정의 기준점
 s["evq_pl"] = _pl
 json.dump(S, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False)
@@ -1515,7 +1516,10 @@ if not mid_arc and random.randint(1, max(1, int(T.get("fire_gate") or 2))) != 1:
 txt = q.pop(0)
 s["evq"] = q
 open("/tmp/yeta_amb_now", "w", encoding="utf-8").write(txt)   # 이번 턴 프롬프트 [옆에서 지금] 블록 재료 — HIST는 extract_mat에서 이미 조립됐으므로 셸이 직접 받아 넣는다
-turns.append({"role": "sys", "text": txt, "ts": int(time.time() * 1000), "kind": "amb"})
+_amb = {"role": "sys", "text": txt, "ts": int(time.time() * 1000), "kind": "amb"}
+_hk = str(s.get("evq_hook") or "").strip()
+if _hk: _amb["hook"] = _hk[:80]      # 사건↔고리 1:1(260726 한 수) — 배치 단위 선언을 비트마다 복사해 둔다(뷰어 ?qa=1 진단선 · 일반 화면 미노출)
+turns.append(_amb)
 s["turns"] = turns[-200:]
 s["updated"] = int(time.time() * 1000)
 S["updated"] = int(time.time() * 1000)
