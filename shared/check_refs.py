@@ -875,6 +875,36 @@ def check_guideline_log():
     return 0   # WARN-only
 
 
+# ── 루트 청결 게이트(WARN-only · 운영자 260726 승인 "게이트 ㄱㄱ" · Q.97) ──
+# 웹·앱에서 파일을 올리면 기본 착지점이 **레포 루트**다. 그래서 미가공 이미지·영상·중복 압축본이
+# 루트에 쌓인다(260726 실측 = 6파일 17.3MB · 그중 3건은 docs/reports 사본과 바이트 동일한 중복).
+# 화이트리스트 밖 루트 '파일'이 보이면 어디로 옮길지 알려준다. 비차단 = 업로드를 막지 않는다(정리 시점 = 운영자 선택).
+ROOT_OK_FILES = {'CLAUDE.md', 'AGENTS.md', 'design-tokens.lock'}   # 루트 고정 필수 3종(lock = 토큰 락 게이트가 루트 경로로 읽어 이동 불가)
+ROOT_STAGE = '_소재'   # 미가공 소재 착지점 — README에 정본 경로(viewer/characters/season/<id>/)·빌더·얼빡 규칙
+
+
+def check_root_clean():
+    try:
+        names = os.listdir(ROOT)
+    except OSError:
+        return 0   # 목록 불능 = 조용히 통과
+    stray = sorted(n for n in names
+                   if not n.startswith('.')                              # 점파일(.gitignore 등) = 대상 아님
+                   and os.path.isfile(os.path.join(ROOT, n))             # 디렉터리는 대상 아님
+                   and n not in ROOT_OK_FILES)
+    if stray:
+        print('⚠️ 루트 청결 게이트(비차단): 최상위에 화이트리스트 밖 파일 %d개 —' % len(stray))
+        for n in stray:
+            try:
+                kb = os.path.getsize(os.path.join(ROOT, n)) // 1024
+            except OSError:
+                kb = 0
+            print('  - %s (%dKB)' % (n, kb))
+        print('  → 미가공 이미지·영상 = `%s/`로(정본 경로 안내 = %s/README.md) · 문서·리포트 = `docs/reports/`로 · '
+              '진짜 루트에 있어야 하면 shared/check_refs.py ROOT_OK_FILES에 등재' % (ROOT_STAGE, ROOT_STAGE))
+    return 0   # WARN-only
+
+
 def check_world_rate():
     """무음동 세계율(6배) 3점 짝 하드 게이트(운영자 260716 Q.08 평의회) — 뷰어 YWORLD_RATE · 러너 wmin(yeta_chat.sh) · yeta_place.world_dh 리터럴 일치 강제(한쪽만 고치는 드리프트 = 지도·대화 시간축 재분열)."""
     rc = 0
@@ -1104,6 +1134,10 @@ def main():
         check_safety_lock()   # 콘텐츠 거절 가드레일(SAFETY-LOCK 앵커) 약화·소실 트립와이어(WARN-only · 운영자 260714)
     except Exception as e:
         print('⚠️ SAFETY-LOCK 게이트 스킵:', e)
+    try:
+        check_root_clean()   # 루트 잡파일 재오염 리마인더(WARN-only · 운영자 260726 "게이트 ㄱㄱ" · Q.97 — 웹 업로드 착지점이 루트라 또 쌓인다)
+    except Exception as e:
+        print('⚠️ 루트 청결 게이트 스킵:', e)
     try:
         import build_menu_kit   # 포터블 메뉴킷 신선도(WARN-only · Q.14 260717) — 정본 코어(:root/.ynav/.ydock) 변경 시 재추출 리마인더(이식 사본이라 비차단)
         build_menu_kit.check()
