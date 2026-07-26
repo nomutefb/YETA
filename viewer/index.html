@@ -226,6 +226,8 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ymsg .yname { font-size:var(--fs-xs); color:var(--fg); font-weight:var(--fw-b); padding-left:2px; }   /* 화자 이름 = 흰색 리프트(운영자 260709 "대화창에서도 잘 보이게" — 옛 mut) */
   .yb { padding:10px 13px; border-radius:var(--r-l); font-size:var(--fs-body); line-height:var(--lh-base); white-space:pre-wrap; word-break:break-word; }
   .yb i.yn { font-style:italic; color:var(--fg-2); opacity:.75; }   /* *나레이션* = 이탤릭 톤다운("대화 폰트 이런식" — 제타 결) */
+  .yb i.yjp { font-style:normal; color:var(--accent); opacity:.5; }   /* 일본어 원문 줄(운영자 260726 "일본어는 50% 불투명한 레몬강조색") — 바로 위 .yn 톤다운 패턴 계승(색만 강조색 · 원문은 강조가 아니라 병기라 이탤릭 해제) · 판정 = 가나 포함 줄(yFmt) */
+  .yb.ai.ov i.yjp { color:inherit; }   /* 겹침 답장 = 전체 mut 통일(바로 아래 .yn 동형) */
   .yb.ai.ov { color:var(--mut); }   /* 겹침 답장(운영자 260717 ⑨⑩) — 내 말과 시간이 겹쳐 사이에 낑겨 들어간 말 = 전체 mut(지문 결과 동일 톤) */
   .yb.ai.ov i.yn { color:inherit; }
   .yb .yatt { display:block; max-width:min(210px, 56vw); max-height:280px; border-radius:var(--r-s); }   /* 첨부 사진(260717 '+') — 버블 안 썸네일(기하 캡 = 토큰 없는 축) · 모서리 = --r-s 계승 */
@@ -236,6 +238,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) { .yb.ai { background:var(--bubble-ai); } }   /* blur 미지원 = 불투명 폴백(--bubble-ai 배선 유지) */
   .yb.me { align-self:flex-end; max-width:78%; background:var(--bubble-me); color:var(--bg); border-top-right-radius:var(--r-s); }
   .yb.me i.yn { color:rgba(0,0,0,.6); }
+  .yb.me i.yjp { color:rgba(0,0,0,.6); }   /* 내 버블 = 라임 바탕이라 강조색이 안 보인다(바로 위 .yn me 가드 100% 계승 — 유저가 일본어를 칠 때) */
   .yb.sys { align-self:center; background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-pill); color:var(--fg-2); font-size:var(--fs-sm); padding:3px 12px;
     backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }   /* 글래스 알약 — 배경 위 가독 */
   .ysit { align-self:stretch; text-align:center; color:var(--mut); font-size:var(--fs-sm); font-style:italic; line-height:var(--lh-base); padding:2px 16px 5px; }   /* 대화 시작 장면 지문(enter_line · 운영자 260708) — 인물 대사 전 "상황 먼저"(제타 결) · 버블 아닌 그레이 나레이션(--mut) · 내 첫 발화 전만 노출 */
@@ -1697,6 +1700,7 @@ const yApi = (op, extra) => fetch('api/yeta', { method: 'POST', headers: { 'cont
 const yFmt = t => esc(t)   // *지문* → 이탤릭 + 줄바꿈 정규화(운영자 260712 — 지문 = 항상 제 줄 시작 · 지문 뒤 대사 = 빈 줄 하나 · .yb pre-wrap가 \n 렌더 · 과거 히스토리도 표시 시점 일괄 정규화)
   .replace(/[ \t]*\*([^*\n]{1,200}?)\*[ \t]*/g, '\n<i class="yn">$1</i>\n\n')
   .replace(/^[ \t]*(\([^()\n]{2,300}\))[ \t]*$/gm, '<i class="yn">$1</i>')   // (괄호) 단독 줄 = 유저 연출 지문(운영자 260717 '#' 합성 메시지) — 괄호 표기 유지 · *지문*과 같은 .yn 결(이탤릭·톤다운)
+  .replace(/^(?!<i )([^\n]*[\u3040-\u30FF][^\n]*)$/gm, '<i class="yjp" lang="ja">$1</i>')   // 일본어 원문 줄 → 레몬 50%(운영자 260726 · 고죠 = 일본어 위 · 번역 아래 2단). 판정 = **가나(히라가나·가타카나) 포함**: 한국어 대사엔 절대 안 섞이는 문자라 오탐 0 · 한자 단독은 일부러 제외(한국어 한자어 오탐 방지 — 자연스러운 일본어 문장엔 가나가 늘 붙는다). `<i `로 시작하는 줄 제외 = 위 지문 치환 결과 재감싸기 방지 · lang=ja = 한자 자형을 일본어 폰트로(한국어 폰트로 렌더되면 자형이 어긋난다)
   .replace(/\n{3,}/g, '\n\n')
   .replace(/^\n+|\n+$/g, '');
 // 스크램블 로더(beui.dev/components/motion/loader 차용 · 운영자 260708) — "LOADING" 글리프 스크램블 = 진행중 표시(별도 문구 없음·메타버스 결) · 좌→우 한 글자씩 확정, 미확정 글자는 랜덤 글리프 · DOM 이탈 시 타이머 자동 정리(누수 0)
@@ -4155,6 +4159,7 @@ function yBubbles(t) {   // 버블 분할(운영자 260714 "2개 먼저 뱉고 2
   const out = [];
   for (const para of String(t || '').split(/\n[ \t]*\n/).map(x => x.trim()).filter(Boolean)) {
     if (/^\*[^*\n]{1,200}\*$/.test(para)) { out.push(para); continue; }
+    if (/[぀-ヿ]/.test(para)) { out.push(para); continue; }   // 일본어 문단(가나 포함) = 통째 한 버블 — 바로 위 *지문* 원자화 100% 계승. 왜 필요한가(260726 실측): 「일본어\n번역」 쌍이 반각 !?~로 끝나면 문장 경계에 걸려 쪼개지고, cur.join(' ')이 그 개행을 공백으로 뭉개 2단 표기가 한 줄로 붕괴한다(7케이스 중 4붕괴). 원문·번역은 갈라놓으면 뜻이 죽는 한 덩어리라 분할 대상이 아니다
     const sents = (para.match(/[\s\S]*?[.!?…~]+(?:\s+|$)|[\s\S]+$/g) || [para]).map(x => x.trim()).filter(Boolean);   // 경계 = 부호+공백/끝만(러너 (?<=[.!?…~])\s+ 와 동형 — 무공백 "좋다.진짜"는 한 버블 · 평의회 UX 재청크 불일치 봉합)
     let cur = [];
     for (const x of sents) { cur.push(x); if (cur.length >= 2) { out.push(cur.join(' ')); cur = []; } }
