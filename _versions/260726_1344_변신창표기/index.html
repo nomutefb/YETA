@@ -131,26 +131,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .gdots i:nth-child(2) { animation-delay:.22s; } .gdots i:nth-child(3) { animation-delay:.44s; }
   @keyframes gdots { 0% { opacity:0; } 25%,70% { opacity:1; } 95%,100% { opacity:0; } }
   .yscramble { display:inline-block; font-family:ui-monospace,SFMono-Regular,Menlo,'Cascadia Code',Consolas,monospace; font-weight:var(--fw-b); font-size:var(--fs-body); letter-spacing:.24em; color:var(--accent); text-shadow:0 0 9px rgba(var(--accent-rgb),.4); }   /* 스크램블 로더 글리프(beui.dev 차용 · 진행중 · 라임 네온 = 메타버스 결 · 운영자 260708) — 모노스페이스 = 글리프 폭 고정(레이아웃 저크 0) · text-shadow = 토큰 없는 축 */
-  .yeta-setup.yload { text-align:center; }   /* 로더 = 가로 중앙(픽토그램 로더 결 · 에러/빈상태 텍스트는 좌측 유지) */
-  /* ── orb 로더(nomute-editor viewer/nm-loader.js §orb 이관 · 원본 승인 = 운영자 260723 시안 v3 · YETA 이관 = 운영자 260726) — 로딩·진행 표기 정본: loading=통통 도트3 · thinking/prompting=소용돌이 링 · solving=흩뿌린 입자 · shimmer=글자 빛 스윕. 입자색 = --fg 계승(원본 #e9eef0 근접 · 신규 hex 0) · shimmer 베이스 = --mut · 커브 = --ease(원본과 동일값) 계승 · 기하(orb 22px·gap 9·fs 13.5·viewBox 좌표·바운스 -52%) = 원본 확정값 그대로(컴포넌트 기하 = raw 예외축) · position/z 무추가 + nm-* 네임스페이스(충돌 0 실측) = 타 레이어 무침입 ── */
-  .nm-orb { display:inline-block; position:relative; vertical-align:middle; flex:0 0 auto; }
-  .nm-orb svg { display:block; width:100%; height:100%; overflow:visible; }
-  .nm-orb .nm-dot { fill:var(--fg); }
-  .nm-orb[data-orb="thinking"] .nm-r, .nm-orb[data-orb="prompting"] .nm-r { transform-origin:50% 50%; animation:nmspin 3.2s linear infinite; }
-  .nm-orb[data-orb="thinking"] .nm-r2, .nm-orb[data-orb="prompting"] .nm-r2 { animation-duration:4.6s; animation-direction:reverse; opacity:.72; }
-  .nm-orb[data-orb="thinking"] .nm-r3, .nm-orb[data-orb="prompting"] .nm-r3 { animation-duration:6s; opacity:.5; }
-  .nm-orb[data-orb="solving"] .nm-cloud { transform-origin:50% 50%; animation:nmspin 9s linear infinite; }
-  .nm-orb[data-orb="solving"] .nm-dot { animation:nmtwk 1.8s ease-in-out infinite; }
-  .nm-orb[data-orb="loading"] .nm-bd { transform-box:fill-box; transform-origin:center; animation:nmbd .92s var(--ease) infinite; }
-  .nm-orb[data-orb="loading"] .nm-bd.b2 { animation-delay:.15s; } .nm-orb[data-orb="loading"] .nm-bd.b3 { animation-delay:.3s; }
-  @keyframes nmspin { to { transform:rotate(360deg); } }
-  @keyframes nmtwk { 0%,100% { opacity:.26; } 50% { opacity:1; } }
-  @keyframes nmbd { 0%,100% { transform:translateY(0); opacity:.5; } 50% { transform:translateY(-52%); opacity:1; } }
-  .nm-load { display:inline-flex; align-items:center; gap:9px; }
-  .nm-load .nm-orb { width:22px; height:22px; }
-  .nm-shim { font-size:13.5px; font-weight:var(--fw-b); letter-spacing:0; line-height:1; display:inline-flex; align-items:center; background:linear-gradient(100deg,var(--mut) 0%,var(--mut) 38%,var(--fg) 50%,var(--mut) 62%,var(--mut) 100%); background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:nmshim 1.9s linear infinite; }
-  @keyframes nmshim { from { background-position:120% 0; } to { background-position:-120% 0; } }
-  @media (prefers-reduced-motion:reduce) { .nm-shim { animation:none; color:var(--mut); -webkit-text-fill-color:var(--mut); } .nm-orb * { animation:none !important; } }
+  .yeta-setup.yload { text-align:center; }   /* 스크램블 로더 = 가로 중앙(픽토그램 로더 결 · 에러/빈상태 텍스트는 좌측 유지) */
   .yboot { position:fixed; inset:0; z-index:999; display:grid; place-items:center; background:var(--yeta-bg,#121212); animation:ybootOut .55s var(--ease) 1.5s forwards; }   /* 첫 열기 부팅 스플래시 = 1.5s(스크램블 1사이클 resolve) 후 페이드 · CSS 애니 = JS 실패해도 반드시 걷힘(블로킹 방지) · z=로컬(raw 예외) */
   .yboot-w { font-size:clamp(26px,7.5vw,46px); letter-spacing:.3em; }
   @keyframes ybootOut { to { opacity:0; visibility:hidden; } }
@@ -247,7 +228,6 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yb i.yn { font-style:italic; color:var(--fg-2); opacity:.75; }   /* *나레이션* = 이탤릭 톤다운("대화 폰트 이런식" — 제타 결) */
   .yb i.yjp { font-style:normal; color:var(--accent); opacity:.5; }   /* 일본어 원문 줄(운영자 260726 "일본어는 50% 불투명한 레몬강조색") — 바로 위 .yn 톤다운 패턴 계승(색만 강조색 · 원문은 강조가 아니라 병기라 이탤릭 해제) · 판정 = 가나 포함 줄(yFmt) */
   .yb i.yjr { font-style:italic; font-size:.5em; color:var(--fg-2); opacity:.5; }   /* 일본어 읽는 발음 줄(운영자 260726 "아주 작게 거의 안보일듯한 컬러로 · 상황설명컬러 · 글자는 50% 작은 · 기울기 포함") — 색·이탤릭 = 바로 위 지문(.yn) 100% 계승(운영자가 지목한 "상황설명컬러" = .yn의 --fg-2) · 투명도는 .yn(.75)보다 낮은 .5 = 바로 위 .yjp 사다리 재사용("거의 안 보일") · 크기 .5em = 지시값(상대 기하라 토큰축 없음) · 판정 = 가나 줄 바로 다음 [대괄호] 줄(yFmt) */
-  .yeta-noruby .yb i.yjr { display:none; }   /* 발음 끄기(설정 · 운영자 260726 "설정에 스위치를 달자 · 몰입도때문이니까 친밀도에 관계없이") — html 클래스 = 위 .yeta-reduce/.yeta-ptt 패턴 100% 계승 · 원문·번역은 그대로 남고 발음 줄만 사라진다(친밀도·해금과 무관 = 사람은 앱 밖에 있다) */
   .yb.ai.ov i.yjp, .yb.ai.ov i.yjr { color:inherit; }   /* 겹침 답장 = 전체 mut 통일(바로 아래 .yn 동형) */
   .yb.ai.ov { color:var(--mut); }   /* 겹침 답장(운영자 260717 ⑨⑩) — 내 말과 시간이 겹쳐 사이에 낑겨 들어간 말 = 전체 mut(지문 결과 동일 톤) */
   .yb.ai.ov i.yn { color:inherit; }
@@ -299,12 +279,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yeta-log .in { animation:ybIn .3s cubic-bezier(.22,.61,.36,1) both; transform-origin:bottom left; }
   .yeta-log .ymrow.me.in { transform-origin:bottom right; }   /* 내 메시지 = 래퍼(ymrow)가 애니 노드(시각 포함 함께 촤르륵) */
   .yeta-log .out { animation:ybOut .2s var(--ease) both; pointer-events:none; }
-  /* 감정 대사 = 글자 등장(운영자 260726 Q.80 · 레퍼런스 = beui.dev/components/motion/text-animation TextReveal — 스크램블 로더[beui 차용 260708] 선례 축) — 답장에 <<MOOD>> 감정이 실린 "신규" 버블만 글자 단위 블러 리졸브 스태거(히스토리·재렌더 = 종전 무애니 · 스트리밍 = 새로 자란 글자만 델타 리졸브 Q.81 — 본 글자 re-whoosh 0) · 잔잔 warm/blue/shy = 은은 / 격정 tense·mad·joy·love = .yemo-hi 증폭 · 커브 = --ease · 흐림 = --blur-l 사다리 계승(raw 0) · em 오프셋 = 기하(raw 예외) · 스태거 간격 = yAiMsg가 길이 보정 주입(장문도 총 지연 ≤1.1s) */
-  .yb.ai.yemo { --emo-d:.5s; --emo-b:calc(var(--blur-l) * .45); --emo-y:.3em; }
-  .yb.ai.yemo.yemo-hi { --emo-d:.62s; --emo-b:var(--blur-l); --emo-y:.55em; }
-  .yb.ai.yemo .ye { display:inline-block; animation:yEmoIn var(--emo-d) var(--ease) both; animation-delay:calc(var(--i, 0) * var(--emo-s, 14ms)); }
-  @keyframes yEmoIn { from { opacity:0; filter:blur(var(--emo-b)); transform:translateY(var(--emo-y)); } }
-  @media (prefers-reduced-motion:reduce) { .yeta-log .in, .yeta-log .out, .ytdots i, .yb.ai.yemo .ye { animation:none; } }
+  @media (prefers-reduced-motion:reduce) { .yeta-log .in, .yeta-log .out, .ytdots i { animation:none; } }
   .yeta-setup { padding:var(--sp-3); color:var(--mut); font-size:var(--fs-label); line-height:1.7; }
   .yeta-setup.yempty { color:var(--fg); text-align:center; max-width:280px; margin-inline:auto; }   /* 빈 대화 목록 = 흰색·중앙(운영자) — 가로중앙+흰색은 여기, 세로중앙은 .ylist.list-empty 컨테이너가 담당 */
   /* 입력행 = 플로팅 알약 캡슐(운영자 260705 "네비처럼 감싸서 띄워" · 레퍼런스 결) — [마이크][입력][+][전송] 중앙정렬 */
@@ -1527,8 +1502,7 @@ function yMeApply() {   // 내 프로필 → 라이브 표면(우상단 프로�
 }
 function yPrefApply() {
   document.documentElement.classList.toggle('yeta-reduce', yPrefOn('reduce', false));   // 모션 줄이기 = html 클래스(CSS가 애니/트랜지션 무효화)
-  document.documentElement.classList.toggle('yeta-ptt', yPrefOn('ptt', false));
-  document.documentElement.classList.toggle('yeta-noruby', !yPrefOn('ruby', true));   // 일본어 발음 = 기본 ON(종전 동작 유지 = 회귀 0) · 끄면 발음 줄만 숨고 원문·번역은 그대로   // 무전기(PTT) 토글 = 입력행 마이크 복원(기본 OFF = 260705 폐지 결정 유지 · 운영자 260709 설정 실동작)
+  document.documentElement.classList.toggle('yeta-ptt', yPrefOn('ptt', false));   // 무전기(PTT) 토글 = 입력행 마이크 복원(기본 OFF = 260705 폐지 결정 유지 · 운영자 260709 설정 실동작)
 }
 function yAvatarPick() {   // 프로필 사진 = 파일 선택 → 256 정사각 리샘플 → data URL 로컬 저장(서버 미전송 · 파일 input은 런타임 생성 = HTML 자동완성 게이트 무관)
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
@@ -1727,47 +1701,7 @@ function yScramble(word) {
   }, Math.round(1000 / word.length * 0.55));   // beui 틱=(speed/len)*1000*.55 · speed=1.0s → LOADING(7자)≈79ms/틱
   return el;
 }
-/* ══ orb 로더(nomute-editor viewer/nm-loader.js §orb 100% 이관 · 원본 승인 = 운영자 260723 시안 v3 · Q459~461 · YETA 이관 = 운영자 260726) — 로딩·진행 표기 정본. 매핑: loading(데이터 불러오는 중)=통통 도트3 · thinking(요약·분석 판단)=소용돌이 링 · solving(변환·렌더·산출)=흩뿌린 입자 · prompting(프롬프팅·설계)=링. CSS = 상단 <style> 인라인(원본의 런타임 <style> 주입 대신 — 단일 파일 정적 결 · 내용 동일) · solving 입자 = 결정적 시드(Math.random 미사용 = 렌더 결정론 · 원본 그대로) · API: nmLoader(type,label[,opts]) / nmOrbHTML(type[,size]) / nmLoaderHydrate(root) ══ */
-(function () {
-  if (window.nmLoader) return;
-  function solvingSVG() {   // 흩뿌린 입자(결정적 시드 — 원본 그대로)
-    var s = 9301, rnd = function () { s = (s * 9301 + 49297) % 233280; return s / 233280; };
-    var d = '', N = 44, i, a, r;
-    for (i = 0; i < N; i++) {
-      a = rnd() * 6.2832; r = Math.sqrt(rnd()) * 45 + 3;
-      d += '<circle class="nm-dot" cx="' + (50 + Math.cos(a) * r * 0.9).toFixed(1) + '" cy="' + (50 + Math.sin(a) * r * 0.9).toFixed(1) +
-           '" r="' + (0.85 + rnd() * 1.7).toFixed(2) + '" style="animation-delay:' + ((i % 7) * 0.26).toFixed(2) + 's"/>';
-    }
-    return '<svg viewBox="0 0 100 100"><g class="nm-cloud">' + d + '</g></svg>';
-  }
-  function ringSVG() {   // 소용돌이 3링(원근 fake — 원본 그대로)
-    function ring(cls, ry, n, rd, rot) {
-      var d = '', i, a;
-      for (i = 0; i < n; i++) { a = i / n * 6.2832; d += '<circle class="nm-dot" cx="' + (50 + Math.cos(a) * 40).toFixed(1) + '" cy="' + (50 + Math.sin(a) * ry).toFixed(1) + '" r="' + rd + '"/>'; }
-      return '<g class="nm-r ' + cls + '" style="transform:rotate(' + rot + 'deg)">' + d + '</g>';
-    }
-    return '<svg viewBox="0 0 100 100">' + ring('', 40, 20, 2, 0) + ring('nm-r2', 15, 16, 1.7, 30) + ring('nm-r3', 26, 13, 1.4, 60) + '</svg>';
-  }
-  function dotsSVG() {   // 통통 튀는 도트3(로딩 정본 — 운영자 260723 "소용돌이 링이 로딩엔 덜 어울려 도트로")
-    return '<svg viewBox="0 0 100 100"><circle class="nm-dot nm-bd" cx="21" cy="50" r="9.5"/><circle class="nm-dot nm-bd b2" cx="50" cy="50" r="9.5"/><circle class="nm-dot nm-bd b3" cx="79" cy="50" r="9.5"/></svg>';
-  }
-  function orbType(t) { return t === 'solving' ? 'solving' : t === 'prompting' ? 'prompting' : t === 'loading' ? 'loading' : 'thinking'; }
-  function orbHTML(type, size) { var t = orbType(type), sz = size ? ' style="width:' + size + 'px;height:' + size + 'px"' : ''; return '<span class="nm-orb" data-orb="' + t + '"' + sz + '>' + (t === 'solving' ? solvingSVG() : t === 'loading' ? dotsSVG() : ringSVG()) + '</span>'; }
-  function esc(x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  window.nmLoader = function (type, label, opts) {   // opts={size:orb px, gap, fs:글자 px} — 좁은 버튼 = size 18·fs 12.5, 기본 필 = 22·13.5(원본 정본값)
-    opts = opts || {}; var g = opts.gap != null ? opts.gap : 9;
-    var fs = opts.fs ? ' style="font-size:' + opts.fs + 'px"' : '';
-    return '<span class="nm-load" style="gap:' + g + 'px">' + orbHTML(type, opts.size) + '<span class="nm-shim"' + fs + '>' + esc(label) + '</span></span>';
-  };
-  window.nmOrbHTML = orbHTML;   // orb만(좁은 폭 컨텍스트용)
-  function hydrate(root) {   // 선언형: <span class="nm-load" data-orb="loading" data-label="불러오는 중…"></span>
-    var els = (root || document).querySelectorAll('.nm-load[data-orb]:not([data-nm-done])'), i, e;
-    for (i = 0; i < els.length; i++) { e = els[i]; e.setAttribute('data-nm-done', '1'); e.innerHTML = orbHTML(e.getAttribute('data-orb')) + '<span class="nm-shim">' + esc(e.getAttribute('data-label')) + '</span>'; }
-  }
-  window.nmLoaderHydrate = hydrate;
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { hydrate(); }); else hydrate();
-})();
-function yLoadingBox() { const box = document.createElement('div'); box.className = 'yeta-setup yload'; box.setAttribute('role', 'status'); box.innerHTML = nmLoader('loading', '불러오는 중…'); return box; }   // 로딩 표시 = .yeta-setup(중앙) + orb 통통 도트3+shimmer(nomute 이관 · 운영자 260726 — 스크램블 대체 · 스크램블은 부트 'YETABUS' 전용 잔존) · role=status 계승 · X.replaceChildren(yLoadingBox())로 주입
+function yLoadingBox() { const box = document.createElement('div'); box.className = 'yeta-setup yload'; box.appendChild(yScramble()); return box; }   // 로딩 표시 = .yeta-setup(중앙) + 스크램블(문구 대체) · X.replaceChildren(yLoadingBox())로 주입
 function yVvFit() {   // 키보드 개폐 = 창 유지 가드(운영자 260707 "입력할 때 창 내려감"): 챗 프레임을 키보드 위 보이는 영역에 정확히 맞춤(높이+팬 오프셋) + 로그 바닥 재고정. 뷰포트 메타(resizes-content)를 안 쓰는 이유 = dvh 축소가 9:16 레터박스 쿼리를 폰에서 오발동 · 임계 120 = 온스크린 키보드 판정(OS 뷰포트 축 = raw 예외)
   if (!yetadlg.open) { yetadlg.style.height = yetadlg.style.top = ''; return; }
   const kb = window.innerHeight - visualViewport.height > 120;
@@ -2167,7 +2101,7 @@ async function ySettingRender() {
   const box = $('#ypolBody') || $('#ysettingBody');   // 정본 = 설정 시트 인라인(#ypolBody · 인수 계약 260707) · 옛 탭 패널 = 휴면 폴백
   if (!box) return;
   if (!YPOLDEF) {
-    box.replaceChildren(yLoadingBox());   // 진행중 = orb 로딩 도트3+shimmer(nomute 이관 · 운영자 260726 — 스크램블 대체)
+    box.replaceChildren(yLoadingBox());   // 진행중 = 스크램블 로더(문구 대체 · 운영자 260708)
     const r = await yApi('policy').catch(() => null);
     if (!r || !r.ok || !r.def) { box.innerHTML = '<div class="yeta-setup">정책 로드 실패 — 잠시 후 다시 열어줘.</div>'; return; }
     YPOLDEF = r.def; _ypolCur = r.p || {};
@@ -2395,7 +2329,7 @@ function yLocOf(r) {   // 행별 장소 표기(운영자 260709 개정) — 노�
 async function yListRender() {
   const box = $('#ylistRows');
   if (!YSESS) {   // 세션 미로드 = 서버에서 한 번
-    box.replaceChildren(yLoadingBox());   // 진행중 = orb 로딩 도트3+shimmer(nomute 이관 · 운영자 260726 — 스크램블 대체)
+    box.replaceChildren(yLoadingBox());   // 진행중 = 스크램블 로더(문구 대체 · 운영자 260708)
     const r = await yApi('get').catch(() => null);
     if (r && r.ok) YSESS = r.sess || {};
   }
@@ -2411,7 +2345,7 @@ async function yListRender() {
     .filter(r => !yDormant(r))   // 방치 3일+ = 자리를 떠남(항목17 · 세계관 활동감 — 대화 앱 아닌 동네)
     .sort((a, b) => ((b.pin ? 1 : 0) - (a.pin ? 1 : 0)) || ((b.updated || 0) - (a.updated || 0)));   // 고정 우선 → 최근이 위(운영자 260707 · pin ts는 판정만 = 고정방도 새 메시지에 부상 · UX감사③B)
   const curP = s.cur ? yPersona(s.cur) : null;
-  if (!rows.length) { _ylSig = ''; _ylPainted = false; $('#ylist').classList.add('list-empty'); box.innerHTML = '<div class="yeta-setup yempty">진행중인 대화가 없습니다.</div>'; return; }   // 빈 = 중앙+흰색(운영자) · 다음 비어있지 않은 렌더 = 진짜 첫 stagger
+  if (!rows.length) { _ylSig = ''; _ylPainted = false; $('#ylist').classList.add('list-empty'); box.innerHTML = '<div class="yeta-setup yempty">진행 중인 대화가 없어 — 캐릭터 탭에서 말을 걸어봐.</div>'; return; }   // 빈 = 중앙+흰색(운영자) · 다음 비어있지 않은 렌더 = 진짜 첫 stagger
   $('#ylist').classList.remove('list-empty');   // 대화 有 = 일반 스크롤 복귀
   yLocsSync(rows.map(r => r.id));   // 최근 장소 일괄 해석(항목18 · 슬롯 키 가드 = 시간당 1회 · 완료 시 재렌더)
   const sig = rows.map(r => `${r.id}:${r.pin ? 1 : 0}:${r.updated || 0}:${(r.turns || []).length}:${r.state}:${yReadTs(r.id)}:${yDead({ id: r.id }) ? 'D' : ''}`).join('|') + `#${rows.length}@${Math.floor(Date.now() / 60000)}`;   // 행 수(dormant 전환·항목17) + 분 버킷(상대시간 매분 노화) — 병합 260707 · D = 사망 전환(260725 — 죽음·부활이 분 버킷을 안 기다리고 그 폴에서 바로 도색)
@@ -2507,8 +2441,7 @@ async function yLrAct(b) {   // 트레이 픽토 = 고정/나가기(구 .ylmenu 
   const box = $('#ylistRows');
   const TRAY_W = 60, THRESH = 36, RUB = .55;   // 트레이폭(=CSS --ylr-w 동기) · 열림 임계 · 오버슈트 저항(0 자유~1 단단)
   let x0 = 0, y0 = 0, tgt = null, row = null, tray = null, decided = 0, horiz = 0, startX = 0, pid = 0;
-  const clear = () => { tgt = null; row = null; tray = null; decided = 0; horiz = 0; };   // 상태만(설정 settle 전용 — DOM은 settle이 이징 시작점 커밋 후 직접 정리)
-  const reset = () => { if (tgt) { tgt.classList.remove('ylr-drag'); if (row) row.style.transform = ''; if (tray) tray.style.transform = ''; } clear(); };   // 중단 = DOM까지 원복(Q.83) — 종전엔 상태만 비워서, 드래그 중 비primary 터치·스크롤 개입 시 .ylr-drag(transition:none)+인라인 transform이 잔존해 행이 반쯤 열린 채 동결(이후 settle은 tgt=null로 조기 탈출 = 정리 코드 도달 불가)
+  const reset = () => { tgt = null; row = null; tray = null; decided = 0; horiz = 0; };
   box.addEventListener('pointerdown', e => {
     if (e.target.closest('.ylr-tray')) { reset(); return; }   // 트레이 픽토 = click 핸들러 처리(드래그 아님)
     const r = e.target.closest('.ylist-row'); if (!r || !e.isPrimary) { reset(); return; }
@@ -2535,7 +2468,7 @@ async function yLrAct(b) {   // 트레이 픽토 = 고정/나가기(구 .ylmenu 
   });
   const settle = e => {
     if (!tgt) return;
-    const w = tgt, r = row, tr = tray, wasH = horiz, x = startX + (e.clientX - x0); clear();   // clear(상태만) — reset이면 offsetWidth 커밋 전에 transform이 풀려 이징 시작점이 스냅된다
+    const w = tgt, r = row, tr = tray, wasH = horiz, x = startX + (e.clientX - x0); reset();
     w.classList.remove('ylr-drag');
     if (!wasH) { if (r) r.style.transform = ''; if (tr) tr.style.transform = ''; return; }   // 세로/무이동 = 인라인 정리만(탭은 click 핸들러가 처리)
     void w.offsetWidth;                                  // transition off 상태서 현 위치 커밋 → 아래 인라인 해제가 이징 시작점이 됨
@@ -2545,7 +2478,10 @@ async function yLrAct(b) {   // 트레이 픽토 = 고정/나가기(구 .ylmenu 
     _ylrJustSwipe = 1; setTimeout(() => _ylrJustSwipe = 0, 80);   // 릴리스 합성 click 소비(방 오발 진입 차단)
   };
   box.addEventListener('pointerup', settle);
-  box.addEventListener('pointercancel', reset);   // reset이 DOM 원복까지 포함(Q.83) — 종전 수동 정리와 동일 동작·중복 제거
+  box.addEventListener('pointercancel', e => {
+    if (tgt) { tgt.classList.remove('ylr-drag'); if (row) row.style.transform = ''; if (tray) tray.style.transform = ''; }
+    reset();
+  });
   $('#ylist') && $('#ylist').addEventListener('scroll', reset, { passive: true });
   box.addEventListener('click', e => {
     const act = e.target.closest('.ylr-act');
@@ -2619,7 +2555,7 @@ function yStatBoost(c) {   // 친밀도 상승 스탯(운영자 260710) — 유�
 async function yCharRender() {   // 메뉴1 = 시즌 세계관 헤더 + 캐릭터 리스트(1행 1명 · 아바타|이름·표현·대사|구분자|육각) · 탭 = 세부 디테일(운영자 260706)
   const grid = $('#ycharGrid');
   if (!YCHARS.length) {
-    grid.replaceChildren(yLoadingBox());   // 진행중 = orb 로딩 도트3+shimmer(nomute 이관 · 운영자 260726 — 스크램블 대체)
+    grid.replaceChildren(yLoadingBox());   // 진행중 = 스크램블 로더(문구 대체 · 운영자 260708)
     const r = await yApi('chars').catch(() => null);
     if (r && r.ok) { YCHARS = r.chars || []; YWORLD = r.world || null; YREADY = !!r.ready; }
   }
@@ -2654,7 +2590,6 @@ function yShowDetail(id) {   // 캐릭터 세부 디테일 — 대형 아바타�
     + (c.intro ? `<span class="ycd-desc">${esc(c.intro)}</span>` : '')
     + (c.video ? `<video class="ycd-video" src="${esc(c.video)}"${c.video_poster ? ` poster="${esc(c.video_poster)}"` : ''} muted loop playsinline autoplay preload="metadata"></video>` : '')
     + yDeadInfo(c.id)   // 죽음 프로세스 줄(운영자 260725) — 죽음/부활 대기/귀환 3상태 공용 · 해당 없으면 빈 문자열 · 육각 위 = 부활 조건 CTA 바로 앞
-    + yModeInfo(c)   // 변신 창 줄(운영자 260726) — 모드축 없는 인물·사망·미대면이면 빈 문자열(가드는 함수 안 단일) · 죽음 줄 바로 뒤 = 같은 메타 띠
     + yHexSvg(c.stats, true, yStatBoost(c))
     + (yLockLabel(c) || um || yEstranged(c) || yDead(c)
         ? `<button type="button" class="ycd-cta locked" disabled>${yDead(c) ? '죽음 — 누가 신당에서 빌어주면 바로, 아니면 시간이 다 흘러야 돌아와' : c.grade === 'barge' ? '부를 수 없는 사람 — 저녁이 오면 저쪽이 먼저 찾아온다' : um ? '아직 만나지 못했어 — 골목 어딘가에서 마주치면 열려' : yEstranged(c) ? '한동안 뜸했어 — 다시 마주치면 이어져' : yLockLabel(c) === '아직 모르는 인물' ? '아직 대화할 수 없어' : '아직 열리지 않은 인물'}</button>`
@@ -2862,7 +2797,7 @@ function yShowSettings(noNav) {
     + `<div class="yset-sec">글꼴</div>`   // 실동작(운영자 260707 "영문/한글 따로 · 볼드 고정 폰트만") — 기본 = LEMONMILK·Paperlogy(260708)
     + fontRow('latin', '영문 폰트') + fontRow('hangul', '한글 폰트')
     + `<div class="yset-sec">알림</div>` + sw(I.bell, '답장 알림', '새 답장 오면 웹푸시', 'push', true) + sw(I.bell, '소리 · 진동', '새 답장에 진동', 'haptic', true)
-    + `<div class="yset-sec">대화</div>` + yDepthRow() + yTodayRow() + yUsageRow() + sw(I.type, '타이핑 표시', '답장 전 “입력 중…”', 'typing', true) + sw(I.chat, '읽음 표시', '내 메시지 옆 안읽음 ‘1’', 'read', true) + sw(I.type, '일본어 발음', '일본어 밑에 읽는 법 — 몰입용', 'ruby', true)
+    + `<div class="yset-sec">대화</div>` + yDepthRow() + yTodayRow() + yUsageRow() + sw(I.type, '타이핑 표시', '답장 전 “입력 중…”', 'typing', true) + sw(I.chat, '읽음 표시', '내 메시지 옆 안읽음 ‘1’', 'read', true)
     + `<div class="yset-sec">음성 · 통화</div>` + sw(I.phone, '걸려오는 전화', '끄면 벨 없이 대사만 남아', 'call', true) + sw(I.radio, '무전기(PTT)', '입력행 마이크 — 켜면 복원', 'ptt', false) + info(I.phone, '일일 통화 상한', '유료 가드 — 서버 설정', '3회')
     + `<div class="yset-sec">화면</div>` + info(I.screen, '테마', '다크 고정(브랜드)', '다크') + sw(I.screen, '모션 줄이기', '애니메이션 최소화', 'reduce', false) + `<button type="button" class="yset-item" data-fs="1"><span class="si-ic">${I.type}</span><span class="si-lbl"><span class="si-t">글자 크기</span><span class="si-d">탭 = 보통 → 크게 → 아주 크게</span></span><span class="si-v">${ySetVt('fs')}${I.chev}</span></button>`
     + `<div class="yset-sec">데이터</div>` + act(I.trash, '대화 초기화', '모든 대화 기록 삭제', 'reset') + act(I.data, '캐시 비우기', '읽음·로컬 캐시 정리', 'cache')
@@ -3071,7 +3006,7 @@ $('#ycsettingsCard').addEventListener('click', e => {
   if (sw) {
     const key = sw.dataset.pref, on = !sw.classList.contains('on');
     sw.classList.toggle('on', on); sw.setAttribute('aria-checked', on); yPrefSet(key, on);
-    if (key === 'reduce' || key === 'ptt' || key === 'ruby') yPrefApply();   // 모션 줄이기·무전기 = 즉시 반영(html 클래스)
+    if (key === 'reduce' || key === 'ptt') yPrefApply();   // 모션 줄이기·무전기 = 즉시 반영(html 클래스)
     if (key === 'push' && on && 'Notification' in window && Notification.permission === 'default') { try { Notification.requestPermission(); } catch (x) {} }   // 알림 켜면 권한 요청
     return;
   }
@@ -3193,7 +3128,7 @@ async function openYeta(charId, _noNav) {
   yStair.pause(); yMapLeave();   // 챗 열림 = 계단·지도 루프 정지(top layer 투과 아티팩트 + GPU/배터리 차단 · QA13: 지도 탭 위 챗 열려도 rAF+60s 인터벌 계속 돌던 누수 봉쇄) — 닫힘 핸들러 yTab이 map 복귀 시 재개
   const log = $('#yetaLog');
   if (!YCHARS.length) {
-    log.replaceChildren(yLoadingBox());   // 진행중 = orb 로딩 도트3+shimmer(nomute 이관 · 운영자 260726 — 스크램블 대체)
+    log.replaceChildren(yLoadingBox());   // 진행중 = 스크램블 로더(문구 대체 · 운영자 260708)
     const r = await yApi('chars').catch(() => null);
     if (r && r.ok) { YCHARS = r.chars || []; YWORLD = r.world || null; YREADY = !!r.ready; }
   }
@@ -3394,32 +3329,6 @@ function yDeadInfo(id) {   // 죽음 프로세스 표시(운영자 260725 "몇�
   return head   // ② 조건 충족 = 부활 대기(성당 앞뜰) · 첫 답이 오면 엔트리가 revived로 넘어간다
     + `<span class="ypp-meta ydead-l"><span>부활 · <b>곧 돌아온다</b></span></span>`
     + `<span class="ypp-desc">${by ? `${esc(by)}${yJosa(by, '이', '가')} 신당에서 빌어줬어 — 성당 앞뜰에서 눈을 뜨는 중.` : '무음동의 밤이 다 흘렀어 — 성당 앞뜰에서 눈을 뜨는 중.'}</span>`;
-}
-function yModeInfo(c) {   // 변신 창 표시(운영자 260726 "도깨비까지 N분") — 창이 현실 4h당 1h뿐이라 육안으로 놓치던 것 · 마크업·시각축 = yDeadInfo 100% 계승(라벨 · <b>값</b> + 각주 1줄 · 무음동 단독 표기 Q.50) · 신규 CSS 0
-  const m = c && c.mode;
-  if (!m || !m.nm) return '';
-  if (yDead(c) || yRevPend(c.id) || yUnmet(c)) return '';   // 사망·부활대기 = 그 줄이 먼저(정보 겹침) · 미대면 = 아직 못 만난 인물의 변신을 미리 알려주지 않는다. ⚠ yLockLabel은 가드로 안 쓴다 — 난입 전용(locked·드루실라)은 만난 뒤에도 라벨이 남아 with 분기가 영영 안 뜬다(실측 260726) · 만난 인물의 정보 공개 수준은 생각·위치·공기와 동렬
-  if (Array.isArray(m.with) && m.with.length) {   // 동석 게이트(드루실라 "고죠 흉내") = 시간축 없음 — 카운트다운 대신 조건을 적는다(없는 수치를 지어내지 않음)
-    const nm = m.with.map(id => (yPersona(id) || {}).name || '').filter(Boolean).join('·');
-    if (!nm) return '';
-    return `<span class="ypp-meta ydead-l"><span>${esc(m.nm)} · <b>${esc(nm)}${yJosa(nm, '과', '와')} 같은 방일 때</b></span></span>`
-      + `<span class="ypp-desc">${esc(nm)}${yJosa(nm, '이', '가')} 이 방에 있으면 그 모습으로 바뀐다 — 프사도 배경도 같이 갈린다.</span>`;
-  }
-  if (!Array.isArray(m.t) || !m.t.length) return '';
-  const RATE = window.YWORLD_RATE || 6;
-  const wm = Math.floor(Date.now() / 60000 * RATE) % 1440, h0 = (wm / 60) | 0;   // 무음동 분·시(yWorldDH와 같은 공식 — 배속 SSOT 참조)
-  const on = h => m.t.includes(ymSlot(h));   // 판정 = yModeOn과 같은 시계(ymSlot 단일 정의)
-  const cur = on(h0);
-  let k = 1; while (k < 24 && on((h0 + k) % 24) === cur) k++;
-  if (k >= 24) return '';   // 24시간 내내 같은 상태 = '창' 개념이 없는 캐릭터
-  const leftMs = ((((h0 + k) % 24) * 60 - wm + 1440) % 1440) / RATE * 60000;   // 다음 경계까지 = 세계 분 → 현실 ms(yWDur가 다시 세계 단위로 되돌린다 · 왕복 무손실)
-  let s = 0, e = 0;
-  for (let h = 0; h < 24; h++) { if (on(h) && !on((h + 23) % 24)) s = h; if (on(h) && !on((h + 1) % 24)) e = (h + 1) % 24; }   // 창의 시작·끝 시(자정 넘김 포함)
-  const win = `무음동 ${String(s).padStart(2, '0')}시~${String(e).padStart(2, '0')}시`;
-  if (cur) return `<span class="ypp-meta ydead-l"><span>${esc(m.nm)} · <b>${esc(yWDur(leftMs))} 남음</b></span></span>`
-    + `<span class="ypp-desc">지금 그 창 안이야 — ${esc(win)}가 지나면 평소 모습으로 돌아간다.</span>`;
-  return `<span class="ypp-meta ydead-l"><span>${esc(m.nm)}까지 · <b>${esc(yWDur(leftMs))}</b></span></span>`
-    + `<span class="ypp-desc">${esc(win)}에만 그 모습이 나온다 — 시계가 그 창에 들면 저절로 바뀐다.</span>`;
 }
 let _yNearC = null, _yNear = [], _yNearGen = 0;   // 공간 초대 후보(pill) + 근처 목록(스택·팝업) · gen = 세대 토큰(평의회A — await 중 방 전환 시 교차 방 오염 차단)
 async function yNearCalc() {   // 현재 방 상대와 같은 장소(동선 판정)의 다른 캐릭터들 — 잠금·미대면·소원·방 멤버 제외 · 로컬 누적 → 원자 커밋(낡은 세대·타 방 결과 = 폐기)
@@ -3823,7 +3732,6 @@ function yProfPop(force, pid) {
     + `<span class="ycd-tag">${esc(c.tagline || '')}</span>`
     + `<span class="ypp-think">${tht ? `“${esc(tht)}…”` : '(무슨 생각을 하는진 모르겠다)'}</span>`
     + (yDeadInfo(c.id) || `<span class="ypp-meta"><span>위치 · <b>${plNm ? esc(plNm) : '알 수 없음'}</b></span><span class="sep"></span><span>공기 · <b>${esc(mood)}</b></span></span>`)   // 죽음·부활 대기·귀환 = 위치·공기 대신 그 상태(죽은 사람의 '지금 위치·기분'은 없다 · 260725)
-    + yModeInfo(c)   // 변신 창 줄(운영자 260726) — 위치·공기 '대신'이 아니라 그 아래 한 줄 추가(변신은 지금 상태가 아니라 시계 정보) · 가드는 함수 안 단일
     + (c.intro || c.desc ? `<span class="ypp-desc">${esc(c.intro || c.desc)}</span>` : '')
     + (c.quote ? `<span class="ycd-quote">“${esc(c.quote)}”</span>` : '');
   pk.hidden = false;
@@ -3860,7 +3768,6 @@ function yPdRender() {   // 카드 내용 = 프사 팝오버 파생 축 동일(�
     + `<span class="ypd-mood"><em role="img" aria-label="지금 기분 ${esc(mood)}">${emo}</em><span>${esc(mood)}</span></span>`
     + `<span class="ypp-think">${tht ? `“${esc(tht)}…”` : '(무슨 생각을 하는진 모르겠다)'}</span>`
     + (yDeadInfo(c.id) || `<span class="ypp-meta"><span>위치 · <b>${plNm ? esc(plNm) : '알 수 없음'}</b></span><span class="sep"></span><span>공기 · <b>${esc(mood)}</b></span></span>`)   // 죽음·부활 대기·귀환 = 위치·공기 대신 그 상태(죽은 사람의 '지금 위치·기분'은 없다 · 260725)
-    + yModeInfo(c)   // 변신 창 줄(운영자 260726) — 위치·공기 '대신'이 아니라 그 아래 한 줄 추가(변신은 지금 상태가 아니라 시계 정보) · 가드는 함수 안 단일
     + `<span class="ypd-acts">`
     + (hasCall ? `<button type="button" class="ypd-act" data-pda="call"${_dgone ? ' disabled aria-disabled="true"' : ''}><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 4.2 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.6a16 16 0 0 0 6 6l1.1-1.1a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7A2 2 0 0 1 22 16.9z"/></svg></i><span>통화</span></button>` : '')
     + `<button type="button" class="ypd-act" data-pda="inv"${_dgone ? ' disabled aria-disabled="true"' : ''}><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="7" r="4"/><path d="M1 21v-1a6 6 0 0 1 12 0v1M19 8v6M22 11h-6"/></svg></i><span>초대</span></button>`
@@ -4160,36 +4067,16 @@ function yTime(ts) {   // 메시지 시각 = 무음동 세계 시각 "오전/오
   const t = wm(ts), h = (t / 60) | 0, m = String(t % 60).padStart(2, '0');
   return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${m}`;
 }
-const Y_EMO_HI = { tense: 1, mad: 1, joy: 1, love: 1 };   // 감정 글자 등장(Q.80)의 격정(고각성) 그룹 — 잔잔(warm/blue/shy)과 진폭 분리 · Y_GRP(배경 씬 폴백)과는 다른 축이라 별도 상수
-function yEmoWrap(html, dc) {   // yFmt 산출 HTML → 글자 단위 .ye 스팬(--i = 스태거 번호) — 태그·&엔티티 = 통짜 보존 · 라틴/숫자 연속 = 단어 1유닛(inline-block 단어 중간 개행 차단) · 공백·개행 = 미포장(pre-wrap 결 유지) · dc(Q.81 스트리밍 델타) = {g:전역 유닛 커서, b:이미 보인 수} — b 미만 유닛은 스팬 없이 통과(정착분 re-whoosh 0), 새 유닛만 --i 0부터
-  let h = '', n = 0;
-  for (let i = 0; i < html.length;) {
-    const c = html[i];
-    if (c === '<') { const j = html.indexOf('>', i); if (j < 0) { h += html.slice(i); break; } h += html.slice(i, j + 1); i = j + 1; continue; }
-    let u = c;
-    if (c === '&') { const j = html.indexOf(';', i); if (j > i && j - i <= 9) u = html.slice(i, j + 1); }
-    else if (/[A-Za-z0-9]/.test(c)) { let j = i + 1; while (j < html.length && /[A-Za-z0-9]/.test(html[j])) j++; u = html.slice(i, j); }
-    i += u.length;
-    if (u.trim()) { if (dc && dc.g++ < dc.b) h += u; else h += `<span class="ye" style="--i:${n++}">${u}</span>`; } else h += u;
-  }
-  return { h, n };
-}
 function yAiMsg(t, fresh, cont) {   // 캐릭터 메시지 = 아바타 + 이름 + [버블|시각](버블 밖 우하단 = 카톡 결) · fresh=신규만 촤르륵 · cont=직전과 같은 화자(아바타·이름 생략 = 톡방 그룹핑)
   const p = yPersona(t.persona) || YCUR || {};
   const tm = yTime(t.ts);
-  const emo = fresh && !t.ov && Y_MOODS.includes(t.mood) && (t.text || '').length <= 600 ? t.mood : '';   // 감정 글자 등장(Q.80) — <<MOOD>> 실린 신규 등장분만(히스토리·재렌더 fresh=false, 겹침 ov = mut 톤 유지, 600자 캡 = 스팬 폭주 안전벨트)
-  const dmo = !emo && t.dc && !t.ov && Y_MOODS.includes(t.dm) ? t.dm : '';   // 스트리밍 델타 리졸브(Q.81) — draft(러너 선두 <<MOOD>> 동봉)·확정 꼬리 스왑: 이미 보인 유닛(dc.b 미만)은 통과, 새로 자란 글자만 리졸브(re-whoosh 0 유지)
-  let body = yFmt(t.text), est = '', ecls = '';
-  if (emo) { const w = yEmoWrap(body); if (w.n) { body = w.h; ecls = ` yemo${Y_EMO_HI[emo] ? ' yemo-hi' : ''}`; est = ` style="--emo-s:${Math.min(Y_EMO_HI[emo] ? 22 : 14, Math.max(6, Math.round(1100 / w.n)))}ms"`; } }   // 스태거 간격 = 기본 14/22ms(beui TextCascade 25ms 결 · 격정이 더 또박또박), 장문은 총 지연 ≤1.1s로 압축
-  else if (t.dc) { const w = yEmoWrap(body, t.dc); if (dmo) { body = w.h; if (w.n) { ecls = ` yemo${Y_EMO_HI[dmo] ? ' yemo-hi' : ''}`; est = ` style="--emo-s:${Math.min(Y_EMO_HI[dmo] ? 22 : 14, Math.max(6, Math.round(700 / w.n)))}ms"`; } } }   // dc 있으면 무드 없어도 커서는 전진(뒤늦게 온 무드가 본 글자를 재리졸브 못 하게) · 델타 총 지연 ≤0.7s = 다음 발행(MIN_GAP 1.2s) 전 정착
-  return `<div class="ymsg${fresh ? ' in' : ''}${cont ? ' cont' : ''}" data-k="a|${esc(t.persona || '')}|${cont ? 1 : 0}|${t.ov ? 1 : 0}|${yModeOn(p) ? 1 : 0}|${esc(t.text || '')}">${yAva(p)}<span class="ycol"><span class="yname">${esc(p.name || '')}</span><span class="ybrow"><div class="yb ai${t.ov ? ' ov' : ''}${ecls}"${est}>${body}</div>${tm ? `<time class="ytime">${tm}</time>` : ''}</span></span></div>`;   // data-k = 번호표(persona·그룹핑·ov·**모드**·텍스트) — time 제외 = 낙관/확정 재사용(분경계 무관) · 모드 자리(운영자 260725 "도깨비 모드면 도깨비 프사") = 변신 경계에서 번호표가 달라져야 이미 그린 말풍선의 프사가 교체된다(없으면 yReconcile이 옛 노드를 영구 재사용 = 프사 고착) · emo 마크업은 번호표 무관(같은 턴 재렌더 = 노드 재사용이라 애니 1회 보장)
+  return `<div class="ymsg${fresh ? ' in' : ''}${cont ? ' cont' : ''}" data-k="a|${esc(t.persona || '')}|${cont ? 1 : 0}|${t.ov ? 1 : 0}|${yModeOn(p) ? 1 : 0}|${esc(t.text || '')}">${yAva(p)}<span class="ycol"><span class="yname">${esc(p.name || '')}</span><span class="ybrow"><div class="yb ai${t.ov ? ' ov' : ''}">${yFmt(t.text)}</div>${tm ? `<time class="ytime">${tm}</time>` : ''}</span></span></div>`;   // data-k = 번호표(persona·그룹핑·ov·**모드**·텍스트) — time 제외 = 낙관/확정 재사용(분경계 무관) · 모드 자리(운영자 260725 "도깨비 모드면 도깨비 프사") = 변신 경계에서 번호표가 달라져야 이미 그린 말풍선의 프사가 교체된다(없으면 yReconcile이 옛 노드를 영구 재사용 = 프사 고착)
 }
 let _yLastN = -1, _yTypOn = false, _yFailOn = false, _yTypHold = 0, _yTypT = null;   // 촤르륵 키드 + 타이핑 지연 홀드(읽는 시간 · 운영자 260707)
 let _yCurT = '';   // 마지막 렌더한 방 id — 서버발 cur 이동(단톡 재합류·휘발 소멸 · Q.06) 감지용(yThreadSwitch 미경유 전환도 방 경계로 취급)
 let _yKickOn = false;   // 난입 내보내기 pill 등장 래치(_yFailOn 동형 — 재렌더 재애니 방지 · 합석 260707)
 let _yPaceN = -1, _yPaceT = 0;   // 답장 페이스 — 공개 승인된 턴 수(꼬리 답장 런은 길이 비례 타이핑 모션 후 공개 · 운영자 260706 "바로 대답 어색" · 항목13)
 let _yDraft = null, _yDraftOn = false, _yNoAnim = false;   // 문장 스트리밍 부분 답장(260714 한수2) — watch가 준 draft + 표시 래치 + 스왑 무애니 1회 플래그(re-whoosh 차단 · 평의회 UX)
-let _yDrN = 0, _yDrSwap = null;   // 감정 델타 리졸브(Q.81) — 이미 화면에 보인 draft 글자 유닛 수 + 확정 스왑 1회분 {b:본 유닛, at:꼬리 런 시작 인덱스}(_yNoAnim과 같은 수명 · 안 본 꼬리만 리졸브)
 let _yComposing = false, _yRenderPend = false;   // IME 조합(한글) 진행 여부 + 조합 중 밀린 렌더 플래그(운영자 260717) — 조합 중 로그 통짜 innerHTML 교체가 조합 중이던 글자를 날리는 모바일 IME 버그 차단
 let _yDrKeep = false;   // 겹침 draft 유지 래치(운영자 260717 ⑨⑩) — 생성 중 화면에 뜬 부분 답장 위로 내가 말을 보내도 숨기지 않고 mut로 계속 자라게(러너가 60% 미만이면 폐기·재생성 = 다음 확정이 자연 대체)
 let _lastUserI = -1, _meUnread = false;   // 인챗 '1' 읽음표시(항목14A) — 마지막 미읽음 내 턴 인덱스 + 미읽음 래치(_yTypHold 경과 = 읽음)
@@ -4368,7 +4255,7 @@ function yRender() {
   if (_yCurT !== _ct) {   // 방 정체 전환 감지(Q.06 평의회5) — 단톡 재합류·휘발 소멸로 서버가 cur을 옮기면 yThreadSwitch를 안 거쳐 키드가 이전 방 기준으로 남음 → 방 경계 리셋과 동형 처리(정규 전환 뒤 중복 실행은 무해·멱등)
     const _old = _yCurT; _yCurT = _ct;
     if (_old && _ct) {
-      _yLastN = -1; _yPaceN = -1; _yTypHold = 0; _meUnread = false; _yDrKeep = false; _yDrN = 0; _yDrSwap = null;   // 첫 렌더 취급 = 병합된 1:1 히스토리 일괄 촤르륵 폭주 차단(평의회5①) · 겹침 draft 래치·감정 델타 커서(Q.81)도 방 경계 리셋(260717)
+      _yLastN = -1; _yPaceN = -1; _yTypHold = 0; _meUnread = false; _yDrKeep = false;   // 첫 렌더 취급 = 병합된 1:1 히스토리 일괄 촤르륵 폭주 차단(평의회5①) · 겹침 draft 래치도 방 경계 리셋(260717)
       clearTimeout(_yTypT); _yTypT = null; clearTimeout(_yPaceT); _yPaceT = 0;
       yScSet(0); _ySegs = [{ at: 0, sc: 0 }]; yScSync();   // # 상황 모드 구간 교차 방 누수 차단(방 경계 리셋 계승 · 평의회5⑤)
       if (!YTH(_old)) { try {   // 옛 방이 소멸(=병합·휘발)이면 읽음 마커 승계 + 고아 키 제거(안읽음 재점화·localStorage 누적 차단 · 평의회5②)
@@ -4393,9 +4280,7 @@ function yRender() {
   //   버블 사이 = staged 유지 → 타이핑 점이 자연히 끼어 메신저 결. 각 홀드 = 그 버블 길이 비례(항목13 공식 온존 · 상한 4.2s).
   if (first || _yPaceN < 0 || _yPaceN > all.length) _yPaceN = all.length;
   else if (all.length > _yPaceN) {
-    if (_yDraftOn) { _yPaceN = all.length; _yDraft = null; _yDrKeep = false; _yNoAnim = true;
-      if (_yDrN) { let dcut = all.length; while (dcut > 0 && all[dcut - 1].role === 'assistant') dcut--; _yDrSwap = { b: _yDrN, at: dcut }; }   // 확정 스왑 델타(Q.81) — draft로 못 본 꼬리 글자만 리졸브 대상(본 글자 re-whoosh 0 불변)
-      _yDrN = 0; }   // 문장 스트리밍으로 이미 본 답장(한수2) = 전량 즉시 스왑(축소 착시 방지) + 촤르륵 재생 억제(이미 보인 텍스트 re-whoosh 플래시 차단 · 평의회 UX) · 겹침 래치도 소거(다음 생성 = 평시 결)
+    if (_yDraftOn) { _yPaceN = all.length; _yDraft = null; _yDrKeep = false; _yNoAnim = true; }   // 문장 스트리밍으로 이미 본 답장(한수2) = 전량 즉시 스왑(축소 착시 방지) + 촤르륵 재생 억제(이미 보인 텍스트 re-whoosh 플래시 차단 · 평의회 UX) · 겹침 래치도 소거(다음 생성 = 평시 결)
     let cut = all.length; while (cut > 0 && all[cut - 1].role === 'assistant') cut--;   // 꼬리 답장 런 직전까지는 즉시 공개(낙관 내 버블 소실 방지)
     _yPaceN = Math.max(_yPaceN, cut);
     if (all.length > _yPaceN && !_yPaceT) {
@@ -4419,7 +4304,6 @@ function yRender() {
   if (!turns.length && YCUR && (!openingPending || openingStuck)) h += yAiMsg({ text: yGreet(YCUR), persona: YCUR.id });   // 첫인사 폴백 — 오프닝 인플라이트면 억제(타이핑만) · 미설정/막힘 시 정적 표시
   const _mks = yMoodLog().filter(m => m.t === ((YSESS || {}).cur || '') && YME_FEEL[m.md]); let _mj = 0;   // 기분 지문(운영자 260716 수렴 · 평의회 A안) — 이 방에 적립된 마커를 ts 순서로 턴 사이에 위빙(로컬 표시 전용 · .ysit 계승 = 상황 지문과 동일 결)
   const _mkH = m => { const f = YME_FEEL[m.md]; return `<div class="ysit">${f[0]} 지금 기분 — ${f[1]}</div>`; };
-  const _dsw = _yDrSwap ? { at: _yDrSwap.at, dc: { g: 0, b: _yDrSwap.b } } : null;   // 확정 스왑 델타(Q.81) — 렌더마다 커서 새로(조합 유예로 같은 스왑을 다시 그려도 정합) · 꼬리 런 유닛을 이어 세어 draft에서 본 만큼 건너뛴다
   h += turns.map((t, i) => {
     let mk = ''; while (_mj < _mks.length && (_mks[_mj].ts || 0) <= (t.ts || 0)) mk += _mkH(_mks[_mj++]);   // 이 턴보다 먼저 찍힌 기분 = 턴 위에
     const fresh = !first && i >= prevN && !_yNoAnim;   // 신규 턴만 촤르륵 · _yNoAnim = 스트리밍 스왑 1회 무애니(이미 보인 텍스트 재생 차단)
@@ -4427,9 +4311,7 @@ function yRender() {
     if (t.role === 'user') {
       if (t.sc) return mk + `<div class="ysit${fresh ? ' in' : ''}">${yFmt(t.text)}</div>`;   // 상황 설명 턴(260714 '#') = 장면 지문 결(.ysit 계승) — 말풍선·'1'·시각 없음(연출 라인)
       const tm = yTime(t.ts); const un = i === _lastUserI && _meUnread && yPrefOn('read', true); const imh = t.img ? `<img class="yatt" data-att="${esc(t.img)}" alt="보낸 사진">` : ''; return mk + `<div class="ymrow me${fresh ? ' in' : ''}${pv && pv.role === 'user' ? ' cont' : ''}" data-k="u|${un ? 1 : 0}|${pv && pv.role === 'user' ? 1 : 0}|${esc(t.img || '')}|${esc(t.text || '')}">${un ? '<span class="yb-un">1</span>' : ''}${tm ? `<time class="ytime">${tm}</time>` : ''}<div class="yb me">${imh}${t.text ? yFmt(t.text) : ''}</div></div>`; }   // data-k = 번호표('1'읽음·그룹핑·img·텍스트) · 내 메시지 = [1][시각][버블] · 1 = 마지막 미읽음 내 턴 · img = 첨부 사진(260717 '+')
-    if (t.role === 'assistant') { const _cnt = pv && pv.role === 'assistant' && (pv.persona || '') === (t.persona || '');
-      if (_dsw && i >= _dsw.at) return mk + yAiMsg({ text: t.text, ts: t.ts, persona: t.persona, ov: t.ov, mood: t.mood, dm: t.mood, dc: _dsw.dc }, fresh, _cnt);   // 스왑 델타(Q.81) — 명시 필드 복사(스프레드 미사용 = 구 사파리 결) · data-k 구성 필드 전부 동봉 = reconcile 번호표 불변
-      return mk + yAiMsg(t, fresh, _cnt); }
+    if (t.role === 'assistant') return mk + yAiMsg(t, fresh, pv && pv.role === 'assistant' && (pv.persona || '') === (t.persona || ''));
     if (t.kind === 'amb') return mk + `<div class="ysit${fresh ? ' in' : ''}">${esc(t.text)}</div>`;   // 주변 사건(운영자 260725 "주변에서 계속 이슈가 터지게") = 장면 지문 결(.ysit 계승 — 상황 턴·기분 마커와 동일 문법 · 새 스타일 창작 0) · 씨앗 SSOT = apps/yeta/ambient.json · 생성 = 러너 ambient_refill
     return mk + `<div class="yb sys${fresh ? ' in' : ''}">${esc(t.text)}</div>`;   // sys = 페르소나 합류 등(그룹 끊음)
   }).join('');
@@ -4458,17 +4340,14 @@ function yRender() {
   const invP = s.invite && Date.now() - (s.invite.ts || 0) < 600000 ? yPersona(s.invite.to) : null;   // 초대 판정 대기(단톡 260707)
   const gbP = s.gb && s.gb.p && (s.room || []).length >= 2 && Date.now() - (s.gb.ts || 0) < 120000 ? yPersona(s.gb.p) : null;   // 단톡 자율 비트 예약(운영자 260725 "자기들끼리 얘기를 이어나가야") — 러너가 답장과 같은 write에 심는다 · state 비점유 = 초대 판정(invP) 결 계승(좀비 리퍼·자동재시도 축과 무관 = 러너 사망 시 TTL 120s로 조용히 소멸 · 짝 = yeta_chat.sh GB_TTL_MS·yeta_v3 GB_TTL_MS)
   const typing = yPrefOn('typing', true) && !deadNow && !gaveUp && !openingStuck && (awaiting || staged || failNow) && !!YCUR && Date.now() >= _yTypHold;   // 타이핑 표시(설정) 끄면 "입력 중" 숨김 · staged = 답장 페이스 홀드 · failNow = 자동 재시도 중에도 점 유지(실패 무노출) · _yTypHold = 읽는 시간 경과 후에만(운영자 260707)
-  if (!awaiting && !staged && _yDraft) { _yDraft = null; _yDrKeep = false; _yDrN = 0; }   // 확정 반영·대기 종료 = 잔여 draft 폐기(다음 턴 유령 버블 차단) · 델타 커서도 원점(Q.81)
+  if (!awaiting && !staged && _yDraft) { _yDraft = null; _yDrKeep = false; }   // 확정 반영·대기 종료 = 잔여 draft 폐기(다음 턴 유령 버블 차단)
   const dr = _yDraft && awaiting && !deadNow && !gaveUp && (_yDrKeep || Date.now() >= _yTypHold) && _yDraft.t === ((YSESS || {}).cur || '') && (_yDrKeep || (_yDraft.ts || 0) >= ((s.awaiting_since || 0) - 5000)) && _yDraft.text ? _yDraft : null;   // 문장 스트리밍(한수2) — 현재 방 · 이번 대기분만(스테일 가드) · 사망/이탈 연출 우선 · 읽는시간(_yTypHold) 게이트 = 타이핑과 동일 · _yDrKeep = 겹침 중 예외 2종(260717 ⑨ — 홀드 게이트 + ts 가드: 내 발송이 awaiting_since를 당겨 유지 버블이 증발하던 것 봉합 · 평의회 MED)
   if (deadNow) { const _dv = ((YSESS || {}).dead || {})[YCUR && YCUR.id]; h += _dv && _dv.flee
       ? `<div class="ysit">…그 자리를 벗어났다. 지금은 연락이 닿지 않는다 — 시간이 지나면 다시.</div>`   // 위협 이탈(운영자 260714) — 콘텐츠 거절 시 인물이 상황에서 벗어남 + 일시 두절(사망과 별개 결)
       : `<div class="ysit">…사망 — 누가 신당에서 빌어주거나, 무음동의 밤이 더 흘러야 닿는다.</div>`; yDcPush(_dv && _dv.flee ? 'flee' : 'dead', `${(YCUR && YCUR.id) || ''}:${(_dv || {}).d || (_dv || {}).t || 0}`); }   // 사망 지문(운영자 260714 "사망으로 표기" · .ysit 계승) — 입력도 함께 잠김 · 해제 = 신당 기도 단일 경로. ⚠️ #396(260725 시간 만료 폐지)이 "24시간·하루쯤 뒤" 안내 10곳을 신당 서사로 옮길 때 이 지문만 누락 — pray:1 + t=365일이라 24h가 지나도 안 풀리는데 로그만 "24시간"이라 같은 화면에서 헤더(신당)와 반대말을 하던 것 봉합(260725 Q.53 실렌더에서 포착)
   else if (gaveUp) h += `<div class="ysit${_yFailOn ? '' : ' in'}">…연결이 끊겼다. 한 번 더 말을 걸면 다시 이어진다.</div>`;   // 재시도 소진 = 세계관 사건이 아니라 '장애'다 — .ysit 결(바이브)은 유지하되 문구는 연결 축으로 갈라 flee("그 자리를 벗어났다")·사망과 구분(운영자 260725: 셋이 같은 얼굴이라 운영자조차 앱 장애인지 연출인지 못 가리던 것) · 새 메시지 = 새 에피소드로 재개
   else if (dr) { const lt = turns[turns.length - 1]; const pid = dr.p || (YCUR && YCUR.id) || ''; const pcont = !!(lt && lt.role === 'assistant' && (lt.persona || '') === pid);
-    const _ddm = !_yDrKeep && Y_MOODS.includes(dr.mood) ? dr.mood : '';   // 감정 델타 리졸브(Q.81) — 러너 선두 <<MOOD>> 동봉분 · 겹침(mut 톤)·미동봉(구 러너) = 무적용
-    const _ddc = { g: 0, b: _ddm ? _yDrN : Infinity };   // 무드 없어도 커서는 세운다(b=∞ = 스팬 0) — 뒤늦게 무드가 와도 이미 본 글자는 재리졸브 안 됨
-    yBubbles(dr.text).forEach((bt, bi) => { h += yAiMsg({ text: bt, persona: pid, ov: _yDrKeep ? 1 : 0, dm: _ddm, dc: _ddc }, !_yDraftOn && bi === 0, bi > 0 || pcont); });
-    _yDrN = _ddc.g; }   // 생성 중 부분 답장 — 확정과 같은 버블 분할로 미리 그림 · 등장만 촤르륵 · 겹침 중(_yDrKeep) = mut 톤(260717 ⑨) · 새로 자란 글자만 감정 리졸브(Q.81)
+    yBubbles(dr.text).forEach((bt, bi) => { h += yAiMsg({ text: bt, persona: pid, ov: _yDrKeep ? 1 : 0 }, !_yDraftOn && bi === 0, bi > 0 || pcont); }); }   // 생성 중 부분 답장 — 확정과 같은 버블 분할로 미리 그림 · 등장만 촤르륵 · 겹침 중(_yDrKeep) = mut 톤(260717 ⑨)
   else if (typing) h += yTypingHtml(!_yTypOn);
   else if (invP) h += yTypingHtml(!_yTypOn, invP, '올지 생각 중');   // 초대받은 캐릭터의 고민 = 타이핑 변형(시안 A)
   else if (gbP && yPrefOn('typing', true) && !deadNow) h += yTypingHtml(!_yTypOn, gbP);   // 자율 비트 생성 중 = 그 사람 이름으로 "입력 중"(정본 컴포넌트 계승 · 타이핑 설정 OFF면 숨김만 = 턴은 폴로 그대로 들어온다)
@@ -4482,7 +4361,7 @@ function yRender() {
   else {
     yReconcile(log, h);   // 통짜 innerHTML 폐지 → 증분(안 바뀐 말풍선 파괴 0 · 스트리밍은 마지막 버블만 교체) = 자연스러운 채팅의 뿌리
     yAttHydrate(log);   // 첨부 사진 지연 로드(260717 '+') — data-att → op att blob(캐시) · reconcile 후 새/재사용 노드 처리(멱등)
-    _yNoAnim = false; _yDrSwap = null;   // 스왑 무애니·스왑 델타(Q.81) = 1회성(다음 렌더부터 정상 촤르륵 · 조합 유예 중엔 유지 = _yNoAnim 동수명)
+    _yNoAnim = false;   // 스왑 무애니 = 1회성(다음 렌더부터 정상 촤르륵)
     if (atBottom) log.scrollTop = log.scrollHeight;
   }
   yPickBar();   // 미연시 선택지(운영자 260725) — 렌더 꼬리에서 매번 재판정(답장 생성 시작·사망·방 전환에 자동 회수)
