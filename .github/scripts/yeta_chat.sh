@@ -92,6 +92,43 @@ r2put() {   # ETag 有 = 조건부 put(교차 writer 덮어쓰기 차단) · CLI
 # 문장 스트리밍 부분 박제(대화 속도 260714 한수2) — 본답장 생성 중 문장 단위로 draft 발행(yeta_stream.py) · finish 후 회수.
 DRAFT_KEY="sessions/${CHAR}.draft.json"
 draft_clear() { aws s3api delete-object --bucket "$YETA_R2_BUCKET" --key "$DRAFT_KEY" --endpoint-url "$EP" >/dev/null 2>&1 || true; }   # 스테일 draft = 다음 턴 유령 버블 씨앗 — 성공/실패 무관 회수(멱등·무해)
+# ── 죽은 러너의 draft 회수(운영자 260726 Q.71-B 한수) ──
+# 왜: 러너가 SIGTERM(exit 143)으로 회수되면 생성 중이던 답이 통째로 증발한다(260725 12:14:27 생성 시작 → 12:14:42 죽음 실측).
+#     그런데 그 순간까지 쓴 문장은 이미 R2 draft 에 있고 **유저 화면에도 떠 있었다**(watch 스트리밍). 종전엔 다음 턴 시작에서
+#     draft_clear 로 그걸 그냥 지워서, 재발사가 전혀 다른 답을 새로 써 왔다 = 유저가 본 말이 증발.
+#     이제 지우기 전에 읽어 '그때 하려던 말'을 재생성 재료로 넘긴다. **이어쓰기가 아니라 방향 계승 + 처음부터 다시 쓰기**
+#     (이어쓰기는 출력이 뒷토막만 나와 finish 합성·이음새·중복 위험 = 파이프 개조. 다시쓰기는 기존 파이프 무변경).
+# 스테일 가드 3중: 같은 스레드(t) · 같은 화자(p) · 나이 ≤ DRAFT_SALVAGE_MAX_H(기본 6h). 하나라도 어긋나면 빈 값 = 종전과 동일.
+draft_salvage() {
+  PREV_DRAFT=""
+  local _f=/tmp/yeta_prev_draft.json
+  rm -f "$_f"
+  aws s3api get-object --bucket "$YETA_R2_BUCKET" --key "$DRAFT_KEY" "$_f" --endpoint-url "$EP" >/dev/null 2>&1 || return 0
+  PREV_DRAFT="$(D_T="$THREAD" D_P="$PERSONA" D_MAXH="${DRAFT_SALVAGE_MAX_H:-6}" python3 - "$_f" <<'PY'
+import json, os, sys, time
+try:
+    d = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception:
+    sys.exit(0)
+if not isinstance(d, dict): sys.exit(0)
+if str(d.get("t") or "") != os.environ.get("D_T", ""): sys.exit(0)      # 다른 방의 조각 = 무시(방 오염 차단)
+if str(d.get("p") or "") != os.environ.get("D_P", ""): sys.exit(0)      # 다른 화자의 조각 = 무시(단톡 교대·재드로 오귀속 차단)
+try: age_h = (time.time() * 1000 - float(d.get("ts") or 0)) / 3600000
+except (TypeError, ValueError): sys.exit(0)
+try: maxh = float(os.environ.get("D_MAXH") or 6)
+except ValueError: maxh = 6
+if not (0 <= age_h <= maxh): sys.exit(0)                                # 미래 ts(클록스큐)·너무 묵은 조각 = 무시
+t = str(d.get("text") or "")
+i = t.find("<<")                                                        # 마커 이후 보류(stream 필터 계약 2선 — 기억·무드 유출 차단)
+if i >= 0: t = t[:i]
+t = t.strip()
+if len(t) < 20: sys.exit(0)                                             # 한두 글자 조각 = 방향 정보 0 = 무시
+print(t[:600])
+PY
+)"
+  [ -n "$PREV_DRAFT" ] && echo "  ♻️ 죽은 러너 draft 회수(${#PREV_DRAFT}자) — 방향 계승해 재생성"
+  return 0
+}
 
 SESSION_START=$SECONDS
 
@@ -779,7 +816,7 @@ print((t[:70]+'…') if len(t)>70 else (t or '새 메시지'))")"
 # ── 상태 블록(공용 — 본답장 + 초대 판정 · env: PERSONA LAST_MOOD CAST GAP_H REL_LV RIV HANDOFF TUNE CO_NAME BARGE_DEBUT) ──
 # 시각·계절·달·데일리 무드 시드(sha256 = 같은 날 같은 기분·무저장) + 직전 공기(감정 관성) + 동네 로스터(주민 창작 방지) + 단톡 동행·난입 데뷔.
 state_block() {
-  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" "${LAST_OPEN:-}" "${LATE_H:-0}" <<'PY'
+  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" "${LAST_OPEN:-}" "${LATE_H:-0}" "${PREV_DRAFT:-}" <<'PY'
 import sys, hashlib, json, time
 from datetime import datetime, timezone, timedelta
 persona, last_mood, cast, gap_h, rel_lv, riv, handoff = sys.argv[1:8]
@@ -789,6 +826,7 @@ place_nm = sys.argv[11] if len(sys.argv) > 11 else ""
 barge_via = sys.argv[12] if len(sys.argv) > 12 else ""
 last_open = sys.argv[13] if len(sys.argv) > 13 else ""   # 직전에 삼킨 것(감정선 캐리어 260725 · 초대 판정 등 미전달 경로 = 빈값 = 블록 생략)
 late_h = sys.argv[14] if len(sys.argv) > 14 else "0"     # 지각(260726 Q.70) — 이 pending 이 들어온 뒤 흐른 시간 · 미전달 경로(오프닝·초대 판정) = "0" = 블록 생략
+prev_draft = sys.argv[15] if len(sys.argv) > 15 else ""  # 죽은 러너의 쓰다 만 말(260726 Q.71-B · draft_salvage 3중 가드 통과분만) — 빈값 = 블록 생략
 try: tune = json.loads(sys.argv[8]) if sys.argv[8] and sys.argv[8] != "None" else []
 except Exception: tune = []
 now = datetime.now(timezone(timedelta(hours=9)))                       # KST 고정(§표기표준 — 러너 UTC) · 계절·요일·무드 시드 = 실제 달력(가속 안 함)
@@ -825,6 +863,11 @@ if lt >= 1:
     L.append(f"- 유저의 이 말은 약 {int(lt // 24)}일 전에 왔고, 너는 지금에서야 본다 — 방금 온 말처럼 받지 마라." if lt >= 24
              else f"- 유저의 이 말은 약 {int(lt)}시간 전에 왔고, 너는 지금에서야 본다 — 방금 온 말처럼 받지 마라.")
     L.append("  그 사이 공백을 네 성향대로 **딱 한 번만** 짚고 본론으로 가라(늦게 본 이유는 네 사정·네 하루로 자연스럽게 — 시스템·서버·오류·연결 얘기는 절대 금지). 사과 반복·변명 나열 금지.")
+# 쓰다 만 말 계승(운영자 260726 Q.71-B 한수) — 러너가 회수되며 증발한 답의 조각. 유저 화면엔 이미 떠 있었을 수 있다(watch 스트리밍)
+# → 전혀 다른 답으로 갈아타면 "봤던 말이 사라졌다"가 된다. 이어붙이기는 파이프가 감당 못 하므로 **방향만 계승해 처음부터 완결**시킨다.
+if prev_draft:
+    L.append("- 너는 방금 이 답을 쓰다가 중간에 끊겼다. 그때 쓰던 말: 「" + prev_draft.replace("\n", " / ") + "」")
+    L.append("  유저 화면엔 이 조각이 이미 떠 있었을 수 있다 — **전혀 다른 말로 갈아타지 마라.** 그때 하려던 방향·톤·화제를 그대로 살려 **처음부터 완결된 답 하나**로 다시 써라(조각을 뒤에 이어붙이지도, 통째로 베끼지도 마라). 끊겼다는 사실·이유는 절대 언급 금지.")
 if rel_lv: L.append(f"- 현재 관계 단계: LV {rel_lv} — 카드의 해금 에피소드 게이트(§🔓) 판정 기준이다.")
 if handoff: L.append(f"- 방금까지 유저는 {handoff}(와)과 있었다 — 인수인계하듯 그 존재를 아는 척 등장해도 좋다(단 그 둘만의 비밀[ME]은 모른다).")
 jeal = 0
@@ -1559,6 +1602,7 @@ PY
 )"
   fi
 
+  draft_salvage   # 죽은 러너가 남긴 '쓰다 만 말' 회수(260726 Q.71-B 한수) — state_block 재료 · 아래 draft_clear 보다 먼저 읽어야 한다
   # 상태 블록(운영자 260707 사람다움 1탄 · T0) — state_block() 공용(초대 판정도 사용) · 전부 결정적 · CBLOCK(캐시 접두) 뒤 가변부 = 프리픽스 무손상.
   STATE_BLOCK="$(state_block)"
   ME_BLOCK="$(me_block)"   # 유저 프로필(호칭+소개 · 260708) — 비신뢰 격리 주입(둘 다 비면 빈 블록)
