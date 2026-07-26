@@ -50,6 +50,10 @@ SEASONS = {
         "comment": ("시즌 감정 미디어 manifest(세라) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
                     "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
+                    "⚠ 260726 얼빡 제외: base에 있던 sera_k01.jpg(640×640 정사각 프사 크롭)를 캐릭터 루트 sera_face01.jpg로 옮겼다 "
+                    "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(sera_face.webp 선례 계승). "
+                    "왜 뺐나 = 얼빡은 420×900 세로 무대에 cover로 깔면 얼굴만 확대·잘려 배경으로 부적합(운영자 260726 「얼빡은 배경에 깔지마」). "
+                    "base는 잔여 3장(k02·k03·v06 = 전부 세로형)으로 로테이션 유지. "
                     "정본=viewer/characters/season/sera/main/<감정>/."),
     },
     "gojo": {
@@ -110,7 +114,10 @@ SEASONS = {
         "comment": ("시즌 감정 미디어 manifest(하서연) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
                     "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
-                    "⚠ 260726 현재 = **얼빡 프사 1장뿐**(운영자 '저분들은 그냥 얼빡으로만 일단 반영') — 수집분 들어오면 감정 폴더에 부어 확장. "
+                    "⚠ 260726 현재 = **배경 풀 0장**(manifest 빈 껍데기 = 뷰어 시그니처 폴백 유지). 얼빡 프사 1장은 캐릭터 루트 `<id>_face01.webp`에 둔다 "
+                    "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라 sera_face.webp 선례 계승). "
+                    "⚠ 왜 뺐나(260726 게이트 개방 실측): 얼빡 = 정사각 프사 크롭이라 420×900 세로 무대에 cover로 깔면 얼굴만 확대·잘려 "
+                    "기존 전용 배경 var_persona_<id>.webp보다 나빴다. 수집분 들어오면 main/<감정>/에 부어 확장. "
                     "정본=viewer/characters/season/haeun/main/<감정>/."),
     },
     "baek": {
@@ -119,7 +126,10 @@ SEASONS = {
         "comment": ("시즌 감정 미디어 manifest(백) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
                     "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
-                    "⚠ 260726 현재 = **얼빡 프사 1장뿐**(운영자 '저분들은 그냥 얼빡으로만 일단 반영') — 수집분 들어오면 감정 폴더에 부어 확장. "
+                    "⚠ 260726 현재 = **배경 풀 0장**(manifest 빈 껍데기 = 뷰어 시그니처 폴백 유지). 얼빡 프사 1장은 캐릭터 루트 `<id>_face01.webp`에 둔다 "
+                    "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라 sera_face.webp 선례 계승). "
+                    "⚠ 왜 뺐나(260726 게이트 개방 실측): 얼빡 = 정사각 프사 크롭이라 420×900 세로 무대에 cover로 깔면 얼굴만 확대·잘려 "
+                    "기존 전용 배경 var_persona_<id>.webp보다 나빴다. 수집분 들어오면 main/<감정>/에 부어 확장. "
                     "정본=viewer/characters/season/baek/main/<감정>/."),
     },
     "yun": {
@@ -128,7 +138,10 @@ SEASONS = {
         "comment": ("시즌 감정 미디어 manifest(윤) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
                     "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
-                    "⚠ 260726 현재 = **얼빡 프사 1장뿐**(운영자 '저분들은 그냥 얼빡으로만 일단 반영') — 수집분 들어오면 감정 폴더에 부어 확장. "
+                    "⚠ 260726 현재 = **배경 풀 0장**(manifest 빈 껍데기 = 뷰어 시그니처 폴백 유지). 얼빡 프사 1장은 캐릭터 루트 `<id>_face01.webp`에 둔다 "
+                    "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라 sera_face.webp 선례 계승). "
+                    "⚠ 왜 뺐나(260726 게이트 개방 실측): 얼빡 = 정사각 프사 크롭이라 420×900 세로 무대에 cover로 깔면 얼굴만 확대·잘려 "
+                    "기존 전용 배경 var_persona_<id>.webp보다 나빴다. 수집분 들어오면 main/<감정>/에 부어 확장. "
                     "정본=viewer/characters/season/yun/main/<감정>/."),
     },
     "kopi": {
@@ -137,7 +150,10 @@ SEASONS = {
         "comment": ("시즌 감정 미디어 manifest(카피) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
                     "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
-                    "⚠ 260726 현재 = **얼빡 프사 1장뿐**(운영자 '저분들은 그냥 얼빡으로만 일단 반영') — 수집분 들어오면 감정 폴더에 부어 확장. "
+                    "⚠ 260726 현재 = **배경 풀 0장**(manifest 빈 껍데기 = 뷰어 시그니처 폴백 유지). 얼빡 프사 1장은 캐릭터 루트 `<id>_face01.webp`에 둔다 "
+                    "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라 sera_face.webp 선례 계승). "
+                    "⚠ 왜 뺐나(260726 게이트 개방 실측): 얼빡 = 정사각 프사 크롭이라 420×900 세로 무대에 cover로 깔면 얼굴만 확대·잘려 "
+                    "기존 전용 배경 var_persona_<id>.webp보다 나빴다. 수집분 들어오면 main/<감정>/에 부어 확장. "
                     "정본=viewer/characters/season/kopi/main/<감정>/."),
     },
     "aeri": {
@@ -146,7 +162,10 @@ SEASONS = {
         "comment": ("시즌 감정 미디어 manifest(애리) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
                     "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
-                    "⚠ 260726 현재 = **얼빡 프사 1장뿐**(운영자 '저분들은 그냥 얼빡으로만 일단 반영') — 수집분 들어오면 감정 폴더에 부어 확장. "
+                    "⚠ 260726 현재 = **배경 풀 0장**(manifest 빈 껍데기 = 뷰어 시그니처 폴백 유지). 얼빡 프사 1장은 캐릭터 루트 `<id>_face01.webp`에 둔다 "
+                    "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라 sera_face.webp 선례 계승). "
+                    "⚠ 왜 뺐나(260726 게이트 개방 실측): 얼빡 = 정사각 프사 크롭이라 420×900 세로 무대에 cover로 깔면 얼굴만 확대·잘려 "
+                    "기존 전용 배경 var_persona_<id>.webp보다 나빴다. 수집분 들어오면 main/<감정>/에 부어 확장. "
                     "정본=viewer/characters/season/aeri/main/<감정>/."),
     },
     "winter": {
