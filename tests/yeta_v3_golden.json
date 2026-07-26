@@ -149,5 +149,117 @@
       ],
       "persona": "a"
     }
+  },
+  "08_열린방_오프닝_우선": {
+    "cur": "a",
+    "pick": "a",
+    "threads": {
+      "a": {
+        "has_invite": false,
+        "last_sp": "a",
+        "n_turns": 0,
+        "pending_users": 0,
+        "room": [
+          "a"
+        ],
+        "state": "awaiting"
+      },
+      "b": {
+        "has_invite": false,
+        "last_sp": "b",
+        "n_turns": 2,
+        "pending_users": 1,
+        "room": [
+          "b"
+        ],
+        "state": "idle"
+      }
+    },
+    "v": 3,
+    "view": {
+      "others": [
+        {
+          "id": "b",
+          "n": 2,
+          "updated": 0
+        }
+      ],
+      "persona": "a"
+    }
+  },
+  "09_묵은방_양보": {
+    "cur": "a",
+    "pick": "b",
+    "threads": {
+      "a": {
+        "has_invite": false,
+        "last_sp": "a",
+        "n_turns": 0,
+        "pending_users": 0,
+        "room": [
+          "a"
+        ],
+        "state": "awaiting"
+      },
+      "b": {
+        "has_invite": false,
+        "last_sp": "b",
+        "n_turns": 2,
+        "pending_users": 1,
+        "room": [
+          "b"
+        ],
+        "state": "idle"
+      }
+    },
+    "v": 3,
+    "view": {
+      "others": [
+        {
+          "id": "a",
+          "n": 0,
+          "updated": 0
+        }
+      ],
+      "persona": "b"
+    }
+  },
+  "10_gb는_비우선": {
+    "cur": "a",
+    "pick": "b",
+    "threads": {
+      "a": {
+        "has_invite": false,
+        "last_sp": "a",
+        "n_turns": 1,
+        "pending_users": 0,
+        "room": [
+          "a",
+          "sera"
+        ],
+        "state": "idle"
+      },
+      "b": {
+        "has_invite": false,
+        "last_sp": "b",
+        "n_turns": 2,
+        "pending_users": 1,
+        "room": [
+          "b"
+        ],
+        "state": "idle"
+      }
+    },
+    "v": 3,
+    "view": {
+      "others": [
+        {
+          "id": "a",
+          "n": 1,
+          "updated": 0
+        }
+      ],
+      "persona": "b"
+    }
   }
 }
