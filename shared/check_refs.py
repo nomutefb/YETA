@@ -1005,6 +1005,12 @@ def main():
             rc = 1
     except Exception as e:
         print('⚠️ 지도 배경 짝 게이트 스킵:', e)
+    try:
+        import ledger   # 원장 번호 중복(하드 게이트 260726 — 세션 여럿이 같은 번호를 각각 쓰면 이력 추적이 끊긴다 · 다음 번호 = python3 shared/ledger.py)
+        if ledger.check() != 0:
+            rc = 1
+    except Exception as e:
+        print('⚠️ 원장 번호 게이트 스킵:', e)
     return rc
 
 

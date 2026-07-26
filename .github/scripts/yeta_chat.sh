@@ -494,6 +494,7 @@ if kind == "ok":
             out = []
             for para in [p.strip() for p in re.split(r'\n\s*\n', t) if p.strip()]:
                 if re.fullmatch(r'\*[^*\n]{1,200}\*', para): out.append(para); continue
+                if re.search(r'[぀-ヿ]', para): out.append(para); continue   # 일본어 문단(가나 포함) = 통째 한 버블 — 위 *지문* 원자화 100% 계승. 「일본어\n번역」 쌍이 반각 !?~로 끝나면 문장 경계에 걸려 쪼개지고 ' '.join이 개행을 뭉개 2단 표기가 붕괴한다(260726 실측 7중 4붕괴) · 뷰어 yBubbles와 동형
                 sents = [x.strip() for x in re.split(r'(?<=[.!?…~])\s+', para) if x.strip()]
                 cur = []
                 for x in sents:
@@ -766,10 +767,12 @@ except Exception: print(sys.argv[1])" "$PERSONA")"   # 제목 = 화자 이름(�
 import sys,re
 t=sys.stdin.read()
 t=re.split(r'^\s*\[[^\]\n]{1,24}\]\s', t, maxsplit=1, flags=re.M)[0]   # 단톡 교대 대본([이름] 이하) 잘라내기 = 알림엔 첫 화자 대사만(ptt_voice 동형 규칙 · 260725)
+t=re.split(r'<<\s*(?:NOTE|MOOD|DEAD)', t, 1, flags=re.I)[0]   # 마커 이전 = 대사만 — push_reply는 finish 전 OUT 원문을 받아 마커가 살아 있다(#273 80자 상한 이후 짧은 답장에서 「…<<MOOD:joy」가 알림에 그대로 새던 버그 · PR#281 회수)
 t=re.sub(r'\*[^*]*\*','',t)                # 지문 제거 = 대사만(미리보기)
 t=re.sub(r'\s+',' ',t).strip()
 print((t[:70]+'…') if len(t)>70 else (t or '새 메시지'))")"
-  python3 .github/scripts/push_send.py --notify "$nm" "$prev" \
+  local ttl="$nm"; printf '%s' "${1:-}" | grep -qiE '<<[[:space:]]*DEAD' && ttl="${nm}의 마지막 말"   # 사망 턴 = 유서처럼 폰에 도착(PR#281 회수 · OUT 원문은 finish 전이라 <<DEAD>> 잔존)
+  python3 .github/scripts/push_send.py --notify "$ttl" "$prev" \
     --url "/?yeta=${CHAR}&t=${THREAD:-}" --tag "nomute-yeta-${CHAR}-${THREAD:-}" >/dev/null 2>&1 || true   # 스레드별 tag(상호 삼킴 방지)+딥링크 t(오배송 방지 · 러너감사⑤B)
 }
 

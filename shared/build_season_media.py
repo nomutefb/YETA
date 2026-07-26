@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SEASON_DIR = ROOT / "viewer" / "characters" / "season"
-IMG_EXT = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"}
+IMG_EXT = {".jpg", ".jpeg", ".jfif", ".png", ".webp", ".gif", ".avif"}   # .jfif(260726) = 브라우저 저장 JPEG 변종 — 운영자 업로드에 그대로 섞여 들어온다. ⚠ 서빙 MIME이 호스트에 따라 octet-stream이 될 수 있어 **가능하면 .jpg로 개명해 두는 게 안전**(바이트 동일 = 무손실). 여기 등재는 누락 방지용 안전망.
 CLIP_EXT = {".mp4", ".webm"}
 EMOS = ["base", "warm", "joy", "love", "shy", "blue", "tense", "mad"]  # viewer Y_MOODS(+base)·러너 화이트리스트와 짝
 
@@ -204,6 +204,8 @@ def build_flat(cid: str, cfg: dict) -> dict:
         raise SystemExit(f"평면 폴더 없음: {fdir}")
     buckets = {e: [] for e in EMOS}
     rules = cfg["rules"]
+    # 클립(mp4/webm) = base 선두 계약 — build_one과 동형(260726 실측: 이 처리가 빠져 있어 운영자가 넣은 영상 3개가 통째로 무시됐다).
+    buckets["base"].extend(sorted(p for p in fdir.iterdir() if p.is_file() and p.suffix.lower() in CLIP_EXT))
     for p in sorted(fdir.iterdir()):
         if not p.is_file() or p.suffix.lower() not in IMG_EXT:
             continue
@@ -234,13 +236,17 @@ def build_one(cid: str, cfg: dict) -> dict:
         mdir = cdir / mode
         if not mdir.is_dir():
             continue
+        # ⚠ 260726: 종전엔 여기서 IMG_EXT만 읽어 **감정 폴더에 넣은 영상이 통째로 무시**됐다(운영자 "고죠 기분좋을때 나오는 영상").
+        #   클립은 캐릭터 루트(=base 선두)에만 놓을 수 있었던 셈 — 감정 지정이 불가능했다. IMG_EXT|CLIP_EXT로 확장해
+        #   **아무 감정 버킷에나 영상을 넣을 수 있게** 한다(뷰어 yStage는 이미 확장자로 클립을 판별하므로 무수정).
+        MEDIA_EXT = IMG_EXT | CLIP_EXT
         for b in root_to:  # 모드 루트 미분류 = 지정 버킷 흡수(신규 수집 안전망)
-            buckets[b].extend(sorted(p for p in mdir.iterdir() if p.is_file() and p.suffix.lower() in IMG_EXT))
+            buckets[b].extend(sorted(p for p in mdir.iterdir() if p.is_file() and p.suffix.lower() in MEDIA_EXT))
         for sub in sorted(d for d in mdir.iterdir() if d.is_dir()):
             if sub.name not in EMOS:
                 print(f"⚠️ {cid}: 규약 밖 폴더 무시 — {mode}/{sub.name}/ (허용 = {'/'.join(EMOS)})")
                 continue
-            buckets[sub.name].extend(sorted(p for p in sub.iterdir() if p.is_file() and p.suffix.lower() in IMG_EXT))
+            buckets[sub.name].extend(sorted(p for p in sub.iterdir() if p.is_file() and p.suffix.lower() in MEDIA_EXT))
     out = {"_comment": cfg["comment"]}
     for e in EMOS:
         if buckets[e]:
