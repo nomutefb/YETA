@@ -3592,7 +3592,7 @@ function yStage(mood) {   // 무대 우선순위(운영자 260707): 난입 플�
   const em = ySeasonMedia(YCUR);   // 시즌 = 감정 미디어 로테이션(기틀감사③ — 키·시드 턴 포함은 시즌 게이트 한정 · 비시즌 경로 불변)
   if (em) {
     const n = (((YTH() || {}).turns) || []).filter(t => t.role === 'assistant').length;   // 답장수 = 모노토닉(렌더 틱 재페인트 방지 · 감사E)
-    const md = (YCUR.mode && em.mode_dir) ? (yModeOn(YCUR) ? 1 : 0) : -1;   // 변신 모드 배경 게이트(운영자 260717 "안드로이드 모드인데 도깨비 배경") — 프사·배지(yModeOn)와 같은 시계 · -1 = 모드축 없는 캐릭터(불변)
+    const md = ((YCUR.mode || (YCUR.modes && YCUR.modes.length)) && em.mode_dir) ? (yModeOn(YCUR) ? 1 : 0) : -1;   // 변신 모드 배경 게이트(운영자 260717 "안드로이드 모드인데 도깨비 배경") — 프사·배지(yModeOn)와 같은 시계 · -1 = 모드축 없는 캐릭터(불변)
     const ekey = `${YCUR.id}|${mood || ''}|${md}|${n}`;   // 키에 모드 포함 = 21시/03시 경계 넘으면 자동 재스테이지
     if (ekey === _yStageKey) return;
     _yStageKey = ekey;
@@ -4052,20 +4052,30 @@ function yGreet(c) {   // 첫인사 = 변주 풀 랜덤 픽(운영자 260707 "�
   const g = (c && Array.isArray(c.greetings) && c.greetings.length) ? c.greetings : (c && c.greeting ? [c.greeting] : ['왔네.']);
   return g[Math.floor(Math.random() * g.length)];
 }
-function yModeOn(c) {   // 변신 모드 게이트 판정 — 배지(yJobBadge)·모드 프사(yCAva)·모드 배경(yCBg) 공용 SSOT(운영자 260717 Q "도깨비 모드 = 프사 자동 교체" · 판정 이원화 = 배지/프사 엇갈림 드리프트라 1함수)
-  const m = c && c.mode;
+function yModeHit(c, m) {   // 모드 1개의 게이트 판정 — 시간대(t)·동석(with)·방내 사망(dead) 3축 AND. 축을 안 적으면 그 축은 무조건 통과.
   if (!m || !m.nm) return false;
-  if (Array.isArray(m.with) && m.with.length) {   // 동석 게이트(운영자 260726 드루실라 "고죠와 단톡에 있을때 또는 대화할때 난입" = 흉내 모드) — 시간대축과 직교, 둘 다 있으면 AND
-    const rm = (YTH() || {}).room || [];          // 지금 열린 방의 정원(목록 행 = 방 미상 → 흉내 미발동 = 안전측)
+  if (Array.isArray(m.with) && m.with.length) {   // 동석 게이트(운영자 260726 드루실라 "고죠와 단톡에 있을때 또는 대화할때 난입" = 흉내 모드)
+    const rm = (YTH() || {}).room || [];          // 지금 열린 방의 정원(목록 행 = 방 미상 → 미발동 = 안전측)
     if (!m.with.some(id => rm.includes(id))) return false;
+  }
+  if (m.dead) {   // 방내 사망 게이트(운영자 260726 "본격적인 살인행위를 시작할때 프사") — 이 방에서 누가 죽어 있으면 = 그 짓을 한 참이다.
+    const rm = (YTH() || {}).room || [];          // 자기 자신 제외(내가 죽은 건 살인이 아니다)
+    if (!rm.some(id => id !== (c && c.id) && yDeadT(id) > Date.now())) return false;
   }
   return !m.t || m.t.includes(ymSlot(yWorldDH().h));   // 시간대 = ymSlot 단일 정의(Q.18 통일 — 지도·동선·러너 slot_of/state_block과 같은 시계 · 구 인라인 late<4/night≥20 폐지 = 도깨비 창 21~03시)
 }
-const yCAva = c => (yModeOn(c) && c.mode.avatar) ? c.mode.avatar : ((c && c.avatar) || '');   // 캐릭터 아바타 해석 SSOT — 모드 활성 + 모드 프사(roster mode.avatar) 있으면 그걸로, 아니면 평시 프사(내 아바타는 yMeAva 별축)
-const yCBg = c => (yModeOn(c) && c.mode.bg) ? c.mode.bg : ((c && c.bg) || '');   // 캐릭터 배경 해석 SSOT — yCAva 대칭축(운영자 260726 "배경바뀌고 프사 바뀌면서 등장") · 모드 배경 없으면 평시 bg
+function yModeCur(c) {   // 지금 걸린 모드 1개 — roster `mode`(단수) 또는 `modes`(복수 · 위에서부터 첫 일치 승 = 좁은 게이트를 먼저 적어라). 260726 복수화 = 드루실라가 흉내·살인 두 모드를 갖는다.
+  if (!c) return null;
+  const list = Array.isArray(c.modes) ? c.modes : (c.mode ? [c.mode] : []);
+  for (const m of list) if (yModeHit(c, m)) return m;
+  return null;
+}
+function yModeOn(c) { return !!yModeCur(c); }   // 변신 모드 게이트 판정 — 배지(yJobBadge)·모드 프사(yCAva)·모드 배경(yCBg) 공용 SSOT(운영자 260717 Q "도깨비 모드 = 프사 자동 교체" · 판정 이원화 = 배지/프사 엇갈림 드리프트라 1함수)
+const yCAva = c => { const m = yModeCur(c); return (m && m.avatar) ? m.avatar : ((c && c.avatar) || ''); };   // 캐릭터 아바타 해석 SSOT — 모드 활성 + 모드 프사(roster mode.avatar) 있으면 그걸로, 아니면 평시 프사(내 아바타는 yMeAva 별축)
+const yCBg = c => { const m = yModeCur(c); return (m && m.bg) ? m.bg : ((c && c.bg) || ''); };   // 캐릭터 배경 해석 SSOT — yCAva 대칭축(운영자 260726 "배경바뀌고 프사 바뀌면서 등장") · 모드 배경 없으면 평시 bg
 function yJobBadge(c) {   // 이름 옆 직업/변신 배지(운영자 260707) — 변신 모드(시간대 게이트) 있으면 터콰이즈 우선 · 아니면 메인 직업 라임
   if (!c) return '';
-  if (yModeOn(c)) return `<span class="yjob tq">${esc(c.mode.nm)}</span>`;
+  const _m = yModeCur(c); if (_m) return `<span class="yjob tq">${esc(_m.nm)}</span>`;
   return c.job ? `<span class="yjob">${esc(c.job)}</span>` : '';
 }
 function yAva(p, cls) {   // 아바타 = avatar URL(GPT 얼굴 · yeta_face.py) 있으면 얼굴 이미지, 없으면 이니셜(+페르소나색) · 모드 프사 = yCAva 경유(도깨비 260717)
@@ -4572,12 +4582,12 @@ try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(fun
     el.hidden = false; el.classList.toggle('night', w.night);   // 밤 터콰이즈 = 표시 시각(무음동)과 동기
     if (_ywcT++ % 4) return;   // 아래 변신 경계 동기는 4틱(8s)마다 = 종전 주기 유지(시계 글자만 2s로 촘촘히 = "흐르게")
     try {   // 변신 경계 동기(운영자 260717 Q.17 "정각 자동 전환") — 모드 on/off 서명이 바뀐 틱에만 열린 화면의 프사·배지 재도장(8s 틱 = 경계 지연 ≤8s · 평시 no-op)
-      const sig = (YCHARS || []).filter(c => c.mode && c.mode.nm).map(c => c.id + (yModeOn(c) ? '+' : '-')).join('|');
+      const sig = (YCHARS || []).filter(c => c.mode || (c.modes && c.modes.length)).map(c => c.id + ':' + ((yModeCur(c) || {}).nm || '-')).join('|');   // 260726 복수 모드 — 이름까지 서명에 넣어야 모드↔모드 전환(흉내→살인)도 재도장된다
       if (_yModeSig !== sig) {
         const first = _yModeSig === null; _yModeSig = sig;
         if (!first) {   // 첫 틱 = 서명 씨앗만(렌더는 각 진입 경로가 이미 함)
           yCharRender(); yListRender();   // 내부 sig 가드가 중복 도장 흡수
-          if (YCUR && YCUR.mode && !document.getElementById('yetaAva2')) yAvaSet($('#yetaAva'), YCUR);   // 챗 헤더(단톡 스택 중엔 방 이벤트가 재도장)
+          if (YCUR && (YCUR.mode || (YCUR.modes && YCUR.modes.length)) && !document.getElementById('yetaAva2')) yAvaSet($('#yetaAva'), YCUR);   // 챗 헤더(단톡 스택 중엔 방 이벤트가 재도장)
           if (yetadlg.open && _yView === 'chat') { _yNoAnim = true; yRender(); }   // 열린 대화 로그 통째 재도장(운영자 260725 "도깨비 모드면 도깨비 프사") — 종전엔 목록·헤더만 도장하고 로그가 빠져 이미 그린 말풍선 프사가 옛 폼으로 고착 · 무애니 1회 = 읽은 말풍선 re-whoosh 차단 · 배경 재스테이지(yStage · 평의회 260717 bg-mode MED)는 yRender가 겸한다
           const pf = document.getElementById('ycprofile'); if (pf && pf.classList.contains('on') && typeof yProfileRender === 'function') yProfileRender();   // 열린 프로필의 히어로 디스크
         }

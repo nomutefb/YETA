@@ -832,13 +832,20 @@
    ],
    "boost_gate": 2
   },
-  "mode": {
-   "nm": "고죠 흉내",
-   "with": [
-    "gojo"
-   ],
-   "avatar": "characters/season/drusilla/drusilla_face_gojo.webp",
-   "bg": "characters/season/drusilla/gojo/base/drusilla_g01.jpg"
-  }
+  "modes": [
+   {
+    "nm": "살(殺)",
+    "dead": true,
+    "avatar": "characters/season/drusilla/drusilla_face_kill.webp"
+   },
+   {
+    "nm": "고죠 흉내",
+    "with": [
+     "gojo"
+    ],
+    "avatar": "characters/season/drusilla/drusilla_face_gojo.webp",
+    "bg": "characters/season/drusilla/gojo/base/drusilla_g01.jpg"
+   }
+  ]
  }
 ]
