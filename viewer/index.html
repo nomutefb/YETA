@@ -131,7 +131,26 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .gdots i:nth-child(2) { animation-delay:.22s; } .gdots i:nth-child(3) { animation-delay:.44s; }
   @keyframes gdots { 0% { opacity:0; } 25%,70% { opacity:1; } 95%,100% { opacity:0; } }
   .yscramble { display:inline-block; font-family:ui-monospace,SFMono-Regular,Menlo,'Cascadia Code',Consolas,monospace; font-weight:var(--fw-b); font-size:var(--fs-body); letter-spacing:.24em; color:var(--accent); text-shadow:0 0 9px rgba(var(--accent-rgb),.4); }   /* 스크램블 로더 글리프(beui.dev 차용 · 진행중 · 라임 네온 = 메타버스 결 · 운영자 260708) — 모노스페이스 = 글리프 폭 고정(레이아웃 저크 0) · text-shadow = 토큰 없는 축 */
-  .yeta-setup.yload { text-align:center; }   /* 스크램블 로더 = 가로 중앙(픽토그램 로더 결 · 에러/빈상태 텍스트는 좌측 유지) */
+  .yeta-setup.yload { text-align:center; }   /* 로더 = 가로 중앙(픽토그램 로더 결 · 에러/빈상태 텍스트는 좌측 유지) */
+  /* ── orb 로더(nomute-editor viewer/nm-loader.js §orb 이관 · 원본 승인 = 운영자 260723 시안 v3 · YETA 이관 = 운영자 260726) — 로딩·진행 표기 정본: loading=통통 도트3 · thinking/prompting=소용돌이 링 · solving=흩뿌린 입자 · shimmer=글자 빛 스윕. 입자색 = --fg 계승(원본 #e9eef0 근접 · 신규 hex 0) · shimmer 베이스 = --mut · 커브 = --ease(원본과 동일값) 계승 · 기하(orb 22px·gap 9·fs 13.5·viewBox 좌표·바운스 -52%) = 원본 확정값 그대로(컴포넌트 기하 = raw 예외축) · position/z 무추가 + nm-* 네임스페이스(충돌 0 실측) = 타 레이어 무침입 ── */
+  .nm-orb { display:inline-block; position:relative; vertical-align:middle; flex:0 0 auto; }
+  .nm-orb svg { display:block; width:100%; height:100%; overflow:visible; }
+  .nm-orb .nm-dot { fill:var(--fg); }
+  .nm-orb[data-orb="thinking"] .nm-r, .nm-orb[data-orb="prompting"] .nm-r { transform-origin:50% 50%; animation:nmspin 3.2s linear infinite; }
+  .nm-orb[data-orb="thinking"] .nm-r2, .nm-orb[data-orb="prompting"] .nm-r2 { animation-duration:4.6s; animation-direction:reverse; opacity:.72; }
+  .nm-orb[data-orb="thinking"] .nm-r3, .nm-orb[data-orb="prompting"] .nm-r3 { animation-duration:6s; opacity:.5; }
+  .nm-orb[data-orb="solving"] .nm-cloud { transform-origin:50% 50%; animation:nmspin 9s linear infinite; }
+  .nm-orb[data-orb="solving"] .nm-dot { animation:nmtwk 1.8s ease-in-out infinite; }
+  .nm-orb[data-orb="loading"] .nm-bd { transform-box:fill-box; transform-origin:center; animation:nmbd .92s var(--ease) infinite; }
+  .nm-orb[data-orb="loading"] .nm-bd.b2 { animation-delay:.15s; } .nm-orb[data-orb="loading"] .nm-bd.b3 { animation-delay:.3s; }
+  @keyframes nmspin { to { transform:rotate(360deg); } }
+  @keyframes nmtwk { 0%,100% { opacity:.26; } 50% { opacity:1; } }
+  @keyframes nmbd { 0%,100% { transform:translateY(0); opacity:.5; } 50% { transform:translateY(-52%); opacity:1; } }
+  .nm-load { display:inline-flex; align-items:center; gap:9px; }
+  .nm-load .nm-orb { width:22px; height:22px; }
+  .nm-shim { font-size:13.5px; font-weight:var(--fw-b); letter-spacing:0; line-height:1; display:inline-flex; align-items:center; background:linear-gradient(100deg,var(--mut) 0%,var(--mut) 38%,var(--fg) 50%,var(--mut) 62%,var(--mut) 100%); background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:nmshim 1.9s linear infinite; }
+  @keyframes nmshim { from { background-position:120% 0; } to { background-position:-120% 0; } }
+  @media (prefers-reduced-motion:reduce) { .nm-shim { animation:none; color:var(--mut); -webkit-text-fill-color:var(--mut); } .nm-orb * { animation:none !important; } }
   .yboot { position:fixed; inset:0; z-index:999; display:grid; place-items:center; background:var(--yeta-bg,#121212); animation:ybootOut .55s var(--ease) 1.5s forwards; }   /* 첫 열기 부팅 스플래시 = 1.5s(스크램블 1사이클 resolve) 후 페이드 · CSS 애니 = JS 실패해도 반드시 걷힘(블로킹 방지) · z=로컬(raw 예외) */
   .yboot-w { font-size:clamp(26px,7.5vw,46px); letter-spacing:.3em; }
   @keyframes ybootOut { to { opacity:0; visibility:hidden; } }
@@ -1703,7 +1722,47 @@ function yScramble(word) {
   }, Math.round(1000 / word.length * 0.55));   // beui 틱=(speed/len)*1000*.55 · speed=1.0s → LOADING(7자)≈79ms/틱
   return el;
 }
-function yLoadingBox() { const box = document.createElement('div'); box.className = 'yeta-setup yload'; box.appendChild(yScramble()); return box; }   // 로딩 표시 = .yeta-setup(중앙) + 스크램블(문구 대체) · X.replaceChildren(yLoadingBox())로 주입
+/* ══ orb 로더(nomute-editor viewer/nm-loader.js §orb 100% 이관 · 원본 승인 = 운영자 260723 시안 v3 · Q459~461 · YETA 이관 = 운영자 260726) — 로딩·진행 표기 정본. 매핑: loading(데이터 불러오는 중)=통통 도트3 · thinking(요약·분석 판단)=소용돌이 링 · solving(변환·렌더·산출)=흩뿌린 입자 · prompting(프롬프팅·설계)=링. CSS = 상단 <style> 인라인(원본의 런타임 <style> 주입 대신 — 단일 파일 정적 결 · 내용 동일) · solving 입자 = 결정적 시드(Math.random 미사용 = 렌더 결정론 · 원본 그대로) · API: nmLoader(type,label[,opts]) / nmOrbHTML(type[,size]) / nmLoaderHydrate(root) ══ */
+(function () {
+  if (window.nmLoader) return;
+  function solvingSVG() {   // 흩뿌린 입자(결정적 시드 — 원본 그대로)
+    var s = 9301, rnd = function () { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    var d = '', N = 44, i, a, r;
+    for (i = 0; i < N; i++) {
+      a = rnd() * 6.2832; r = Math.sqrt(rnd()) * 45 + 3;
+      d += '<circle class="nm-dot" cx="' + (50 + Math.cos(a) * r * 0.9).toFixed(1) + '" cy="' + (50 + Math.sin(a) * r * 0.9).toFixed(1) +
+           '" r="' + (0.85 + rnd() * 1.7).toFixed(2) + '" style="animation-delay:' + ((i % 7) * 0.26).toFixed(2) + 's"/>';
+    }
+    return '<svg viewBox="0 0 100 100"><g class="nm-cloud">' + d + '</g></svg>';
+  }
+  function ringSVG() {   // 소용돌이 3링(원근 fake — 원본 그대로)
+    function ring(cls, ry, n, rd, rot) {
+      var d = '', i, a;
+      for (i = 0; i < n; i++) { a = i / n * 6.2832; d += '<circle class="nm-dot" cx="' + (50 + Math.cos(a) * 40).toFixed(1) + '" cy="' + (50 + Math.sin(a) * ry).toFixed(1) + '" r="' + rd + '"/>'; }
+      return '<g class="nm-r ' + cls + '" style="transform:rotate(' + rot + 'deg)">' + d + '</g>';
+    }
+    return '<svg viewBox="0 0 100 100">' + ring('', 40, 20, 2, 0) + ring('nm-r2', 15, 16, 1.7, 30) + ring('nm-r3', 26, 13, 1.4, 60) + '</svg>';
+  }
+  function dotsSVG() {   // 통통 튀는 도트3(로딩 정본 — 운영자 260723 "소용돌이 링이 로딩엔 덜 어울려 도트로")
+    return '<svg viewBox="0 0 100 100"><circle class="nm-dot nm-bd" cx="21" cy="50" r="9.5"/><circle class="nm-dot nm-bd b2" cx="50" cy="50" r="9.5"/><circle class="nm-dot nm-bd b3" cx="79" cy="50" r="9.5"/></svg>';
+  }
+  function orbType(t) { return t === 'solving' ? 'solving' : t === 'prompting' ? 'prompting' : t === 'loading' ? 'loading' : 'thinking'; }
+  function orbHTML(type, size) { var t = orbType(type), sz = size ? ' style="width:' + size + 'px;height:' + size + 'px"' : ''; return '<span class="nm-orb" data-orb="' + t + '"' + sz + '>' + (t === 'solving' ? solvingSVG() : t === 'loading' ? dotsSVG() : ringSVG()) + '</span>'; }
+  function esc(x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  window.nmLoader = function (type, label, opts) {   // opts={size:orb px, gap, fs:글자 px} — 좁은 버튼 = size 18·fs 12.5, 기본 필 = 22·13.5(원본 정본값)
+    opts = opts || {}; var g = opts.gap != null ? opts.gap : 9;
+    var fs = opts.fs ? ' style="font-size:' + opts.fs + 'px"' : '';
+    return '<span class="nm-load" style="gap:' + g + 'px">' + orbHTML(type, opts.size) + '<span class="nm-shim"' + fs + '>' + esc(label) + '</span></span>';
+  };
+  window.nmOrbHTML = orbHTML;   // orb만(좁은 폭 컨텍스트용)
+  function hydrate(root) {   // 선언형: <span class="nm-load" data-orb="loading" data-label="불러오는 중…"></span>
+    var els = (root || document).querySelectorAll('.nm-load[data-orb]:not([data-nm-done])'), i, e;
+    for (i = 0; i < els.length; i++) { e = els[i]; e.setAttribute('data-nm-done', '1'); e.innerHTML = orbHTML(e.getAttribute('data-orb')) + '<span class="nm-shim">' + esc(e.getAttribute('data-label')) + '</span>'; }
+  }
+  window.nmLoaderHydrate = hydrate;
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { hydrate(); }); else hydrate();
+})();
+function yLoadingBox() { const box = document.createElement('div'); box.className = 'yeta-setup yload'; box.setAttribute('role', 'status'); box.innerHTML = nmLoader('loading', '불러오는 중…'); return box; }   // 로딩 표시 = .yeta-setup(중앙) + orb 통통 도트3+shimmer(nomute 이관 · 운영자 260726 — 스크램블 대체 · 스크램블은 부트 'YETABUS' 전용 잔존) · role=status 계승 · X.replaceChildren(yLoadingBox())로 주입
 function yVvFit() {   // 키보드 개폐 = 창 유지 가드(운영자 260707 "입력할 때 창 내려감"): 챗 프레임을 키보드 위 보이는 영역에 정확히 맞춤(높이+팬 오프셋) + 로그 바닥 재고정. 뷰포트 메타(resizes-content)를 안 쓰는 이유 = dvh 축소가 9:16 레터박스 쿼리를 폰에서 오발동 · 임계 120 = 온스크린 키보드 판정(OS 뷰포트 축 = raw 예외)
   if (!yetadlg.open) { yetadlg.style.height = yetadlg.style.top = ''; return; }
   const kb = window.innerHeight - visualViewport.height > 120;
@@ -2103,7 +2162,7 @@ async function ySettingRender() {
   const box = $('#ypolBody') || $('#ysettingBody');   // 정본 = 설정 시트 인라인(#ypolBody · 인수 계약 260707) · 옛 탭 패널 = 휴면 폴백
   if (!box) return;
   if (!YPOLDEF) {
-    box.replaceChildren(yLoadingBox());   // 진행중 = 스크램블 로더(문구 대체 · 운영자 260708)
+    box.replaceChildren(yLoadingBox());   // 진행중 = orb 로딩 도트3+shimmer(nomute 이관 · 운영자 260726 — 스크램블 대체)
     const r = await yApi('policy').catch(() => null);
     if (!r || !r.ok || !r.def) { box.innerHTML = '<div class="yeta-setup">정책 로드 실패 — 잠시 후 다시 열어줘.</div>'; return; }
     YPOLDEF = r.def; _ypolCur = r.p || {};
@@ -2331,7 +2390,7 @@ function yLocOf(r) {   // 행별 장소 표기(운영자 260709 개정) — 노�
 async function yListRender() {
   const box = $('#ylistRows');
   if (!YSESS) {   // 세션 미로드 = 서버에서 한 번
-    box.replaceChildren(yLoadingBox());   // 진행중 = 스크램블 로더(문구 대체 · 운영자 260708)
+    box.replaceChildren(yLoadingBox());   // 진행중 = orb 로딩 도트3+shimmer(nomute 이관 · 운영자 260726 — 스크램블 대체)
     const r = await yApi('get').catch(() => null);
     if (r && r.ok) YSESS = r.sess || {};
   }
@@ -2347,7 +2406,7 @@ async function yListRender() {
     .filter(r => !yDormant(r))   // 방치 3일+ = 자리를 떠남(항목17 · 세계관 활동감 — 대화 앱 아닌 동네)
     .sort((a, b) => ((b.pin ? 1 : 0) - (a.pin ? 1 : 0)) || ((b.updated || 0) - (a.updated || 0)));   // 고정 우선 → 최근이 위(운영자 260707 · pin ts는 판정만 = 고정방도 새 메시지에 부상 · UX감사③B)
   const curP = s.cur ? yPersona(s.cur) : null;
-  if (!rows.length) { _ylSig = ''; _ylPainted = false; $('#ylist').classList.add('list-empty'); box.innerHTML = '<div class="yeta-setup yempty">진행 중인 대화가 없어 — 캐릭터 탭에서 말을 걸어봐.</div>'; return; }   // 빈 = 중앙+흰색(운영자) · 다음 비어있지 않은 렌더 = 진짜 첫 stagger
+  if (!rows.length) { _ylSig = ''; _ylPainted = false; $('#ylist').classList.add('list-empty'); box.innerHTML = '<div class="yeta-setup yempty">진행중인 대화가 없습니다.</div>'; return; }   // 빈 = 중앙+흰색(운영자) · 다음 비어있지 않은 렌더 = 진짜 첫 stagger
   $('#ylist').classList.remove('list-empty');   // 대화 有 = 일반 스크롤 복귀
   yLocsSync(rows.map(r => r.id));   // 최근 장소 일괄 해석(항목18 · 슬롯 키 가드 = 시간당 1회 · 완료 시 재렌더)
   const sig = rows.map(r => `${r.id}:${r.pin ? 1 : 0}:${r.updated || 0}:${(r.turns || []).length}:${r.state}:${yReadTs(r.id)}:${yDead({ id: r.id }) ? 'D' : ''}`).join('|') + `#${rows.length}@${Math.floor(Date.now() / 60000)}`;   // 행 수(dormant 전환·항목17) + 분 버킷(상대시간 매분 노화) — 병합 260707 · D = 사망 전환(260725 — 죽음·부활이 분 버킷을 안 기다리고 그 폴에서 바로 도색)
@@ -2557,7 +2616,7 @@ function yStatBoost(c) {   // 친밀도 상승 스탯(운영자 260710) — 유�
 async function yCharRender() {   // 메뉴1 = 시즌 세계관 헤더 + 캐릭터 리스트(1행 1명 · 아바타|이름·표현·대사|구분자|육각) · 탭 = 세부 디테일(운영자 260706)
   const grid = $('#ycharGrid');
   if (!YCHARS.length) {
-    grid.replaceChildren(yLoadingBox());   // 진행중 = 스크램블 로더(문구 대체 · 운영자 260708)
+    grid.replaceChildren(yLoadingBox());   // 진행중 = orb 로딩 도트3+shimmer(nomute 이관 · 운영자 260726 — 스크램블 대체)
     const r = await yApi('chars').catch(() => null);
     if (r && r.ok) { YCHARS = r.chars || []; YWORLD = r.world || null; YREADY = !!r.ready; }
   }
@@ -3130,7 +3189,7 @@ async function openYeta(charId, _noNav) {
   yStair.pause(); yMapLeave();   // 챗 열림 = 계단·지도 루프 정지(top layer 투과 아티팩트 + GPU/배터리 차단 · QA13: 지도 탭 위 챗 열려도 rAF+60s 인터벌 계속 돌던 누수 봉쇄) — 닫힘 핸들러 yTab이 map 복귀 시 재개
   const log = $('#yetaLog');
   if (!YCHARS.length) {
-    log.replaceChildren(yLoadingBox());   // 진행중 = 스크램블 로더(문구 대체 · 운영자 260708)
+    log.replaceChildren(yLoadingBox());   // 진행중 = orb 로딩 도트3+shimmer(nomute 이관 · 운영자 260726 — 스크램블 대체)
     const r = await yApi('chars').catch(() => null);
     if (r && r.ok) { YCHARS = r.chars || []; YWORLD = r.world || null; YREADY = !!r.ready; }
   }
