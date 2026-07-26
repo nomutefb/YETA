@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# lucy_threads.sh — 루시 스레드(Threads) 자동 발행 러너(운영자 260726 "api 붙여서 자동으로" · Q.88)
+# lucy_threads.sh — 루시 스레드(Threads) 자동 발행 러너(운영자 260726 "api 붙여서 자동으로" · Q.90)
 # lucy-threads.yml(cron 00:00/14:00 UTC = KST 09:00 시크 · 23:00 도깨비+답글 스윕)이 호출.
 # 정본 = viewer/characters/season/lucy/CLAUDE.md(페르소나 · 충돌 시 이쪽이 이김) + docs/reports/260726_루시_스레드운영_설계.md(§1 매핑·§3 문법·§4 few-shot·§5 금기).
 # 가드: THREADS_ACCESS_TOKEN 없으면 claude 호출 전 즉시 종료(쿼터 0 · yeta_nudge 동형) · LUCY_DRY_RUN=1 = 생성만(발행 0)
