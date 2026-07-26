@@ -236,13 +236,17 @@ def build_one(cid: str, cfg: dict) -> dict:
         mdir = cdir / mode
         if not mdir.is_dir():
             continue
+        # ⚠ 260726: 종전엔 여기서 IMG_EXT만 읽어 **감정 폴더에 넣은 영상이 통째로 무시**됐다(운영자 "고죠 기분좋을때 나오는 영상").
+        #   클립은 캐릭터 루트(=base 선두)에만 놓을 수 있었던 셈 — 감정 지정이 불가능했다. IMG_EXT|CLIP_EXT로 확장해
+        #   **아무 감정 버킷에나 영상을 넣을 수 있게** 한다(뷰어 yStage는 이미 확장자로 클립을 판별하므로 무수정).
+        MEDIA_EXT = IMG_EXT | CLIP_EXT
         for b in root_to:  # 모드 루트 미분류 = 지정 버킷 흡수(신규 수집 안전망)
-            buckets[b].extend(sorted(p for p in mdir.iterdir() if p.is_file() and p.suffix.lower() in IMG_EXT))
+            buckets[b].extend(sorted(p for p in mdir.iterdir() if p.is_file() and p.suffix.lower() in MEDIA_EXT))
         for sub in sorted(d for d in mdir.iterdir() if d.is_dir()):
             if sub.name not in EMOS:
                 print(f"⚠️ {cid}: 규약 밖 폴더 무시 — {mode}/{sub.name}/ (허용 = {'/'.join(EMOS)})")
                 continue
-            buckets[sub.name].extend(sorted(p for p in sub.iterdir() if p.is_file() and p.suffix.lower() in IMG_EXT))
+            buckets[sub.name].extend(sorted(p for p in sub.iterdir() if p.is_file() and p.suffix.lower() in MEDIA_EXT))
     out = {"_comment": cfg["comment"]}
     for e in EMOS:
         if buckets[e]:
