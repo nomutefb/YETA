@@ -62,6 +62,20 @@ FIX = [
      'in': {'v': 3, 'cur': 'a', 'threads': {
          'a': {'turns': [{'role': 'user', 'ts': 5000, 'text': '비밀A'}], 'last_sp': 'a', 'room': ['a']},
          'b': {'turns': [{'role': 'user', 'ts': 6000, 'text': '비밀B'}], 'last_sp': 'b', 'room': ['b']}}}},
+    # ── 열린 방(cur) 우선 · 260726 첫 대사 지연 실측(러너 로그 23:43:31 남의 방 30s → 오프닝은 그 뒤) ──
+    {'name': '08_열린방_오프닝_우선', 'desc': '지금 연 방의 첫 대사 대기 vs 다른 방 2분 전 pending → 열린 방 먼저(눈앞 대기 우선)',
+     'in': {'v': 3, 'cur': 'a', 'threads': {
+         'a': {'turns': [], 'state': 'awaiting', 'opening': NOW - 3000, 'last_sp': 'a', 'room': ['a']},
+         'b': {'turns': [{'role': 'assistant', 'ts': 1000}, {'role': 'user', 'ts': NOW - 120000}], 'last_sp': 'b', 'room': ['b']}}}},
+    {'name': '09_묵은방_양보', 'desc': '다른 방 pending 이 5분 묵음(>CUR_YIELD 3분) → 열린 방이 양보(기아 방지)',
+     'in': {'v': 3, 'cur': 'a', 'threads': {
+         'a': {'turns': [], 'state': 'awaiting', 'opening': NOW - 3000, 'last_sp': 'a', 'room': ['a']},
+         'b': {'turns': [{'role': 'assistant', 'ts': 1000}, {'role': 'user', 'ts': NOW - 300000}], 'last_sp': 'b', 'room': ['b']}}}},
+    {'name': '10_gb는_비우선', 'desc': '열린 방이 단톡 자율 비트뿐 → 유저를 기다리는 다른 방이 먼저(_age_kind 계약 온존)',
+     'in': {'v': 3, 'cur': 'a', 'threads': {
+         'a': {'turns': [{'role': 'assistant', 'ts': 1000}], 'last_sp': 'a', 'room': ['a', 'sera'],
+               'gb': {'p': 'sera', 'ts': NOW - 10000, 'n': 1}},
+         'b': {'turns': [{'role': 'assistant', 'ts': 1000}, {'role': 'user', 'ts': NOW - 60000}], 'last_sp': 'b', 'room': ['b']}}}},
 ]
 
 

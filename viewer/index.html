@@ -1730,7 +1730,7 @@ function yTab(tab) {   // 'char' | 'list' | 'settings' — 네비 활성·패널
   m.classList.toggle('tab-map', tab === 'map');
   m.classList.toggle('tab-settings', tab === 'settings');
   document.querySelectorAll('#ynav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  if (tab === 'char' || tab === 'list') { ySsnFixed(); yMeDock(); }   // 공용 시즌 헤더 = char/list 상주(전환에 안 깜빡) + 내 정보 행 = 캐릭터 창 고정 회수(운영자 260709)
+  if (tab === 'char' || tab === 'list') { ySsnFixed(); yMeDock(); if (m.classList.contains('unlocked')) { try { yWarm(); } catch {} } }   // 공용 시즌 헤더 = char/list 상주(전환에 안 깜빡) + 내 정보 행 = 캐릭터 창 고정 회수(운영자 260709) · 프리웜 재무장(260726) = 사람을 고르는 두 화면에 들어설 때마다(언락 직후 yTab('char') 포함) 러너 선부팅 — 잠금 프리웜이 만료된 재진입·오래 머문 세션을 덮는다(unlocked 가드 = 잠금화면 헛발사 0 · 9분 디바운스가 중복 흡수)
   if (tab === 'char') yCharRender();
   if (tab === 'list') yListRender();
   if (tab === 'map') yMapEnter(); else yMapLeave();   // 지도 = 진입 시 rAF 시작 · 이탈 시 정지(60fps 예산 보호 · 260707)
@@ -4552,6 +4552,7 @@ try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(fun
     if (unlocked) return;
     if (entered) { ymain.classList.add('go', 'strike', 'calm', 'pin-mode'); ymPinFocus(); return; }   // 시퀀스 중 재탭 = 세리머니 스킵(최종 상태 직행 · 평의회10)
     entered = true;
+    try { yWarm(); } catch {}   // 프리웜 최이른 지점(운영자 260726 "첫 대사가 많이 늦다") — 잠금 터치 = 진입 의사 확정. 종전엔 캐릭터를 탭한 '뒤'에야 러너를 불러 콜드 부팅(dispatch→스크립트 시작 실측 ~18~20s)이 통째로 첫 대사 대기에 들어갔다. PIN 안무(1.1s)+패턴 입력+캐릭터 고르는 시간(합쳐 6~20s)을 부팅에 겹쳐 태우면 draw 시점엔 웜 러너가 이미 R2 폴 중(2s 픽업) = 남는 대기 = 생성시간뿐. 9분 디바운스가 헛발사·중복 dispatch를 흡수(앱만 열고 나가도 웜 런은 10분 뒤 조용히 종료)
     try { const cs = getComputedStyle(accessBtn), mt = new DOMMatrixReadOnly(cs.transform === 'none' ? undefined : cs.transform); accessBtn.style.setProperty('--ig-s', String(+(mt.a || 1).toFixed(3))); accessBtn.style.setProperty('--ig-o', cs.opacity); } catch {}   // 숨쉬기 현재 프레임(scale·opacity)을 점화 시작값으로 이어받기 — animation 교체 시 스냅 제거(실패 = 키프레임 기본값 폴백)
     accessBtn.classList.add('unlocking');
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) { ymain.classList.add('go', 'strike', 'calm', 'pin-mode'); ymPinFocus(); return; }   // 모션 최소화 = 최종 상태 직행
