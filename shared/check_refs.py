@@ -24,6 +24,7 @@ import json
 import shutil
 import subprocess
 import tempfile
+from pathlib import Path   # 얼빡 배경 게이트 — build_season_media.is_face/img_size가 Path를 받는다
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -448,6 +449,65 @@ def check_issue_badge_parity():
         rc = 1
     else:
         print('✅ 이슈 배지 패리티 — ISS_CROSS_MIN·BJ_* 4종 정규식·grade3 우회 = viewer↔build-viewer 동일.')
+    return rc
+
+
+# ── 얼빡(프사) 배경 차단 게이트 — 운영자 260726 「얼빡은 배경에 깔지마」 ──────────────────
+# 왜 게이트인가: 같은 사고가 **두 번** 났다. ① 5인 `_face01`(파일명으로 잡음) ② 세라 `sera_k01`
+#   (이름이 평범해 파일명 그물을 통과 · 640×640 얼빡이 채팅 배경에 깔림). 손 점검은 또 샌다.
+# baseline = **정사각~가로형인데 배경으로 멀쩡한 것**(육안 확인 완료분). 정사각이라고 다 얼빡이 아니다 —
+#   전신 풍경·여백 큰 일러스트는 세로 크롭해도 쓸 만하다. 그래서 자동 차단이 아니라 **등재제**로 둔다.
+#   새 정사각이 들어오면 게이트가 막고 → 사람이 보고 → 얼빡이면 파일명에 프사 표식, 배경이면 여기 등재.
+_FACE_RATIO_OK = {
+    'characters/season/gojo/main/joy/gojo_n09.jpg',        # 736×736 헬스장 전신 풍경(인물 작음·배경 넓음) — 260726 육안
+    'characters/season/lucy/dokkaebi/base/dokkaebi_21.jpg', # 735×825 비 오는 지붕 착석 전신 — 260726 육안
+    'characters/season/lucy/dokkaebi/joy/dokkaebi_11.jpg',  # 1600×1600 소품 든 상반신 일러스트(여백 큼) — 260726 육안
+}
+
+def check_face_bg():
+    """배경 풀에 얼빡이 섞였나 — media.json 실측(하드 게이트).
+    ① 파일명 프사 표식(운영자 명명 = 정본 축)이 배경 풀에 있으면 차단.
+    ② 종횡비 > FACE_RATIO 인데 _FACE_RATIO_OK 미등재면 차단(육안 확인 강제)."""
+    sys.path.insert(0, os.path.join(ROOT, 'shared'))
+    import build_season_media as bsm
+    named, ratio, checked = [], [], 0
+    for mp in sorted(glob.glob(os.path.join(ROOT, 'viewer', 'characters', 'season', '*', 'media.json'))):
+        try:
+            d = json.loads(open(mp, encoding='utf-8').read())
+        except Exception:
+            continue
+        for bucket, arr in d.items():
+            if bucket.startswith('_') or not isinstance(arr, list):
+                continue
+            for relp in arr:
+                if not isinstance(relp, str):
+                    continue
+                p = Path(os.path.join(ROOT, 'viewer', relp.lstrip('/')))
+                if p.suffix.lower() not in bsm.IMG_EXT or not p.exists():
+                    continue
+                checked += 1
+                if bsm.is_face(p):
+                    named.append(relp)
+                    continue
+                wh = bsm.img_size(p)
+                if wh and wh[1] and wh[0] / wh[1] > bsm.FACE_RATIO and relp not in _FACE_RATIO_OK:
+                    ratio.append('%s (%d×%d)' % (relp, wh[0], wh[1]))
+    rc = 0
+    if named:
+        rc = 1
+        print('❌ 얼빡 배경 게이트(차단) — 프사 표식 파일이 배경 풀에 있다 '
+              '(처방 = 캐릭터 루트로 옮기고 build_season_media.py 재실행):')
+        for x in named:
+            print('   ·', x)
+    if ratio:
+        rc = 1
+        print('❌ 얼빡 배경 게이트(차단) — 미확인 정사각~가로형이 배경 풀에 있다 '
+              '(세로 무대 cover 시 좌우 잘림 · 얼빡이면 파일명에 프사 표식 후 재빌드 / 배경이면 _FACE_RATIO_OK 등재):')
+        for x in ratio:
+            print('   ·', x)
+    if rc == 0:
+        print('✅ 얼빡 배경 게이트 — 배경 풀 %d장 프사 0 · 정사각 미확인 0(승인 %d건).'
+              % (checked, len(_FACE_RATIO_OK)))
     return rc
 
 
@@ -953,6 +1013,11 @@ def main():
             rc = 1
     except Exception as e:
         print('⚠️ --bare 도구충돌 게이트 스킵:', e)
+    try:
+        if check_face_bg() != 0:   # 얼빡 배경 차단(하드 게이트 — 두 번 샌 사고: 5인 _face01 + 세라 sera_k01 · 운영자 260726 「얼빡은 배경에 깔지마」)
+            rc = 1
+    except Exception as e:
+        print('⚠️ 얼빡 배경 게이트 스킵:', e)
     try:
         if check_autocomplete() != 0:   # 평문 텍스트칸 OS 자동완성 끔 4종(하드 게이트 — 자동완성 바 재발 차단·STAGE1b·260628)
             rc = 1
