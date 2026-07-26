@@ -270,7 +270,7 @@ export async function onRequestPost({ request, env }) {
         try { const o = await env.YETA_R2.get(DKEY); if (o) { det = o.etag; dj = await o.json(); } } catch {}
         if (dj && typeof dj.text === 'string') {
           let txt = stripMarkers(dj.text); const ci = txt.indexOf('<<'); if (ci >= 0) txt = txt.slice(0, ci);   // 러너 필터가 1선, 여기는 2선(기억·무드 유출 원천 차단)
-          if (txt.trim()) return json({ ok: true, etag: et || known, detag: det, draft: { t: String(dj.t || '').slice(0, 24), p: String(dj.p || '').slice(0, 24), ts: Number(dj.ts) || 0, text: txt.slice(0, 4000) } });
+          if (txt.trim()) return json({ ok: true, etag: et || known, detag: det, draft: { t: String(dj.t || '').slice(0, 24), p: String(dj.p || '').slice(0, 24), ts: Number(dj.ts) || 0, text: txt.slice(0, 4000), ...(dj.mood ? { mood: String(dj.mood).slice(0, 12) } : {}) } });   // mood(Q.81) = 러너 선두 <<MOOD>> 캡처분 통과 — 뷰어 Y_MOODS 화이트리스트가 최종 게이트
         }
         dknown = det;   // 파싱 불가·빈 draft = 기준선만 전진(같은 객체 무한 재조회 차단)
       }
