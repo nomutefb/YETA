@@ -803,6 +803,7 @@ except Exception: print(sys.argv[1])" "$PERSONA")"   # 제목 = 화자 이름(�
   prev="$(printf '%s' "${1:-}" | python3 -c "
 import sys,re
 t=sys.stdin.read()
+t=re.sub(r'^\s*<<\s*MOOD\s*:\s*\w+\s*>>\s*', '', t, flags=re.I)   # 선두 MOOD(Q.81 출력 계약 첫 줄) 선벗김 — 안 벗기면 아래 마커 split[0]이 빈 문자열 = 알림이 전부 '새 메시지'로 뭉개진다
 t=re.split(r'^\s*\[[^\]\n]{1,24}\]\s', t, maxsplit=1, flags=re.M)[0]   # 단톡 교대 대본([이름] 이하) 잘라내기 = 알림엔 첫 화자 대사만(ptt_voice 동형 규칙 · 260725)
 t=re.split(r'<<\s*(?:NOTE|MOOD|DEAD)', t, 1, flags=re.I)[0]   # 마커 이전 = 대사만 — push_reply는 finish 전 OUT 원문을 받아 마커가 살아 있다(#273 80자 상한 이후 짧은 답장에서 「…<<MOOD:joy」가 알림에 그대로 새던 버그 · PR#281 회수)
 t=re.sub(r'\*[^*]*\*','',t)                # 지문 제거 = 대사만(미리보기)
