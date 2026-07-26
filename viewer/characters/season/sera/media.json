@@ -1,7 +1,6 @@
 {
- "_comment": "시즌 감정 미디어 manifest(세라) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. 정본=viewer/characters/season/sera/main/<감정>/.",
+ "_comment": "시즌 감정 미디어 manifest(세라) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. ⚠ 260726 얼빡 제외: base에 있던 sera_k01.jpg(640×640 정사각 프사 크롭)를 캐릭터 루트 sera_face01.jpg로 옮겼다 — 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(sera_face.webp 선례 계승). 왜 뺐나 = 얼빡은 420×900 세로 무대에 cover로 깔면 얼굴만 확대·잘려 배경으로 부적합(운영자 260726 「얼빡은 배경에 깔지마」). base는 잔여 3장(k02·k03·v06 = 전부 세로형)으로 로테이션 유지. 정본=viewer/characters/season/sera/main/<감정>/.",
  "base": [
-  "characters/season/sera/main/base/sera_k01.jpg",
   "characters/season/sera/main/base/sera_k02.jpg",
   "characters/season/sera/main/base/sera_k03.jpg",
   "characters/season/sera/main/base/sera_v06.jpg"

@@ -3416,7 +3416,7 @@ function yAgo(ts) {   // 상대시간(운영자 260707) — <1분 = 방금 · 1~
 }
 let YSEASONM = {};   // 시즌 감정 미디어 manifest 캐시(캐릭터별 1회 fetch — {warm[]·tense[]·blue[]·base[]})
 function ySeasonMedia(c) {
-  if (!c || c.grade !== 'season' || !c.season) return null;   // 비시즌·manifest 무 = 일반 무대(옵트인)
+  if (!c || !c.season) return null;   // manifest 무 = 일반 무대(옵트인 축 = roster season 필드 하나 · 운영자 260726 "ㄱ") — 옛 `grade==='season'` 이중 게이트 폐지: 감정 이미지를 모아둔 캐릭터가 루시 말고도 15인인데 등급이 없어 전원 로테이션이 죽어 있었다(세라 16장 중 1장만 노출). 등급 훈장(yGradeBadge·yring)은 별개 축 = 불변
   if (YSEASONM[c.id]) return YSEASONM[c.id];
   if (!YSEASONM['_p_' + c.id]) {   // 도착 전 1회만 발사 — 도착하면 재스테이지
     YSEASONM['_p_' + c.id] = 1;
@@ -3551,7 +3551,7 @@ function yWarmBg() {   // 배경 프리로드(운영자 260707 "배경 로딩=�
   if (!_ybgWarmed && YCHARS.length) {   // ① 시그니처 bg = 즉시(오프닝 진입 = 캐시 히트 → yStage 즉시페인트)
     _ybgWarmed = true;
     for (const c of YCHARS) if (c && c.bg) { const im = new Image(); im.src = c.bg; }
-    for (const c of YCHARS) if (c && c.grade === 'season' && c.season) ySeasonMedia(c);   // 시즌 감정미디어 = 진입 전 프리페치(manifest+버킷 첫 이미지) → 방 진입 순간 바로 캐릭터 배경(시그니처 깜빡임 제거 · 운영자 260717)
+    for (const c of YCHARS) if (c && c.season) ySeasonMedia(c);   // 감정미디어 = 진입 전 프리페치(manifest+버킷 첫 이미지) → 방 진입 순간 바로 캐릭터 배경(시그니처 깜빡임 제거 · 운영자 260717) · 게이트는 ySeasonMedia와 같은 축(roster season 필드)으로 통일(260726)
   }
   if (!_ybgWarmed2) {   // ② 장소·무드 씬 = 유휴 지연 프리로드(장소 국면 재진입도 진입 동기 · HTTP 캐시 · 트랜지언트 Image = 디코드 미보유)
     _ybgWarmed2 = true;
@@ -3594,7 +3594,7 @@ function yStage(mood) {   // 무대 우선순위(운영자 260707): 난입 플�
     yPaintBg(pool[pi], YCUR.color || '#7c5cfc', true);   // 결정적 로테이션 = 답장마다 다음 장(전 장이 순서대로 다 나옴)
     return;
   }
-  if (YCUR.grade === 'season' && YCUR.season) return;   // 시즌 manifest 로딩 중 = 시그니처(기존 배경) 페인트 스킵 → 블랙 유지, 도착 시 재스테이지(운영자 260717 "들어가는 순간 기존 배경 없이 바로 캐릭터 배경") · fetch 실패는 ySeasonMedia catch가 빈 manifest로 시그니처 폴백 · _yStageCold 유지(도착 시 첫 페인트 = 클립 skip)
+  if (YCUR.grade === 'season' && YCUR.season) return;   // 시즌 manifest 로딩 중 = 시그니처(기존 배경) 페인트 스킵 → 블랙 유지, 도착 시 재스테이지(운영자 260717 "들어가는 순간 기존 배경 없이 바로 캐릭터 배경") · fetch 실패는 ySeasonMedia catch가 빈 manifest로 시그니처 폴백 · _yStageCold 유지(도착 시 첫 페인트 = 클립 skip). ⚠ 여기만 `grade==='season'` 유지(260726 게이트 개방 시 의도적 비확대) = 블랙 대기는 시즌 주인공 한정 · 나머지 15인은 시그니처 먼저 뜨고 manifest 도착 시 감정배경으로 크로스페이드(딥링크 직행처럼 프리페치 전 진입해도 암전 0)
   const th = YTH() || {}, turns = th.turns || [];   // 비시즌 체인(난입 > 오프닝 시그니처 > 장소·날씨 > 무드 > base)
   const sig = ((th.room || []).length < 2) && ySigPhase(turns);   // 오프닝(첫/오랜만 "단독"대화) 처음 몇 발화 = 캐릭터 시그니처 · 합석(2명)이면 바로 장소 · 이후 = 장소(운영자 260707 "단독대화")
   const bg = th.barged;
