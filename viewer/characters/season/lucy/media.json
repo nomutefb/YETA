@@ -11,7 +11,6 @@
   "characters/season/lucy/android/base/android_30.jpg",
   "characters/season/lucy/android/base/android_34.jpg",
   "characters/season/lucy/android/base/android_42.jpg",
-  "characters/season/lucy/android/base/android_43.jpg",
   "characters/season/lucy/android/base/android_44.jpg",
   "characters/season/lucy/android/base/android_45.jpg",
   "characters/season/lucy/android/base/android_56.jpg",
@@ -29,7 +28,6 @@
   "characters/season/lucy/android/warm/android_41.jpg",
   "characters/season/lucy/android/warm/android_46.jpg",
   "characters/season/lucy/dokkaebi/warm/dokkaebi_05.jpg",
-  "characters/season/lucy/dokkaebi/warm/dokkaebi_06.jpg",
   "characters/season/lucy/dokkaebi/warm/dokkaebi_09.jpg",
   "characters/season/lucy/dokkaebi/warm/dokkaebi_14.jpg",
   "characters/season/lucy/dokkaebi/warm/dokkaebi_16.jpg",
@@ -51,10 +49,9 @@
   "characters/season/lucy/dokkaebi/joy/dokkaebi_11.jpg",
   "characters/season/lucy/dokkaebi/joy/lucy_clip_01.mp4",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_13.jpg",
-  "characters/season/lucy/dokkaebi/joy/dokkaebi_15.jpg",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_23.jpg",
-  "characters/season/lucy/dokkaebi/joy/lucy_clip_01.mp4",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_29.jpg",
+  "characters/season/lucy/dokkaebi/joy/lucy_clip_01.mp4",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_37.jpg",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_42.jpg",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_44.jpg"
@@ -71,7 +68,6 @@
   "characters/season/lucy/android/love/android_61.jpg",
   "characters/season/lucy/dokkaebi/love/dokkaebi_12.jpg",
   "characters/season/lucy/dokkaebi/love/dokkaebi_17.jpg",
-  "characters/season/lucy/dokkaebi/love/dokkaebi_19.jpg",
   "characters/season/lucy/dokkaebi/love/dokkaebi_33.jpg"
  ],
  "shy": [
@@ -116,13 +112,10 @@
   "characters/season/lucy/dokkaebi/mad/dokkaebi_08.jpg",
   "characters/season/lucy/dokkaebi/mad/dokkaebi_18.jpg",
   "characters/season/lucy/dokkaebi/mad/dokkaebi_27.jpg",
-  "characters/season/lucy/dokkaebi/mad/dokkaebi_35.jpg",
   "characters/season/lucy/dokkaebi/mad/dokkaebi_41.jpg",
   "characters/season/lucy/dokkaebi/mad/dokkaebi_45.jpg"
  ],
  "sulky": [
-  "characters/season/lucy/android/sulky/android_01.jpg",
-  "characters/season/lucy/android/sulky/android_06.jpg",
   "characters/season/lucy/android/sulky/android_09.jpg",
   "characters/season/lucy/android/sulky/android_35.jpg",
   "characters/season/lucy/android/sulky/android_50.jpg",
