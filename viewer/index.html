@@ -2503,7 +2503,7 @@ async function yLrAct(b) {   // 트레이 픽토 = 고정/나가기(구 .ylmenu 
   const TRAY_W = 60, THRESH = 36, RUB = .55;   // 트레이폭(=CSS --ylr-w 동기) · 열림 임계 · 오버슈트 저항(0 자유~1 단단)
   let x0 = 0, y0 = 0, tgt = null, row = null, tray = null, decided = 0, horiz = 0, startX = 0, pid = 0;
   const clear = () => { tgt = null; row = null; tray = null; decided = 0; horiz = 0; };   // 상태만(설정 settle 전용 — DOM은 settle이 이징 시작점 커밋 후 직접 정리)
-  const reset = () => { if (tgt) { tgt.classList.remove('ylr-drag'); if (row) row.style.transform = ''; if (tray) tray.style.transform = ''; } clear(); };   // 중단 = DOM까지 원복(Q.80) — 종전엔 상태만 비워서, 드래그 중 비primary 터치·스크롤 개입 시 .ylr-drag(transition:none)+인라인 transform이 잔존해 행이 반쯤 열린 채 동결(이후 settle은 tgt=null로 조기 탈출 = 정리 코드 도달 불가)
+  const reset = () => { if (tgt) { tgt.classList.remove('ylr-drag'); if (row) row.style.transform = ''; if (tray) tray.style.transform = ''; } clear(); };   // 중단 = DOM까지 원복(Q.83) — 종전엔 상태만 비워서, 드래그 중 비primary 터치·스크롤 개입 시 .ylr-drag(transition:none)+인라인 transform이 잔존해 행이 반쯤 열린 채 동결(이후 settle은 tgt=null로 조기 탈출 = 정리 코드 도달 불가)
   box.addEventListener('pointerdown', e => {
     if (e.target.closest('.ylr-tray')) { reset(); return; }   // 트레이 픽토 = click 핸들러 처리(드래그 아님)
     const r = e.target.closest('.ylist-row'); if (!r || !e.isPrimary) { reset(); return; }
@@ -2540,7 +2540,7 @@ async function yLrAct(b) {   // 트레이 픽토 = 고정/나가기(구 .ylmenu 
     _ylrJustSwipe = 1; setTimeout(() => _ylrJustSwipe = 0, 80);   // 릴리스 합성 click 소비(방 오발 진입 차단)
   };
   box.addEventListener('pointerup', settle);
-  box.addEventListener('pointercancel', reset);   // reset이 DOM 원복까지 포함(Q.80) — 종전 수동 정리와 동일 동작·중복 제거
+  box.addEventListener('pointercancel', reset);   // reset이 DOM 원복까지 포함(Q.83) — 종전 수동 정리와 동일 동작·중복 제거
   $('#ylist') && $('#ylist').addEventListener('scroll', reset, { passive: true });
   box.addEventListener('click', e => {
     const act = e.target.closest('.ylr-act');
