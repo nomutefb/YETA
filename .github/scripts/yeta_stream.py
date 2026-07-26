@@ -29,8 +29,16 @@ result = None
 raw_lines = []
 head_fired = False
 
+MOODS = ("base", "warm", "tense", "blue", "joy", "love", "shy", "mad")   # finish 화이트리스트와 짝(yeta_chat.sh 8감정 · Q.29)
+mood = ""   # 선두 <<MOOD:x>> 캡처분(출력 계약 첫 줄 · Q.81) — draft 동봉 = 뷰어가 생성 중에도 감정 글자 리졸브
+
 def clean(t):
-    i = t.find("<<")                      # 첫 마커부터 전부 보류 — NOTE 내용·MOOD 태그 유출 원천 차단(대사는 마커 앞)
+    global mood
+    m = re.match(r'\s*<<\s*MOOD\s*:\s*([A-Za-z]+)\s*>>\s*', t, flags=re.I)   # 선두 MOOD(Q.81 출력 계약 첫 줄) — 캡처 후 대사에서 벗김(태그 유출 0 유지 · 미완성 '<<MO…'는 아래 find 보류가 그대로 잡음)
+    if m:
+        if not mood and m.group(1).lower() in MOODS: mood = m.group(1).lower()
+        t = t[m.end():]
+    i = t.find("<<")                      # 첫 마커부터 전부 보류 — NOTE 내용·꼬리 MOOD 태그 유출 원천 차단(대사는 마커 앞)
     if i >= 0: t = t[:i]
     if t.endswith("<"): t = t[:-1]        # 꼬리 낱개 '<' 보류(다음 델타에서 '<<' 완성 가능)
     return t.strip()[:4000]
@@ -54,7 +62,9 @@ def publish(force=False):
     if not force and now - last_pub < MIN_GAP: return
     if not force and not re.search(r"[.!?…~\n]", t[pub_len:]): return   # 새 문장 경계 없으면 보류(어중간한 단어 절단 노출 감소)
     try:
-        body = json.dumps({"t": TH, "p": PS, "ts": int(now * 1000), "text": t}, ensure_ascii=False)
+        d = {"t": TH, "p": PS, "ts": int(now * 1000), "text": t}
+        if mood and mood != "base": d["mood"] = mood   # base = 무감정(뷰어 연출 비발동 축) — 동봉 생략 = 종전 draft와 동형
+        body = json.dumps(d, ensure_ascii=False)
         f = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8")
         f.write(body); f.close()
         r = subprocess.run(["aws", "s3api", "put-object", "--bucket", BUCKET, "--key", KEY, "--body", f.name,
