@@ -249,6 +249,55 @@ def check_design():
     return 1 if hard else 0   # accent_raw·accent_hex만 차단, hex/blur/죽은토큰은 WARN
 
 
+def check_backstack_contract():
+    """인앱 뒤로가기(백스택) 골격 계약 — popstate 분기가 조용히 사라지면 rc=1.
+
+    왜(260726 사고): 262차가 종료 확인 팝업을 폐지하며 "홈에서 뒤로 1회 = 앱 밖"을 계약으로
+    내걸었는데, 검증이 '팝업 0'만 보고 **몇 번 눌러야 나가는지를 안 셌다**. 실제론 2회였고
+    (연쇄 감기의 착지 칸에서 멈춤) 뒤로 1회가 통째로 씹혔다 — 267차에서야 실측으로 잡혔다.
+    popstate는 한 함수 안에 분기가 겹겹이라 한 줄만 지워도 증상이 '조용히' 돌아온다.
+
+    여기서 보는 것(가볍게 · 매 커밋): popstate 리스너 안에 세 계약이 살아 있나.
+      ① 레이어 회수 우선(_navPopClose)  ② 고아 칸 감기(history.state → back)
+      ③ 감기 착지에서 이탈(back 호출이 2회 이상 = 감기 + 착지)
+    실동작 증명은 `node tests/test_backstack.js`(실브라우저 8계약 · ~1.5분)가 한다 —
+    무거워서 매 커밋엔 안 붙인다. 이 게이트가 걸리면 그 하니스로 실증해라."""
+    rel = 'viewer/index.html'
+    p = os.path.join(ROOT, rel)
+    if not os.path.exists(p):
+        print('⚠️ viewer/index.html 없음 — 백스택 계약 게이트 스킵'); return 0
+    src = open(p, encoding='utf-8').read()
+    i = src.find("addEventListener('popstate'")
+    if i < 0:
+        print('❌ 백스택 계약 — popstate 리스너를 못 찾았다(%s).' % rel)
+        print('   처방 = node tests/test_backstack.js --report 로 실동작부터 확인해라.')
+        return 1
+    j = src.find('\n});', i)
+    body = src[i:j if j > 0 else i + 2000]
+    miss = []
+    if '_navPopClose' not in body:
+        miss.append('① 레이어 회수(_navPopClose) — 뒤로가 최상단 레이어를 안 닫고 앱을 나간다')
+    if 'history.state' not in body:
+        miss.append('② 고아 칸 감기(history.state 검사) — navHome이 남긴 칸에서 뒤로가 씹힌다')
+    if len(re.findall(r'history\.back\s*\(', body)) < 2:
+        miss.append('③ 감기 착지 이탈(back 2회째) — 267차 이전으로 회귀 = 홈에서 뒤로 1회가 통째로 씹힌다')
+    # ④ 폐지분 부활 감시 — ⚠ `.yexit*` **CSS 클래스는 살아 있는 정본**이다(#yconfirm·#ymedead·#ymdquiz가
+    #    계승하는 확인 팝업 골격 · 262차 CSS 무접촉). 되살아나면 안 되는 건 DOM id와 함수뿐이라 그것만 본다.
+    revived = re.findall(r'id\s*=\s*["\']yexit["\']|getElementById\(\s*["\']yexit["\']\s*\)|yExit(?:Ask|Yes|Close)\s*\(', src)
+    if revived:
+        miss.append('④ 폐지된 종료 확인 팝업 부활(%s) — 262차 운영자 승인 폐지분(.yexit* CSS 골격은 정상)'
+                    % ', '.join(sorted(set(revived))[:3]))
+    if miss:
+        print('❌ 백스택 계약 게이트 — popstate 골격에서 사라진 분기:')
+        for m in miss:
+            print('  -', m)
+        print('   실증 = node tests/test_backstack.js --report (실브라우저 8계약)')
+        print('   의도된 리팩터라면: 하니스를 먼저 통과시키고 이 게이트의 기대를 갱신해라(사유 기록).')
+        return 1
+    print('✅ 백스택 계약 게이트 — popstate 3분기 생존(레이어 회수·고아 칸 감기·착지 이탈) · 실증 = tests/test_backstack.js')
+    return 0
+
+
 def check_token_lock():
     """절대명령#1 기계강제 — design-tokens.lock(승인 원장)에 없는 :root 신규 토큰 = 커밋 차단(rc=1).
     승인 = 락 등재(PR diff 리뷰). '승인 없이 조용히 :root 토큰 추가'를 기계가 봉쇄 = §🔒 진짜 강제 지렛대.
@@ -1003,6 +1052,11 @@ def main():
             rc = 1
     except Exception as e:
         print('⚠️ 토큰 락 게이트 스킵:', e)
+    try:
+        if check_backstack_contract() != 0:   # 백스택 popstate 3분기 생존(267차 — '뒤로 1회 씹힘' 재발 차단 · 실증 = tests/test_backstack.js)
+            rc = 1
+    except Exception as e:
+        print('⚠️ 백스택 계약 게이트 스킵:', e)
     try:
         if check_claude_failover() != 0:   # claude -p 호출 = 폴오버 SSOT 경유 통일(자체 쿼터처리·따로놀기 차단 · 260629 weekly한도 전건실패)
             rc = 1
