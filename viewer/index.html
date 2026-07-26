@@ -3440,7 +3440,11 @@ function yAgo(ts) {   // 상대시간(운영자 260707) — <1분 = 방금 · 1~
 }
 let YSEASONM = {};   // 시즌 감정 미디어 manifest 캐시(캐릭터별 1회 fetch — {warm[]·tense[]·blue[]·base[]})
 function ySeasonMedia(c) {
-  if (!c || c.grade !== 'season' || !c.season) return null;   // 비시즌·manifest 무 = 일반 무대(옵트인)
+  if (!c || !c.season) return null;   // manifest 무 = 일반 무대(옵트인 = `season` 필드 유무 단일 판정)
+  // ⚠ 260726 실측 사고: 종전 게이트가 `c.grade !== 'season'`을 함께 걸어, **grade가 'season'인 루시 1명만** 감정 미디어를 썼다.
+  //   나머지 15명(고죠 41장·로이스 32장·윈터 200장·레제 15·서예은 10·세라 16·드루실라 6·홍석천 5 …)은 roster.season을 달아놨는데도
+  //   manifest를 fetch조차 안 해 **수집분 전체가 앱에 도달하지 않았다**(운영자 "루시는 배경이 바뀌는데" = 정확한 증상).
+  //   grade는 훈장 축(시즌/IDOL/난입)이고 미디어 보유와 무관하다 → 두 축을 분리. 옵트인은 `season` 필드가 이미 하고 있다.
   if (YSEASONM[c.id]) return YSEASONM[c.id];
   if (!YSEASONM['_p_' + c.id]) {   // 도착 전 1회만 발사 — 도착하면 재스테이지
     YSEASONM['_p_' + c.id] = 1;
@@ -3575,7 +3579,7 @@ function yWarmBg() {   // 배경 프리로드(운영자 260707 "배경 로딩=�
   if (!_ybgWarmed && YCHARS.length) {   // ① 시그니처 bg = 즉시(오프닝 진입 = 캐시 히트 → yStage 즉시페인트)
     _ybgWarmed = true;
     for (const c of YCHARS) if (c && c.bg) { const im = new Image(); im.src = c.bg; }
-    for (const c of YCHARS) if (c && c.grade === 'season' && c.season) ySeasonMedia(c);   // 시즌 감정미디어 = 진입 전 프리페치(manifest+버킷 첫 이미지) → 방 진입 순간 바로 캐릭터 배경(시그니처 깜빡임 제거 · 운영자 260717)
+    for (const c of YCHARS) if (c && c.season) ySeasonMedia(c);   // 260726 게이트 통일(ySeasonMedia와 짝) — grade 조건을 남기면 프리페치만 루시로 좁아져 나머지는 방 진입 때 콜드 fetch가 된다   // 시즌 감정미디어 = 진입 전 프리페치(manifest+버킷 첫 이미지) → 방 진입 순간 바로 캐릭터 배경(시그니처 깜빡임 제거 · 운영자 260717)
   }
   if (!_ybgWarmed2) {   // ② 장소·무드 씬 = 유휴 지연 프리로드(장소 국면 재진입도 진입 동기 · HTTP 캐시 · 트랜지언트 Image = 디코드 미보유)
     _ybgWarmed2 = true;
@@ -3618,7 +3622,7 @@ function yStage(mood) {   // 무대 우선순위(운영자 260707): 난입 플�
     yPaintBg(pool[pi], YCUR.color || '#7c5cfc', true);   // 결정적 로테이션 = 답장마다 다음 장(전 장이 순서대로 다 나옴)
     return;
   }
-  if (YCUR.grade === 'season' && YCUR.season) return;   // 시즌 manifest 로딩 중 = 시그니처(기존 배경) 페인트 스킵 → 블랙 유지, 도착 시 재스테이지(운영자 260717 "들어가는 순간 기존 배경 없이 바로 캐릭터 배경") · fetch 실패는 ySeasonMedia catch가 빈 manifest로 시그니처 폴백 · _yStageCold 유지(도착 시 첫 페인트 = 클립 skip)
+  if (YCUR.season) return;   // 260726 게이트 통일(ySeasonMedia와 짝) — grade 조건이 남으면 나머지 15인은 manifest 도착 전에 옛 bg를 한 번 칠했다가 교체돼 깜빡인다   // 시즌 manifest 로딩 중 = 시그니처(기존 배경) 페인트 스킵 → 블랙 유지, 도착 시 재스테이지(운영자 260717 "들어가는 순간 기존 배경 없이 바로 캐릭터 배경") · fetch 실패는 ySeasonMedia catch가 빈 manifest로 시그니처 폴백 · _yStageCold 유지(도착 시 첫 페인트 = 클립 skip)
   const th = YTH() || {}, turns = th.turns || [];   // 비시즌 체인(난입 > 오프닝 시그니처 > 장소·날씨 > 무드 > base)
   const sig = ((th.room || []).length < 2) && ySigPhase(turns);   // 오프닝(첫/오랜만 "단독"대화) 처음 몇 발화 = 캐릭터 시그니처 · 합석(2명)이면 바로 장소 · 이후 = 장소(운영자 260707 "단독대화")
   const bg = th.barged;
@@ -4071,7 +4075,19 @@ function yModeCur(c) {   // 지금 걸린 모드 1개 — roster `mode`(단수) 
   return null;
 }
 function yModeOn(c) { return !!yModeCur(c); }   // 변신 모드 게이트 판정 — 배지(yJobBadge)·모드 프사(yCAva)·모드 배경(yCBg) 공용 SSOT(운영자 260717 Q "도깨비 모드 = 프사 자동 교체" · 판정 이원화 = 배지/프사 엇갈림 드리프트라 1함수)
-const yCAva = c => { const m = yModeCur(c); return (m && m.avatar) ? m.avatar : ((c && c.avatar) || ''); };   // 캐릭터 아바타 해석 SSOT — 모드 활성 + 모드 프사(roster mode.avatar) 있으면 그걸로, 아니면 평시 프사(내 아바타는 yMeAva 별축)
+function yAvaSeason(c) {   // 감정 프사 로테이션(운영자 260726 "내가 잘라서 준 정사각 = 프사로 바뀌는 것") — manifest `av` 풀에서 무드 버킷 → 그룹 폴백 → base
+  if (!c || !YCUR || c.id !== YCUR.id) return '';   // 열린 방의 그 인물만 — 목록·지도까지 흔들면 스캔이 어지럽다(고정이 낫다)
+  const em = ySeasonMedia(c), av = em && em.av;
+  if (!av) return '';
+  const mood = yLastMood();
+  let pool = av[mood || 'base'] || [];
+  if (!pool.length && mood && Y_GRP[mood]) pool = av[Y_GRP[mood]] || [];
+  if (!pool.length) pool = av.base || [];
+  if (!pool.length) return '';
+  const n = (((YTH() || {}).turns) || []).filter(t => t.role === 'assistant').length;   // 배경(yStage)과 같은 축 = 답장수 결정적 로테이션 → 프사·배경이 같은 박자로 넘어간다
+  return pool[n % pool.length];
+}
+const yCAva = c => { const m = yModeCur(c); if (m && m.avatar) return m.avatar; return yAvaSeason(c) || ((c && c.avatar) || ''); };   // 캐릭터 아바타 해석 SSOT — 모드 활성 + 모드 프사(roster mode.avatar) 있으면 그걸로, 아니면 평시 프사(내 아바타는 yMeAva 별축)
 const yCBg = c => { const m = yModeCur(c); return (m && m.bg) ? m.bg : ((c && c.bg) || ''); };   // 캐릭터 배경 해석 SSOT — yCAva 대칭축(운영자 260726 "배경바뀌고 프사 바뀌면서 등장") · 모드 배경 없으면 평시 bg
 function yJobBadge(c) {   // 이름 옆 직업/변신 배지(운영자 260707) — 변신 모드(시간대 게이트) 있으면 터콰이즈 우선 · 아니면 메인 직업 라임
   if (!c) return '';

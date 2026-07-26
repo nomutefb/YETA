@@ -15,7 +15,6 @@
   "characters/season/lucy/android/base/android_42.jpg",
   "characters/season/lucy/dokkaebi/base/dokkaebi_04.jpg",
   "characters/season/lucy/dokkaebi/base/dokkaebi_10.jpg",
-  "characters/season/lucy/dokkaebi/base/dokkaebi_21.jpg",
   "characters/season/lucy/dokkaebi/base/dokkaebi_22.jpg",
   "characters/season/lucy/dokkaebi/base/dokkaebi_31.webp"
  ],
@@ -36,7 +35,6 @@
   "characters/season/lucy/android/joy/android_40.jpg",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_01.jpg",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_07.jpg",
-  "characters/season/lucy/dokkaebi/joy/dokkaebi_11.jpg",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_13.jpg",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_15.jpg",
   "characters/season/lucy/dokkaebi/joy/dokkaebi_23.jpg",
@@ -72,7 +70,6 @@
   "characters/season/lucy/dokkaebi/blue/dokkaebi_30.jpg"
  ],
  "tense": [
-  "characters/season/lucy/android/tense/android_07.jpg",
   "characters/season/lucy/android/tense/android_15.jpg",
   "characters/season/lucy/android/tense/android_20.jpg",
   "characters/season/lucy/android/tense/android_23.jpg",
@@ -94,5 +91,16 @@
   "characters/season/lucy/dokkaebi/mad/dokkaebi_27.jpg",
   "characters/season/lucy/dokkaebi/mad/dokkaebi_32.jpg"
  ],
+ "av": {
+  "base": [
+   "characters/season/lucy/dokkaebi/base/dokkaebi_21.jpg"
+  ],
+  "joy": [
+   "characters/season/lucy/dokkaebi/joy/dokkaebi_11.jpg"
+  ],
+  "tense": [
+   "characters/season/lucy/android/tense/android_07.jpg"
+  ]
+ },
  "mode_dir": "dokkaebi"
 }

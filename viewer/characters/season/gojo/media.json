@@ -26,7 +26,6 @@
   "characters/season/gojo/main/joy/gojo_13.jpg",
   "characters/season/gojo/main/joy/gojo_clip_01.mp4",
   "characters/season/gojo/main/joy/gojo_n02.jpg",
-  "characters/season/gojo/main/joy/gojo_n09.jpg",
   "characters/season/gojo/main/joy/gojo_n11.jpg",
   "characters/season/gojo/main/joy/gojo_n14.jpg",
   "characters/season/gojo/main/joy/gojo_n17.jpg",
@@ -57,5 +56,10 @@
   "characters/season/gojo/main/mad/gojo_10.jpg",
   "characters/season/gojo/main/mad/gojo_11.jpg",
   "characters/season/gojo/main/mad/gojo_12.jpg"
- ]
+ ],
+ "av": {
+  "joy": [
+   "characters/season/gojo/main/joy/gojo_n09.jpg"
+  ]
+ }
 }

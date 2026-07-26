@@ -1,7 +1,6 @@
 {
  "_comment": "시즌 감정 미디어 manifest(세라) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 8종(base/warm/joy/love/shy/blue/tense/mad · Q.29) — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. 정본=viewer/characters/season/sera/main/<감정>/.",
  "base": [
-  "characters/season/sera/main/base/sera_k01.jpg",
   "characters/season/sera/main/base/sera_k02.jpg",
   "characters/season/sera/main/base/sera_k03.jpg",
   "characters/season/sera/main/base/sera_v06.jpg"
@@ -29,5 +28,10 @@
  ],
  "mad": [
   "characters/season/sera/main/mad/sera_v04.jpg"
- ]
+ ],
+ "av": {
+  "base": [
+   "characters/season/sera/main/base/sera_k01.jpg"
+  ]
+ }
 }

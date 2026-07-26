@@ -186,6 +186,33 @@ SEASONS = {
 }
 
 
+AV_RATIO_LO, AV_RATIO_HI = 0.80, 1.30   # 프사 풀 판정 종횡비 창(운영자 260726 "사이즈를 내가 잘라서 준거같은거는 프사로 바뀌는거고 나머지는 배경 · 9:16에 가까운것들은")
+                                        # 실측(윈터 200장): 정사각 ±10% 109장 · 세로 9:16대(0.62~0.80) 33장 · 더 김 17장 → 0.80 경계가 손크롭/원본을 정확히 가른다.
+
+
+def _dim(p: Path):
+    """이미지·클립 실측 (w, h). ffprobe 없거나 실패 = None(= 배경으로 취급 = 종전 동작)."""
+    try:
+        import subprocess
+        o = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0",
+                            "-show_entries", "stream=width,height", "-of", "csv=p=0:s=x", str(p)],
+                           capture_output=True, text=True, timeout=20).stdout.strip().split("\n")[0]
+        w, h = (int(x) for x in o.split("x")[:2])
+        return (w, h) if w and h else None
+    except Exception:
+        return None
+
+
+def is_avatar_shape(p: Path) -> bool:
+    """손으로 잘라 준 정사각(±) = 프사 풀 · 9:16 계열 = 배경. 클립은 언제나 배경."""
+    if p.suffix.lower() in CLIP_EXT:
+        return False
+    d = _dim(p)
+    if not d:
+        return False
+    return AV_RATIO_LO <= d[0] / d[1] <= AV_RATIO_HI
+
+
 def rel(p: Path) -> str:
     return p.relative_to(ROOT / "viewer").as_posix()  # viewer 서빙 루트 기준(로스터 bg 경로 규약과 동일)
 
@@ -203,6 +230,7 @@ def build_flat(cid: str, cfg: dict) -> dict:
     if not fdir.is_dir():
         raise SystemExit(f"평면 폴더 없음: {fdir}")
     buckets = {e: [] for e in EMOS}
+    avs = {e: [] for e in EMOS}          # 프사 풀(정사각 손크롭) — 배경과 분리(운영자 260726)
     rules = cfg["rules"]
     # 클립(mp4/webm) = base 선두 계약 — build_one과 동형(260726 실측: 이 처리가 빠져 있어 운영자가 넣은 영상 3개가 통째로 무시됐다).
     buckets["base"].extend(sorted(p for p in fdir.iterdir() if p.is_file() and p.suffix.lower() in CLIP_EXT))
@@ -210,16 +238,19 @@ def build_flat(cid: str, cfg: dict) -> dict:
         if not p.is_file() or p.suffix.lower() not in IMG_EXT:
             continue
         nm = p.stem.lower()
-        for emo, toks in rules:
+        emo = "base"
+        for e, toks in rules:
             if any(t in nm for t in toks):
-                buckets[emo].append(p)
+                emo = e
                 break
-        else:
-            buckets["base"].append(p)
+        (avs if is_avatar_shape(p) else buckets)[emo].append(p)
     out = {"_comment": cfg["comment"]}
     for e in EMOS:
         if buckets[e]:
             out[e] = [rel(p) for p in buckets[e]]
+    av = {e: [rel(p) for p in avs[e]] for e in EMOS if avs[e]}
+    if av:
+        out["av"] = av
     return out
 
 
@@ -248,9 +279,15 @@ def build_one(cid: str, cfg: dict) -> dict:
                 continue
             buckets[sub.name].extend(sorted(p for p in sub.iterdir() if p.is_file() and p.suffix.lower() in MEDIA_EXT))
     out = {"_comment": cfg["comment"]}
+    avs = {e: [] for e in EMOS}          # 프사 풀(정사각 손크롭) 분리 — 배경으로 쓰면 잘린다(운영자 260726)
     for e in EMOS:
-        if buckets[e]:
-            out[e] = [rel(p) for p in buckets[e]]  # 빈 버킷 = 생략(viewer 그룹 폴백 Y_GRP가 흡수)
+        keep = [p for p in buckets[e] if not is_avatar_shape(p)]
+        avs[e] = [p for p in buckets[e] if is_avatar_shape(p)]
+        if keep:
+            out[e] = [rel(p) for p in keep]  # 빈 버킷 = 생략(viewer 그룹 폴백 Y_GRP가 흡수)
+    av = {e: [rel(p) for p in avs[e]] for e in EMOS if avs[e]}
+    if av:
+        out["av"] = av
     if cfg.get("mode_dir"):
         out["mode_dir"] = cfg["mode_dir"]
     return out
