@@ -3537,22 +3537,68 @@ function yBgReset() {   // 두 레이어 전부 소거 — 비디오 정지·제
     L.style.backgroundImage = '';
   });
 }
+/* ── 원화 휘도 가변 딤(운영자 260727 한 수 채택 "원화 휘도로 가변 이게 더 좋을듯") ──
+   문제 = 휘도 18(무디)과 200(레제)이 같은 딤을 쓰니 어두운 원화는 흑면이 되고 밝은 원화는 흰 글자가 아슬했다.
+   해법 = 딤을 고정값이 아니라 **합성 후 실효 휘도를 맞추는 함수**로. 목표 휘도 T = 운영자가 "이정도면 좋네" 한
+   화면(루시 시그니처 휘도 155 × 딤 .55/.68)에서 유도 = 그 화면은 이 식에서도 정확히 .55/.68로 재현된다(계보 보존).
+   상한 = 계보값 .68/.78(260709 정본) · 하한 = 딤 없음 = 새 값 창작 0.
+   결과(실측 9장) = 휘도 79 이상은 실효 밝기가 79/62로 완전히 균일 · 그 아래는 원화가 이미 어두워 딤이 0으로 걷힌다. */
+const _YSCRIM = 18;   // 스크림 색 = rgba(18,18,18) 계승(--bg #161716 위 근흑)
+const _YLREF = 155, _YDREF = [.55, .68];   // 기준 화면 = 루시 시그니처(실측 평균휘도 155) × 운영자 확정 딤
+const _YTGT = _YDREF.map(x => _YLREF * (1 - x) + _YSCRIM * x);   // 목표 실효 휘도(상단·하단) — 이 두 수가 전 캐릭터 공통 기준
+const _YCLAMP = [[0, .68], [0, .78]];   // [하한, 상한] · 상한 = 260709 정본(계보값 밖으로 안 나간다) · 하한 = 0 = 「딤 없음」(새 값 신설이 아니라 부재 — 원화가 스크림보다 어두우면 덮을 이유 자체가 없다. 하한을 .35로 두면 휘도 102 이하가 전부 거기 뭉쳐 실효 밝기가 안 고르다 = 가변의 실익 소멸)
+const _YLUM = new Map();   // URL → 평균휘도(0~255) · 측정은 URL당 1회(같은 오리진 = canvas taint 없음)
+function yBgLum(url) {   // 원화 평균휘도 측정 — 실패(로드 오류·taint)는 null = 고정 딤 폴백(회귀 0)
+  if (!url) return Promise.resolve(null);
+  if (_YLUM.has(url)) return Promise.resolve(_YLUM.get(url));
+  return new Promise(res => {
+    const im = new Image();
+    im.onload = () => {
+      let l = null;
+      try {
+        const c = document.createElement('canvas'); c.width = c.height = 64;   // 64² 축소 = 측정 비용 상수화(원본 해상도 무관 · 1ms 미만)
+        const x = c.getContext('2d', { willReadFrequently: true });
+        x.drawImage(im, 0, 0, 64, 64);
+        const d = x.getImageData(0, 0, 64, 64).data;
+        let s = 0; for (let i = 0; i < d.length; i += 4) s += .2126 * d[i] + .7152 * d[i + 1] + .0722 * d[i + 2];   // Rec.709 상대휘도(사람 눈 가중 = 초록이 제일 밝게 보인다)
+        l = s / (d.length / 4);
+      } catch (e) { l = null; }
+      _YLUM.set(url, l); res(l);
+    };
+    im.onerror = () => { _YLUM.set(url, null); res(null); };
+    im.src = url;
+  });
+}
+function yDimPair(lum, wd) {   // 휘도 → 딤 한 쌍(문자열 = 기존 조립부 계약 그대로) · wd = 윈터 블라인드 +50% 재합성
+  let p;
+  if (lum == null) p = _YDREF.slice();   // 미측정(첫 페인트·측정 실패) = 운영자 확정 고정값 = 회귀 0 · 측정이 끝나면 아래 갱신이 제 값을 얹는다
+  else if (lum - _YSCRIM < 1) p = [_YCLAMP[0][0], _YCLAMP[1][0]];   // 스크림보다 어두운 원화 = 하한(더 눌러봐야 흑면만 깊어진다)
+  else p = _YTGT.map((t, i) => Math.min(_YCLAMP[i][1], Math.max(_YCLAMP[i][0], (lum - t) / (lum - _YSCRIM))));
+  return (wd ? p.map(x => x + (1 - x) * .5) : p).map(x => x.toFixed(2).replace(/^0/, ''));   // 윈터 = 기존 합성식 그대로 계승
+}
 function yPaintBg(bgUrl, tint, season) {   // 레이어 페인트(페르소나 전환·무드 전환 공용) — 같은 그림 재페인트는 키 가드가 막음 · season = 감정 미디어 모드(캐릭터 아트 스크림·클립 muted)
-  const wd = !!(YCUR && YCUR.id === 'winter');   // 윈터 = 블라인드 +50% 합성(운영자 260726 "배경 앞에 블라인드 투명도 50% 더") — .55/.68 + (1−x)×.5 = .78/.84(클립은 .ybg.wdim 필터가 짝 · 노브: 여기 한 곳)
-  const [d1, d2] = wd ? ['.78', '.84'] : ['.55', '.68'];   // 캐릭터 아트 스크림 = 260709 정본 복귀(운영자 260727 "배경이 넘 안 보여 — 투명도 더 높여") = 260709 "+30% 더" 합성 되돌림 · 새 값 창작 0(계보값 계승) · 더 옅은 안 = 플그 사다리 viewer/pg/20260727_160936_챗배경딤투명도_v1.html
+  const wd = !!(YCUR && YCUR.id === 'winter');   // 윈터 = 블라인드 +50% 합성(운영자 260726 "배경 앞에 블라인드 투명도 50% 더") — 합성식은 yDimPair가 들고 있다(클립은 .ybg.wdim 필터가 짝)
+  const artUrl = (season && /\.(mp4|webm)(\?|$)/i.test(bgUrl || '')) ? (YCUR && YCUR.bg || '') : (bgUrl || '');   // 딤이 걸리는 실물 그림(클립 국면 = 밑에 깔리는 시그니처 스틸)
+  const [d1, d2] = yDimPair(_YLUM.has(artUrl) ? _YLUM.get(artUrl) : null, wd);   // 첫 페인트 = 미측정이면 하한으로 깔고, 아래 비동기 측정이 끝나면 제 값으로 갱신(캐시 히트면 즉시 확정)
   const layers = [$('#ybgA'), $('#ybgB')], next = layers[1 - _ybgCur], curL = layers[_ybgCur];
   yBgKillVid(next.querySelector('video'));   // 레이어 재사용 = 이전 클립 결정적 회수
   const curV = curL.querySelector('video'); if (curV) { try { curV.pause(); } catch {} }   // 밀려나는 레이어 클립 = 즉시 정지(불투명 0 뒤 무한 디코드 차단 — 평의회1·7 공통 지적 · 제거는 레이어 재사용/리셋 때)
   if (season && /\.(mp4|webm)(\?|$)/i.test(bgUrl || '')) {   // 시즌 클립 — "소리만 빼고 다"(운영자 260707) = muted 고정
-    next.style.backgroundImage = (YCUR && YCUR.bg) ? `linear-gradient(rgba(18,18,18,${d1}),rgba(18,18,18,${d2})), url("${YCUR.bg}")` : 'none';   // 클립 디코드/자동재생 전까지 시그니처 스틸을 밑에 깔아 무대 암전 차단(분신술 260708 — 비시즌 프리로드 게이트 대응) · 딤 = 캐릭터별 d1/d2(윈터 +50%)
+    next.style.backgroundImage = (YCUR && YCUR.bg) ? `linear-gradient(rgba(18,18,18,${d1}),rgba(18,18,18,${d2})), url("${YCUR.bg}")` : 'none';   // 클립 디코드/자동재생 전까지 시그니처 스틸을 밑에 깔아 무대 암전 차단(분신술 260708 — 비시즌 프리로드 게이트 대응) · 딤 = 그 스틸의 휘도 가변(클립 자체는 .ybg video brightness가 짝 = 고정)
     const v = document.createElement('video');
     v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
     if (YCUR && YCUR.bg) v.poster = YCUR.bg;   // 포스터 = 시그니처(자동재생 차단 시에도 암전 대신 스틸)
     v.src = bgUrl; next.appendChild(v); try { v.play().catch(() => {}); } catch {}
   } else next.style.backgroundImage = bgUrl
-    ? (season ? `linear-gradient(rgba(18,18,18,${d1}),rgba(18,18,18,${d2})), url("${bgUrl}")`   // 캐릭터 아트 = 스포티파이 블랙 스크림(운영자 260709 재검수 "+30% 더 — 대화창 집중" · .55/.68 → +30% 등가 .68/.78 · 윈터만 +50% 재합성 .84/.89 = 위 d1/d2)
+    ? (season ? `linear-gradient(rgba(18,18,18,${d1}),rgba(18,18,18,${d2})), url("${bgUrl}")`   // 캐릭터 아트 = 스포티파이 블랙 스크림 · 농도 = 원화 휘도 가변(yDimPair · 기준 .55/.68 · 범위 .35/.52~.68/.78 · 윈터 +50% 재합성)
             : `linear-gradient(rgba(18,18,18,.35),rgba(18,18,18,.52)), url("${bgUrl}")`)   // 환경(장소·무드 씬) = 딤 대폭 완화(운영자 260709 재검수 "그대로임" — 1차 .55/.72가 어두운 원화에선 체감 미미 → .35/.52)
     : `radial-gradient(120% 90% at 50% 0%, ${tint}14, transparent 55%)`;                            // 이미지 없으면 페르소나색 은은한 무드 틴트
+  next.dataset.art = artUrl;   // 세대 표식 — 측정이 늦게 끝났는데 그 사이 다른 그림으로 갈렸으면 갱신을 버린다(레이어 경합 차단)
+  if (season && artUrl && !_YLUM.has(artUrl)) yBgLum(artUrl).then(l => {   // 캐릭터 아트만 가변(환경 씬 .35/.52는 이미 얕아 그대로) · 측정 1회 후 캐시라 재방문은 첫 페인트에서 확정
+    if (next.dataset.art !== artUrl) return;
+    const [n1, n2] = yDimPair(l, wd);
+    next.style.backgroundImage = `linear-gradient(rgba(18,18,18,${n1}),rgba(18,18,18,${n2})), url("${artUrl}")`;
+  });
   next.classList.toggle('season', !!season);
   next.classList.toggle('wdim', !!season && wd);   // 윈터 시즌 클립 딤 짝(.ybg.wdim video) — 타 캐릭터 레이어 재사용 시 자동 해제
   next.classList.add('on'); curL.classList.remove('on'); _ybgCur = 1 - _ybgCur;
