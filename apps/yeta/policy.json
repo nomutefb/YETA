@@ -126,6 +126,50 @@
           "어두운 주제 = 깊게: 상실·공포·심리 갈등을 회피하지 말고 깊게 다뤄라 — 위로로 급히 덮지 않는다."
         ]
       }
+    ],
+    "switches_label": "연출 — 자동 개입",
+    "_switches_doc": "운영자 260727 지시(「껐다 킬 수 있는 옵션 설정은 모두 UI 설정란에 있어야 된다 — 내가 모르는 설정이 켜져 있는지도 모르니까」). 위 axes가 **말의 수위**를 정한다면 여기 switches는 **유저가 말 안 했는데 러너가 스스로 하는 일** 4가지를 켜고 끈다. axes와 계약이 같다({key,label,default,opts}) → 뷰어는 같은 행 렌더러(axRow·yPolChips)를 그대로 쓰고, 게이트웨이는 같은 enum 정수 경로로 저장한다(SET = 관리자 PIN). ⚠️ axes와 딱 하나 다른 점 = **prompt 필드가 없다**: 이건 프롬프트에 문장을 얹는 축이 아니라 러너 코드가 읽고 동작을 끊는 축이라, POLICY_BLOCK 조립 루프(axes+L0 토글만 순회)에 들어가지 않는다. 여기에 prompt를 달지 마라 — 다는 순간 두 축이 섞인다. 소비처: ambient = yeta_chat.sh AMB_ON(생성·심기·HIST) + viewer yAmbOn(화면) · beats = GB_BEATS(0=끔) · chorus = GB_LINES(1=끔) · barge = BARGE_ON(barge_check 조기 종료). 세션에 키가 없으면 종전 기본(env·ambient.json)이 그대로 이긴다 = 이 파일만 늘려도 회귀 0.",
+    "switches": [
+      {
+        "key": "ambient",
+        "label": "주변 사건",
+        "default": 0,
+        "opts": [
+          "끔",
+          "켬"
+        ],
+        "hint": "대화 중간에 옆에서 일이 터지는 지문 — 끄면 화면·프롬프트 양쪽에서 사라진다"
+      },
+      {
+        "key": "beats",
+        "label": "자율 비트",
+        "default": 1,
+        "opts": [
+          "끔",
+          "켬"
+        ],
+        "hint": "내가 조용하면 캐릭터가 스스로 몇 마디 더 — 끄면 답장 한 번으로 끝"
+      },
+      {
+        "key": "chorus",
+        "label": "단톡 교대",
+        "default": 1,
+        "opts": [
+          "끔",
+          "켬"
+        ],
+        "hint": "한 답장 안에서 두 사람이 번갈아 말하기 — 끄면 상대 한 명만 답한다"
+      },
+      {
+        "key": "barge",
+        "label": "난입",
+        "default": 1,
+        "opts": [
+          "끔",
+          "켬"
+        ],
+        "hint": "낯선 주민이 스스로 대화에 끼어들기(하루 1회) — 끄면 안 나타난다"
+      }
     ]
   },
   "L2": {
