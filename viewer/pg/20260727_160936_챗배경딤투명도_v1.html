@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>챗 배경 딤 투명도 — 플레이그라운드 v1</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크 ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --cobalt:#3D6BFF; --cobalt-rgb:61,107,255;
+    --think:#3EE0C8; --think-rgb:62,224,200;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --glass-0:rgba(255,255,255,.002); --glass-line-0:rgba(255,255,255,.066);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+    --bubble-me:var(--accent); --bubble-ai:#1e2023; --yeta-bg:var(--bg);
+    --lgap:6px;
+    /* 딤 노브(플그 전용 상태 변수) — 실제 값은 yPaintBg의 d1/d2 */
+    --d1:.68; --d2:.78;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+
+  /* ── PC = 좌 미리보기 고정 / 우 조작 · 모바일 = 상/하(B3 규약) ── */
+  .pg { display:grid; grid-template-columns:minmax(300px,38%) 1fr; gap:var(--sp-3); padding:var(--sp-3); align-items:start; }
+  .pg-left { position:sticky; top:var(--sp-3); }
+  @media (max-width:900px) { .pg { grid-template-columns:1fr; } .pg-left { position:static; } }
+
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-2); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+
+  /* ── 미리보기 = 9:16 프레임(챗 화면 재현 · 표면 CSS는 index.html 정본 계승) ── */
+  .frame { position:relative; width:100%; aspect-ratio:9/16; max-height:78vh; margin-inline:auto; border-radius:var(--r-modal); overflow:hidden;
+    background:var(--bg); border:1px solid var(--glass-line); box-shadow:var(--shadow-card); }
+  .frame .ybg { position:absolute; inset:0; background-size:cover; background-position:center; opacity:.92; }   /* .ybg.on = .92 계승 */
+  .frame .ysurf { position:absolute; inset:0; display:flex; flex-direction:column; }
+
+  .yeta-h { position:absolute; top:10px; left:10px; right:10px; z-index:3; display:flex; align-items:center; gap:8px; padding:7px 9px;
+    background:linear-gradient(var(--glass), var(--glass)), rgba(18,18,18,.75); border:1px solid var(--glass-line); border-radius:var(--r-pill);
+    backdrop-filter:blur(var(--blur-l)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-l)) saturate(1);
+    box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card); }
+  .yh-ava { flex:none; width:32px; height:32px; border-radius:50%; background-size:cover; background-position:center; background-color:rgba(255,255,255,.06); }
+  .yeta-h b { font-size:var(--fs-h2); font-weight:var(--fw-x); flex:none; }
+  .yeta-h .yh-tag { font-size:var(--fs-xs); color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .ylog { position:absolute; inset:64px 12px 66px; z-index:2; display:flex; flex-direction:column; gap:10px; justify-content:flex-end; overflow:hidden; }
+  .ymsg { display:flex; gap:8px; align-items:flex-start; max-width:86%; }
+  .ymsg .yava { flex:none; width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); background-size:cover; background-position:center; margin-top:2px; }
+  .ymsg .ycol { display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .ymsg .yname { font-size:var(--fs-xs); color:var(--fg); font-weight:var(--fw-b); padding-left:2px; }
+  .yb { padding:10px 13px; border-radius:var(--r-l); font-size:var(--fs-body); line-height:var(--lh-base); white-space:pre-wrap; word-break:break-word; }
+  .yb i.yn { font-style:italic; color:var(--fg-2); opacity:.75; }
+  .yb.ai { background:var(--glass-2); border:1px solid var(--glass-line); border-top-left-radius:var(--r-s);
+    backdrop-filter:blur(var(--blur-m)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-m)) saturate(1); box-shadow:inset 0 1px 0 var(--glass-line); }
+  .yb.me { align-self:flex-end; max-width:78%; background:var(--bubble-me); color:var(--bg); border-top-right-radius:var(--r-s); }
+  .ytime { font-size:var(--fs-xs); color:var(--fg-2); opacity:.8; align-self:flex-end; }
+
+  .yeta-in { position:absolute; bottom:12px; left:10px; right:10px; z-index:3; display:flex; align-items:center; gap:4px; padding:5px 6px;
+    background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-pill);
+    backdrop-filter:blur(var(--blur-l)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-l)) saturate(1);
+    box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card); }
+  .yeta-in span { flex:1; padding:6px 10px; color:var(--mut); font-size:var(--fs-body); }
+  .yeta-in .snd { width:var(--btn); height:var(--btn); display:grid; place-items:center; color:var(--accent); }
+
+  /* A/B 스와이프 = 프레임 우측 절반에 현행(.68/.78) 겹쳐 그리기 */
+  .frame .ab { position:absolute; inset:0; z-index:1; background-size:cover; background-position:center; opacity:.92;
+    clip-path:inset(0 0 0 var(--ab,100%)); }
+  .ab-lbl { position:absolute; z-index:4; bottom:64px; font-size:var(--fs-meta); letter-spacing:.14em; font-weight:var(--fw-x);
+    padding:3px 8px; border-radius:var(--r-pill); background:rgba(18,18,18,.75); border:1px solid var(--glass-line); color:var(--fg-2); }
+  .ab-lbl.l { left:12px; } .ab-lbl.r { right:12px; }
+  .ab-lbl[hidden] { display:none; }
+
+  /* ── 조작부 ── */
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .thumbs { display:grid; grid-template-columns:repeat(auto-fill,minmax(84px,1fr)); gap:8px; }
+  .th { position:relative; aspect-ratio:9/16; border-radius:var(--r-s); overflow:hidden; border:1px solid var(--glass-line);
+    background-size:cover; background-position:center; cursor:pointer; padding:0; transition:transform .28s var(--ease), border-color .28s var(--ease); }
+  .th:active { transform:scale(var(--press-l,.95)); }
+  .th.cur { border-color:rgba(var(--accent-rgb),.5); box-shadow:0 0 14px rgba(var(--accent-rgb),.14); }
+  .th em { position:absolute; left:0; right:0; bottom:0; padding:3px 4px; font-style:normal; font-size:var(--fs-meta); line-height:1.3;
+    background:rgba(18,18,18,.75); color:var(--fg-2); display:block; text-align:center; }
+
+  .lad { display:flex; flex-direction:column; gap:6px; }
+  .lad button { display:grid; grid-template-columns:26px 1fr auto auto; align-items:center; gap:9px; text-align:left;
+    padding:8px 11px; border-radius:var(--r-pill); background:var(--glass-2); border:1px solid var(--glass-line); color:var(--fg);
+    font:inherit; font-size:var(--fs-sm); cursor:pointer; transition:transform .28s var(--ease), border-color .28s var(--ease);
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .lad button:active { transform:scale(var(--press-l,.95)); }
+  .lad button.cur { border-color:rgba(var(--accent-rgb),.5); box-shadow:inset 0 1px 0 var(--glass-line), 0 0 14px rgba(var(--accent-rgb),.14); }
+  .lad .no { color:var(--mut); font-size:var(--fs-xs); }
+  .lad .val { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--fg-2); }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.now { color:var(--bg); background:var(--accent); }
+  .bdg.base { color:var(--think); border:1px solid rgba(var(--think-rgb),.4); }
+  .bdg.rec { color:var(--cobalt); border:1px solid rgba(var(--cobalt-rgb),.5); }
+
+  .sl { display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; margin-top:4px; font-size:var(--fs-sm); }
+  .sl input[type=range] { width:100%; accent-color:var(--accent); }
+  .sl output { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--fg-2); min-width:34px; text-align:right; }
+
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .row button.tgl { padding:7px 13px; border-radius:var(--r-pill); background:var(--glass-2); border:1px solid var(--glass-line);
+    color:var(--fg); font:inherit; font-size:var(--fs-sm); cursor:pointer; transition:transform .28s var(--ease); }
+  .row button.tgl:active { transform:scale(var(--press-l,.95)); }
+  .row button.tgl.on { border-color:rgba(var(--accent-rgb),.5); color:var(--accent); }
+
+  /* 일괄 그리드 = 선택 딤을 전 이미지에 동시 적용(대표1 실측 후 전수 확인 · B5) */
+  .wall { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; }
+  .wall .cell { position:relative; aspect-ratio:9/16; border-radius:var(--r-m); overflow:hidden; border:1px solid var(--glass-line); background:var(--bg); }
+  .wall .cell .im { position:absolute; inset:0; background-size:cover; background-position:center; opacity:.92; }
+  .wall .cell .cap { position:absolute; left:0; right:0; bottom:0; padding:3px 5px; font-size:var(--fs-meta); text-align:center;
+    background:rgba(18,18,18,.75); color:var(--fg-2); }
+  .wall .cell .mini { position:absolute; left:8px; right:8px; top:50%; transform:translateY(-50%); padding:7px 9px; border-radius:var(--r-s);
+    background:var(--glass-2); border:1px solid var(--glass-line); font-size:var(--fs-meta); line-height:1.45; color:var(--fg);
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+
+  .note { font-size:var(--fs-xs); color:var(--mut); margin-top:8px; }
+  .out { margin-top:10px; padding:9px 11px; border-radius:var(--r-s); background:rgba(0,0,0,.35); border:1px solid var(--glass-line);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--fg-2); white-space:pre-wrap; word-break:break-all; }
+  @media (prefers-reduced-motion:reduce) { * { transition:none !important; animation:none !important; } }
+</style>
+</head>
+<body>
+<div class="pg">
+  <!-- ── 좌(모바일=상) 미리보기 고정 ── -->
+  <div class="pg-left">
+    <div class="frame" id="frame">
+      <div class="ybg" id="bgMain"></div>
+      <div class="ab" id="bgAb"></div>
+      <div class="ysurf">
+        <div class="yeta-h">
+          <span style="color:var(--fg-2)">‹</span>
+          <span class="yh-ava" id="hAva"></span>
+          <b id="hName">루시</b>
+          <span class="yh-tag">낮엔 시크한 자동…</span>
+        </div>
+        <div class="ylog">
+          <div class="ymsg">
+            <span class="yava" id="bAva"></span>
+            <div class="ycol">
+              <span class="yname" id="bName">루시</span>
+              <div class="yb ai"><i class="yn">담배 든 손이 움찔한다.</i>
+갑자기 왜 소리질러, 놀랐잖아.</div>
+            </div>
+          </div>
+          <div class="yb me">뭘또저질렀냐느니</div>
+          <div class="ymsg">
+            <span class="yava" id="bAva2"></span>
+            <div class="ycol">
+              <span class="yname" id="bName2">루시</span>
+              <div class="yb ai">말을 하다 말면 어떡해, 또 뭔 일 벌어진 건데.</div>
+            </div>
+          </div>
+          <span class="ytime">오후 6:40</span>
+        </div>
+        <div class="yeta-in"><span>메시지</span><span class="snd">➤</span></div>
+      </div>
+      <span class="ab-lbl l" id="abL" hidden>지금</span>
+      <span class="ab-lbl r" id="abR" hidden>후보</span>
+    </div>
+    <p class="note" id="frameNote"></p>
+  </div>
+
+  <!-- ── 우(모바일=하) 조작 ── -->
+  <div class="pg-right">
+    <h1>챗 배경 딤 — 투명도 사다리</h1>
+    <p class="lead">노브 1곳 = <code>viewer/index.html · yPaintBg</code>의 <code>[d1, d2]</code>(캐릭터 아트 스크림 <code>linear-gradient(rgba(18,18,18,d1), rgba(18,18,18,d2))</code>). 값이 작을수록 검정이 옅어져 배경이 보인다.</p>
+
+    <div class="sect grp">
+      <h2>① 배경 이미지 — 밝기 스펙트럼 9장(헤드리스 실측 평균휘도)</h2>
+      <div class="thumbs" id="thumbs"></div>
+      <p class="note">어두운 원화일수록 같은 딤에서도 더 캄캄해진다 — 한 값으로 전 캐릭터를 덮는 게 이 노브의 조건이라, 맨 왼쪽(가장 어두움)과 맨 오른쪽(가장 밝음)이 동시에 통과하는 값을 골라야 한다.</p>
+    </div>
+
+    <div class="sect grp">
+      <h2>② 딤 사다리 10안 — 진함 → 옅음</h2>
+      <div class="lad" id="ladder"></div>
+      <p class="note"><span class="bdg now">지금</span> = 현행값 · <span class="bdg base">기틀</span> = 이미 이 레포에 살아있는 계보값(새 값 창작 0) · <span class="bdg rec">권장</span> = 이번 제안.</p>
+    </div>
+
+    <div class="sect grp">
+      <h2>③ 자유 조정</h2>
+      <div class="sl"><label for="s1">상단 d1</label><input type="range" id="s1" min="0" max="1" step=".01" value=".68"><output id="o1">.68</output></div>
+      <div class="sl"><label for="s2">하단 d2</label><input type="range" id="s2" min="0" max="1" step=".01" value=".78"><output id="o2">.78</output></div>
+      <div class="row" style="margin-top:10px">
+        <button class="tgl" id="abBtn">A/B 반갈 비교(우 = 현행 .68/.78)</button>
+        <button class="tgl" id="surfBtn">챗 표면 끄기</button>
+      </div>
+      <div class="out" id="out"></div>
+      <p class="note">위 한 줄이 <code>yPaintBg</code>에 넣을 값이다. 윈터는 같은 함수에서 <code>x + (1−x)×.5</code> 블라인드 합성, 시즌 클립은 <code>brightness</code> 짝이 자동으로 따라간다(아래 표시).</p>
+    </div>
+
+    <div class="sect grp">
+      <h2>④ 전수 확인 — 선택 딤을 9장 전부에</h2>
+      <div class="wall" id="wall"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 이미지 = 실제 정본 자산(밝기 = 헤드리스 canvas 평균휘도 0~255 실측 260727) ──
+const IMGS = [
+  { n:'무디',       f:'../characters/season/mudi/main/base/mudi_01.webp',        l:18 },
+  { n:'데스크',     f:'../characters/season/desk/main/base/desk_04.jpg',         l:49 },
+  { n:'루시(안드)', f:'../characters/season/lucy/android/base/android_10.jpg',   l:58 },
+  { n:'세라',       f:'../characters/season/sera/main/base/sera_k03.jpg',        l:66 },
+  { n:'드루실라',   f:'../characters/season/drusilla/main/base/drusilla_01.jpg', l:79 },
+  { n:'루시(네온)', f:'../characters/season/lucy/lucy_neon.webp',                l:91 },
+  { n:'고죠',       f:'../characters/season/gojo/main/base/gojo_02.jpg',         l:102 },
+  { n:'루시 ★',     f:'../characters/season/lucy/lucy_02.webp',                  l:155 },
+  { n:'레제',       f:'../characters/season/reze/main/base/reze_02.jpg',         l:200 },
+];
+// ── 사다리 = 이 레포 계보값 + 그 사이 등간 ──
+const LADDER = [
+  { d:[.68,.78], t:'현행 — 260709 “+30% 더” 합성',      b:'now'  },
+  { d:[.61,.73], t:'되돌림 절반',                        b:''     },
+  { d:[.55,.68], t:'260709 이전 정본(캐릭터 아트)',      b:'base' },
+  { d:[.48,.62], t:'구 정본에서 한 칸 더',               b:'rec'  },
+  { d:[.42,.57], t:'두 칸 더',                            b:''     },
+  { d:[.35,.52], t:'환경 씬 현행 정본(장소·무드 배경)',  b:'base' },
+  { d:[.28,.45], t:'환경 씬보다 옅게',                    b:''     },
+  { d:[.20,.38], t:'거의 원본',                           b:''     },
+  { d:[.12,.30], t:'그라데만 남김',                       b:''     },
+  { d:[.00,.00], t:'딤 0 — 상한 확인용(가독 불가 예상)',  b:''     },
+];
+const F = v => (v === 0 ? '0' : v.toFixed(2).replace(/^0/, ''));   // .68 표기(코드에 넣을 형태 그대로 · 소수 2자리 고정 = 사다리 자릿수 정렬)
+const $ = s => document.querySelector(s);
+let cur = 7, d1 = .68, d2 = .78, ab = false, surf = true;
+
+function dimCss(a, b) { return `linear-gradient(rgba(18,18,18,${a}),rgba(18,18,18,${b}))`; }
+function paint() {
+  const im = IMGS[cur];
+  $('#bgMain').style.backgroundImage = `${dimCss(d1, d2)}, url("${im.f}")`;
+  $('#bgAb').style.backgroundImage = `${dimCss(.68, .78)}, url("${im.f}")`;
+  $('#bgAb').style.setProperty('--ab', ab ? '50%' : '100%');
+  $('#abL').hidden = $('#abR').hidden = !ab;
+  $('#abL').textContent = `후보 ${F(d1)}/${F(d2)}`; $('#abR').textContent = '지금 .68/.78';
+  [ '#hAva', '#bAva', '#bAva2' ].forEach(s => $(s).style.backgroundImage = `url("${im.f}")`);
+  $('#hName').textContent = $('#bName').textContent = $('#bName2').textContent = im.n.replace(' ★', '');
+  $('#frameNote').textContent = `미리보기 = ${im.n} · 원본 평균휘도 ${im.l}/255 · 레이어 불투명도 .92(.ybg.on 계승)`;
+  $('#s1').value = d1; $('#s2').value = d2; $('#o1').textContent = F(d1); $('#o2').textContent = F(d2);
+  document.querySelectorAll('.ysurf').forEach(e => e.style.display = surf ? '' : 'none');
+  $('#surfBtn').classList.toggle('on', !surf);
+  $('#surfBtn').textContent = surf ? '챗 표면 끄기' : '챗 표면 켜기';
+  $('#abBtn').classList.toggle('on', ab);
+  // 짝값 자동 산출 — 윈터 블라인드(+50%)·시즌 클립 brightness(딤과 등가 반비례)
+  const w1 = d1 + (1 - d1) * .5, w2 = d2 + (1 - d2) * .5;
+  const brF = Math.max(0, Math.min(1, 1 - (d1 + d2) / 2)).toFixed(2).replace(/^0/, '');   // 클립 밝기 = 딤 평균의 여집합(현행 .68/.78 → .27 ≈ 정본 .32 계보)
+  $('#out').textContent =
+    `const [d1, d2] = wd ? ['${F(w1)}', '${F(w2)}'] : ['${F(d1)}', '${F(d2)}'];\n` +
+    `.ybg video { filter:brightness(${brF}); }   /* 딤 평균의 여집합 = 클립 짝 */\n` +
+    `.ybg.wdim video { filter:brightness(${Math.max(0, (1 - (w1 + w2) / 2)).toFixed(2).replace(/^0/, '')}); }`;
+  document.querySelectorAll('#ladder button').forEach((b, i) =>
+    b.classList.toggle('cur', LADDER[i].d[0] === +d1.toFixed(2) && LADDER[i].d[1] === +d2.toFixed(2)));
+  document.querySelectorAll('#wall .im').forEach((e, i) =>
+    e.style.backgroundImage = `${dimCss(d1, d2)}, url("${IMGS[i].f}")`);
+  document.querySelectorAll('#thumbs .th').forEach((b, i) => b.classList.toggle('cur', i === cur));
+}
+
+// ① 썸네일
+$('#thumbs').innerHTML = IMGS.map((m, i) =>
+  `<button class="th" data-i="${i}" style="background-image:url('${m.f}')" title="${m.n} · 휘도 ${m.l}"><em>${m.n}<br>${m.l}</em></button>`).join('');
+$('#thumbs').addEventListener('click', e => { const b = e.target.closest('.th'); if (!b) return; cur = +b.dataset.i; paint(); });
+
+// ② 사다리
+$('#ladder').innerHTML = LADDER.map((s, i) => {
+  const bd = s.b === 'now' ? '<span class="bdg now">지금</span>' : s.b === 'base' ? '<span class="bdg base">기틀</span>'
+           : s.b === 'rec' ? '<span class="bdg rec">권장</span>' : '<span></span>';
+  return `<button data-i="${i}"><span class="no">${String(i + 1).padStart(2, '0')}</span><span>${s.t}</span>` +
+         `<span class="val">${F(s.d[0])}/${F(s.d[1])}</span>${bd}</button>`;
+}).join('');
+$('#ladder').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  [d1, d2] = LADDER[+b.dataset.i].d; paint();
+});
+
+// ③ 슬라이더·토글
+$('#s1').addEventListener('input', e => { d1 = +e.target.value; paint(); });
+$('#s2').addEventListener('input', e => { d2 = +e.target.value; paint(); });
+$('#abBtn').addEventListener('click', () => { ab = !ab; paint(); });
+$('#surfBtn').addEventListener('click', () => { surf = !surf; paint(); });
+
+// ④ 전수 벽
+$('#wall').innerHTML = IMGS.map(m =>
+  `<div class="cell"><div class="im"></div><div class="mini"><i style="font-style:italic;opacity:.75">시선이 확 꽂힌다.</i><br>…뭔데, 또 뭐 저질렀어?</div><div class="cap">${m.n} · ${m.l}</div></div>`).join('');
+
+paint();
+</script>
+</body>
+</html>
