@@ -453,7 +453,7 @@ export async function onRequestPost({ request, env }) {
       if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return json({ error: '정책은 {key:0~2} 객체' }, 400);
       const p = {};
       for (const [k, v] of Object.entries(raw)) {
-        if (Object.keys(p).length >= 8) break;   // 8축 캡 도달 = 조기 종료(초대형 페이로드 전량 순회 컷 · 기틀검증 보안 권고)
+        if (Object.keys(p).length >= 16) break;   // 축 캡 도달 = 조기 종료(초대형 페이로드 전량 순회 컷 · 기틀검증 보안 권고) — 8→16(260727 L1 switches 4축 신설로 정확히 8이 되어 여유 0이던 것 · 키 화이트폼·0~2 클램프는 그대로라 확장해도 주입 표면 불변)
         if (!/^[a-z]{1,16}$/.test(k)) continue;
         p[k] = Math.max(0, Math.min(2, Math.round(Number(v) || 0)));
       }

@@ -42,6 +42,7 @@ GB_TTL_MS=120000                    # 예약 유효 시간(뷰어 타이핑 점 
 case "$GB_BEATS" in ''|*[!0-9]*) GB_BEATS=0 ;; esac   # 정수 강제(오타 env = 축 OFF로 안전 강등 · 아래 산술 전개·비교가 셸 에러 없이 돌게)
 case "$GB_GAP" in ''|*[!0-9]*) GB_GAP=6 ;; esac
 case "$GB_LINES" in ''|*[!0-9]*|0) GB_LINES=1 ;; esac
+GB_ENV_BEATS="$GB_BEATS"; GB_ENV_LINES="$GB_LINES"   # 부팅 기본 보존(260727 L1 연출 축) — 턴마다 세션 정책으로 덮어쓰되, 정책에 키가 없으면 이 값으로 되돌린다(설정 미사용 = 종전 동작 그대로 = 회귀 0)
 
 source "$ROOT/shared/claude_transient.sh"   # is_transient/is_quota/claude_failover/is_frame_break SSOT
 source "$ROOT/shared/claude_meter.sh"
@@ -170,7 +171,13 @@ _me = S_ROOT.get("me") if isinstance(S_ROOT.get("me"), dict) else {}   # 유저 
 me_call = str(_me.get("call") or "").strip()
 me_about = str(_me.get("about") or "").strip()
 
-AMB_HIDE = os.environ.get("AMB_ON", "1") != "1"   # 축 정지(ambient.json tuning.enabled:false) = **과거에 심긴 사건 턴도 히스토리에서 뺀다**(운영자 260727 「없애기로 했는데 나온다」) — 스위치는 새 사건만 막아서, 남아 있던 턴을 프롬프트가 계속 물고 캐릭터가 「아까 그 오토바이」를 다시 꺼냈다. 세션 데이터는 안 지운다(표시=뷰어 YAMB_HIDE · 주입=여기 두 곳만 차단) · fail-open = 값 없으면 종전대로 포함
+_POL = s.get("policy") if isinstance(s.get("policy"), dict) else {}   # L1 연출 축(260727) — 이 파이썬은 셸보다 먼저 도므로 정책을 세션에서 직접 읽는다(셸 pol_axes와 같은 계약: 키 없음·깨짐 = 폴백)
+def _pol_on(k, d):
+    x = _POL.get(k)
+    if x is None: return d
+    try: return int(x) != 0
+    except Exception: return d
+AMB_HIDE = not _pol_on("ambient", os.environ.get("AMB_ON", "1") == "1")   # 축 OFF = **과거에 심긴 사건 턴도 히스토리에서 뺀다**(운영자 260727 「없애기로 했는데 나온다」) — 스위치는 새 사건만 막아서, 남아 있던 턴을 프롬프트가 계속 물고 캐릭터가 「아까 그 오토바이」를 다시 꺼냈다. 세션 데이터는 안 지운다(표시=뷰어 yAmbOn · 주입=여기 두 곳만 차단)
 _amb_ok = lambda t: not (AMB_HIDE and (t or {}).get("kind") == "amb")
 
 
@@ -251,6 +258,7 @@ if not pend_idx:
     except (TypeError, ValueError): _gn = 0
     try: _cap, _gap, _ttl = int(os.environ.get("GB_BEATS") or 0), float(os.environ.get("GB_GAP") or 0) * 1000, float(os.environ.get("GB_TTL_MS") or 120000)
     except ValueError: _cap, _gap, _ttl = 0, 6000.0, 120000.0
+    if not _pol_on("beats", True): _cap = 0   # 자율 비트 축 정지(L1 설정 · 260727) = 상한 0 = 아래 `1 <= _gn <= _cap`이 항상 거짓 = 예약 픽 안 함(기존 '0 = 축 OFF' 계약 재사용 · 새 분기 0)
     _lu = next((t for t in reversed(turns) if t.get("role") == "user"), {})   # 다이얼 계승 = 마지막 유저 턴(ptt·far·img 같은 턴 고유 부수효과는 승계 금지 = last_u는 계속 {})
     _dial = _lu.get("model") or (s.get("pref") or {}).get("model") or ""
     _deff = _lu.get("effort") if isinstance(_lu.get("effort"), str) else ((s.get("pref") or {}).get("effort") or "")
@@ -1161,6 +1169,7 @@ ${HIST:-"(없음)"}
 # 대사 생성 0회 = 비용 0: 합류 sys만 심고, 첫 마디는 다음 유저 턴에 화자 사다리(난입 데뷔)가 얹는다. 실패 전부 무해.
 # 위치 축(운영자 260707 "주변에 인물이 있으면 만나는"): 화자의 지금 장소(동선 SSOT)와 같은 곳 = 시드 1/2 · 인접 = 1/3 — 지도 UI가 붙어도 같은 정본을 읽는다.
 barge_check() {
+  [ "${BARGE_ON:-1}" = "1" ] || return 0   # 난입 축 정지(L1 설정 · 260727) — R2 재읽기·파이썬 기동 전에 끊는다(끈 상태 비용 0 · 미설정이면 종전대로 켬)
   r2get 2>/dev/null || return 0
   if THREAD="${THREAD:-}" python3 - "$SESS" "$ROOT/apps/yeta/characters/roster.json" <<'PY'
 import hashlib, json, sys, time
@@ -1304,10 +1313,28 @@ AMB_EFF="${YETA_AMB_EFF:-max}"                 # 운영자 260725 지정("--effo
 AMB_ON="$(python3 -c 'import json,sys
 try: print("1" if (json.load(open(sys.argv[1],encoding="utf-8")).get("tuning") or {}).get("enabled", True) else "0")
 except Exception: print("1")' "$AMB_JSON" 2>/dev/null)"; [ "$AMB_ON" = "0" ] || AMB_ON=1   # 파싱 실패·키 없음 = 종전대로 켬(fail-open = 노브 오타로 축이 조용히 죽는 사고 차단)
+AMB_FILE="$AMB_ON"   # 파일 기본 보존 — 아래 pol_axes가 세션 정책으로 덮어쓸 때의 폴백(정책에 ambient 키가 없으면 종전대로 이 값이 이긴다)
+
+# ── L1 연출 축(운영자 260727 「껐다 킬 수 있는 설정은 모두 UI 설정란에 있어야 된다」) ──
+# 유저가 말 안 했는데 러너가 스스로 하는 일 4가지를 관리자 설정(policy.json L1.switches)이 켜고 끈다.
+# 정본 = 세션 s.policy(게이트웨이가 관리자 PIN 대조 후 enum 정수만 기록) · 키가 없으면 종전 기본(env·ambient.json)이 이긴다 = 설정을 안 건드리면 회귀 0.
+# 파이썬 기동 = 턴당 1회(4축 한 줄로 뽑는다 — 축마다 부르면 턴당 4회 = 지연).
+pol_axes() {   # $1=정책 JSON · $2~$5=폴백(ambient beats chorus barge) → "1 1 1 1"
+  python3 -c 'import json, sys
+try: p = json.loads(sys.argv[1]) if sys.argv[1] and sys.argv[1] != "None" else {}
+except Exception: p = {}
+if not isinstance(p, dict): p = {}
+def v(k, d):
+    x = p.get(k)
+    if x is None: return d                      # 미설정 = 폴백(설정 UI를 한 번도 안 만진 상태 = 종전 동작)
+    try: return "0" if int(x) == 0 else "1"
+    except Exception: return d                  # 깨진 값 = 폴백(조용히 축이 죽는 사고 차단)
+print(" ".join([v("ambient", sys.argv[2]), v("beats", sys.argv[3]), v("chorus", sys.argv[4]), v("barge", sys.argv[5])]))' "$1" "$2" "$3" "$4" "$5" 2>/dev/null
+}
 
 # 큐가 마르면 프롬프트를 stdout에 뱉는다(충분하면 빈 출력 = 생성 스킵). 씨앗 추첨 = 진짜 랜덤(운영자 "그 순간에 자연스럽게 랜덤하게" — barge의 결정적 시드와 반대 축).
 ambient_prompt() {
-  THREAD="${THREAD:-}" python3 - "$SESS" "$AMB_JSON" <<'PY' 2>/dev/null
+  THREAD="${THREAD:-}" AMB_ON="${AMB_ON:-1}" python3 - "$SESS" "$AMB_JSON" <<'PY' 2>/dev/null
 import json, os, random, sys
 from datetime import datetime, timezone, timedelta
 sys.path.insert(0, ".github/scripts")
@@ -1320,7 +1347,7 @@ except Exception: sys.exit(0)
 s = (S.get("threads") or {}).get(os.environ.get("THREAD", ""))
 if not s: sys.exit(0)
 T = A.get("tuning") or {}
-if not T.get("enabled", True): sys.exit(0)           # 축 정지(운영자 260726) = 빈 출력 → refill이 LLM을 안 탄다(호출부 AMB_ON과 이중 안전 · fail-open = 키 없으면 켬)
+if os.environ.get("AMB_ON", "1") != "1": sys.exit(0)  # 축 정지 = 빈 출력 → refill이 LLM을 안 탄다. 유효값 SSOT = 셸 AMB_ON(L1 설정 policy.ambient가 이기고, 없으면 ambient.json tuning.enabled) · 미전달 = 켬(fail-open)
 batch = int(T.get("batch") or 3)
 PL = load_places()
 wd, wh = world_dh()                                  # 무음동 세계 시각(6배속 · 지도·동선과 동일 정본)
@@ -1493,7 +1520,7 @@ ambient_refill() {
 ambient_fire() {
   rm -f /tmp/yeta_amb_now
   r2get 2>/dev/null || return 0
-  if THREAD="${THREAD:-}" python3 - "$SESS" "$AMB_JSON" <<'PY'
+  if THREAD="${THREAD:-}" AMB_ON="${AMB_ON:-1}" python3 - "$SESS" "$AMB_JSON" <<'PY'
 import json, os, random, sys, time
 sys.path.insert(0, ".github/scripts")
 from yeta_place import world_dh
@@ -1505,7 +1532,7 @@ except Exception: sys.exit(0)
 s = (S.get("threads") or {}).get(os.environ.get("THREAD", ""))
 if not s: sys.exit(0)
 T = A.get("tuning") or {}
-if not T.get("enabled", True): sys.exit(0)           # 축 정지(운영자 260726) = 큐가 남아 있어도 안 심는다(호출부 AMB_ON과 이중 안전)
+if os.environ.get("AMB_ON", "1") != "1": sys.exit(0)  # 축 정지 = 큐가 남아 있어도 안 심는다(유효값 SSOT = 셸 AMB_ON · 호출부 가드와 이중 안전)
 q = [x for x in (s.get("evq") or []) if isinstance(x, str)]
 if not q: sys.exit(0)
 turns = s.get("turns") or []
@@ -1559,6 +1586,13 @@ process_turn() {
   INS="$(matv ins)"; ANCHOR_TS="$(matv anchor_ts)"; PERSONA="$(matv persona)"; PTT="$(matv ptt)"; FAR="$(matv far)"   # FAR = 원거리(다른 장소 · 260714)
   ME_CALL="$(matv me_call)"; ME_ABOUT="$(matv me_about)"   # 유저 프로필(호칭+소개 · "AI가 나를 부르는 법" · 260708)
   RAW_MODEL="$(matv model)"; RAW_EFF="$(matv effort)"; TUNE="$(matv tune)"; POL="$(matv policy)"; LAST_MOOD="$(matv last_mood)"; LAST_OPEN="$(matv last_open)"; CAST="$(matv cast)"; GAP_H="$(matv gap_h)"; LATE_H="$(matv late_h)"; REL_LV="$(matv rel_lv)"; RIV="$(matv riv)"; HANDOFF="$(matv handoff)"   # LAST_OPEN = 직전에 삼킨 것(감정선 캐리어 260725) · LATE_H = 지각(260726 Q.70)
+  # L1 연출 축 유효값(260727) — 이 턴 동안만 유효한 4개 스위치. 아래 소비처: AMB_ON(주변 사건 생성·심기·HIST) · GB_BEATS(자율 비트) · GB_LINES(단톡 교대) · BARGE_ON(난입).
+  _GBON=0; [ "${GB_ENV_BEATS:-0}" -gt 0 ] 2>/dev/null && _GBON=1; _CHON=0; [ "${GB_ENV_LINES:-1}" -gt 1 ] 2>/dev/null && _CHON=1   # env 기본의 '켬/끔' 환산 = 정책 미설정 시 폴백
+  _PA="$(pol_axes "$POL" "${AMB_FILE:-1}" "$_GBON" "$_CHON" 1)"
+  case "$_PA" in [01]" "[01]" "[01]" "[01]) AMB_ON="${_PA%% *}"; _PA="${_PA#* }"; GB_ON="${_PA%% *}"; _PA="${_PA#* }"; CH_ON="${_PA%% *}"; BARGE_ON="${_PA##* }" ;;
+                 *) AMB_ON="${AMB_FILE:-1}"; GB_ON="$_GBON"; CH_ON="$_CHON"; BARGE_ON=1 ;; esac   # 형식 불일치(파이썬 실패·빈 출력) = 종전 기본 전량 복귀(설정 사고로 축이 통째 죽는 것 차단)
+  GB_BEATS="$GB_ENV_BEATS"; [ "$GB_ON" = "1" ] || GB_BEATS=0     # 자율 비트 끔 = 상한 0 = 예약 자체가 안 걸린다(기존 '0 = 축 OFF' 계약 재사용 · 새 분기 0)
+  GB_LINES="$GB_ENV_LINES"; [ "$CH_ON" = "1" ] || GB_LINES=1     # 단톡 교대 끔 = 1토막 = 종전 결(GROUP_RULE 폴백이 그대로 받는다)
   CO_ID="$(matv co)"; CO_NAME="$(matv co_name)"; BARGE_DEBUT="$(matv barge_debut)"   # 단톡 동행·난입 데뷔(합석 260707)
   PLACE_NM="$(matv place_nm)"; BARGE_VIA="$(matv barge_via)"   # 동선 장소 + 마주침 데뷔 결(위치 SSOT places.json · 260707)
   OPEN="$(matv open)"; OPENING_TS="$(matv opening_ts)"   # 오프닝 잡(동적 첫인사 · 운영자 260707) — OPEN=1이면 유저발화 없이 캐릭터가 먼저 · OPENING_TS = nonce(finish 레이스 방어)
