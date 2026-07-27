@@ -1710,6 +1710,7 @@ function yDialLoad() {
 yDialLoad();
 let _yView = 'chat';   // 'list'(SNS식 캐릭터 선택) | 'chat'(대화방) — 첫 진입/이름탭 = 리스트(운영자 260703)
 const YQA = (() => { try { return new URLSearchParams(location.search).get('qa') === '1'; } catch (e) { return false; } })();   // QA 모드 1회 판정(【바인딩】 QA = ?qa=1) — 판정식은 기존 QA 딥링크 블록과 동일 문법 계승 · 진단 표시 전용(라이브 결 무영향)
+const YAMB_HIDE = true;   // 주변 사건(kind=amb) 라이브 미노출(운영자 260727 「그냥 없애기로 했는데 나온다」) — 러너 스위치(apps/yeta/ambient.json tuning.enabled:false)는 **새 사건만** 막는다: 이미 심긴 과거 턴은 세션에 남아 열 때마다 다시 그려졌다(Q.107이 「기록 보존」으로 남겨둔 그 턴들). 여기서 표시만 끊는다 — 데이터 삭제 0 · `?qa=1`에선 종전대로 보인다(Q.106 진단선 보존). ⚠ 축을 되살릴 땐 이 값과 ambient.json enabled를 **함께** 뒤집는다(하나만 켜면 사건이 생기는데 화면엔 안 뜬다)
 const yApi = (op, extra) => fetch('api/yeta', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op, ...(extra || {}) }) }).then(r => r.json());
 const yFmt = t => esc(t)   // *지문* → 이탤릭 + 줄바꿈 정규화(운영자 260712 — 지문 = 항상 제 줄 시작 · 지문 뒤 대사 = 빈 줄 하나 · .yb pre-wrap가 \n 렌더 · 과거 히스토리도 표시 시점 일괄 정규화)
   .replace(/[ \t]*\*([^*\n]{1,200}?)\*[ \t]*/g, '\n<i class="yn">$1</i>\n\n')
@@ -4463,7 +4464,7 @@ function yRender() {
     if (t.role === 'assistant') { const _cnt = pv && pv.role === 'assistant' && (pv.persona || '') === (t.persona || '');
       if (_dsw && i >= _dsw.at) return mk + yAiMsg({ text: t.text, ts: t.ts, persona: t.persona, ov: t.ov, mood: t.mood, dm: t.mood, dc: _dsw.dc }, fresh, _cnt);   // 스왑 델타(Q.81) — 명시 필드 복사(스프레드 미사용 = 구 사파리 결) · data-k 구성 필드 전부 동봉 = reconcile 번호표 불변
       return mk + yAiMsg(t, fresh, _cnt); }
-    if (t.kind === 'amb') return mk + `<div class="ysit${fresh ? ' in' : ''}">${esc(t.text)}</div>`
+    if (t.kind === 'amb') return (YAMB_HIDE && !YQA) ? mk : mk + `<div class="ysit${fresh ? ' in' : ''}">${esc(t.text)}</div>`   // 축 정지 중 = 지문 줄만 건너뛴다(기분 마커 mk는 그대로 흘려보낸다 — 여기서 삼키면 그 마커가 영영 안 뜬다)
       + (YQA && t.hook ? `<div class="ysit-qa">🎲 고리 = ${esc(t.hook)}</div>` : '');   // [QA] 사건이 무엇에 걸었다고 선언했는지(러너 ambient_store가 박제 · turn.hook) — 뜬금없는 사건이 또 나오면 「고리가 낱말이었나 / 아예 없었나 / 고리는 맞는데 사건이 튀었나」가 한 번에 갈린다. 라이브 미노출(?qa=1 전용)
       ;   // 주변 사건(운영자 260725 "주변에서 계속 이슈가 터지게") = 장면 지문 결(.ysit 계승 — 상황 턴·기분 마커와 동일 문법 · 새 스타일 창작 0) · 씨앗 SSOT = apps/yeta/ambient.json · 생성 = 러너 ambient_refill
     return mk + `<div class="yb sys${fresh ? ' in' : ''}">${esc(t.text)}</div>`;   // sys = 페르소나 합류 등(그룹 끊음)

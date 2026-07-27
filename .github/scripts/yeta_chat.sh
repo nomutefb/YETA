@@ -138,7 +138,7 @@ SESSION_START=$SECONDS
 #   mode=invite = 합석 초대 판정(260707 단톡) — pending보다 우선 처리(판정 뒤 웜 루프가 pending 즉답)
 #   gb=1 = 단톡 자율 비트(260725) — pending 0인데 s.gb 예약이 신선하면 상대가 받아치는 턴(pending보다 항상 후순위)
 extract_mat() {
-  mat="$(GB_BEATS="$GB_BEATS" GB_GAP="$GB_GAP" GB_TTL_MS="$GB_TTL_MS" KIMI_IDS="$KIMI_MODEL $KIMI25_MODEL" \
+  mat="$(GB_BEATS="$GB_BEATS" GB_GAP="$GB_GAP" GB_TTL_MS="$GB_TTL_MS" KIMI_IDS="$KIMI_MODEL $KIMI25_MODEL" AMB_ON="${AMB_ON:-1}" \
     python3 - "$SESS" "$RECENT_TURNS" "$ROOT/apps/yeta/characters/roster.json" <<'PY'
 import json, os, sys, time
 import re as _re
@@ -169,6 +169,10 @@ now_ms = time.time() * 1000
 _me = S_ROOT.get("me") if isinstance(S_ROOT.get("me"), dict) else {}   # 유저 프로필(호칭+소개 · 전 방 공유 top-level · 260708) — 러너가 비신뢰 격리 주입
 me_call = str(_me.get("call") or "").strip()
 me_about = str(_me.get("about") or "").strip()
+
+AMB_HIDE = os.environ.get("AMB_ON", "1") != "1"   # 축 정지(ambient.json tuning.enabled:false) = **과거에 심긴 사건 턴도 히스토리에서 뺀다**(운영자 260727 「없애기로 했는데 나온다」) — 스위치는 새 사건만 막아서, 남아 있던 턴을 프롬프트가 계속 물고 캐릭터가 「아까 그 오토바이」를 다시 꺼냈다. 세션 데이터는 안 지운다(표시=뷰어 YAMB_HIDE · 주입=여기 두 곳만 차단) · fail-open = 값 없으면 종전대로 포함
+_amb_ok = lambda t: not (AMB_HIDE and (t or {}).get("kind") == "amb")
+
 
 def line(t, me):
     r, x = t.get("role"), (t.get("text") or "").replace("\n", " / ")
@@ -227,7 +231,7 @@ if inv.get("to") and now_ms - (inv.get("ts") or 0) < 600000 and inv["to"] not in
                       "me_call": me_call, "me_about": me_about,
                       "note_pub": s.get("note_pub") or s.get("note") or "",
                       "note_me": ((s.get("notes") or {}).get(persona)) or "",
-                      "hist": "\n".join(line(t, persona) for t in turns[-n:]),
+                      "hist": "\n".join(line(t, persona) for t in turns[-n:] if _amb_ok(t)),
                       "cast": " · ".join(v for v in names.values() if v),
                       "last_mood": _lm, "rel_lv": _m.group(1) if _m else "",
                       "policy": json.dumps(s.get("policy"), ensure_ascii=False) if isinstance(s.get("policy"), dict) else "",
@@ -251,7 +255,7 @@ if not pend_idx:
     _dial = _lu.get("model") or (s.get("pref") or {}).get("model") or ""
     _deff = _lu.get("effort") if isinstance(_lu.get("effort"), str) else ((s.get("pref") or {}).get("effort") or "")
     # 꼬리 턴 = 대사이거나 '주변 사건'(kind=amb)까지 허용 — 사건이 심긴 턴에서 예약을 죽이면 ambient(1/2 확률)와 충돌해 축이 반쯤 죽는다. 사건 직후 = 오히려 둘이 그걸 두고 떠들 자리.
-    _tail_ok = bool(turns) and (turns[-1].get("role") == "assistant" or (turns[-1].get("role") == "sys" and turns[-1].get("kind") == "amb"))
+    _tail_ok = bool(turns) and (turns[-1].get("role") == "assistant" or (turns[-1].get("role") == "sys" and turns[-1].get("kind") == "amb" and not AMB_HIDE))   # 축 정지 중엔 꼬리 amb를 '대화 꼬리'로 안 친다(260727) — 화면에서 숨긴 묵은 사건이 자율 비트를 깨우면 유저 눈엔 근거 없는 혼잣말이 된다
     if (_gp and _gp in room and len(room) == 2 and _tail_ok
             and 1 <= _gn <= _cap and _gap <= now_ms - _gts <= _ttl   # n = 예약 회차(1부터) — finish가 n+1로 재예약하고 상한 넘으면 예약 자체를 안 남긴다(유령 타이핑 점 0)
             and _gp not in _dead and _gp not in locked_ids and not S_ROOT.get("me_dead")
@@ -295,7 +299,7 @@ pending = [("(사진을 보냈다)" + ((" " + (turns[i].get("text") or "")) if t
 att = [turns[i].get("img") for i in pend_idx if turns[i].get("img")][-2:]   # 이번 답이 봐야 할 첨부(pending 유저 턴의 사진 · 최근 2장 캡 = 프롬프트·비용 절제)
 scene = [turns[i].get("text", "") for i in pend_idx if turns[i].get("sc")]         # 상황 설명 = <user_message> 밖 격리 블록으로
 recent = turns[:_p0][-n:]   # pending 직전까지 전부(재뽑기 sys 턴 포함 — last_a 기준이면 합류 신호 누락) · 자율 비트 = 로그 꼬리 전부(직전 화자 대사 포함 = 받아칠 대상)
-hist = "\n".join(line(t, persona) for t in recent)
+hist = "\n".join(line(t, persona) for t in recent if _amb_ok(t))
 last_u = turns[_pl] if pend_idx else {}
 pref = s.get("pref") or {}
 last_mood = next((t.get("mood") for t in reversed(turns[:_p0]) if t.get("role") == "assistant" and t.get("mood")), "")   # 직전 공기(감정 관성 · 260707)
