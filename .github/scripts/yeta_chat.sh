@@ -378,7 +378,7 @@ print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": 
                   "policy": json.dumps(s.get("policy"), ensure_ascii=False) if isinstance(s.get("policy"), dict) else "",
                   "last_mood": last_mood, "last_open": last_open, "cast": " · ".join(v for v in names.values() if v),   # 상태 블록 재료(260707 · last_open = 감정선 캐리어 260725)
                   "gap_h": round(gap_h, 1), "late_h": round(late_h, 1), "rel_lv": rel_lv, "riv": riv, "handoff": handoff,   # T1 재료(휴면·지각[260726 Q.70]·관계LV·질투메타·인계 · 260707)   # 시즌 수위·금기(L1 · op policy) — 문구 조립은 apps/yeta/policy.json 정본
-                  "co": co, "co_name": (names.get(co) or co) if co else "", "barge_debut": barge_debut, "barge_host": barge_host, "wfrz": frz_ms(S_ROOT), "wrate": rate_of(S_ROOT), "wrb": json.dumps(anchor_of(S_ROOT) or {}, ensure_ascii=False),   # 세계 배속·변경 앵커(L1 · 260728)   # 단톡 재료(합석 260707) — co = 이번 턴 비화자 동행 · barge_host = 난입당한 쪽(260728 · 1=첫 반응 2=재실 중)
+                  "co": co, "co_name": (names.get(co) or co) if co else "", "barge_debut": barge_debut, "barge_host": barge_host, "wfrz": frz_ms(S_ROOT), "wrate": rate_of(S_ROOT), "notice": ((S_ROOT.get("notice") or {}).get("text") or "") if isinstance(S_ROOT.get("notice"), dict) else "",   # 오늘 자 전광판(260728) — 주민이라면 지나며 봤을 소식 "wrb": json.dumps(anchor_of(S_ROOT) or {}, ensure_ascii=False),   # 세계 배속·변경 앵커(L1 · 260728)   # 단톡 재료(합석 260707) — co = 이번 턴 비화자 동행 · barge_host = 난입당한 쪽(260728 · 1=첫 반응 2=재실 중)
                   "barge_via": (s.get("barged") or {}).get("via") or "",   # 난입 경로(place=지나다 마주침 · 데뷔 결 분기 · 마주침 260707)
                   "place_nm": place_name(PL, place_of(PL, persona, _kdate, _khour)),   # 화자의 지금 장소(동선 SSOT — 배경 정합 + 마주침 sys와 앞뒤)
                   "att": "\n".join(a for a in att if a),   # 첨부 사진 R2 키(개행 구분 · 260717 '+') — process_turn이 내려받아 Read 비전으로 전달
@@ -865,7 +865,7 @@ print((t[:70]+'…') if len(t)>70 else (t or '새 메시지'))")"
 # ── 상태 블록(공용 — 본답장 + 초대 판정 · env: PERSONA LAST_MOOD CAST GAP_H REL_LV RIV HANDOFF TUNE CO_NAME BARGE_DEBUT) ──
 # 시각·계절·달·데일리 무드 시드(sha256 = 같은 날 같은 기분·무저장) + 직전 공기(감정 관성) + 동네 로스터(주민 창작 방지) + 단톡 동행·난입 데뷔.
 state_block() {
-  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" "${LAST_OPEN:-}" "${LATE_H:-0}" "${PREV_DRAFT:-}" "${BARGE_HOST:-0}" "${WFRZ_MS:-0}" "${WRATE:-6}" "${WANCH:-}" <<'PY'
+  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" "${LAST_OPEN:-}" "${LATE_H:-0}" "${PREV_DRAFT:-}" "${BARGE_HOST:-0}" "${WFRZ_MS:-0}" "${WRATE:-6}" "${WANCH:-}" "${NOTICE_TXT:-}" <<'PY'
 import sys, hashlib, json, time
 from datetime import datetime, timezone, timedelta
 persona, last_mood, cast, gap_h, rel_lv, riv, handoff = sys.argv[1:8]
@@ -878,7 +878,8 @@ late_h = sys.argv[14] if len(sys.argv) > 14 else "0"     # 지각(260726 Q.70) �
 prev_draft = sys.argv[15] if len(sys.argv) > 15 else ""  # 죽은 러너의 쓰다 만 말(260726 Q.71-B · draft_salvage 3중 가드 통과분만) — 빈값 = 블록 생략
 wfrz_ms = sys.argv[17] if len(sys.argv) > 17 else "0"
 wrate = sys.argv[18] if len(sys.argv) > 18 else "6"   # 세계 배속(L1 · 260728) — 미전달 경로 = 종전 6배
-wanch = sys.argv[19] if len(sys.argv) > 19 else ""    # 배속 변경 앵커 JSON {eff,wmin} — 빈값 = 앵커 없음(종전 공식)    # 난입 정지 누적(현실 ms · 260728) — 미전달 경로 = "0" = 종전 세계 시각
+wanch = sys.argv[19] if len(sys.argv) > 19 else ""    # 배속 변경 앵커 JSON {eff,wmin} — 빈값 = 앵커 없음(종전 공식)
+notice_txt = sys.argv[20] if len(sys.argv) > 20 else ""  # 오늘 자 전광판 소식(260728) — 빈값 = 블록 생략    # 난입 정지 누적(현실 ms · 260728) — 미전달 경로 = "0" = 종전 세계 시각
 barge_host = sys.argv[16] if len(sys.argv) > 16 else "0" # 난입당한 쪽(260728) — 1=난입 후 첫 반응 2=난입자 재실 중 · 미전달 경로(오프닝·초대 판정) = "0" = 블록 생략
 try: tune = json.loads(sys.argv[8]) if sys.argv[8] and sys.argv[8] != "None" else []
 except Exception: tune = []
@@ -906,6 +907,7 @@ L.append(f"- 오늘의 너: {daily} — 사건 없는 그날 기분, 미묘하�
 if moon: L.append("- 오늘 밤 달이 차오른다 — 본능이 증폭되는 며칠(해당 없는 캐릭터는 무시).")
 if mood_ko: L.append(f"- 직전 장면의 공기: {mood_ko}. 감정은 스위치가 아니라 곡선이다 — 급변하지 말고 이 공기에서 자연스럽게 이어가라(유지·심화·서서히 이완). 단 진짜 계기(진심 어린 사과·충격·제대로 꽂힌 농담)가 오면 곡선을 꺾어도 된다.")
 if last_open: L.append(f"- 직전에 네가 삼킨 것: {last_open} — 아직 안 끝났다. 이번 턴 어딘가에서 티가 나게 하라(설명·재론 금지 · 말끝·행동·딴소리로 새어나오는 정도). 유저가 화제를 옮겼으면 억지로 끌고 오지 말고 그냥 흘려보내라.")   # 감정선 캐리어(평의회 260725) — MOOD가 겉 공기라면 이건 속. 질문으로 넘기지 않고 대화가 이어지는 재료(대화분석 SC3 회피 · 운영자 "묻자는 건 아니고")
+if notice_txt: L.append(f"- 오늘 무음동 전광판에 걸린 소식: 「{notice_txt}」 — 이 동네 사람이면 지나면서 봤을 것이다. **먼저 꺼내 낭독하지 마라**(공지를 읽어주는 인물이 되면 사람이 아니라 게시판이 된다). 대화가 그 언저리로 오면 아는 티만 내라 — 한 마디 얹거나, 남 얘기 하듯 흘리거나, 관계된 인물이면 반응이 달라지거나. 관심 없는 성격이면 무시해도 된다.")
 if cast: L.append(f"- 이 동네 사람들: {cast}. 이 밖의 주민을 창작하지 마라 — 최근 대화에 이름표로 등장한 다른 주민의 말은 그 사람 얘기로 자연스럽게 인용해도 된다.")
 if place_nm: L.append(f"- 네 평소 동선상 지금 너는 {place_nm} 언저리다 — **장소 낭독은 금지**(\"난 지금 ○○에 있어\" 식 보고 금지)지만, 종결부 지문의 **소품은 여기서 가져와라**: 그곳에 있을 법한 물건·풍경·이름 없는 사람(옆자리 아이·점원·지나가던 사람)이 지문의 재료다(운영자 260725 3차). 단 대화 흐름이 이미 다른 곳을 가리키면 그쪽이 우선이다.")
 if co_name: L.append(f"- 지금 이 자리엔 {co_name}도 같이 있다(합석). 대화는 셋이서다 — 그리고 {co_name}는 네가 유저와 주고받는 말을 **처음부터 다 듣고 있다**(운영자 260725 \"모니터링 하는 느낌\"). 없는 사람처럼 굴지 마라: 걔가 걸릴 만한 대목에선 말을 고르거나 시선을 의식하는 티가 나야 한다. 유저 말이 {co_name}를 향한 것 같으면 짧게 반응만 얹거나 물러나도 된다 — 그 자리는 걔가 자기 차례에 직접 받는다(네가 걔 속을 대신 말하지 마라).")
@@ -1574,6 +1576,89 @@ PY
   return 0
 }
 
+# ── 무음동 전광판(운영자 260728 "채팅창 상단에 공지로 전광판처럼 · 그날의 공지 · 누구 사망하면 알 수 있게 · 별별이슈") ──
+# 하루 **1건**만. 발행 주체 = 편집국 데스크(조지 로이스 — 이미 있는 인물이라 세계관 신설 0).
+# 모델 = 소넷(운영자 "생성비용 해봣자 소넷으로 만들면 얼마 안들듯") x effort low. 하루 1회라 비용은 사실상 고정.
+# 사망·부활은 **창작이 아니라 사실 주입** — dead{}에 있는 것만 쓴다(없는 죽음을 지어내면 대화와 세계가 갈라진다).
+notice_prompt() {
+  python3 - "$SESS" "$ROOT/apps/yeta/characters/roster.json" <<'NPY' 2>/dev/null
+import json, sys, time, datetime, re
+sys.path.insert(0, ".github/scripts")
+from yeta_v3 import migrate_v3
+from yeta_place import world_dh, set_freeze, frz_ms, set_rate, rate_of, anchor_of
+try:
+    S = migrate_v3(json.load(open(sys.argv[1], encoding="utf-8")))
+    roster = json.load(open(sys.argv[2], encoding="utf-8"))
+except Exception: sys.exit(1)
+set_freeze(frz_ms(S)); set_rate(rate_of(S), anchor_of(S))
+today = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime("%Y-%m-%d")
+nt = S.get("notice") if isinstance(S.get("notice"), dict) else {}
+if nt.get("d") == today: sys.exit(1)
+names = {c.get("id"): (c.get("name") or c.get("id")) for c in roster if isinstance(c, dict) and c.get("id") and not c.get("locked")}
+if not names: sys.exit(1)
+_wd, _wh = world_dh()
+now_ms = time.time() * 1000
+dead = [(names.get(k) or k) for k, v in (S.get("dead") or {}).items()
+        if ((v.get("t") if isinstance(v, dict) else v) or 0) > now_ms and (names.get(k) or k)]
+recent = []
+_th = max(((S.get("threads") or {}).values()), key=lambda x: (x or {}).get("updated") or 0, default={}) or {}
+for t in (_th.get("turns") or [])[-6:]:
+    if (t or {}).get("role") == "assistant" and t.get("text"): recent.append(str(t["text"])[:60])
+L = []
+L.append("너는 무음동 편집국의 데스크(조지 로이스)다. 골목 하나짜리 동네 소식지를 혼자 굴린다 — 각 하나에 목숨을 걸고, 확인 안 된 건 안 싣는다.")
+L.append("오늘 자 전광판에 걸 **소식 딱 한 줄**을 쓴다. 마을 사람들이 지나가며 읽는 띠 광고판이다.")
+L.append("")
+L.append("[이 동네 사람들] " + " · ".join(v for v in names.values() if v))
+if dead: L.append("[확인된 부고] " + " · ".join(dead) + " — 오늘은 이걸 최우선으로 싣는다(사실이다).")
+if recent: L.append("[요즘 골목에서 오간 말] " + " / ".join(recent))
+L.append("[지금] 무음동 %02d시경" % _wh)
+L.append("")
+L.append("[규칙]")
+L.append("- **한 줄. 80자 안.** 신문 헤드라인이 아니라 전광판 문구다 — 읽고 지나가면 끝.")
+L.append("- 소재는 셋 중 하나: (1) 인물 하나에 얽힌 일 (2) 인물 **사이**에 얽힌 일 (3) 편집국 자체 알림·홍보(제보 요청·구인·분실물).")
+L.append("- **그럴듯한 것만.** '자전거가 부딪혔다' 같은 아무 사건 금지 — 이름이 걸리거나 관계가 걸리거나 편집국이 걸려야 한다.")
+L.append("- 없는 죽음·없는 사람을 만들지 마라. 위 명단 밖 인물 창작 금지.")
+L.append("- 유저(플레이어)를 소재로 삼지 마라 — 이건 마을 소식이지 그 사람 얘기가 아니다.")
+L.append("- 데스크 말투: 짧고 건조하고 살짝 능청. 예) 「무음동 편집국 — 제보할 일 있으면 desk@desk.com. 카메라 들고 뛰어갑니다.」")
+L.append("")
+L.append("[출력 계약]")
+L.append("- 첫 줄: 종류 한 단어만 — dead(부고) / ad(편집국 알림·홍보) / issue(인물·관계 소식)")
+L.append("- 둘째 줄: 전광판 문구 한 줄. 따옴표·군더더기 없이 문구만.")
+print("\n".join(L))
+NPY
+}
+
+notice_store() {   # 생성 결과를 세션 top-level notice에 박제(fresh 재-read → CAS put · ambient_store 동형). $1 = LLM 원문
+  r2get 2>/dev/null || return 0
+  if NOTICE_RAW="$1" python3 - "$SESS" <<'NPY'
+import json, os, re, sys, time, datetime
+sys.path.insert(0, ".github/scripts")
+from yeta_v3 import migrate_v3
+try: S = migrate_v3(json.load(open(sys.argv[1], encoding="utf-8")))
+except Exception: sys.exit(1)
+raw = [l.strip() for l in (os.environ.get("NOTICE_RAW") or "").splitlines() if l.strip()]
+if len(raw) < 2: sys.exit(1)
+kind = re.sub(r"[^a-z]", "", raw[0].lower())[:8]
+if kind not in ("dead", "ad", "issue"): kind = "issue"
+text = re.sub(r"\s+", " ", raw[1]).strip().strip("\"'")[:120]
+if not text: sys.exit(1)
+today = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime("%Y-%m-%d")
+S["notice"] = {"d": today, "text": text, "kind": kind, "by_name": "데스크", "ts": int(time.time() * 1000)}
+json.dump(S, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False)
+NPY
+  then r2put >/dev/null 2>&1 && echo "  📰 전광판 갱신(오늘 자 소식)" || true; fi
+  return 0
+}
+
+notice_refill() {   # 답장 완료 후 호출 — 오늘 것이 없을 때만 1회 생성(있으면 프롬프트 단계에서 빠져 LLM 호출 0)
+  local _p; _p="$(notice_prompt)" || return 0
+  [ -n "$_p" ] || return 0
+  local _o; _o="$( MODEL="${NOTICE_MODEL:-claude-sonnet-5}" EFF="low" METER_STREAM="" gen_out "$_p" >/dev/null 2>&1 && printf '%s' "$OUT" )"
+  [ -n "$_o" ] || return 0
+  notice_store "$_o"
+  return 0
+}
+
 # 답장 완료 후 호출 — 큐가 마르면 채운다(웜 대기 시간에 미리 = 다음 턴 지연 0)
 ambient_refill() {
   local _p; _p="$(ambient_prompt)" || return 0
@@ -1665,7 +1750,7 @@ process_turn() {
                  *) AMB_ON="${AMB_FILE:-1}"; GB_ON="$_GBON"; CH_ON="$_CHON"; BARGE_ON=1 ;; esac   # 형식 불일치(파이썬 실패·빈 출력) = 종전 기본 전량 복귀(설정 사고로 축이 통째 죽는 것 차단)
   GB_BEATS="$GB_ENV_BEATS"; [ "$GB_ON" = "1" ] || GB_BEATS=0     # 자율 비트 끔 = 상한 0 = 예약 자체가 안 걸린다(기존 '0 = 축 OFF' 계약 재사용 · 새 분기 0)
   GB_LINES="$GB_ENV_LINES"; [ "$CH_ON" = "1" ] || GB_LINES=1     # 단톡 교대 끔 = 1토막 = 종전 결(GROUP_RULE 폴백이 그대로 받는다)
-  CO_ID="$(matv co)"; CO_NAME="$(matv co_name)"; BARGE_DEBUT="$(matv barge_debut)"; BARGE_HOST="$(matv barge_host)"; WFRZ_MS="$(matv wfrz)"; WRATE="$(matv wrate)"; WANCH="$(matv wrb)"   # 단톡 동행·난입 데뷔(합석 260707) · 난입당한 쪽(260728)
+  CO_ID="$(matv co)"; CO_NAME="$(matv co_name)"; BARGE_DEBUT="$(matv barge_debut)"; BARGE_HOST="$(matv barge_host)"; WFRZ_MS="$(matv wfrz)"; WRATE="$(matv wrate)"; WANCH="$(matv wrb)"; NOTICE_TXT="$(matv notice)"   # 단톡 동행·난입 데뷔(합석 260707) · 난입당한 쪽(260728)
   PLACE_NM="$(matv place_nm)"; BARGE_VIA="$(matv barge_via)"   # 동선 장소 + 마주침 데뷔 결(위치 SSOT places.json · 260707)
   OPEN="$(matv open)"; OPENING_TS="$(matv opening_ts)"   # 오프닝 잡(동적 첫인사 · 운영자 260707) — OPEN=1이면 유저발화 없이 캐릭터가 먼저 · OPENING_TS = nonce(finish 레이스 방어)
   RETRY_N="$(matv retry_n)"   # 자동 재시도 회차(사다리 260714) — 오프닝 JSON엔 키 없음 = 빈값(아래 -ge 가드가 흡수)
@@ -2045,7 +2130,7 @@ ${CONTRACT1}${GROUP_RULE}${ME_RULE}
   draft_clear   # 확정 반영 뒤 회수(뷰어 = 세션 변경 먼저 픽업 → 버블 스왑 → 잔여 draft 소거)
   # 자율 비트(GB=1) = 유저가 부른 답이 아니다 → 푸시·PTT(유료 TTS)·난입·주변사건 전부 생략(알림 도배·과금·연출 겹침 차단). 유저 턴이 부른 답만 종전 후처리를 태운다.
   [ "$_did_reply" = 1 ] && [ "$GB" = "1" ] && echo "yeta: 자율 비트 반영(${#OUT}자 · ${GEN_S}s · ${GB_N}/${GB_BEATS})"
-  [ "$_did_reply" = 1 ] && [ "$GB" != "1" ] && { echo "yeta: 답장 완료(${#OUT}자 · ${GEN_S}s)"; push_reply "$OUT"; [ "$PTT" = "1" ] && ptt_voice "$OUT"; barge_check; [ "$AMB_ON" = "1" ] && ambient_refill; }   # 주변 사건 보충만(260726 · 축이 꺼져 있으면 생성 자체를 안 탄다 = LLM 쿼터 0) — 심기(ambient_fire)는 답장 **생성 전**으로 이관해 사건이 답장에 받쳐지게 했다. 보충은 종전대로 답장 뒤(이번 턴 대화까지 반영해 뽑고, 사용자 대기 0)
+  [ "$_did_reply" = 1 ] && [ "$GB" != "1" ] && { echo "yeta: 답장 완료(${#OUT}자 · ${GEN_S}s)"; push_reply "$OUT"; [ "$PTT" = "1" ] && ptt_voice "$OUT"; barge_check; notice_refill; [ "$AMB_ON" = "1" ] && ambient_refill; }   # 주변 사건 보충만(260726 · 축이 꺼져 있으면 생성 자체를 안 탄다 = LLM 쿼터 0) — 심기(ambient_fire)는 답장 **생성 전**으로 이관해 사건이 답장에 받쳐지게 했다. 보충은 종전대로 답장 뒤(이번 턴 대화까지 반영해 뽑고, 사용자 대기 0)
   return 0
 }
 
