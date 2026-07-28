@@ -1247,10 +1247,16 @@ today = f"{now:%Y-%m-%d}"
 turns = s.get("turns") or []
 persona = s.get("last_sp") or _os.environ.get("THREAD", "")
 room = [r for r in (s.get("room") or []) if r][:2] or ([persona] if persona else [])
-if len(room) != 1: sys.exit(1)                     # 이미 단톡/방 없음
-if s.get("invite") or s.get("barged"): sys.exit(1)
+if len(room) != 1:
+    if _FORCE: print(f"::warning::난입 강제 — 이 방은 1:1이 아니다(현재 {len(room)}명). 난입은 1:1 방에서만 성립한다.")
+    sys.exit(1)                                    # 이미 단톡/방 없음
+if s.get("invite") or s.get("barged"):
+    if _FORCE: print("::warning::난입 강제 — 이 방에 이미 초대/난입이 진행 중이다(중복 난입 차단).")
+    sys.exit(1)
 if not _FORCE and S_ROOT.get("barge_day") == today: sys.exit(1)   # 하루 1회 상한 = 전역(top-level — 스레드 곱셈·다방 동시 난입 차단 · 러너감사③A)
-if s.get("state") == "awaiting": sys.exit(1)       # 답장 생성 중 = 안 끼어듦(반영 레이스 축소)
+if s.get("state") == "awaiting":
+    if _FORCE: print("::warning::난입 강제 — 답장 생성 중이라 보류(다음 답장 뒤 재시도된다).")
+    sys.exit(1)                                    # 답장 생성 중 = 안 끼어듦(반영 레이스 축소)
 set_freeze(frz_ms(S_ROOT)); set_rate(rate_of(S_ROOT), anchor_of(S_ROOT))   # 난입 정지 + 세계 배속(L1 · 260728) — 세션 wfz만큼 세계 시계를 뒤로 민다(배속 불변)
 _wd, _wh = world_dh()                              # 무음동 세계 시각(운영자 260716 지도 싱크) — 장소·새벽 판정 축 · today(상한·시드)는 현실 일자 유지(하루 1회 = 현실 하루)
 if not _FORCE and 3 <= _wh < 8: sys.exit(1)        # 깊은 새벽(세계 시각) = 난입 없음(주민 수면 — 대화 속 시간과 정합)
@@ -1269,6 +1275,12 @@ for _cid in sorted(BARGE):
     if not _FORCE and int(hashlib.sha256(f"{today}:{_cid}:only".encode()).hexdigest(), 16) % _g: continue   # 결정적 시드(재현 가능 · 하루 1회 전역 상한과 곱해짐) · 강제 = 무조건 통과
     cand, via = _cid, "only"
     break
+# 강제(260728) = **난입 전용 인물만** 부르는 테스트 스위치다. 위 barge 축에서 못 잡았으면 여기서 끝낸다 —
+# 아래 fallback 축(거절 회수·자주 대면·최근 언급·위치 마주침)을 그대로 타면 **엉뚱한 주민이 대신 난입**해서
+# 테스트가 아니라 딴 이벤트가 된다(운영자 260728 "on한다고 무조건 100% 난입은 아니거든 · 나 말고 다른 ???이").
+if _FORCE and not cand:
+    print("::warning::난입 강제 — 난입 전용 인물을 못 잡았다(사망 중이거나 이미 이 방에 있음). 다른 주민으로 대체하지 않고 종료한다.")
+    sys.exit(1)
 d = s.get("declined") or {}
 if not cand and d.get("id") and d["id"] in names and d["id"] not in room and time.time() * 1000 - (d.get("ts") or 0) < 172800000:
     cand = d["id"]                                  # 거절 회수 — "아까는 미안" 서사
@@ -1315,7 +1327,7 @@ else:
         if best:
             cand, via, meet_pl = best[1], "place", me_pl
 if not cand: sys.exit(1)
-if len(S_ROOT.get("threads") or {}) >= 12: sys.exit(1)   # 방 하드캡(초대 260712 동형) — 가득 차면 난입 보류(원본 1:1 보존)
+if not _FORCE and len(S_ROOT.get("threads") or {}) >= 12: sys.exit(1)   # 방 하드캡(초대 260712 동형) — 가득 차면 난입 보류(원본 1:1 보존) · 강제는 우회(260728)
 tnow = int(time.time() * 1000)
 # ⚠️ 성장 시 분기 계약(짝: functions/api/yeta.js op invite) — 난입 = 원본 1:1 스레드 보존 + 직전 3주고받기 시드 복사 → 새 단톡 스레드(g 접두)로 분기(초대 op 동형 · 운영자 260712 "기존 1명 대화 고유성" · 대화창 분리 260714) — 구: 원본 room 인플레이스 변형(1:1 파괴). 수정 시 invite도 같이.
 host = room[0]
