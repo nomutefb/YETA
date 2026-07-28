@@ -1258,8 +1258,12 @@ today = f"{now:%Y-%m-%d}"
 turns = s.get("turns") or []
 persona = s.get("last_sp") or _os.environ.get("THREAD", "")
 room = [r for r in (s.get("room") or []) if r][:2] or ([persona] if persona else [])
-if len(room) != 1: sys.exit(1)                     # 이미 단톡/방 없음
-if s.get("invite") or s.get("barged"): sys.exit(1)
+if len(room) != 1:
+    if _FORCE: print(f"::warning::난입 강제 — 이 방은 1:1이 아니다(현재 {len(room)}명). 난입은 1:1 방에서만 성립한다.")
+    sys.exit(1)                                    # 이미 단톡/방 없음
+if s.get("invite") or s.get("barged"):
+    if _FORCE: print("::warning::난입 강제 — 이 방에 이미 초대/난입이 진행 중이다(중복 난입 차단).")
+    sys.exit(1)
 # ── 이중 난입 차단(운영자 260728 "밖에 나오니까 대화창이 두개로 되어있음 = 버그") ──
 # 근인: 위 가드는 **이 스레드**의 barged만 본다. 난입은 원본 1:1을 보존하고 새 g스레드로 분기하므로(위 분기 계약),
 # 유저가 원본 1:1에서 계속 말하면 그 방엔 barged가 없어 가드가 통과 → 답장마다 난입 방이 또 생긴다(강제 모드 = 매 턴 재현 · 목록에 단톡 2개).
@@ -1267,12 +1271,18 @@ if s.get("invite") or s.get("barged"): sys.exit(1)
 # 내보내기·이탈·정지 상한으로 room에서 빠지면 자동 해제 = 영구 차단 없음.
 # ⚠ _FORCE도 우회 못 한다 — 위 '남기는 게이트' 목록의 "이중 난입" 그 자리(연출이 아니라 정합성 축).
 _ths = [t for t in (S_ROOT.get("threads") or {}).values() if isinstance(t, dict)]
-if any(t.get("barged") for t in _ths): sys.exit(1)
+if any(t.get("barged") for t in _ths):
+    if _FORCE: print("::warning::난입 강제 — 다른 방에 아직 데뷔 전 난입이 걸려 있다(이중 난입 차단). 그 방에 한마디 걸어 데뷔시키거나 정리하면 다시 열린다.")   # 실패 사유 로그 = Q.119 보강 결 계승(테스트 스위치에서 침묵이 제일 나쁘다)
+    sys.exit(1)
 _wf = S_ROOT.get("wfz") if isinstance(S_ROOT.get("wfz"), dict) else {}
 _seated = {r for t in _ths for r in (t.get("room") or []) if r}
-if _wf.get("since") and _wf.get("by") in _seated: sys.exit(1)
+if _wf.get("since") and _wf.get("by") in _seated:
+    if _FORCE: print(f"::warning::난입 강제 — 난입자({_wf.get('by')})가 아직 다른 방에 앉아 있다(이중 난입 차단). 내보내거나 인사하고 나가면 다시 열린다.")
+    sys.exit(1)
 if not _FORCE and S_ROOT.get("barge_day") == today: sys.exit(1)   # 하루 1회 상한 = 전역(top-level — 스레드 곱셈·다방 동시 난입 차단 · 러너감사③A)
-if s.get("state") == "awaiting": sys.exit(1)       # 답장 생성 중 = 안 끼어듦(반영 레이스 축소)
+if s.get("state") == "awaiting":
+    if _FORCE: print("::warning::난입 강제 — 답장 생성 중이라 보류(다음 답장 뒤 재시도된다).")
+    sys.exit(1)                                    # 답장 생성 중 = 안 끼어듦(반영 레이스 축소)
 set_freeze(frz_ms(S_ROOT)); set_rate(rate_of(S_ROOT), anchor_of(S_ROOT))   # 난입 정지 + 세계 배속(L1 · 260728) — 세션 wfz만큼 세계 시계를 뒤로 민다(배속 불변)
 _wd, _wh = world_dh()                              # 무음동 세계 시각(운영자 260716 지도 싱크) — 장소·새벽 판정 축 · today(상한·시드)는 현실 일자 유지(하루 1회 = 현실 하루)
 if not _FORCE and 3 <= _wh < 8: sys.exit(1)        # 깊은 새벽(세계 시각) = 난입 없음(주민 수면 — 대화 속 시간과 정합)
@@ -1291,6 +1301,12 @@ for _cid in sorted(BARGE):
     if not _FORCE and int(hashlib.sha256(f"{today}:{_cid}:only".encode()).hexdigest(), 16) % _g: continue   # 결정적 시드(재현 가능 · 하루 1회 전역 상한과 곱해짐) · 강제 = 무조건 통과
     cand, via = _cid, "only"
     break
+# 강제(260728) = **난입 전용 인물만** 부르는 테스트 스위치다. 위 barge 축에서 못 잡았으면 여기서 끝낸다 —
+# 아래 fallback 축(거절 회수·자주 대면·최근 언급·위치 마주침)을 그대로 타면 **엉뚱한 주민이 대신 난입**해서
+# 테스트가 아니라 딴 이벤트가 된다(운영자 260728 "on한다고 무조건 100% 난입은 아니거든 · 나 말고 다른 ???이").
+if _FORCE and not cand:
+    print("::warning::난입 강제 — 난입 전용 인물을 못 잡았다(사망 중이거나 이미 이 방에 있음). 다른 주민으로 대체하지 않고 종료한다.")
+    sys.exit(1)
 d = s.get("declined") or {}
 if not cand and d.get("id") and d["id"] in names and d["id"] not in room and time.time() * 1000 - (d.get("ts") or 0) < 172800000:
     cand = d["id"]                                  # 거절 회수 — "아까는 미안" 서사
@@ -1337,8 +1353,10 @@ else:
         if best:
             cand, via, meet_pl = best[1], "place", me_pl
 if not cand: sys.exit(1)
-if cand in _seated: sys.exit(1)   # 최종 안전벨트 — 관계·언급·마주침 축이 고른 후보가 이미 다른 방에 앉아 있으면 취소(각 축의 `not in room`은 **이 방**만 본다 · 위 이중 난입 가드와 같은 창)
-if len(S_ROOT.get("threads") or {}) >= 12: sys.exit(1)   # 방 하드캡(초대 260712 동형) — 가득 차면 난입 보류(원본 1:1 보존)
+if cand in _seated:
+    if _FORCE: print(f"::warning::난입 강제 — 고른 후보({cand})가 이미 다른 방에 앉아 있다(이중 난입 차단).")
+    sys.exit(1)   # 최종 안전벨트 — 관계·언급·마주침 축이 고른 후보가 이미 다른 방에 앉아 있으면 취소(각 축의 `not in room`은 **이 방**만 본다 · 위 이중 난입 가드와 같은 창)
+if not _FORCE and len(S_ROOT.get("threads") or {}) >= 12: sys.exit(1)   # 방 하드캡(초대 260712 동형) — 가득 차면 난입 보류(원본 1:1 보존) · 강제는 우회(260728)
 tnow = int(time.time() * 1000)
 # ⚠️ 성장 시 분기 계약(짝: functions/api/yeta.js op invite) — 난입 = 원본 1:1 스레드 보존 + 직전 3주고받기 시드 복사 → 새 단톡 스레드(g 접두)로 분기(초대 op 동형 · 운영자 260712 "기존 1명 대화 고유성" · 대화창 분리 260714) — 구: 원본 room 인플레이스 변형(1:1 파괴). 수정 시 invite도 같이.
 host = room[0]
