@@ -906,21 +906,30 @@ def check_root_clean():
 
 
 def check_world_rate():
-    """무음동 세계율(6배) 3점 짝 하드 게이트(운영자 260716 Q.08 평의회) — 뷰어 YWORLD_RATE · 러너 wmin(yeta_chat.sh) · yeta_place.world_dh 리터럴 일치 강제(한쪽만 고치는 드리프트 = 지도·대화 시간축 재분열)."""
+    """무음동 세계율 폴백·기본 4점 짝 하드 게이트(운영자 260716 Q.08 평의회 · 260728 L1 노브 개편).
+    배속이 L1 설정값이 된 뒤(운영자 260728 「설정값에서 조정 · L1급」) 대조 대상이 '공식 안의 리터럴'에서 **폴백 상수 + 정책 기본값**으로 바뀌었다 —
+    실배속은 세션 정책이 정하고, 정책을 못 읽는 경로(구세션·프리페치 전·러너 미전달)는 폴백으로 착지한다. 그 착지점 4곳이 어긋나면 지도·대화 시간축이 다시 갈라진다."""
     rc = 0
     try:
         vals = {}
         v = re.search(r'const YWORLD_RATE = (\d+)', open(os.path.join(ROOT, 'viewer/index.html'), encoding='utf-8').read())
         if v: vals['viewer YWORLD_RATE'] = v.group(1)
-        c = re.search(r'time\.time\(\).*?/ 60 \* (\d+)\) % 1440', open(os.path.join(ROOT, '.github/scripts/yeta_chat.sh'), encoding='utf-8').read())   # `.*?` = 난입 정지 오프셋 감산분(260728 `- (float(wfrz_ms…)/1000)`) 흡수 — 6배 리터럴 위치만 이동했지 배속은 불변이라 게이트 취지(3점 일치)는 그대로
-        if c: vals['러너 wmin(yeta_chat.sh)'] = c.group(1)
-        p = re.search(r'/ 60 \* (\d+)', open(os.path.join(ROOT, '.github/scripts/yeta_place.py'), encoding='utf-8').read())
-        if p: vals['world_dh(yeta_place.py)'] = p.group(1)
-        if len(vals) != 3:
-            print('❌ 세계율 게이트 — 3점 중 %d점만 검출(패턴 이동 시 게이트도 같이 수정): %s' % (len(vals), ', '.join(vals) or '없음')); return 1
+        c = re.search(r'_WRATE_FB = (\d+)', open(os.path.join(ROOT, '.github/scripts/yeta_chat.sh'), encoding='utf-8').read())
+        if c: vals['러너 폴백(_WRATE_FB)'] = c.group(1)
+        p = re.search(r'^_RATE = (\d+)', open(os.path.join(ROOT, '.github/scripts/yeta_place.py'), encoding='utf-8').read(), re.M)
+        if p: vals['world_dh 폴백(_RATE)'] = p.group(1)
+        try:   # ④ 노브의 기본 선택지 = L1.world[wrate].vals[default] — 폴백과 어긋나면 "설정 안 만졌는데 배속이 다른" 상태가 된다
+            _pj = json.load(open(os.path.join(ROOT, 'apps/yeta/policy.json'), encoding='utf-8'))
+            _ax = next((x for x in ((_pj.get('L1') or {}).get('world') or []) if isinstance(x, dict) and x.get('key') == 'wrate'), None)
+            if _ax and isinstance(_ax.get('vals'), list):
+                _i = _ax.get('default') or 0
+                if 0 <= _i < len(_ax['vals']): vals['policy.json 기본(L1.world wrate)'] = str(_ax['vals'][_i])
+        except Exception: pass
+        if len(vals) != 4:
+            print('❌ 세계율 게이트 — 4점 중 %d점만 검출(패턴 이동 시 게이트도 같이 수정): %s' % (len(vals), ', '.join(vals) or '없음')); return 1
         if len(set(vals.values())) != 1:
-            print('❌ 세계율 게이트 — 6배 상수 3점 불일치(한쪽만 수정 = 시간축 드리프트): ' + ' · '.join(f'{k}={v}' for k, v in vals.items())); return 1
-        print('✅ 세계율 게이트 — 무음동 배속 3점 짝 일치(%s배: 뷰어·러너 wmin·world_dh).' % next(iter(vals.values())))
+            print('❌ 세계율 게이트 — 배속 폴백·기본 4점 불일치(한쪽만 수정 = 시간축 드리프트): ' + ' · '.join(f'{k}={v}' for k, v in vals.items())); return 1
+        print('✅ 세계율 게이트 — 배속 폴백·기본 4점 짝 일치(%s배: 뷰어·러너·world_dh·policy.json · 실배속 = L1 노브).' % next(iter(vals.values())))
     except Exception as e:
         print('⚠️ 세계율 게이트 스킵:', e)
     return rc
