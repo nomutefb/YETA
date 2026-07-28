@@ -1219,9 +1219,9 @@ ${HIST:-"(없음)"}
 # 대사 생성 0회 = 비용 0: 합류 sys만 심고, 첫 마디는 다음 유저 턴에 화자 사다리(난입 데뷔)가 얹는다. 실패 전부 무해.
 # 위치 축(운영자 260707 "주변에 인물이 있으면 만나는"): 화자의 지금 장소(동선 SSOT)와 같은 곳 = 시드 1/2 · 인접 = 1/3 — 지도 UI가 붙어도 같은 정본을 읽는다.
 barge_check() {
-  [ "${BARGE_ON:-1}" = "1" ] || return 0   # 난입 축 정지(L1 설정 · 260727) — R2 재읽기·파이썬 기동 전에 끊는다(끈 상태 비용 0 · 미설정이면 종전대로 켬)
+  [ "${BARGE_ON:-1}" != "0" ] || return 0   # 난입 축 정지(L1 설정 · 260727) — R2 재읽기·파이썬 기동 전에 끊는다(끈 상태 비용 0 · 미설정이면 종전대로 켬) · 3단화(260728): 0=끔 1=평시 2=강제
   r2get 2>/dev/null || return 0
-  if THREAD="${THREAD:-}" python3 - "$SESS" "$ROOT/apps/yeta/characters/roster.json" <<'PY'
+  if THREAD="${THREAD:-}" BARGE_FORCE="$([ "${BARGE_ON:-1}" = "2" ] && echo 1 || echo 0)" python3 - "$SESS" "$ROOT/apps/yeta/characters/roster.json" <<'PY'
 import hashlib, json, sys, time
 from datetime import datetime, timezone, timedelta
 sys.path.insert(0, ".github/scripts")
@@ -1232,6 +1232,8 @@ import os as _os
 S_ROOT = migrate_v3(json.load(open(sys.argv[1], encoding="utf-8")))
 s = (S_ROOT.get("threads") or {}).get(_os.environ.get("THREAD", ""))
 if s is None: sys.exit(1)                          # 스레드 소멸 = 난입 없음
+_FORCE = _os.environ.get("BARGE_FORCE") == "1"   # L1 난입=강제(260728 운영자 "트리거를 강제로 지금 한번 진행시켜줘") — 아래 4게이트(하루1회·깊은새벽·초반보호·시간대/확률)만 건너뛴다.
+# ⚠ 남기는 게이트: 방 1명 · 진행 중 초대/난입 없음 · 답장 생성 중 아님 · 사망 제외 — 이건 우회하면 데이터가 깨지거나 이중 난입이 난다(연출이 아니라 정합성 축).
 try: roster = json.load(open(sys.argv[2], encoding="utf-8"))
 except Exception: sys.exit(1)
 BARGE = {c["id"]: c["barge"] for c in roster if isinstance(c, dict) and c.get("id") and isinstance(c.get("barge"), dict)}   # 난입 전용 인물(운영자 260726 프리실라 "일방적 대화 열기 불가 · 가끔 대화에 난입") — locked로 목록 진입은 막고, 이 축으로만 등장시킨다
@@ -1247,12 +1249,12 @@ persona = s.get("last_sp") or _os.environ.get("THREAD", "")
 room = [r for r in (s.get("room") or []) if r][:2] or ([persona] if persona else [])
 if len(room) != 1: sys.exit(1)                     # 이미 단톡/방 없음
 if s.get("invite") or s.get("barged"): sys.exit(1)
-if S_ROOT.get("barge_day") == today: sys.exit(1)   # 하루 1회 상한 = 전역(top-level — 스레드 곱셈·다방 동시 난입 차단 · 러너감사③A)
+if not _FORCE and S_ROOT.get("barge_day") == today: sys.exit(1)   # 하루 1회 상한 = 전역(top-level — 스레드 곱셈·다방 동시 난입 차단 · 러너감사③A)
 if s.get("state") == "awaiting": sys.exit(1)       # 답장 생성 중 = 안 끼어듦(반영 레이스 축소)
 set_freeze(frz_ms(S_ROOT)); set_rate(rate_of(S_ROOT), anchor_of(S_ROOT))   # 난입 정지 + 세계 배속(L1 · 260728) — 세션 wfz만큼 세계 시계를 뒤로 민다(배속 불변)
 _wd, _wh = world_dh()                              # 무음동 세계 시각(운영자 260716 지도 싱크) — 장소·새벽 판정 축 · today(상한·시드)는 현실 일자 유지(하루 1회 = 현실 하루)
-if 3 <= _wh < 8: sys.exit(1)                       # 깊은 새벽(세계 시각) = 난입 없음(주민 수면 — 대화 속 시간과 정합)
-if len(turns) < 8: sys.exit(1)                     # 초반 대화 보호(관계 전 난입 = 소음)
+if not _FORCE and 3 <= _wh < 8: sys.exit(1)        # 깊은 새벽(세계 시각) = 난입 없음(주민 수면 — 대화 속 시간과 정합)
+if not _FORCE and len(turns) < 8: sys.exit(1)      # 초반 대화 보호(관계 전 난입 = 소음)
 cand = ""
 via, meet_pl = "", ""
 # ── 난입 전용 인물 축(운영자 260726 프리실라) — 목록에서 못 여는 대신 '오직 난입'으로만 등장. 관계·언급·장소 축보다 먼저 = 특수 이벤트가 일반 난입에 굶지 않게.
@@ -1261,10 +1263,10 @@ for _cid in sorted(BARGE):
     if _cid in room: continue
     _cfg = BARGE[_cid] or {}
     _sl = _cfg.get("slot") or []
-    if _sl and slot_of(_wh) not in _sl: continue           # 시간대 게이트(프리실라 = 저녁~밤)
+    if not _FORCE and _sl and slot_of(_wh) not in _sl: continue   # 시간대 게이트(프리실라 = 저녁~밤)
     _g = int(_cfg.get("gate") or 6)
     if set(_cfg.get("boost") or []) & set(room): _g = int(_cfg.get("boost_gate") or 2)   # 동석 가중(고죠와 있는 자리 = 흉내 모드 난입이 잦아진다)
-    if int(hashlib.sha256(f"{today}:{_cid}:only".encode()).hexdigest(), 16) % _g: continue   # 결정적 시드(재현 가능 · 하루 1회 전역 상한과 곱해짐)
+    if not _FORCE and int(hashlib.sha256(f"{today}:{_cid}:only".encode()).hexdigest(), 16) % _g: continue   # 결정적 시드(재현 가능 · 하루 1회 전역 상한과 곱해짐) · 강제 = 무조건 통과
     cand, via = _cid, "only"
     break
 d = s.get("declined") or {}
@@ -1380,12 +1382,12 @@ pol_axes() {   # $1=정책 JSON · $2~$5=폴백(ambient beats chorus barge) → 
 try: p = json.loads(sys.argv[1]) if sys.argv[1] and sys.argv[1] != "None" else {}
 except Exception: p = {}
 if not isinstance(p, dict): p = {}
-def v(k, d):
+def v(k, d, hi=1):
     x = p.get(k)
     if x is None: return d                      # 미설정 = 폴백(설정 UI를 한 번도 안 만진 상태 = 종전 동작)
-    try: return "0" if int(x) == 0 else "1"
+    try: return str(max(0, min(hi, int(x))))    # hi = 이 축의 최대 단수(기본 2단 0/1 · barge만 3단 0/1/2 = 끔/켬/강제)
     except Exception: return d                  # 깨진 값 = 폴백(조용히 축이 죽는 사고 차단)
-print(" ".join([v("ambient", sys.argv[2]), v("beats", sys.argv[3]), v("chorus", sys.argv[4]), v("barge", sys.argv[5])]))' "$1" "$2" "$3" "$4" "$5" 2>/dev/null
+print(" ".join([v("ambient", sys.argv[2]), v("beats", sys.argv[3]), v("chorus", sys.argv[4]), v("barge", sys.argv[5], 2)]))' "$1" "$2" "$3" "$4" "$5" 2>/dev/null
 }
 
 # 큐가 마르면 프롬프트를 stdout에 뱉는다(충분하면 빈 출력 = 생성 스킵). 씨앗 추첨 = 진짜 랜덤(운영자 "그 순간에 자연스럽게 랜덤하게" — barge의 결정적 시드와 반대 축).
@@ -1647,7 +1649,7 @@ process_turn() {
   # L1 연출 축 유효값(260727) — 이 턴 동안만 유효한 4개 스위치. 아래 소비처: AMB_ON(주변 사건 생성·심기·HIST) · GB_BEATS(자율 비트) · GB_LINES(단톡 교대) · BARGE_ON(난입).
   _GBON=0; [ "${GB_ENV_BEATS:-0}" -gt 0 ] 2>/dev/null && _GBON=1; _CHON=0; [ "${GB_ENV_LINES:-1}" -gt 1 ] 2>/dev/null && _CHON=1   # env 기본의 '켬/끔' 환산 = 정책 미설정 시 폴백
   _PA="$(pol_axes "$POL" "${AMB_FILE:-1}" "$_GBON" "$_CHON" 1)"
-  case "$_PA" in [01]" "[01]" "[01]" "[01]) AMB_ON="${_PA%% *}"; _PA="${_PA#* }"; GB_ON="${_PA%% *}"; _PA="${_PA#* }"; CH_ON="${_PA%% *}"; BARGE_ON="${_PA##* }" ;;
+  case "$_PA" in [01]" "[01]" "[01]" "[0-2]) AMB_ON="${_PA%% *}"; _PA="${_PA#* }"; GB_ON="${_PA%% *}"; _PA="${_PA#* }"; CH_ON="${_PA%% *}"; BARGE_ON="${_PA##* }" ;;
                  *) AMB_ON="${AMB_FILE:-1}"; GB_ON="$_GBON"; CH_ON="$_CHON"; BARGE_ON=1 ;; esac   # 형식 불일치(파이썬 실패·빈 출력) = 종전 기본 전량 복귀(설정 사고로 축이 통째 죽는 것 차단)
   GB_BEATS="$GB_ENV_BEATS"; [ "$GB_ON" = "1" ] || GB_BEATS=0     # 자율 비트 끔 = 상한 0 = 예약 자체가 안 걸린다(기존 '0 = 축 OFF' 계약 재사용 · 새 분기 0)
   GB_LINES="$GB_ENV_LINES"; [ "$CH_ON" = "1" ] || GB_LINES=1     # 단톡 교대 끔 = 1토막 = 종전 결(GROUP_RULE 폴백이 그대로 받는다)
