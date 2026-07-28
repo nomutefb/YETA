@@ -243,12 +243,15 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   /* ── 무음동 전광판(운영자 260728 "채팅창 상단에 공지로 전광판처럼 쭉 우>좌 · 그날의 공지 · 누구 사망하면 알 수 있게 · 별별이슈") ──
      발행 주체 = 편집국 데스크(조지 로이스) — 이미 있는 인물이라 세계관 신설 0. 표면 = .yb.sys 글래스 알약 선언 100% 계승(배경·테두리·모서리·blur 동값),
      배치 = .yeta-h 규약 계승(absolute · left/right 10 · safe-area) · z2 = 헤더(3)와 상단 블러(1) 사이 = 어느 쪽도 안 가린다(#282 레이어와 무충돌).
-     색축 = 종류별 정본 토큰 계승만: 사망 --danger · 홍보/제보 --accent · 그 외 무채색(신규 hex 0). */
+     색축 = 종류별 정본 토큰 계승만: 사망 --danger · 홍보/제보 --accent · 그 외 무채색(신규 hex 0).
+     ⚠ 표면은 글래스가 아니라 **스포티파이 블랙 솔리드 판**(운영자 260728 "스포티파이 블랙으로 도형 하나 감싸서 배경으로 놔") — 뒤 배경이 비치면 흐르는 글자가 그림에 묻혀 전광판으로 안 읽힌다.
+     테두리·인셋·그림자는 글래스 결 그대로 계승(--glass-line·--shadow-card)이라 다른 표면과 따로 놀지 않는다. backdrop-filter는 불투명이 됐으니 제거(연산 낭비). */
   #yetanotice { position:absolute; left:10px; right:10px; z-index:2; overflow:hidden; display:flex; align-items:center; height:26px; padding:0 10px;
-    background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-pill);
-    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m));
+    background:var(--bg); border:1px solid var(--glass-line); border-radius:var(--r-pill);
+    box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card);
     color:var(--fg-2); font-size:var(--fs-xs); pointer-events:none; }   /* pointer-events:none = 스크롤·탭을 안 먹는다(읽기 전용 띠) */
   #yetanotice[hidden] { display:none; }
+  #yetanotice .ynt-ico { flex:none; display:inline-flex; align-items:center; margin-right:5px; color:var(--mut); }   /* 확성기 = 발행 표식(SSOT MEGAPHONE_SVG 주입 · 인라인 재선언 0) — 라벨과 한 덩어리로 왼쪽 고정 */
   #yetanotice .ynt-tag { flex:none; margin-right:8px; font-weight:var(--fw-x); color:var(--mut); letter-spacing:.04em; }   /* 발행처 라벨 — 흐르지 않고 왼쪽 고정(무엇을 읽는지가 먼저) */
   #yetanotice .ynt-win { position:relative; flex:1; min-width:0; overflow:hidden; height:100%; }
   #yetanotice .ynt-txt { position:absolute; top:50%; left:0; display:flex; will-change:transform;
@@ -256,7 +259,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   #yetanotice .ynt-txt i { font-style:normal; white-space:nowrap; padding-right:48px; }   /* 같은 문장 2벌을 이어붙이고 정확히 절반만 밀어 이음매를 지운다 — padding이 벌 사이 간격이자 반환점 기준. ⚠ 1벌 방식(100%→-100%)은 글이 화면 밖에 있는 시간이 대부분이라 전광판이 아니라 '가끔 지나가는 글'이 된다(260728 실렌더에서 포착) */
   @keyframes yntFlow { from { transform:translate(0, -50%); } to { transform:translate(-50%, -50%); } }
   #yetanotice.k-dead { border-color:rgba(var(--danger-rgb),.4); }
-  #yetanotice.k-dead .ynt-tag, #yetanotice.k-dead .ynt-txt { color:var(--danger); }   /* 사망 = 난입 축과 같은 자몽(.ygrade.barge·.yb.fail 선언 계승) */
+  #yetanotice.k-dead .ynt-ico, #yetanotice.k-dead .ynt-tag, #yetanotice.k-dead .ynt-txt { color:var(--danger); }   /* 사망 = 난입 축과 같은 자몽(.ygrade.barge·.yb.fail 선언 계승) */
   #yetanotice.k-ad .ynt-txt { color:var(--accent); }   /* 홍보·제보 = 브랜드 강조색 */
   @media (prefers-reduced-motion:reduce) { #yetanotice .ynt-txt { position:static; animation:none; transform:none; display:block; max-width:100%; } #yetanotice .ynt-txt i { display:block; padding-right:0; overflow:hidden; text-overflow:ellipsis; } #yetanotice .ynt-txt i + i { display:none; } }   /* 모션 줄이기 = 흐름 정지 + 한 벌 말줄임(정보는 남기고 움직임만 끈다) */
   #yetatopblur { position:absolute; top:0; left:0; right:0; height:calc(83px + env(safe-area-inset-top)); z-index:1; pointer-events:none; }
@@ -1470,7 +1473,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
       <div class="ymeter" id="yetaMeter"></div>   <!-- 미터 = 모델·노력 탭 전환 + 대화 누적 토큰(운영자 260709·260712 인터랙티브) -->
       <div class="yside" id="yside" hidden></div>   <!-- 좌 슬림 캐릭터 레일(운영자 260705 "왔다갔다") — 이름+최근대화 스니펫 · 탭=화자 전환 -->
       <div class="yeta-log" id="yetaLog"></div>
-      <div id="yetanotice" hidden><span class="ynt-tag">데스크</span><span class="ynt-win"><span class="ynt-txt"><i></i><i></i></span></span></div>
+      <div id="yetanotice" hidden><span class="ynt-ico"></span><span class="ynt-tag">데스크</span><span class="ynt-win"><span class="ynt-txt"><i></i><i></i></span></span></div>
       <div id="yetatopblur" aria-hidden="true"><div></div><div></div><div></div><div></div><div></div><div class="tf-scrim"></div></div>   <!-- 상단 5레이어 프로그레시브 블러 + 스크림(운영자 20260714 확정) — 네비 뒤로 스크롤 대화 숨김 · z1(로그 위·미터/네비 아래) · char/list의 #ytopfade와 대칭 -->
       <div class="yeta-pick" id="yetaPick" hidden></div>
       <div class="yeta-pick yinv" id="yetaInv" hidden></div>   <!-- 합석 초대 패널(단톡 260707) — + 버튼 진입 · 정본 픽커 계승 -->
@@ -3886,6 +3889,8 @@ function yNotice() {   // 무음동 전광판(운영자 260728) — 세션 top-l
   const kind = String((n.kind || '')).toLowerCase();
   const k = kind === 'dead' || kind === 'revive' ? 'k-dead' : (kind === 'ad' || kind === 'notice' ? 'k-ad' : '');
   if (el.className !== k) el.className = k;
+  const ico = el.querySelector('.ynt-ico');
+  if (ico && !ico.firstChild) ico.innerHTML = (typeof MEGAPHONE_SVG !== 'undefined' ? MEGAPHONE_SVG : '');   // 1회만 주입(재렌더마다 파싱 안 함) · 미로드 = 빈 칸(문구는 그대로 = fail-soft)
   if (tag) tag.textContent = n.by_name || '데스크';             // 발행처 = 러너가 준 이름(기본 = 편집국 데스크)
   el.hidden = false;
   yNoticePos();
