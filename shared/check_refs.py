@@ -912,7 +912,7 @@ def check_world_rate():
         vals = {}
         v = re.search(r'const YWORLD_RATE = (\d+)', open(os.path.join(ROOT, 'viewer/index.html'), encoding='utf-8').read())
         if v: vals['viewer YWORLD_RATE'] = v.group(1)
-        c = re.search(r'time\.time\(\) / 60 \* (\d+)\) % 1440', open(os.path.join(ROOT, '.github/scripts/yeta_chat.sh'), encoding='utf-8').read())
+        c = re.search(r'time\.time\(\).*?/ 60 \* (\d+)\) % 1440', open(os.path.join(ROOT, '.github/scripts/yeta_chat.sh'), encoding='utf-8').read())   # `.*?` = 난입 정지 오프셋 감산분(260728 `- (float(wfrz_ms…)/1000)`) 흡수 — 6배 리터럴 위치만 이동했지 배속은 불변이라 게이트 취지(3점 일치)는 그대로
         if c: vals['러너 wmin(yeta_chat.sh)'] = c.group(1)
         p = re.search(r'/ 60 \* (\d+)', open(os.path.join(ROOT, '.github/scripts/yeta_place.py'), encoding='utf-8').read())
         if p: vals['world_dh(yeta_place.py)'] = p.group(1)
