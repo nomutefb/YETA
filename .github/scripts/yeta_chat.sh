@@ -266,7 +266,10 @@ if not pend_idx:
     _dial = _lu.get("model") or (s.get("pref") or {}).get("model") or ""
     _deff = _lu.get("effort") if isinstance(_lu.get("effort"), str) else ((s.get("pref") or {}).get("effort") or "")
     # 꼬리 턴 = 대사이거나 '주변 사건'(kind=amb)까지 허용 — 사건이 심긴 턴에서 예약을 죽이면 ambient(1/2 확률)와 충돌해 축이 반쯤 죽는다. 사건 직후 = 오히려 둘이 그걸 두고 떠들 자리.
-    _tail_ok = bool(turns) and (turns[-1].get("role") == "assistant" or (turns[-1].get("role") == "sys" and turns[-1].get("kind") == "amb" and not AMB_HIDE))   # 축 정지 중엔 꼬리 amb를 '대화 꼬리'로 안 친다(260727) — 화면에서 숨긴 묵은 사건이 자율 비트를 깨우면 유저 눈엔 근거 없는 혼잣말이 된다
+    # 꼬리 sys 중 'barge'(난입 합류 알림)도 대화 꼬리로 친다(운영자 260728 "내가 반응 바로 안 해도 놀라서 대응해야 하는데 아무 말 안 하고 있어서 어색함") —
+    # 난입 직후 로그 꼬리는 **항상** 이 sys 턴이라 종전 판정에선 자율 비트가 원천 차단됐다 = 유저가 먼저 말을 걸 때까지 방이 얼어 있던 근인.
+    # 낯선 사람이 자리에 앉은 자리 = 오히려 원래 있던 쪽이 먼저 반응해야 하는 자리다(꼬리 amb를 허용한 논리와 동형).
+    _tail_ok = bool(turns) and (turns[-1].get("role") == "assistant" or (turns[-1].get("role") == "sys" and turns[-1].get("kind") == "amb" and not AMB_HIDE) or (turns[-1].get("role") == "sys" and turns[-1].get("kind") == "barge"))   # 축 정지 중엔 꼬리 amb를 '대화 꼬리'로 안 친다(260727) — 화면에서 숨긴 묵은 사건이 자율 비트를 깨우면 유저 눈엔 근거 없는 혼잣말이 된다
     if (_gp and _gp in room and len(room) == 2 and _tail_ok
             and 1 <= _gn <= _cap and _gap <= now_ms - _gts <= _ttl   # n = 예약 회차(1부터) — finish가 n+1로 재예약하고 상한 넘으면 예약 자체를 안 남긴다(유령 타이핑 점 0)
             and _gp not in _dead and _gp not in locked_ids and not S_ROOT.get("me_dead")
@@ -391,7 +394,9 @@ print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": 
                   "persona": persona,
                   "gb": gb_on, "gb_n": (_gn if gb_on else 0),   # 단톡 자율 비트(260725) — gb=1 = 유저 발화 없는 교대 턴 · gb_n = 소진 회차(finish가 +1 재예약)
                   # 비트 결(운영자 260725 "같이 단톡에 있는 사람은 모니터링 하는 느낌") — 1회차 = watch(유저 발화 직후 = 안 불린 쪽이 '나도 들었다'를 남기는 자리) · 2회차+ = on(둘이 하던 얘기 이어가기).
-                  "gb_kind": ("watch" if (gb_on and _gn == 1) else ("on" if gb_on else "")),
+                  # 260728 추가 = 'barge'(난입 첫 반응) — watch의 장면 지문은 "유저가 방금 옆 사람에게 말을 걸고 둘이 주고받았다"라 난입 자리와 안 맞는다(유저는 아무 말도 안 했고, 받아칠 대사도 없다).
+                  # 나머지 계약(혼자 반응·대역 금지·지문 한 줄 허용·PICK 금지)은 watch와 완전히 같아 셸에서 같은 가지를 타고 장면 블록만 갈린다.
+                  "gb_kind": ("barge" if (gb_on and barge_host == 1) else "watch" if (gb_on and _gn == 1) else ("on" if gb_on else "")),
                   "gb_from": (names.get(next((t.get("persona") for t in reversed(turns) if t.get("role") == "assistant" and t.get("persona")), "")) or "") if gb_on else "",   # 받아칠 직전 화자 이름(사건 sys 턴이 꼬리면 그 앞 대사 임자 · 프롬프트 조준)
                   "ptt": 1 if last_u.get("ptt") else 0,   # 무전기(PTT) 턴 = 답장 반영 후 음성 합성(ptt_voice)
                   "far": 1 if last_u.get("far") else 0,   # 원거리(운영자 260714) — 상대 다른 장소 = 물리 접촉·같은 공간 전제 금지(2·3차원 거스르기 불가)
@@ -717,6 +722,12 @@ if kind == "ok":
         if len(_rm2) == 2:
             _endsp = emit[-1][0] or turn_persona
             _nxt = _rm2[1] if _endsp == _rm2[0] else _rm2[0]
+        # 난입자는 교대에서 뺀다(운영자 260728 "프리실라는 반응을 기다리는 입장") — 저쪽은 질문을 던져놓고 **유저의 대답**을 기다리는 인물이라,
+        # 유저가 조용한 사이에 자기가 또 말하면 기다린다는 전제가 깨지고 혼자 떠드는 방이 된다. 호스트 반응 1회로 끝내고 공은 유저에게 넘긴다.
+        # 판정 = wfz.by(난입자 id · barge_check가 심는다) — finish 블록은 로스터를 안 읽으므로 등급 조회 없이 성립(게이트웨이 sweepSess 해제 판정과 같은 축).
+        # 예약이 안 걸리면 그대로 자연 정지 = 상한 도달과 같은 경로(새 분기 0).
+        _wfz2 = S_ROOT.get("wfz") if isinstance(S_ROOT.get("wfz"), dict) else {}
+        if _nxt and _wfz2.get("since") and _nxt == _wfz2.get("by"): _nxt = ""
         _dv2 = (S_ROOT.get("dead") or {}).get(_nxt) if _nxt else None       # 사망 두절 판정 = DEAD_ON 계보(구형 숫자 흡수)
         _alive = ((_dv2.get("t") if isinstance(_dv2, dict) else _dv2) or 0) <= now
         if (_nxt and _alive and _n2 <= _cap2 and s.get("state") == "idle"
@@ -1255,6 +1266,21 @@ if len(room) != 1:
 if s.get("invite") or s.get("barged"):
     if _FORCE: print("::warning::난입 강제 — 이 방에 이미 초대/난입이 진행 중이다(중복 난입 차단).")
     sys.exit(1)
+# ── 이중 난입 차단(운영자 260728 "밖에 나오니까 대화창이 두개로 되어있음 = 버그") ──
+# 근인: 위 가드는 **이 스레드**의 barged만 본다. 난입은 원본 1:1을 보존하고 새 g스레드로 분기하므로(위 분기 계약),
+# 유저가 원본 1:1에서 계속 말하면 그 방엔 barged가 없어 가드가 통과 → 답장마다 난입 방이 또 생긴다(강제 모드 = 매 턴 재현 · 목록에 단톡 2개).
+# 창 = ⓐ 전 스레드 barged 마커(데뷔 전) + ⓑ 정지 중인 난입자의 room 재실(마커는 데뷔 첫 마디에 소거되니 이쪽이 본체 · 뷰어 yBargeRoom·게이트웨이 sweepSess seated와 같은 판정).
+# 내보내기·이탈·정지 상한으로 room에서 빠지면 자동 해제 = 영구 차단 없음.
+# ⚠ _FORCE도 우회 못 한다 — 위 '남기는 게이트' 목록의 "이중 난입" 그 자리(연출이 아니라 정합성 축).
+_ths = [t for t in (S_ROOT.get("threads") or {}).values() if isinstance(t, dict)]
+if any(t.get("barged") for t in _ths):
+    if _FORCE: print("::warning::난입 강제 — 다른 방에 아직 데뷔 전 난입이 걸려 있다(이중 난입 차단). 그 방에 한마디 걸어 데뷔시키거나 정리하면 다시 열린다.")   # 실패 사유 로그 = Q.119 보강 결 계승(테스트 스위치에서 침묵이 제일 나쁘다)
+    sys.exit(1)
+_wf = S_ROOT.get("wfz") if isinstance(S_ROOT.get("wfz"), dict) else {}
+_seated = {r for t in _ths for r in (t.get("room") or []) if r}
+if _wf.get("since") and _wf.get("by") in _seated:
+    if _FORCE: print(f"::warning::난입 강제 — 난입자({_wf.get('by')})가 아직 다른 방에 앉아 있다(이중 난입 차단). 내보내거나 인사하고 나가면 다시 열린다.")
+    sys.exit(1)
 if not _FORCE and S_ROOT.get("barge_day") == today: sys.exit(1)   # 하루 1회 상한 = 전역(top-level — 스레드 곱셈·다방 동시 난입 차단 · 러너감사③A)
 if s.get("state") == "awaiting":
     if _FORCE: print("::warning::난입 강제 — 답장 생성 중이라 보류(다음 답장 뒤 재시도된다).")
@@ -1268,7 +1294,7 @@ via, meet_pl = "", ""
 # ── 난입 전용 인물 축(운영자 260726 프리실라) — 목록에서 못 여는 대신 '오직 난입'으로만 등장. 관계·언급·장소 축보다 먼저 = 특수 이벤트가 일반 난입에 굶지 않게.
 #    barge{slot:[세계시각 슬롯], gate:N(1/N 확률), boost:[동석 시 가중될 id], boost_gate:M} — 전부 roster 데이터, 러너는 인물명을 모른다(하드코딩 0).
 for _cid in sorted(BARGE):
-    if _cid in room: continue
+    if _cid in room or _cid in _seated: continue   # 다른 방에 이미 앉아 있는 인물 = 후보 제외(같은 사람이 두 방에 동시에 앉는 모순 차단 · 위 이중 난입 가드의 인물 축)
     _cfg = BARGE[_cid] or {}
     _sl = _cfg.get("slot") or []
     if not _FORCE and _sl and slot_of(_wh) not in _sl: continue   # 시간대 게이트(프리실라 = 저녁~밤)
@@ -1329,6 +1355,9 @@ else:
         if best:
             cand, via, meet_pl = best[1], "place", me_pl
 if not cand: sys.exit(1)
+if cand in _seated:
+    if _FORCE: print(f"::warning::난입 강제 — 고른 후보({cand})가 이미 다른 방에 앉아 있다(이중 난입 차단).")
+    sys.exit(1)   # 최종 안전벨트 — 관계·언급·마주침 축이 고른 후보가 이미 다른 방에 앉아 있으면 취소(각 축의 `not in room`은 **이 방**만 본다 · 위 이중 난입 가드와 같은 창)
 if not _FORCE and len(S_ROOT.get("threads") or {}) >= 12: sys.exit(1)   # 방 하드캡(초대 260712 동형) — 가득 차면 난입 보류(원본 1:1 보존) · 강제는 우회(260728)
 tnow = int(time.time() * 1000)
 # ⚠️ 성장 시 분기 계약(짝: functions/api/yeta.js op invite) — 난입 = 원본 1:1 스레드 보존 + 직전 3주고받기 시드 복사 → 새 단톡 스레드(g 접두)로 분기(초대 op 동형 · 운영자 260712 "기존 1명 대화 고유성" · 대화창 분리 260714) — 구: 원본 room 인플레이스 변형(1:1 파괴). 수정 시 invite도 같이.
@@ -1353,7 +1382,13 @@ while gid in (S_ROOT.get("threads") or {}):
     tnow += 1; gid = "g" + format(tnow, "x")
 gth = {"turns": seed, "state": "idle", "opening": 0, "awaiting_since": 0, "err": "",
        "room": [host, cand], "invite": None, "barged": {"id": cand, "ts": tnow},
-       "declined": {}, "pin": 0, "updated": tnow, "last_sp": host, "char_ver": "", "nudge": None}   # 난입 = 즉시 합류(room 2명) · 데뷔 첫 마디 = 유저 다음 턴(barged 마커)
+       "declined": {}, "pin": 0, "updated": tnow, "last_sp": host, "char_ver": "", "nudge": None,
+       # 첫 반응 예약(운영자 260728 ①②) — 화자 = **호스트**(원래 대화하던 쪽). 난입자가 아니다:
+       #   "프리실라는 반응을 기다리는 입장이니 그게 더 자연스럽고, 보통 같이 대화하고 있던 사람이 반응하면 됨".
+       # 자율 비트 예약 계약 100% 계승({p,ts,n} · finish가 심는 것과 같은 모양) = 새 축 0 · 소비처(extract_mat 게이트·뷰어 타이핑 점·yeta_v3 _age_kind) 전부 그대로 재사용.
+       # n=1 = 첫 회차라 gb_kind가 'watch'(모니터링 반응)로 잡히고, 프롬프트에선 barge_host=1(난입당한 쪽 첫 반응) 블록이 함께 걸린다.
+       # 발사 시점 = GB_GAP(기본 6s) 경과 후 = 유저가 먼저 끼어들 틈은 남긴다(유저 메시지가 오면 pending 우선이라 이 예약은 자동 폐기).
+       "gb": {"p": host, "ts": tnow, "n": 1}}   # 난입 = 즉시 합류(room 2명) · 데뷔 첫 마디 = 유저 다음 턴(barged 마커)
 if via: gth["barged"]["via"] = via; gth["barged"]["place"] = meet_pl
 S_ROOT.setdefault("threads", {})[gid] = gth
 if S_ROOT.get("cur") == _os.environ.get("THREAD", ""): S_ROOT["cur"] = gid   # 유저가 이 방을 보는 중일 때만 새 단톡으로 전환(백그라운드 난입 = cur 불변 · 유령 전환 방지) — 원본 1:1은 목록에 그대로 보존
@@ -1971,7 +2006,7 @@ PY
   # 자율 비트 공통 = 선택지(PICK) 금지 — 유저가 말을 걸지도 않았는데 답을 고르라고 띄우는 자리가 아니다(finish도 gb 턴엔 picks를 안 건드려 직전 칩을 보존한다).
   [ "$GB" = "1" ] && GB_TAIL="
 - 이 턴엔 <<PICK: …>> 선택지를 붙이지 마라(유저에게 답을 요구하는 자리가 아니다)."
-  if [ "$GB" = "1" ] && [ "$GB_KIND" = "watch" ]; then
+  if [ "$GB" = "1" ] && { [ "$GB_KIND" = "watch" ] || [ "$GB_KIND" = "barge" ]; }; then   # barge(난입 첫 반응 · 260728) = watch와 계약이 같은 자리(혼자 반응·대역 금지·지문 한 줄 허용·PICK 금지) → 같은 가지를 타고 장면 블록만 아래에서 갈린다
     GROUP_RULE="
 - 이 턴은 **너 혼자 반응하는 자리**다. 이름표로 ${CO_NAME:-상대} 대사를 쓰지 마라 — 걔 말은 걔 차례에 걔가 한다(대역 금지 = 페르소나 유지)."
     GB_TAIL="${GB_TAIL}
@@ -1986,6 +2021,14 @@ PY
 - 유저의 답을 요구하지 마라(질문으로 닫지 말 것). 둘이 하던 대화를 가로채 네가 대신 답하지도 마라.
 - 이미 이 대화에서 네가 한 마디 얹었으면 같은 말을 반복하지 마라 — 더 얹을 게 없으면 지문 한 줄로 끝내라.
 - 방금 들은 게 네 기억에 남을 만한 것이면(유저가 밝힌 사실·둘 사이의 진전) 네 기억 블록에 네 관점으로 적어라."
+    # 난입 첫 반응(운영자 260728 "내가 반응 바로 안 해도 놀라서 대응해야") — 유저는 아직 아무 말도 안 했고, 받아칠 상대 대사도 없다(로그 꼬리 = 합류 지문 한 줄).
+    # 그래서 watch의 "유저가 방금 옆 사람에게 말을 걸고" 전제를 통째로 갈아끼운다. 반응의 **모양**은 여기서 정하지 않는다 — 위 [난입당한 쪽] 지시가 성향별로 갈라준다(중복 지시 = 톤 충돌).
+    [ "$GB_KIND" = "barge" ] && SCENE_BLOCK="[장면 — 초대 안 한 사람이 방금 이 자리에 앉았다]
+유저는 아직 아무 말도 하지 않았다. 방금 ${CO_NAME:-누군가}가 부르지도 않았는데 이 대화 한복판에 들어왔고, 너는 그걸 눈앞에서 봤다. 하던 말은 거기서 끊겼다.
+지금은 네 차례다 — 위 [난입당한 쪽] 지시대로, 그 사실이 드러나는 네 첫 반응만 남겨라:
+- 놀랐든 굳었든 웃어넘기든 **모양은 네 성향이 정한다**. 말이 아니라 몸짓이면 *지문 한 줄*로 끝내도 된다.
+- 유저에게 답을 요구하지 마라(질문으로 닫지 말 것) — 유저는 지금 이 상황을 보고 있는 중이다.
+- 들어온 사람에게 사정을 캐묻거나 소개를 주선하지 마라. 반가워하지도 마라."
     CONTRACT1="- 너는 \"${CNAME}\"다. 캐릭터의 대사(또는 *지문 한 줄*)만 출력한다(이름표·따옴표·메타 설명 없이).
 - 지금 유저가 너를 부른 게 아니다 — 옆에서 듣고 있던 네 반응이 이 턴의 전부다. 짧게. 대사가 없어도 된다(그때는 지문 한 줄).
 - 무슨 일이 있어도 한국어 캐릭터 대사·지문으로만 답한다 — 메타 발화·영어·거절 선언은 금지."

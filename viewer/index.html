@@ -178,6 +178,11 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   @media (prefers-reduced-motion:reduce){ #yetadlg.ydlg-dead::after { animation:none; opacity:1; } }
   #yetadlg.ydlg-yank::after { content:''; position:fixed; inset:0; z-index:var(--z-float); background:var(--bg); opacity:0; animation:ydeadFade .62s var(--ease) forwards; }   /* 난입 종속 끌어당김(운영자 260728 "화면 움직이면서 거기로 다시 들어가져야함") — 위 .ydlg-dead 선언 100% 계승(값·커브·z 전부 동일), 다른 건 지속시간뿐(.9s = 죽음의 무게 / .62s = 회수는 빠르다)·클래스명(의미 축 분리) */
   @media (prefers-reduced-motion:reduce){ #yetadlg.ydlg-yank::after { animation:none; opacity:1; } }   /* reduce = 즉시 암전(.ydlg-dead 가드 계승) */   /* reduce = 즉시 암전(ydlg-in 결 계승) */
+  /* 암전 역재생(운영자 260728 "어두워지는거 역으로 되면서 채팅창 보이면됨") — 종전엔 회수가 끝나면 .ydlg-yank를 그냥 떼서 검은 막이 **툭** 사라졌다(연출의 절반이 없던 셈).
+     위 .ydlg-yank 선언 100% 계승(inset·z·색·커브·지속시간 전부 동값) · 다른 건 키프레임 방향 하나뿐(1→0) = 신규 값 0. 암전이 걷히는 동안 그 밑엔 이미 난입자 배경이 깔려 있다(JS가 프리로드 후 전환). */
+  @keyframes ydeadLift { from { opacity:1; } to { opacity:0; } }
+  #yetadlg.ydlg-lift::after { content:''; position:fixed; inset:0; z-index:var(--z-float); background:var(--bg); opacity:1; pointer-events:none; animation:ydeadLift .62s var(--ease) forwards; }
+  @media (prefers-reduced-motion:reduce){ #yetadlg.ydlg-lift::after { animation:none; opacity:0; } }   /* reduce = 즉시 개방(위 가드 대칭) */
   #yetadlg.ydlg-in::backdrop { animation:ydlgBd .3s var(--ease) both; }
   #yetadlg.ydlg-in .yeta-h { animation:ydlgUp .44s var(--ease) .05s both; }
   #yetadlg.ydlg-in .yeta-stage { animation:ydlgUp .46s var(--ease) .12s both; }
@@ -278,6 +283,9 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yb .yq { font-weight:var(--fw-b); background:linear-gradient(100deg,var(--mut) 0%,var(--mut) 38%,var(--fg) 50%,var(--mut) 62%,var(--mut) 100%); background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:nmshim 1.9s linear infinite; }
   @media (prefers-reduced-motion:reduce) { .yb .yq { animation:none; color:var(--fg); -webkit-text-fill-color:var(--fg); } }   /* 모션 줄이기 = 위 .nm-shim 가드 계승(정지 시 베이스색으로 착지 · 버블 본문은 --fg가 기본이라 그쪽으로) */
   .yb.ai:has(.yq) { font-family:'MiraendaekyoVBatang', var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); font-weight:var(--fw-b); letter-spacing:-.025em; }   /* 핵심 질문이 든 말풍선 = 명조 볼드(운영자 260728 "해당 말풍선에도 이 폰트") — 버블 **전체**에 걸어 질문 앞뒤 대사까지 한 덩어리로 결이 갈린다(질문만 갈면 한 버블 안에서 서체가 두 번 바뀌어 지저분) · 폴백 = 상속(로드 실패해도 레이아웃 불변 · font-display:swap과 짝) */
+  /* 지문·발음줄만 예외 = 본문 고딕 복귀(운영자 260728 "그 대화에서 상황 설명하는 부분은 원래 글자체 사용해야") — 명조는 **그 사람이 하는 말**의 결이지 장면 설명의 결이 아니다.
+     지문은 화자가 누구든 같은 목소리(서술)라 난입 버블 안에서도 다른 버블의 지문과 서체가 같아야 한다(위 .yn 톤다운 축과 같은 위계). 값 = body 전역 스택 100% 계승(신규 0) · 자간도 명조 상속(-.025em)을 normal로 원복. */
+  .yb.ai:has(.yq) i.yn, .yb.ai:has(.yq) i.yjr { font-family:var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); font-weight:400; letter-spacing:normal; }
   @supports not selector(:has(*)) { .yb.ai.barge { font-family:'MiraendaekyoVBatang', var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); letter-spacing:-.025em; } }   /* :has 미지원(구 사파리) = 난입 버블 전체로 폴백 — 질문 버블을 못 집느니 난입 전체가 명조인 게 의도에 가깝다 */
   .yb i.yjr { font-style:italic; font-size:.5em; color:var(--fg-2); opacity:.5; }   /* 일본어 읽는 발음 줄(운영자 260726 "아주 작게 거의 안보일듯한 컬러로 · 상황설명컬러 · 글자는 50% 작은 · 기울기 포함") — 색·이탤릭 = 바로 위 지문(.yn) 100% 계승(운영자가 지목한 "상황설명컬러" = .yn의 --fg-2) · 투명도는 .yn(.75)보다 낮은 .5 = 바로 위 .yjp 사다리 재사용("거의 안 보일") · 크기 .5em = 지시값(상대 기하라 토큰축 없음) · 판정 = 가나 줄 바로 다음 [대괄호] 줄(yFmt) */
   .yeta-noruby .yb i.yjr { display:none; }   /* 발음 끄기(설정 · 운영자 260726 "설정에 스위치를 달자 · 몰입도때문이니까 친밀도에 관계없이") — html 클래스 = 위 .yeta-reduce/.yeta-ptt 패턴 100% 계승 · 원문·번역은 그대로 남고 발음 줄만 사라진다(친밀도·해금과 무관 = 사람은 앱 밖에 있다) */
@@ -292,9 +300,12 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) { .yb.ai { background:var(--bubble-ai); } }   /* blur 미지원 = 불투명 폴백(--bubble-ai 배선 유지) */
   /* 난입 인물 버블(운영자 260728 "빨간색+아주 살짝 보라 · 불투명 100%는 아니고 채색이 좀 많이 · 글래스 리버 유지") — .yb.ai 선언 100% 계승(blur·saturate·인셋·모서리 그대로 = 글래스 결 불변),
      교체는 background/border 두 줄뿐. 색 = 난입 축 정본색 --danger(등급 플레이트 .ygrade.barge · 프로필 링 .yring-barge와 동일 축)에 --season(보라)을 16%만 섞은 계승 조합 = 신규 hex 0·:root 무변경.
-     알파 .26 = "채색 많이"(무채색 글래스 .yb.ai 대비 확연) + 배경 씬이 비치는 상한(가독 실측). border = .yb.fail의 rgba(var(--danger-rgb),.4) 선언 계승. */
-  .yb.ai.barge { background:color-mix(in srgb, color-mix(in srgb, var(--season) 16%, var(--danger)) 26%, transparent); border-color:rgba(var(--danger-rgb),.4); }
-  @supports not (background:color-mix(in srgb, red, blue)) { .yb.ai.barge { background:rgba(var(--danger-rgb),.24); } }   /* color-mix 미지원 = 보라 없는 붉은 채색만(글래스 결·알파 동일 = 결손 최소) */
+     알파 .26 = "채색 많이"(무채색 글래스 .yb.ai 대비 확연) + 배경 씬이 비치는 상한(가독 실측). border = .yb.fail의 rgba(var(--danger-rgb),.4) 선언 계승.
+     ⚠ 260728 후속(운영자 "핵심이 되는 문구에만 빨간 대화창 쓰는거로") — 난입자의 **모든** 버블이 아니라 《핵심 질문》이 든 버블 하나만 붉다. 난입 3연발이 전부 붉으면 강조가 평평해져 정작 판돈이 걸린 질문이 안 보인다(실렌더 대조).
+     선택자만 `:has(.yq)`로 좁혔고 값은 종전 그대로 = 신규 값 0 · 명조(위 .yb.ai:has(.yq))와 같은 창이라 "명조 + 붉은 채색"이 한 버블에서 항상 같이 뜬다(결 분리 0). */
+  .yb.ai.barge:has(.yq) { background:color-mix(in srgb, color-mix(in srgb, var(--season) 16%, var(--danger)) 26%, transparent); border-color:rgba(var(--danger-rgb),.4); }
+  @supports not (background:color-mix(in srgb, red, blue)) { .yb.ai.barge:has(.yq) { background:rgba(var(--danger-rgb),.24); } }   /* color-mix 미지원 = 보라 없는 붉은 채색만(글래스 결·알파 동일 = 결손 최소) */
+  @supports not selector(:has(*)) { .yb.ai.barge { background:rgba(var(--danger-rgb),.24); border-color:rgba(var(--danger-rgb),.4); } }   /* :has 미지원(구 사파리) = 난입 버블 전체 착색으로 폴백 — 위 폰트 폴백(.yb.ai.barge 전체 명조)과 같은 판단: 질문 버블을 못 집느니 난입 전체가 갈리는 게 의도에 가깝다 */
   .yb.me { align-self:flex-end; max-width:78%; background:var(--bubble-me); color:var(--bg); border-top-right-radius:var(--r-s); }
   .yb.me i.yn { color:rgba(0,0,0,.6); }
   .yb.me i.yjp, .yb.me i.yjr { color:rgba(0,0,0,.6); }   /* 내 버블 = 라임 바탕이라 강조색이 안 보인다(바로 위 .yn me 가드 100% 계승 — 유저가 일본어를 칠 때) */
@@ -2633,6 +2644,41 @@ function yBargeRoom() {   // 난입자가 앉아 있는 방 id(운영자 260728 
   return '';
 }
 let _yYankOn = false;   // 끌어당김 진행 래치 — 연출 중 재진입·중복 예약 차단(_yKickOn 동형)
+const _yBargeSeen = new Set();   // 등장 연출을 이미 태운 방(방당 1회 — 재렌더·재진입마다 암전이 반복되면 대화가 못 굴러간다)
+async function yBargeEnter(tid) {   // 난입 첫 등장 연출(운영자 260728) — 이 방을 보고 있는데 그 사람이 들어온 경로.
+  // 끌어당김(yBargeYank)은 "다른 방에 있다가 회수되는" 축이고 이쪽은 "여기 앉아 있었는데 문이 열린" 축이다 — 유저가 보는 그림은 같아야 하므로 연출 3단(암전→배경→역암전)을 공유한다.
+  // 창 = barged 마커 신선(내 후속 발화 전 · yStage bargeP·kick pill과 같은 판정) · 방당 1회 래치.
+  if (_yYankOn || !tid || _yBargeSeen.has(tid)) return;
+  const th = YTH(tid) || {}, bgm = th.barged;
+  if (!bgm || !bgm.id || !(th.room || []).includes(bgm.id)) return;
+  if ((th.turns || []).some(t => t.role === 'user' && (t.ts || 0) > (bgm.ts || 0))) return;   // 이미 내가 말을 섞은 뒤 = 등장 순간이 지났다(늦은 암전 0)
+  _yBargeSeen.add(tid); _yYankOn = true;
+  const dlg = $('#yetadlg');
+  if (dlg) dlg.classList.add('ydlg-yank');                       // ① 암전(운영자 "첫 등장에 어두워지는건 좋은데")
+  await new Promise(r => setTimeout(r, 620));                     // 회수 암전과 같은 길이(.ydlg-yank .62s와 짝)
+  await yBargeReveal(dlg);
+}
+async function yBargeReveal(dlg) {   // ② 암전 밑에서 배경 교체 → ③ 암전 역재생(두 등장 경로 공용 · 값·타이밍 단일 정본)
+  await yBargeBgReady(900);                                      // 상한 900ms = 회수 암전(620)보다 길지 않게 체감 · 만료돼도 진행(fail-soft — 느린 망에서 암전이 눌러앉지 않는다)
+  if (dlg) { dlg.classList.add('ydlg-lift'); dlg.classList.remove('ydlg-yank'); }   // 같은 틱에 교체 = ::after가 opacity 1에서 이어받아 깜빡임 0
+  setTimeout(() => { if (dlg) dlg.classList.remove('ydlg-lift'); }, 640);   // 역재생(.62s) 종료 뒤 회수 — 남겨둬도 pointer-events:none이라 무해하나 스테일 노드 0
+  _yYankOn = false;
+}
+async function yBargeBgReady(cap) {   // 난입자 등장 배경이 실제로 화면에 붙을 때까지(상한 cap ms) — 암전 중에만 부른다.
+  // 2단: ⓐ manifest 도착 대기(ySeasonMedia = 첫 호출이 fetch만 걸고 null) → ⓑ 고른 그림 디코드 대기 → 캐시에 얹힌 뒤 재스테이지하면 yStage가 즉시 페인트한다(im.complete 경로).
+  const t0 = Date.now();
+  try {
+    const th = YTH() || {}, bgm = th.barged, p = bgm && bgm.id ? yPersona(bgm.id) : null;
+    if (!p) return;
+    while (p.season && !ySeasonMedia(p) && Date.now() - t0 < cap) await new Promise(r => setTimeout(r, 60));
+    const u = yBargeBg(p, bgm) || yCBg(p);   // 풀이 비었거나 manifest가 늦으면 시그니처 — yStage tries 사다리와 같은 순서
+    if (u) await Promise.race([
+      new Promise(r => { const im = new Image(); im.onload = im.onerror = r; im.src = u; }),
+      new Promise(r => setTimeout(r, Math.max(0, cap - (Date.now() - t0)))),
+    ]);
+    _yStageKey = ''; yStage(yLastMood());   // 프리로드분으로 즉시 재페인트(암전이 걷히기 전에 그림이 자리에 있게)
+  } catch {}
+}
 async function yBargeYank(dest) {   // 되돌려 보내기 — 막지 않는다(진입은 된다). 잠깐 그 방을 보여준 뒤 화면이 움직이며 난입 방으로 도로 끌어온다.
   if (_yYankOn) return; _yYankOn = true;
   const dlg = $('#yetadlg');
@@ -2641,8 +2687,10 @@ async function yBargeYank(dest) {   // 되돌려 보내기 — 막지 않는다(
   if (dlg) dlg.classList.add('ydlg-yank');                       // 암전 = 사망 강제이동(.ydlg-dead) 선언 100% 계승 · 이름만 분리(의미 축이 다르다)
   setTimeout(async () => {
     try { await yOpenThread(dest); } catch {}
-    if (dlg) dlg.classList.remove('ydlg-yank');
-    _yYankOn = false;
+    // 암전을 **유지한 채** 난입자 고유 배경을 먼저 붙인다(운영자 260728 "그담에 배경이 하나 떠야할듯 · 그리고 어두워지는거 역으로 되면서 채팅창 보이면됨").
+    // 순서가 핵심 = [암전] → [그 밑에서 배경 교체] → [암전이 역으로 걷히며 배경 위 채팅창 노출]. 프리로드를 안 기다리면 밝아진 뒤에 그림이 늦게 깔려 크로스페이드가 눈에 밟힌다.
+    _yBargeSeen.add(dest);   // 회수로 들어온 방 = 등장 연출을 여기서 소진(정체 전환 경로가 곧바로 한 번 더 암전시키는 겹침 차단)
+    await yBargeReveal(dlg);   // ②③ = yBargeEnter와 같은 정본(값·타이밍 1곳)
     // 안내 토스트 없음(운영자 260728 "프리실라가 하면서 안내문자하지말고 · 경고문구는 필없을듯") — 끌려왔다는 사실은 암전+회수 연출이 이미 다 말한다. 말로 한 번 더 설명하면 세계가 아니라 앱이 말을 거는 게 된다(몰입 차단). 문구가 사라져 난입자 조회(yPersona)도 함께 제거 = 죽은 변수 0
   }, 620);
 }
@@ -3571,6 +3619,22 @@ function yAgo(ts) {   // 상대시간(운영자 260707) — <1분 = 방금 · 1~
   return `<span class="ylist-ago">${t}</span>`;
 }
 let YSEASONM = {};   // 시즌 감정 미디어 manifest 캐시(캐릭터별 1회 fetch — {warm[]·tense[]·blue[]·base[]})
+function yStageWants(c) {   // 이 manifest가 도착하면 무대를 다시 그려야 하나 — ⓐ 지금 방 주인 ⓑ **지금 방에 난입해 앉은 사람**(260728)
+  if (!c) return false;                                        // ⓑ가 없으면 난입 등장 배경이 manifest 도착 뒤에도 안 붙는다(난입 방의 YCUR은 호스트라 ⓐ가 영영 거짓)
+  if (YCUR && YCUR.id === c.id) return true;
+  return (((YTH() || {}).barged) || {}).id === c.id;
+}
+function yBargeBg(p, bg) {   // 난입 등장 배경(운영자 260728 "프리실라 고유 배경 9대 16 몇 개 있는데 그중 하나") — 그 인물 고유 풀에서 결정적으로 1장.
+  // 전 버킷 합집합에서 뽑는다 = 등장 순간엔 감정 축이 없다(무드는 대화가 굴러야 생긴다) · 클립 제외 = 등장은 스틸 한 장(시즌 첫 페인트가 클립을 피하는 결 100% 계승).
+  // 시드 = 난입 ts → 방마다 고정(재렌더로 그림이 안 바뀐다)이면서 난입할 때마다 다른 장이 걸린다. 모드 필터 = yStage 시즌 경로와 동형(고죠 흉내면 그 폴더만).
+  const em = ySeasonMedia(p);                                  // manifest 미도착 = null → 호출부가 시그니처(yCBg)로 폴백, 도착하면 yStageWants가 재스테이지
+  if (!em) return '';
+  let pool = [...new Set(Object.keys(em).filter(k => Array.isArray(em[k])).flatMap(k => em[k]))].filter(u => u && !/\.(mp4|webm)(\?|$)/i.test(u));
+  const md = (p.mode && em.mode_dir) ? (yModeOn(p) ? 1 : 0) : -1;
+  if (md >= 0) { const re = new RegExp('/' + em.mode_dir + '/'); const f = pool.filter(u => md ? re.test(u) : !re.test(u)); if (f.length) pool = f; }
+  if (!pool.length) return '';
+  return pool[Math.abs(((bg || {}).ts) || 0) % pool.length];
+}
 function ySeasonMedia(c) {
   if (!c || !c.season) return null;   // manifest 무 = 일반 무대(옵트인 축 = roster season 필드 하나 · 운영자 260726 "ㄱ") — 옛 `grade==='season'` 이중 게이트 폐지: 감정 이미지를 모아둔 캐릭터가 루시 말고도 15인인데 등급이 없어 전원 로테이션이 죽어 있었다(세라 16장 중 1장만 노출). 등급 훈장(yGradeBadge·yring)은 별개 축 = 불변
   if (YSEASONM[c.id]) return YSEASONM[c.id];
@@ -3579,8 +3643,8 @@ function ySeasonMedia(c) {
     fetch(c.season).then(r => r.json()).then(j => {
       YSEASONM[c.id] = j || {};
       try { for (const b of Object.keys(j || {})) { if (!Array.isArray(j[b])) continue; const u = j[b].find(x => !/\.(mp4|webm)(\?|$)/i.test(x || '')); if (u) { const im = new Image(); im.src = u; } } } catch {}   // 버킷별 첫 이미지 워밍(키 제네릭 — 8감정 버킷 자동 수용 · Q.29)
-      if (YCUR && YCUR.id === c.id) { _yStageKey = ''; yStage(yLastMood()); }
-    }).catch(() => { YSEASONM[c.id] = {}; if (YCUR && YCUR.id === c.id) { _yStageKey = ''; yStage(yLastMood()); } });   // fetch 실패 = 빈 manifest 표시 → 시즌 로딩 스킵의 블랙 영구화 차단, 시그니처 폴백(260717)
+      if (yStageWants(c)) { _yStageKey = ''; yStage(yLastMood()); }
+    }).catch(() => { YSEASONM[c.id] = {}; if (yStageWants(c)) { _yStageKey = ''; yStage(yLastMood()); } });   // fetch 실패 = 빈 manifest 표시 → 시즌 로딩 스킵의 블랙 영구화 차단, 시그니처 폴백(260717)
   }
   return null;
 }
@@ -3724,6 +3788,20 @@ function yWarmBg() {   // 배경 프리로드(운영자 260707 "배경 로딩=�
 function yStage(mood) {   // 무대 우선순위(운영자 260707): 난입 플래시 > 오프닝 시그니처(첫/오랜만·처음 몇 발화) > 장소 씬(날씨 종속) > 무드 씬 > base — 전부 프리로드 성공 시에만 페인트
   if (!YCUR) return;
   if (_yStageRoom !== YCUR.id) { _yStageRoom = YCUR.id; _yStageCold = true; _yStageKey = ''; yBgReset(); }   // 방 전환 = 이전 방 무대(멈춘 클립 프레임 포함) 즉시 소거(운영자 260709 "해당 캐릭터/장소만 나오게") — 새 그림 로드 전 = 블랙 베이스(로딩)
+  // ── 난입 플래시 = 최우선(선언된 우선순위대로 · 260728 봉합) ──
+  // ⚠ 종전엔 이 판정이 **시즌 경로 뒤**에 있어서, 감정 미디어를 가진 방(윈터 등 16인 대부분)에선 난입이 와도 호스트 배경만 계속 돌았다 = 위 우선순위 주석과 실제 동작이 어긋나 있던 자리.
+  //    운영자 260728 "배경이 하나 떠야할듯 — 프리실라 고유 배경 그중 하나"가 이 구멍을 짚은 것(실렌더에서 윈터 백스테이지가 뜨는 걸로 재현).
+  // 창 = barged 마커 신선(내 후속 발화 전 · kick pill·yBargeEnter와 같은 판정) → 내가 한마디 하는 순간 종전 체인(시즌·장소·무드)으로 자연 복귀.
+  const _th0 = YTH() || {}, _bgm = _th0.barged;
+  const _bp = _bgm && _bgm.id && (_th0.room || []).includes(_bgm.id)
+    && !((_th0.turns || []).some(t => t.role === 'user' && (t.ts || 0) > (_bgm.ts || 0))) ? yPersona(_bgm.id) : null;
+  if (_bp) {
+    const bkey = `barge|${_bp.id}|${yModeOn(_bp) ? 1 : 0}`;   // 모드축(고죠 흉내) = 배경 폴더가 갈리므로 키에 포함(종전 키 규칙 계승)
+    if (bkey === _yStageKey) return;
+    _yStageKey = bkey; _yStageCold = false;
+    yTryPaint([yBargeBg(_bp, _bgm), yCBg(_bp), YCUR.bg || ''], YCUR.color || '#7c5cfc', bkey, true);   // season=true = 캐릭터 아트 스크림(난입 배경도 인물 아트 · 시즌 로테이션과 같은 딤이라야 말풍선이 읽힌다)
+    return;
+  }
   const em = ySeasonMedia(YCUR);   // 시즌 = 감정 미디어 로테이션(기틀감사③ — 키·시드 턴 포함은 시즌 게이트 한정 · 비시즌 경로 불변)
   if (em) {
     const n = (((YTH() || {}).turns) || []).filter(t => t.role === 'assistant').length;   // 답장수 = 모노토닉(렌더 틱 재페인트 방지 · 감사E)
@@ -3756,25 +3834,24 @@ function yStage(mood) {   // 무대 우선순위(운영자 260707): 난입 플�
   if (YCUR.grade === 'season' && YCUR.season) return;   // 시즌 manifest 로딩 중 = 시그니처(기존 배경) 페인트 스킵 → 블랙 유지, 도착 시 재스테이지(운영자 260717 "들어가는 순간 기존 배경 없이 바로 캐릭터 배경") · fetch 실패는 ySeasonMedia catch가 빈 manifest로 시그니처 폴백 · _yStageCold 유지(도착 시 첫 페인트 = 클립 skip). ⚠ 여기만 `grade==='season'` 유지(260726 게이트 개방 시 의도적 비확대) = 블랙 대기는 시즌 주인공 한정 · 나머지 15인은 시그니처 먼저 뜨고 manifest 도착 시 감정배경으로 크로스페이드(딥링크 직행처럼 프리페치 전 진입해도 암전 0)
   const th = YTH() || {}, turns = th.turns || [];   // 비시즌 체인(난입 > 오프닝 시그니처 > 장소·날씨 > 무드 > base)
   const sig = ((th.room || []).length < 2) && ySigPhase(turns);   // 오프닝(첫/오랜만 "단독"대화) 처음 몇 발화 = 캐릭터 시그니처 · 합석(2명)이면 바로 장소 · 이후 = 장소(운영자 260707 "단독대화")
-  const bg = th.barged;
-  const bargeP = bg && (th.room || []).includes(bg.id) && !turns.some(t => t.role === 'user' && (t.ts || 0) > (bg.ts || 0)) ? yPersona(bg.id) : null;   // 난입 직후(내 후속 발화 전) = 난입자 시그니처 순간 노출(kick pill 판정과 동일 창)
-  const place = sig ? '' : yPlaceSync();   // 장소 국면에서만 위치 조회(시그니처 국면은 조회 생략)
-  const key = `${YCUR.id}|${sig ? '' : (mood || '')}|${sig ? 'sig' : place}|${bargeP ? bargeP.id + (yModeOn(bargeP) ? '+' : '') : ''}`;   // 시그니처 국면 = 그림이 mood 무관(tries=[YCUR.bg]) → 키에서 mood 제외 = 같은 그림 재스테이지('숨') 방지(감사 260707) · 난입자 모드축(260726) = 흉내 모드 배경으로 갈릴 때 키가 달라져야 재페인트된다
+  const place = sig ? '' : yPlaceSync();   // 장소 국면에서만 위치 조회(시그니처 국면은 조회 생략) · 난입 국면은 위에서 이미 return(최우선 분기)
+  const key = `${YCUR.id}|${sig ? '' : (mood || '')}|${sig ? 'sig' : place}`;   // 시그니처 국면 = 그림이 mood 무관(tries=[YCUR.bg]) → 키에서 mood 제외 = 같은 그림 재스테이지('숨') 방지(감사 260707)
   if (key === _yStageKey) return;
   _yStageKey = key;
-  const tint = YCUR.color || '#7c5cfc';
-  const tries = bargeP ? [yCBg(bargeP), YCUR.bg || '']
-    : sig ? [YCUR.bg || '']
-    : [place ? ySceneForPlace(place, mood) : '', mood ? ySceneFor(mood) : '', mood && YCUR.bg ? yMoodUrl(YCUR.bg, mood) : '', YCUR.bg || ''];
-  const T = tries.filter(Boolean);
+  yTryPaint(sig ? [YCUR.bg || '']
+    : [place ? ySceneForPlace(place, mood) : '', mood ? ySceneFor(mood) : '', mood && YCUR.bg ? yMoodUrl(YCUR.bg, mood) : '', YCUR.bg || ''],
+    YCUR.color || '#7c5cfc', key);
+}
+function yTryPaint(list, tint, key, season) {   // 폴백 사다리 프리로드 페인트(종전 yStage 내부 tryNext 100% 계승 — 난입 분기와 공용화하며 함수로만 뽑음 · 값·판정 무변경)
+  const T = list.filter(Boolean);
   if (!T.length) { yPaintBg('', tint); return; }
   (function tryNext(i) {
     if (i >= T.length) { yPaintBg('', tint); return; }
     const im = new Image();
-    im.onload = () => { if (_yStageKey === key) yPaintBg(T[i], tint); };   // 늦게 로드돼도 무대가 바뀌었으면 폐기
+    im.onload = () => { if (_yStageKey === key) yPaintBg(T[i], tint, season); };   // 늦게 로드돼도 무대가 바뀌었으면 폐기
     im.onerror = () => { if (_yStageKey === key) tryNext(i + 1); };
     im.src = T[i];
-    if (im.complete && im.naturalWidth && _yStageKey === key) { im.onload = null; yPaintBg(T[i], tint); }   // 이미 캐시된 그림 = 즉시 페인트(늦은 페이드 방지 · 로딩=챗 진입 동기 · 운영자 260707)
+    if (im.complete && im.naturalWidth && _yStageKey === key) { im.onload = null; yPaintBg(T[i], tint, season); }   // 이미 캐시된 그림 = 즉시 페인트(늦은 페이드 방지 · 로딩=챗 진입 동기 · 운영자 260707)
   })(0);
 }
 function yAvaSet(el, c) {   // 헤더 아바타 채움(얼굴 이미지 우선 · 이니셜 폴백) — yApply·단톡 스택 공용 · 모드 프사 = yCAva 경유(도깨비 260717)
@@ -4035,7 +4112,7 @@ function yInvToggle(force) {   // 초대 2차 팝업(운영자 260712 재생 —
   const inv = s.invite && Date.now() - (s.invite.ts || 0) < 600000 ? yPersona(s.invite.to) : null;
   const full = room.length >= 2;
   const cap = inv ? `${inv.name || '누군가'} 대답을 기다리는 중…` : full ? '자리가 찼어 — 한 명을 보내고 불러' : _yNear.length ? '지금 부를 수 있는 인물 — 근처' : '근처에 부를 만한 사람이 없어 — 골목을 돌아봐';
-  const mem = full ? room.map(c => `<div class="ypick-row" data-mem="1">${yAva(c)}<span class="yp-col"><span class="yp-name">${esc(c.name)}</span><span class="yp-tag">${esc(c.tagline || '')}</span></span><button type="button" class="yinv-x" data-kick="${esc(c.id)}">보내기</button></div>`).join('') : '';
+  const mem = full ? room.map(c => `<div class="ypick-row" data-mem="1">${yAva(c)}<span class="yp-col"><span class="yp-name">${esc(c.name)}</span><span class="yp-tag">${esc(c.tagline || '')}</span></span>${c.grade === 'barge' ? '' : `<button type="button" class="yinv-x" data-kick="${esc(c.id)}">보내기</button>`}</div>`).join('') : '';   // 난입 등급 = [보내기] 자체를 안 그린다(운영자 260728 "내보내기 처음에 있는데 불가해야함") — 부를 수도 없는 사람이면 보낼 수도 없다(카드 CTA "부를 수 없는 사람 — 저녁이 오면 저쪽이 먼저 찾아온다"와 같은 축) · 가는 시각도 저쪽이 정한다 = 퇴장은 인물의 <<LEAVE>>·정지 상한이 회수
   const rows = (!full && !inv) ? _yNear.map(n => { const c = yPersona(n.id); if (!c) return '';
     return `<div class="ypick-row" data-mem="1">${yAva(c)}<span class="yp-col"><span class="yp-name">${esc(c.name)}${yGradeBadge(c)}</span><span class="yp-tag">${esc(n.pl ? `${n.pl} · 같은 자리` : (c.tagline || ''))}</span></span><button type="button" class="yinv-go" data-inv="${esc(c.id)}">초대</button></div>`; }).join('') : '';   // 행 = div + 내부 [초대] 필(중첩 버튼 금지 · armed 2탭)
   pk.innerHTML = `<div class="yinv-cap">${esc(cap)}</div>` + mem + rows + `<div class="yinv-note">정원 2명 · 초대해도 상대가 관계·시각을 보고 거절할 수 있어</div>`;   // 힌트 = 선택값 표시
@@ -4506,6 +4583,7 @@ function yRender() {
         localStorage.removeItem('yeta_read_' + _old);
       } catch {} }
     }
+    if (_old && _ct) yBargeEnter(_ct);   // 난입 등장 연출(260728) — 서버가 cur을 난입 방으로 옮겨준 경로(=그 방을 보고 있었을 때). 다른 방을 보고 있었으면 위 yBargeYank가 같은 연출을 태운다 = 두 경로 모두 암전→배경→역암전
   }
   if (yMeDeadCheck()) return;   // 유저 사망(운영자 260725) = 최우선 게이트 — 암전·이탈·부활 팝업이 이 렌더를 대체
   const log = $('#yetaLog'), s = YTH() || {}, all = s.turns || [];   // v3 = 현재 방 스코프(state/opening/err/room/invite/barged 전부)
@@ -4578,8 +4656,10 @@ function yRender() {
   if (failNow && !gaveUp && !deadNow) yAutoRetry(_ak, _an);   // 사망 방 = 재시도 발사 금지(서버 가드 409 — 헛발 쿼터 차단)
   if (failNow && !deadNow) yDcPush(gaveUp ? 'gaveup' : 'stall', `${gaveUp ? 'g' : 's'}:${_ak}`);   // 두절 적립(260725) — 에피소드 키(_ak) 앞에 종류 접두 = 한 에피소드에서 '늦어짐→끊김' 2단계가 각각 한 번씩만 남는다(재렌더 중복 0)
   // 난입 직후 원탭 내보내기 pill(단톡 260707) — 다음 내 메시지 전까지만 노출(소멸형 = 로그 청결) · 언제든 말로도 가능
+  // ⚠ 난입 **등급**(grade=barge · 프리실라) 제외(운영자 260728 "내보내기 처음에 있는데 불가해야함") — 이 인물은 유저가 열 수도 닫을 수도 없는 축이다.
+  //    pill이 뜨면 "누르면 나간다"는 약속이 되는데 실제로는 서버가 막으므로(op kick 가드) 버튼 자체를 안 그린다 = 죽은 버튼 0. 우연 마주침 난입(via=place · 일반 인물)은 종전대로 pill 유지.
   const bg = s.barged;
-  const kickOn = !!(bg && ((s.room || []).includes(bg.id)) && !all.some(t => t.role === 'user' && (t.ts || 0) > (bg.ts || 0)));
+  const kickOn = !!(bg && ((s.room || []).includes(bg.id)) && (yPersona(bg.id) || {}).grade !== 'barge' && !all.some(t => t.role === 'user' && (t.ts || 0) > (bg.ts || 0)));
   if (kickOn) {
     const bc = yPersona(bg.id) || {};
     h += `<button type="button" class="yb sys ykick${_yKickOn || first ? '' : ' in'}" data-kick-pill="${esc(bg.id)}">${esc(bc.name || '')} 내보내기</button>`;
