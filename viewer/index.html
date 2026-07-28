@@ -1586,6 +1586,23 @@ function yPrefApply() {
   document.documentElement.classList.toggle('yeta-reduce', yPrefOn('reduce', false));   // 모션 줄이기 = html 클래스(CSS가 애니/트랜지션 무효화)
   document.documentElement.classList.toggle('yeta-ptt', yPrefOn('ptt', false));
   document.documentElement.classList.toggle('yeta-noruby', !yPrefOn('ruby', true));   // 일본어 발음 = 기본 ON(종전 동작 유지 = 회귀 0) · 끄면 발음 줄만 숨고 원문·번역은 그대로   // 무전기(PTT) 토글 = 입력행 마이크 복원(기본 OFF = 260705 폐지 결정 유지 · 운영자 260709 설정 실동작)
+  yVidApply();   // 배경 영상 스위치(운영자 260728) — 위 3종과 같은 자리에서 적용(설정 적용 단일 깔때기)
+}
+function yVidApply() {   // 배경 영상 on/off(운영자 260728 "설정에서 영상 on off · 배경으로 뜨는 영상 중에 영상은 제끼고 나오게")
+  // 끄기 = **숨김이 아니라 정지**. `<video>`를 display:none 하면 poster까지 사라져 배경이 통째로 빈다 —
+  // 재생만 멈추면 poster(정지 이미지)가 그 자리에 그대로 남는다 = 지시한 "영상은 제끼고 (이미지가) 나오게" 그 그림.
+  // 값·판정은 기존 `prefers-reduced-motion = 포스터 정지` 계약 100% 계승(yStair.reduced) = 새 축 0.
+  // 대상 = 배경 3종 ⓐ 잠금 히어로 ⓑ 언락 앱 배경 ⓒ 대화 무대 클립(yStage 풀에서 애초에 제외 = 요소 자체가 안 생긴다).
+  // 비대상 = 캐릭터 소개 영상(.ycd-video) — 그건 배경이 아니라 유저가 보러 들어간 콘텐츠라 이 스위치의 축이 아니다.
+  const on = yPrefOn('bgvid', true);
+  const hold = (document.getElementById('ybgvid') || {}).classList;   // 챗 열림 중(ys-hold) = yStair가 이미 정지시킨 상태 — 여기서 되살리면 그 계약이 깨진다
+  ['ymVideo', 'ybgvidEl'].forEach(id => {
+    const v = document.getElementById(id); if (!v) return;
+    if (!on) { try { v.pause(); } catch {} v.removeAttribute('autoplay'); return; }   // autoplay 제거 = 다음 로드에서도 안 튄다
+    if (id === 'ymVideo') v.setAttribute('autoplay', '');
+    if (id === 'ybgvidEl' && hold && hold.contains('ys-hold')) return;
+    if (v.paused && !document.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches) { try { const p = v.play(); p && p.catch(() => {}); } catch {} }
+  });
 }
 function yAvatarPick() {   // 프로필 사진 = 파일 선택 → 256 정사각 리샘플 → data URL 로컬 저장(서버 미전송 · 파일 input은 런타임 생성 = HTML 자동완성 게이트 무관)
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
@@ -2294,7 +2311,7 @@ function yPolClick(e) {   // 정책 클릭 위임(설정 시트 #ycsettingsCard 
 const yStair = (() => {
   let started = false, paused = false;
   const vid = () => document.getElementById('ybgvidEl'), wrap = () => document.getElementById('ybgvid');
-  const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches || !yPrefOn('bgvid', true);   // 배경 영상 끔(설정 260728) = 모션 최소화와 **같은 처리**(포스터 정지) — 이 한 줄로 start/resume/visibilitychange 3경로가 전부 따라온다(분기 추가 0)
   const start = () => { if (started) return; started = true; const v = vid(); if (!v) return;
     if (reduced()) { try { v.pause(); } catch {} return; }   // 모션 최소화 = 포스터 정지
     try { const p = v.play(); p && p.catch(() => {}); } catch {} };
@@ -2999,7 +3016,7 @@ function yShowSettings(noNav) {
     + `<div class="yset-sec">알림</div>` + sw(I.bell, '답장 알림', '새 답장 오면 웹푸시', 'push', true) + sw(I.bell, '소리 · 진동', '새 답장에 진동', 'haptic', true)
     + `<div class="yset-sec">대화</div>` + yDepthRow() + yTodayRow() + yUsageRow() + sw(I.type, '타이핑 표시', '답장 전 “입력 중…”', 'typing', true) + sw(I.chat, '읽음 표시', '내 메시지 옆 안읽음 ‘1’', 'read', true) + sw(I.type, '일본어 발음', '일본어 밑에 읽는 법 — 몰입용', 'ruby', true)
     + `<div class="yset-sec">음성 · 통화</div>` + sw(I.phone, '걸려오는 전화', '끄면 벨 없이 대사만 남아', 'call', true) + sw(I.radio, '무전기(PTT)', '입력행 마이크 — 켜면 복원', 'ptt', false) + info(I.phone, '일일 통화 상한', '유료 가드 — 서버 설정', '3회')
-    + `<div class="yset-sec">화면</div>` + info(I.screen, '테마', '다크 고정(브랜드)', '다크') + sw(I.screen, '모션 줄이기', '애니메이션 최소화', 'reduce', false) + `<button type="button" class="yset-item" data-fs="1"><span class="si-ic">${I.type}</span><span class="si-lbl"><span class="si-t">글자 크기</span><span class="si-d">탭 = 보통 → 크게 → 아주 크게</span></span><span class="si-v">${ySetVt('fs')}${I.chev}</span></button>`
+    + `<div class="yset-sec">화면</div>` + info(I.screen, '테마', '다크 고정(브랜드)', '다크') + sw(I.screen, '배경 영상', '끄면 정지 이미지만 — 배터리·데이터 절약', 'bgvid', true) + sw(I.screen, '배경 소리', '대화 배경 영상의 소리 — 시작·끝 페이드', 'bgaud', true) + sw(I.screen, '모션 줄이기', '애니메이션 최소화', 'reduce', false) + `<button type="button" class="yset-item" data-fs="1"><span class="si-ic">${I.type}</span><span class="si-lbl"><span class="si-t">글자 크기</span><span class="si-d">탭 = 보통 → 크게 → 아주 크게</span></span><span class="si-v">${ySetVt('fs')}${I.chev}</span></button>`
     + `<div class="yset-sec">데이터</div>` + act(I.trash, '대화 초기화', '모든 대화 기록 삭제', 'reset') + act(I.data, '캐시 비우기', '읽음·로컬 캐시 정리', 'cache')
     + `<div class="yset-sec">정보</div>` + info(I.info, '버전', '', 'v1') + act(I.info, '이용약관 · 문의', '15개조 열람', 'terms');   // 하단 잔여 설명 노트 폐지(운영자 260709 "이거도 없애주고")
   const d = yCdShow('#ycsettings');
@@ -3206,7 +3223,10 @@ $('#ycsettingsCard').addEventListener('click', e => {
   if (sw) {
     const key = sw.dataset.pref, on = !sw.classList.contains('on');
     sw.classList.toggle('on', on); sw.setAttribute('aria-checked', on); yPrefSet(key, on);
-    if (key === 'reduce' || key === 'ptt' || key === 'ruby') yPrefApply();   // 모션 줄이기·무전기 = 즉시 반영(html 클래스)
+    if (key === 'reduce' || key === 'ptt' || key === 'ruby' || key === 'bgvid') yPrefApply();   // 모션 줄이기·무전기 = 즉시 반영(html 클래스) · 배경 영상 = 잠금/앱 배경 재생 정지·재개
+    if (key === 'bgvid') { _yStageKey = ''; try { yStage(yLastMood()); } catch {} }   // 대화 무대도 즉시 갈아끼움(클립 ↔ 이미지) — 방이 안 열려 있으면 YCUR 가드가 알아서 빠진다
+    if (key === 'bgaud') document.querySelectorAll('#yetadlg .ybg video').forEach(v => { yVidAudio(v); if (v.paused) return; try { const pr = v.play(); pr && pr.catch(() => { v.muted = true; yVidFadeStop(v); v.volume = 1; }); } catch {} });   // 지금 도는 클립에 즉시 반영(끄면 음소거·켜면 페이드인부터) — 재렌더 없이 그 자리에서
+
     if (key === 'push' && on && 'Notification' in window && Notification.permission === 'default') { try { Notification.requestPermission(); } catch (x) {} }   // 알림 켜면 권한 요청
     return;
   }
@@ -3653,7 +3673,29 @@ function ySeasonMedia(c) {
 }
 let _ybgCur = 0, _yStageKey = '';   // 무대 2겹 크로스페이드(§🎬 배너 디졸브 축소판) — 다음 레이어에 그리고 opacity 스왑
 let _yStageRoom = '', _yStageCold = true;   // 방 진입 추적(운영자 260709) — 방 전환/재진입 = 이전 방 배경(멈춘 클립 프레임) 즉시 소거 + 시즌 첫 페인트 = 클립 대신 이미지(대화 관련 배경 먼저)
-function yBgKillVid(v) { if (!v) return; try { v.pause(); v.removeAttribute('src'); v.load(); } catch {} v.remove(); }   // 클립 결정적 해제(pause+src 해제+load = 디코더 회수 · WebKit GC 위임 탈피 — 평의회7③)
+function yBgKillVid(v) { if (!v) return; yVidFadeStop(v); try { v.pause(); v.removeAttribute('src'); v.load(); } catch {} v.remove(); }   // 클립 결정적 해제(pause+src 해제+load = 디코더 회수 · WebKit GC 위임 탈피 — 평의회7③) · 볼륨 엔벨로프 루프도 같이 회수(260728 — 안 끊으면 제거된 노드를 계속 도는 유령 rAF)
+// ── 배경 클립 소리(운영자 260728 "재생하게 만들어놨으면 소리도 나오게 · 시작 시 페이드인, 종료 시점에 페이드아웃, 다시 나올 때 또 반복") ──
+// 재생 위치(currentTime) 기반 엔벨로프라 **loop가 되감기면 저절로 다시 페이드인**한다 = 지시한 "또 반복"이 상태 변수 없이 성립.
+// 값 = 토큰 없는 축(§🎨 raw 허용) — 볼륨 .34는 배경음 위치(대사·알림보다 아래에서 깔린다) · 페이드 1.2s는 진입 암전(.62)의 두 배 = "스르륵" 체감.
+// ⚠ 자동재생 정책: 음소거 아닌 영상은 자동재생이 막힐 수 있다 → 실패하면 **무음으로 되살린다**(재생 자체는 유지 = 종전 동작으로 안전 강등).
+const YBGA_VOL = .34, YBGA_FADE = 1.2;
+function yVidFadeStop(v) { if (v && v._af) { try { cancelAnimationFrame(v._af); } catch {} v._af = 0; } }
+function yVidAudio(v) {   // 클립 1개에 소리+엔벨로프 배선(호출 = 요소 생성 직후 1회)
+  if (!v) return;
+  const on = yPrefOn('bgvid', true) && yPrefOn('bgaud', true);
+  if (!on) { yVidFadeStop(v); v.muted = true; v.setAttribute('muted', ''); v.volume = 1; return; }   // 끔 = 종전 결(muted 고정 · 운영자 260707 "소리만 빼고 다") · ⚠ 엔벨로프 루프도 반드시 끊는다 — 안 끊으면 음소거된 채 프레임마다 volume을 계속 쓰는 유령 rAF가 남는다(260728 실측으로 잡음)
+  v.muted = false; v.removeAttribute('muted'); v.volume = 0;          // 0에서 출발 = 첫 프레임에 소리가 튀지 않는다(페이드인의 시작점)
+  const tick = () => {
+    if (!v.isConnected || v.paused) { v._af = 0; return; }             // 레이어 교체·정지 = 루프 종료(다음 재생에서 재배선)
+    const d = v.duration || 0, t = v.currentTime || 0;
+    let g = 1;
+    if (d > YBGA_FADE * 2.2) g = Math.min(t / YBGA_FADE, (d - t) / YBGA_FADE);   // 앞 1.2s 올리고 · 끝 1.2s 내린다 · 가운데는 1
+    else if (d > 0) g = Math.min(t, d - t) / (d / 2);                  // 아주 짧은 클립 = 삼각 엔벨로프(페이드 구간이 겹쳐도 튀지 않게)
+    v.volume = Math.max(0, Math.min(1, g)) * YBGA_VOL;
+    v._af = requestAnimationFrame(tick);
+  };
+  yVidFadeStop(v); v._af = requestAnimationFrame(tick);
+}
 function yBgReset() {   // 두 레이어 전부 소거 — 비디오 정지·제거(스테일 프레임·GPU 디코드 차단) + 그림 비움(잔상 0 · 로드 전 = 스포티파이 블랙 베이스 = 깔끔한 로딩 상태)
   [$('#ybgA'), $('#ybgB')].forEach(L => {
     if (!L) return;
@@ -3668,12 +3710,15 @@ function yPaintBg(bgUrl, tint, season) {   // 레이어 페인트(페르소나 �
   const layers = [$('#ybgA'), $('#ybgB')], next = layers[1 - _ybgCur], curL = layers[_ybgCur];
   yBgKillVid(next.querySelector('video'));   // 레이어 재사용 = 이전 클립 결정적 회수
   const curV = curL.querySelector('video'); if (curV) { try { curV.pause(); } catch {} }   // 밀려나는 레이어 클립 = 즉시 정지(불투명 0 뒤 무한 디코드 차단 — 평의회1·7 공통 지적 · 제거는 레이어 재사용/리셋 때)
+  if (season && /\.(mp4|webm)(\?|$)/i.test(bgUrl || '') && !yPrefOn('bgvid', true)) { next.style.backgroundImage = (YCUR && YCUR.bg) ? `linear-gradient(rgba(18,18,18,${d1}),rgba(18,18,18,${d2})), url("${YCUR.bg}")` : 'none'; next.classList.toggle('season', !!season); next.classList.remove('wdim'); next.classList.add('on'); curL.classList.remove('on'); _ybgCur = 1 - _ybgCur; return; }   // 배경 영상 끔 최종 방어선(260728) — 풀이 클립뿐이라 위 필터가 못 걷어낸 경우. 시그니처 스틸로 착지(바로 아래 클립 밑깔이와 같은 그림·같은 딤 = 새 값 0)
   if (season && /\.(mp4|webm)(\?|$)/i.test(bgUrl || '')) {   // 시즌 클립 — "소리만 빼고 다"(운영자 260707) = muted 고정
     next.style.backgroundImage = (YCUR && YCUR.bg) ? `linear-gradient(rgba(18,18,18,${d1}),rgba(18,18,18,${d2})), url("${YCUR.bg}")` : 'none';   // 클립 디코드/자동재생 전까지 시그니처 스틸을 밑에 깔아 무대 암전 차단(분신술 260708 — 비시즌 프리로드 게이트 대응) · 딤 = 캐릭터별 d1/d2(윈터 +50%)
     const v = document.createElement('video');
     v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
     if (YCUR && YCUR.bg) v.poster = YCUR.bg;   // 포스터 = 시그니처(자동재생 차단 시에도 암전 대신 스틸)
-    v.src = bgUrl; next.appendChild(v); try { v.play().catch(() => {}); } catch {}
+    v.src = bgUrl; next.appendChild(v);
+    yVidAudio(v);   // 소리+페이드 배선(260728) — 설정이 꺼져 있으면 종전대로 muted 고정
+    try { const pr = v.play(); pr && pr.catch(() => { v.muted = true; v.setAttribute('muted', ''); yVidFadeStop(v); v.volume = 1; try { v.play().catch(() => {}); } catch {} }); } catch {}   // 음소거 아닌 자동재생이 막히면 **무음으로 되살린다** — 그림이 멈추는 것보다 소리를 포기하는 쪽이 낫다(재생 = 종전 동작으로 안전 강등)
   } else next.style.backgroundImage = bgUrl
     ? (season ? `linear-gradient(rgba(18,18,18,${d1}),rgba(18,18,18,${d2})), url("${bgUrl}")`   // 캐릭터 아트 = 스포티파이 블랙 스크림(운영자 260709 재검수 "+30% 더 — 대화창 집중" · .55/.68 → +30% 등가 .68/.78 · 윈터만 +50% 재합성 .84/.89 = 위 d1/d2)
             : `linear-gradient(rgba(18,18,18,.35),rgba(18,18,18,.52)), url("${bgUrl}")`)   // 환경(장소·무드 씬) = 딤 대폭 완화(운영자 260709 재검수 "그대로임" — 1차 .55/.72가 어두운 원화에선 체감 미미 → .35/.52)
@@ -3809,7 +3854,8 @@ function yStage(mood) {   // 무대 우선순위(운영자 260707): 난입 플�
   if (em) {
     const n = (((YTH() || {}).turns) || []).filter(t => t.role === 'assistant').length;   // 답장수 = 모노토닉(렌더 틱 재페인트 방지 · 감사E)
     const md = (YCUR.mode && em.mode_dir) ? (yModeOn(YCUR) ? 1 : 0) : -1;   // 변신 모드 배경 게이트(운영자 260717 "안드로이드 모드인데 도깨비 배경") — 프사·배지(yModeOn)와 같은 시계 · -1 = 모드축 없는 캐릭터(불변)
-    const ekey = `${YCUR.id}|${mood || ''}|${md}|${n}`;   // 키에 모드 포함 = 21시/03시 경계 넘으면 자동 재스테이지
+    const vidOK = yPrefOn('bgvid', true);   // 배경 영상 스위치(설정 · 260728) — 키에 넣어야 토글 즉시 재스테이지된다(안 넣으면 같은 키로 no-op)
+    const ekey = `${YCUR.id}|${mood || ''}|${md}|${n}|${vidOK ? 1 : 0}`;   // 키에 모드 포함 = 21시/03시 경계 넘으면 자동 재스테이지
     if (ekey === _yStageKey) return;
     _yStageKey = ekey;
     let pool = em[mood || 'base'] || [];   // 무드 버킷 → 그룹(Y_GRP) → base 폴백(8감정 확장 Q.29 — 세부 버킷 없는 manifest도 안전)
@@ -3822,9 +3868,10 @@ function yStage(mood) {   // 무대 우선순위(운영자 260707): 난입 플�
       if (!p2.length) p2 = mf([...new Set(Object.keys(em).filter(k => Array.isArray(em[k])).flatMap(k => em[k]))]);   // 전 버킷 합집합 = 키 제네릭(버킷 증설 자동 수용)
       if (p2.length) pool = p2;
     }
+    const isVid = u => /\.(mp4|webm)(\?|$)/i.test(u || '');
+    if (!vidOK) { const p3 = pool.filter(u => !isVid(u)); if (p3.length) pool = p3; }   // 배경 영상 끔 = 로테이션에서 클립을 아예 뺀다(요소 자체가 안 생김 = 디코드 0) · 이미지가 하나도 없는 풀이면 종전대로 둔다(빈 무대 방지 — 아래 클립전용 폴백이 시그니처로 받는다)
     if (!pool.length) { _yStageCold = false; yPaintBg(YCUR.bg || '', YCUR.color || '#7c5cfc', true); return; }
     let pi = n % pool.length;
-    const isVid = u => /\.(mp4|webm)(\?|$)/i.test(u || '');
     if (_yStageCold && isVid(pool[pi])) {   // 진입 첫 페인트 = 클립 대신 이미지(운영자 260709 "인트로 영상 말고 관련 배경 바로") — 클립은 대화 진행 중 로테이션에서만
       const alt = pool.findIndex(u => !isVid(u));
       if (alt >= 0) pi = alt;
