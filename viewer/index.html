@@ -240,6 +240,25 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     -webkit-mask-image:linear-gradient(to bottom, transparent 0, transparent calc(51px + env(safe-area-inset-top)), #000 calc(83px + env(safe-area-inset-top)));
     mask-image:linear-gradient(to bottom, transparent 0, transparent calc(51px + env(safe-area-inset-top)), #000 calc(83px + env(safe-area-inset-top))); }   /* 상단 = 네비 뒤로 대화가 새지 않게 완전투명 0→51 → 불투명 83(운영자 20260714 플그 확정값 · 구 밴드 마스크[0-52 불투명·60-76만 숨김] 폐지 · #yetatopblur z1 5레이어 그라데 블러와 합작) · 상하 패딩 = 플로팅 알약 클리어런스(운영자 260705) · px=기하 예외축 */
   /* 상단 그라데 블러(운영자 20260714 확정 — 플그 5레이어 프로그레시브 채택 · docs/reports/20260714_184051_상단그라데블러_스와이프모션_플레이그라운드) — 네비(.yeta-h z3)·미터(z2) 아래(z1)서 스크롤 대화를 위로 갈수록 블러+어둠으로 뭉갬 → "보이는 영역"처럼 새어오름 차단 · 확정값 blur 30→0·각도180·존 24→83·스크림.54 · 블러 max = --blur-m 계승(30≈29 광학동일)·레이어 램프(.8/.6/.4/.2) = 안무축 · 스크림/마스크 px = 기하 예외축 */
+  /* ── 무음동 전광판(운영자 260728 "채팅창 상단에 공지로 전광판처럼 쭉 우>좌 · 그날의 공지 · 누구 사망하면 알 수 있게 · 별별이슈") ──
+     발행 주체 = 편집국 데스크(조지 로이스) — 이미 있는 인물이라 세계관 신설 0. 표면 = .yb.sys 글래스 알약 선언 100% 계승(배경·테두리·모서리·blur 동값),
+     배치 = .yeta-h 규약 계승(absolute · left/right 10 · safe-area) · z2 = 헤더(3)와 상단 블러(1) 사이 = 어느 쪽도 안 가린다(#282 레이어와 무충돌).
+     색축 = 종류별 정본 토큰 계승만: 사망 --danger · 홍보/제보 --accent · 그 외 무채색(신규 hex 0). */
+  #yetanotice { position:absolute; left:10px; right:10px; z-index:2; overflow:hidden; display:flex; align-items:center; height:26px; padding:0 10px;
+    background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-pill);
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m));
+    color:var(--fg-2); font-size:var(--fs-xs); pointer-events:none; }   /* pointer-events:none = 스크롤·탭을 안 먹는다(읽기 전용 띠) */
+  #yetanotice[hidden] { display:none; }
+  #yetanotice .ynt-tag { flex:none; margin-right:8px; font-weight:var(--fw-x); color:var(--mut); letter-spacing:.04em; }   /* 발행처 라벨 — 흐르지 않고 왼쪽 고정(무엇을 읽는지가 먼저) */
+  #yetanotice .ynt-win { position:relative; flex:1; min-width:0; overflow:hidden; height:100%; }
+  #yetanotice .ynt-txt { position:absolute; top:50%; left:0; display:flex; will-change:transform;
+    animation:yntFlow var(--ynt-d, 18s) linear infinite; }   /* 우→좌 무한 흐름 · 주기는 실측 폭에 비례해 JS가 --ynt-d로 준다 */
+  #yetanotice .ynt-txt i { font-style:normal; white-space:nowrap; padding-right:48px; }   /* 같은 문장 2벌을 이어붙이고 정확히 절반만 밀어 이음매를 지운다 — padding이 벌 사이 간격이자 반환점 기준. ⚠ 1벌 방식(100%→-100%)은 글이 화면 밖에 있는 시간이 대부분이라 전광판이 아니라 '가끔 지나가는 글'이 된다(260728 실렌더에서 포착) */
+  @keyframes yntFlow { from { transform:translate(0, -50%); } to { transform:translate(-50%, -50%); } }
+  #yetanotice.k-dead { border-color:rgba(var(--danger-rgb),.4); }
+  #yetanotice.k-dead .ynt-tag, #yetanotice.k-dead .ynt-txt { color:var(--danger); }   /* 사망 = 난입 축과 같은 자몽(.ygrade.barge·.yb.fail 선언 계승) */
+  #yetanotice.k-ad .ynt-txt { color:var(--accent); }   /* 홍보·제보 = 브랜드 강조색 */
+  @media (prefers-reduced-motion:reduce) { #yetanotice .ynt-txt { position:static; animation:none; transform:none; display:block; max-width:100%; } #yetanotice .ynt-txt i { display:block; padding-right:0; overflow:hidden; text-overflow:ellipsis; } #yetanotice .ynt-txt i + i { display:none; } }   /* 모션 줄이기 = 흐름 정지 + 한 벌 말줄임(정보는 남기고 움직임만 끈다) */
   #yetatopblur { position:absolute; top:0; left:0; right:0; height:calc(83px + env(safe-area-inset-top)); z-index:1; pointer-events:none; }
   #yetatopblur > div { position:absolute; inset:0;
     -webkit-mask-image:linear-gradient(to bottom, #000 calc(var(--a) + env(safe-area-inset-top)), transparent calc(var(--b) + env(safe-area-inset-top)));
@@ -1451,6 +1470,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
       <div class="ymeter" id="yetaMeter"></div>   <!-- 미터 = 모델·노력 탭 전환 + 대화 누적 토큰(운영자 260709·260712 인터랙티브) -->
       <div class="yside" id="yside" hidden></div>   <!-- 좌 슬림 캐릭터 레일(운영자 260705 "왔다갔다") — 이름+최근대화 스니펫 · 탭=화자 전환 -->
       <div class="yeta-log" id="yetaLog"></div>
+      <div id="yetanotice" hidden><span class="ynt-tag">데스크</span><span class="ynt-win"><span class="ynt-txt"><i></i><i></i></span></span></div>
       <div id="yetatopblur" aria-hidden="true"><div></div><div></div><div></div><div></div><div></div><div class="tf-scrim"></div></div>   <!-- 상단 5레이어 프로그레시브 블러 + 스크림(운영자 20260714 확정) — 네비 뒤로 스크롤 대화 숨김 · z1(로그 위·미터/네비 아래) · char/list의 #ytopfade와 대칭 -->
       <div class="yeta-pick" id="yetaPick" hidden></div>
       <div class="yeta-pick yinv" id="yetaInv" hidden></div>   <!-- 합석 초대 패널(단톡 260707) — + 버튼 진입 · 정본 픽커 계승 -->
@@ -3849,6 +3869,35 @@ function yApply(c) {   // 페르소나 적용 — 이름·태그·포인트색·
   yMeter();   // 좌상단 기록 미터 = 방 전환 즉시 갱신(운영자 260709)
   if (window.YCALL && YCALL.sync) { try { YCALL.sync(); } catch {} }   // [call 모듈 훅] 방 전환 = 수화기 락·연락처 버튼 즉시 동기(폴 전 스테일 교정 260709 · 모듈 부재 = no-op)
 }
+function yNotice() {   // 무음동 전광판(운영자 260728) — 세션 top-level notice{d,text,kind}를 챗 상단 띠에 흘린다. 러너가 하루 1건 생성·저장하고 뷰어는 읽기만(생성 0 = 렌더 비용 0).
+  const el = $('#yetanotice'); if (!el) return;
+  const n = (YSESS || {}).notice;
+  const txt = n && typeof n === 'object' ? String(n.text || '').trim() : '';
+  if (!txt) { el.hidden = true; return; }                       // 공지 없음 = 띠 자체를 숨긴다(빈 알약이 자리만 먹는 것 방지)
+  const t = el.querySelector('.ynt-txt'), tag = el.querySelector('.ynt-tag');
+  const cells = t.querySelectorAll('i');
+  if ((cells[0] ? cells[0].textContent : '') !== txt) {         // 같은 공지 재렌더 = 애니 재시작 금지(흐르던 글이 튀어 되감기는 것처럼 보인다)
+    cells.forEach(c => { c.textContent = txt; });               // 2벌 동일 문장 = 이음매 없는 무한 흐름
+    requestAnimationFrame(() => {                               // 폭은 페인트 후에야 잡힌다
+      const w = cells[0] ? cells[0].getBoundingClientRect().width : 0;
+      el.style.setProperty('--ynt-d', Math.max(10, Math.min(45, Math.round(w / 42))) + 's');   // 속도 = 약 42px/s 고정(긴 글도 짧은 글도 같은 체감 속도 · 캡 10~45s)
+    });
+  }
+  const kind = String((n.kind || '')).toLowerCase();
+  const k = kind === 'dead' || kind === 'revive' ? 'k-dead' : (kind === 'ad' || kind === 'notice' ? 'k-ad' : '');
+  if (el.className !== k) el.className = k;
+  if (tag) tag.textContent = n.by_name || '데스크';             // 발행처 = 러너가 준 이름(기본 = 편집국 데스크)
+  el.hidden = false;
+  yNoticePos();
+}
+function yNoticePos() {   // 띠 위치 = 헤더 실측 바닥 + 6px — 헤더 높이가 단톡(아바타 스택)·1:1에서 다르고 safe-area까지 얹혀 상수로 두면 겹친다(실측 계산 = 기하축 raw 예외)
+  const el = $('#yetanotice'), h = $('.yeta-h'); if (!el || el.hidden || !h) return;
+  const st = h.getBoundingClientRect(), pr = (h.offsetParent || h.parentElement);
+  const top = st.height + (parseFloat(getComputedStyle(h).top) || 0) + 6;
+  el.style.top = top + 'px';
+  const log = $('#yetaLog');
+  if (log) log.style.paddingTop = 'calc(' + (top + 26 + 8) + 'px)';   // 로그 상단 여백 = 띠 아래로 밀기(첫 말풍선이 띠에 가리지 않게) · 띠 없으면 CSS 기본값이 그대로
+}
 function yHeadRoom() {   // 단톡 헤더(합석 260707) — room 2명 = 아바타 스택 + 이름 나열 + '단톡' 태그 · 1명 = yApply 단일 원복(멱등 · yRender마다 호출)
   if (_yView !== 'chat' || !YCUR) return;
   const room = (((YTH() || {}).room) || []).map(yPersona).filter(Boolean).filter(c => !yDead(c));   // 사망 멤버 = 방에서 즉시 제외(운영자 260714 "죽으면 한 명 사라져야") — 러너 이탈 반영 전에도 헤더 스택에 죽은 인물이 잔존하던 것 차단
@@ -4636,6 +4685,7 @@ function yRender() {
   else if (gbP && yPrefOn('typing', true) && !deadNow) h += yTypingHtml(!_yTypOn, gbP);   // 자율 비트 생성 중 = 그 사람 이름으로 "입력 중"(정본 컴포넌트 계승 · 타이핑 설정 OFF면 숨김만 = 턴은 폴로 그대로 들어온다)
   _yFailOn = gaveUp; _yTypOn = !dr && (typing || (!deadNow && !gaveUp && !typing && (!!invP || !!gbP))); _yDraftOn = !!dr;
   yHeadRoom();   // 단톡 헤더 동기화(스택/단일 멱등)
+  yNotice();     // 전광판 동기화(260728) — 같은 자리에서 돌면 방 전환·폴 갱신·단톡 전환 전부 커버(별도 트리거 0)
   yStackSync();   // 근처 인물 스택 동기(만석 전환·후보 소진 반영 — 시그니처 가드 = 무변경 no-op · 260712)
   yStage(yLastMood());   // 새 답장의 공기 → 배경 배리언트 크로스페이드(키 가드 = 같으면 no-op)
   yMeter();   // 누적 토큰 갱신(새 답장 턴 tok 합산 · 운영자 260709)
