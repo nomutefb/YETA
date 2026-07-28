@@ -145,8 +145,9 @@ import json, os, sys, time
 import re as _re
 from datetime import datetime, timezone, timedelta
 sys.path.insert(0, ".github/scripts")
-from yeta_place import load_places, place_of, place_name, world_dh   # 위치 SSOT = apps/yeta/places.json(마주침·지도 공용 · 260707)
+from yeta_place import load_places, place_of, place_name, world_dh, set_freeze, frz_ms   # 위치 SSOT = apps/yeta/places.json(마주침·지도 공용 · 260707)
 PL = load_places()
+set_freeze(frz_ms(S_ROOT))   # 난입 정지 반영(260728) — 세션 wfz만큼 세계 시계를 뒤로 민다(배속 불변)
 _kdate, _khour = world_dh()   # 동선 시간축 = 무음동 세계 시각(운영자 260716 지도 싱크 — 뷰어 지도·근처·원거리와 동일 공식) · 구 _kst(현실 KST)는 소비처 0으로 제거(평의회4)
 from yeta_v3 import migrate_v3, pick_thread, thread_view   # v3 다중 채팅방(260707 · 어댑터 SSOT — JS migrateV3 동형)
 S_ROOT = migrate_v3(json.load(open(sys.argv[1], encoding="utf-8"))); n = int(sys.argv[2])
@@ -377,7 +378,7 @@ print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": 
                   "policy": json.dumps(s.get("policy"), ensure_ascii=False) if isinstance(s.get("policy"), dict) else "",
                   "last_mood": last_mood, "last_open": last_open, "cast": " · ".join(v for v in names.values() if v),   # 상태 블록 재료(260707 · last_open = 감정선 캐리어 260725)
                   "gap_h": round(gap_h, 1), "late_h": round(late_h, 1), "rel_lv": rel_lv, "riv": riv, "handoff": handoff,   # T1 재료(휴면·지각[260726 Q.70]·관계LV·질투메타·인계 · 260707)   # 시즌 수위·금기(L1 · op policy) — 문구 조립은 apps/yeta/policy.json 정본
-                  "co": co, "co_name": (names.get(co) or co) if co else "", "barge_debut": barge_debut, "barge_host": barge_host,   # 단톡 재료(합석 260707) — co = 이번 턴 비화자 동행 · barge_host = 난입당한 쪽(260728 · 1=첫 반응 2=재실 중)
+                  "co": co, "co_name": (names.get(co) or co) if co else "", "barge_debut": barge_debut, "barge_host": barge_host, "wfrz": frz_ms(S_ROOT),   # 단톡 재료(합석 260707) — co = 이번 턴 비화자 동행 · barge_host = 난입당한 쪽(260728 · 1=첫 반응 2=재실 중)
                   "barge_via": (s.get("barged") or {}).get("via") or "",   # 난입 경로(place=지나다 마주침 · 데뷔 결 분기 · 마주침 260707)
                   "place_nm": place_name(PL, place_of(PL, persona, _kdate, _khour)),   # 화자의 지금 장소(동선 SSOT — 배경 정합 + 마주침 sys와 앞뒤)
                   "att": "\n".join(a for a in att if a),   # 첨부 사진 R2 키(개행 구분 · 260717 '+') — process_turn이 내려받아 Read 비전으로 전달
@@ -491,6 +492,10 @@ if kind == "ok":
     dead_tag = bool(dm)
     dead_why = ((dm.group(1) or "").strip()[:120]) if dm else ""
     text = re.sub(r'<<\s*/?\s*DEAD(?:\s*:[^>]*)?\s*>>', '', text, flags=re.I)
+    # 퇴장 태그(운영자 260728 "그게 끝나야 시간이 다시 흐르게") — 난입 인물이 채점을 끝내고 인사하며 자리를 뜨는 순간. DEAD 동형 계보: 추출 후 제거(대사 유출 0).
+    # 시간이 멈춘 동안엔 시간 기반 퇴장(3시가 지나면 나간다)이 원리적으로 불가능하므로, '나간다'를 인물이 직접 선언하는 이 마커가 유일한 정상 종료 경로다(그 외 = 내보내기·안전벨트).
+    leave_tag = bool(re.search(r'<<\s*LEAVE(?:\s*:[^>]*)?\s*>>', text, flags=re.I))
+    text = re.sub(r'<<\s*/?\s*LEAVE(?:\s*:[^>]*)?\s*>>', '', text, flags=re.I)
     # 유저 사망 태그(운영자 260725 "타의든 자의든 사용자 본인이 죽었을 경우") — DEAD 동형 계보: 추출 후 제거(대사 유출 0) · 뷰어가 sess.me_dead를 보고 대화창 암전·이탈 + 부활 팝업
     mdm = re.search(r'<<\s*ME\s*_?\s*DEAD(?:\s*:\s*([^>]{1,200}))?\s*>>', text, flags=re.I)
     me_dead_tag = bool(mdm)
@@ -653,6 +658,16 @@ if kind == "ok":
         if me_dead_tag and not open_job:   # 유저 사망 반영(운영자 260725) — me_dead={d:사망ts, mood, why} 박제 = 뷰어가 다음 폴에서 암전·이탈·부활 팝업 · 해제 = op revive 단일 경로(캐릭터 dead와 달리 시간 대기 없음)
             S_ROOT["me_dead"] = {"d": now, "mood": mood or "", "why": me_dead_why}
             S_ROOT.pop("me_revived", None)   # 직전 부활 맥락은 새 죽음이 덮는다
+        if leave_tag and not open_job and turn_persona and not dead_tag:   # 퇴장 반영(운영자 260728) — 난입 인물이 인사하고 자리를 뜬다. 위 사망 처리의 **멤버 제거 계약을 그대로 계승**(room 필터 + last_sp/barged 인계), 다른 건 dead 박제를 안 한다는 것뿐(죽은 게 아니라 간 거다).
+            _lnm = os.environ.get("CNAME", "") or turn_persona
+            for _th3 in (S_ROOT.get("threads") or {}).values():
+                _rm3 = [r for r in (_th3.get("room") or []) if r]
+                if turn_persona in _rm3 and len(_rm3) > 1:
+                    _th3["room"] = [r for r in _rm3 if r != turn_persona]
+                    if _th3.get("last_sp") == turn_persona: _th3["last_sp"] = _th3["room"][0]
+                    if (_th3.get("barged") or {}).get("id") == turn_persona: _th3["barged"] = 0
+            turns.insert(ins + k, {"role": "sys", "text": f"{_lnm}{'은' if (ord(_lnm[-1]) - 0xAC00) % 28 else '는'} 자리에서 일어났다", "ts": now + k}); k += 1   # 퇴장 지문(합류 sys 대칭)
+            # 세계 시계 재개는 여기서 손대지 않는다 — room에서 빠진 사실만 남기면 게이트웨이 sweepSess(단일 깔때기)가 다음 폴에서 wfz를 회수한다(러너/게이트웨이 이중 구현 0 · Q.06 계보).
         if dead_tag and not open_job and turn_persona:   # 사망 반영(운영자 260714) — dead[persona]={t:부활ts, d:사망ts, mood:장면 공기, why:직전 상황 한 줄, pray:기도 대기, wit:목격자, nm:이름} · 전 방 이탈 · 두절 지문 sys · 이 방 잡 정지(idle — extract_mat 픽 제외와 짝)
             _dd = {p: u for p, u in (S_ROOT.get("dead") or {}).items() if (((u.get("t") if isinstance(u, dict) else u) or 0) + 604800000) > now}   # 7일+ 스테일만 소거(만료 엔트리 = 부활 첫 답 재료라 보존)
             _nm = os.environ.get("CNAME", "") or turn_persona
@@ -850,7 +865,7 @@ print((t[:70]+'…') if len(t)>70 else (t or '새 메시지'))")"
 # ── 상태 블록(공용 — 본답장 + 초대 판정 · env: PERSONA LAST_MOOD CAST GAP_H REL_LV RIV HANDOFF TUNE CO_NAME BARGE_DEBUT) ──
 # 시각·계절·달·데일리 무드 시드(sha256 = 같은 날 같은 기분·무저장) + 직전 공기(감정 관성) + 동네 로스터(주민 창작 방지) + 단톡 동행·난입 데뷔.
 state_block() {
-  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" "${LAST_OPEN:-}" "${LATE_H:-0}" "${PREV_DRAFT:-}" "${BARGE_HOST:-0}" <<'PY'
+  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" "${LAST_OPEN:-}" "${LATE_H:-0}" "${PREV_DRAFT:-}" "${BARGE_HOST:-0}" "${WFRZ_MS:-0}" <<'PY'
 import sys, hashlib, json, time
 from datetime import datetime, timezone, timedelta
 persona, last_mood, cast, gap_h, rel_lv, riv, handoff = sys.argv[1:8]
@@ -861,12 +876,13 @@ barge_via = sys.argv[12] if len(sys.argv) > 12 else ""
 last_open = sys.argv[13] if len(sys.argv) > 13 else ""   # 직전에 삼킨 것(감정선 캐리어 260725 · 초대 판정 등 미전달 경로 = 빈값 = 블록 생략)
 late_h = sys.argv[14] if len(sys.argv) > 14 else "0"     # 지각(260726 Q.70) — 이 pending 이 들어온 뒤 흐른 시간 · 미전달 경로(오프닝·초대 판정) = "0" = 블록 생략
 prev_draft = sys.argv[15] if len(sys.argv) > 15 else ""  # 죽은 러너의 쓰다 만 말(260726 Q.71-B · draft_salvage 3중 가드 통과분만) — 빈값 = 블록 생략
+wfrz_ms = sys.argv[17] if len(sys.argv) > 17 else "0"    # 난입 정지 누적(현실 ms · 260728) — 미전달 경로 = "0" = 종전 세계 시각
 barge_host = sys.argv[16] if len(sys.argv) > 16 else "0" # 난입당한 쪽(260728) — 1=난입 후 첫 반응 2=난입자 재실 중 · 미전달 경로(오프닝·초대 판정) = "0" = 블록 생략
 try: tune = json.loads(sys.argv[8]) if sys.argv[8] and sys.argv[8] != "None" else []
 except Exception: tune = []
 now = datetime.now(timezone(timedelta(hours=9)))                       # KST 고정(§표기표준 — 러너 UTC) · 계절·요일·무드 시드 = 실제 달력(가속 안 함)
 # 무음동 세계 시각(운영자 260715) — 실제 시각과 분리, 6배 가속(실제 4h = 무음동 하루). 뷰어 yWorldMin과 동일 공식(epoch분×6 mod 1440) = 저장 없이 뷰어↔러너 동기.
-wmin = int(time.time() / 60 * 6) % 1440
+wmin = int((time.time() - (float(wfrz_ms or 0) / 1000)) / 60 * 6) % 1440   # 난입 정지 반영(260728) — 세션 wfz만큼 세계 시계를 뒤로 민다(배속 불변)
 h = wmin // 60
 slot = "깊은 밤 — 경계가 얇아지는 시간" if h < 3 else "새벽" if h < 7 else "아침" if h < 11 else "낮" if h < 17 else "저녁" if h < 21 else "밤"
 wd = "월화수목금토일"[now.weekday()]
@@ -1200,7 +1216,7 @@ barge_check() {
 import hashlib, json, sys, time
 from datetime import datetime, timezone, timedelta
 sys.path.insert(0, ".github/scripts")
-from yeta_place import load_places, place_of, place_name, world_dh, slot_of
+from yeta_place import load_places, place_of, place_name, world_dh, slot_of, set_freeze, frz_ms
 PL = load_places()
 from yeta_v3 import migrate_v3
 import os as _os
@@ -1224,6 +1240,7 @@ if len(room) != 1: sys.exit(1)                     # 이미 단톡/방 없음
 if s.get("invite") or s.get("barged"): sys.exit(1)
 if S_ROOT.get("barge_day") == today: sys.exit(1)   # 하루 1회 상한 = 전역(top-level — 스레드 곱셈·다방 동시 난입 차단 · 러너감사③A)
 if s.get("state") == "awaiting": sys.exit(1)       # 답장 생성 중 = 안 끼어듦(반영 레이스 축소)
+set_freeze(frz_ms(S_ROOT))   # 난입 정지 반영(260728) — 세션 wfz만큼 세계 시계를 뒤로 민다(배속 불변)
 _wd, _wh = world_dh()                              # 무음동 세계 시각(운영자 260716 지도 싱크) — 장소·새벽 판정 축 · today(상한·시드)는 현실 일자 유지(하루 1회 = 현실 하루)
 if 3 <= _wh < 8: sys.exit(1)                       # 깊은 새벽(세계 시각) = 난입 없음(주민 수면 — 대화 속 시간과 정합)
 if len(turns) < 8: sys.exit(1)                     # 초반 대화 보호(관계 전 난입 = 소음)
@@ -1316,6 +1333,11 @@ if via: gth["barged"]["via"] = via; gth["barged"]["place"] = meet_pl
 S_ROOT.setdefault("threads", {})[gid] = gth
 if S_ROOT.get("cur") == _os.environ.get("THREAD", ""): S_ROOT["cur"] = gid   # 유저가 이 방을 보는 중일 때만 새 단톡으로 전환(백그라운드 난입 = cur 불변 · 유령 전환 방지) — 원본 1:1은 목록에 그대로 보존
 S_ROOT["barge_day"] = today                        # 전역 상한 스탬프(top-level)
+# ── 세계 시계 정지 개시(운영자 260728 "일단 들어오면 그 순간 시간이 멈추는 개념으로 가자 · 그게 끝나야 시간이 다시 흐르게") ──
+# 난입이 열린 순간부터 무음동 시간이 멈춘다 → 동선·낮밤·지도·프롬프트 slot이 전부 그 시각에 고정. 유저가 다른 방으로 못 벗어나는 것(뷰어 끌어당김)과 같은 축의 앞뒤다.
+# by = 난입자 id — 해제 판정이 로스터를 안 읽어도 되게(게이트웨이는 barge 등급을 모른다). acc = 이전까지 누적된 정지분(재난입 시 이어붙임).
+_wfz = S_ROOT.get("wfz") if isinstance(S_ROOT.get("wfz"), dict) else {}
+S_ROOT["wfz"] = {"since": tnow, "acc": int(_wfz.get("acc") or 0), "by": cand}
 if d.get("id") == cand and s.get("declined"): s.pop("declined", None)   # 원본의 스테일 거절 마커 정리(거절 회수 반영 · updated 미변경 = 목록 순서 유지)
 S_ROOT["updated"] = tnow
 json.dump(S_ROOT, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False)
@@ -1363,7 +1385,7 @@ ambient_prompt() {
 import json, os, random, sys
 from datetime import datetime, timezone, timedelta
 sys.path.insert(0, ".github/scripts")
-from yeta_place import load_places, place_of, place_name, world_dh
+from yeta_place import load_places, place_of, place_name, world_dh, set_freeze, frz_ms
 from yeta_v3 import migrate_v3
 try:
     S = migrate_v3(json.load(open(sys.argv[1], encoding="utf-8")))
@@ -1375,6 +1397,7 @@ T = A.get("tuning") or {}
 if os.environ.get("AMB_ON", "1") != "1": sys.exit(0)  # 축 정지 = 빈 출력 → refill이 LLM을 안 탄다. 유효값 SSOT = 셸 AMB_ON(L1 설정 policy.ambient가 이기고, 없으면 ambient.json tuning.enabled) · 미전달 = 켬(fail-open)
 batch = int(T.get("batch") or 3)
 PL = load_places()
+set_freeze(frz_ms(S))   # 난입 정지 반영(260728) — 세션 wfz만큼 세계 시계를 뒤로 민다(배속 불변)
 wd, wh = world_dh()                                  # 무음동 세계 시각(6배속 · 지도·동선과 동일 정본)
 sp = s.get("last_sp") or os.environ.get("THREAD", "")
 pl = place_of(PL, sp, wd, wh) if sp else ""
@@ -1504,7 +1527,8 @@ if not out: sys.exit(1)
 print("  🎲 고리 = " + (hook or "(선언 없음 — 프롬프트 이탈)"))   # 관련도 진단선(러너 로그) — 뜬금없는 사건이 또 나오면 여기서 고리가 뭐였는지가 보인다
 _PL = {}
 try:                                                 # 장소 스탬프(fail-soft — 실패해도 적재는 계속 · 계산식 = ambient_prompt와 동형)
-    from yeta_place import load_places, place_of, world_dh
+    from yeta_place import load_places, place_of, world_dh, set_freeze, frz_ms
+    set_freeze(frz_ms(S))   # 난입 정지 반영(260728) — 세션 wfz만큼 세계 시계를 뒤로 민다(배속 불변)
     _wd, _wh = world_dh()
     _sp = s.get("last_sp") or os.environ.get("THREAD", "")
     _PL = load_places()
@@ -1618,7 +1642,7 @@ process_turn() {
                  *) AMB_ON="${AMB_FILE:-1}"; GB_ON="$_GBON"; CH_ON="$_CHON"; BARGE_ON=1 ;; esac   # 형식 불일치(파이썬 실패·빈 출력) = 종전 기본 전량 복귀(설정 사고로 축이 통째 죽는 것 차단)
   GB_BEATS="$GB_ENV_BEATS"; [ "$GB_ON" = "1" ] || GB_BEATS=0     # 자율 비트 끔 = 상한 0 = 예약 자체가 안 걸린다(기존 '0 = 축 OFF' 계약 재사용 · 새 분기 0)
   GB_LINES="$GB_ENV_LINES"; [ "$CH_ON" = "1" ] || GB_LINES=1     # 단톡 교대 끔 = 1토막 = 종전 결(GROUP_RULE 폴백이 그대로 받는다)
-  CO_ID="$(matv co)"; CO_NAME="$(matv co_name)"; BARGE_DEBUT="$(matv barge_debut)"; BARGE_HOST="$(matv barge_host)"   # 단톡 동행·난입 데뷔(합석 260707) · 난입당한 쪽(260728)
+  CO_ID="$(matv co)"; CO_NAME="$(matv co_name)"; BARGE_DEBUT="$(matv barge_debut)"; BARGE_HOST="$(matv barge_host)"; WFRZ_MS="$(matv wfrz)"   # 단톡 동행·난입 데뷔(합석 260707) · 난입당한 쪽(260728)
   PLACE_NM="$(matv place_nm)"; BARGE_VIA="$(matv barge_via)"   # 동선 장소 + 마주침 데뷔 결(위치 SSOT places.json · 260707)
   OPEN="$(matv open)"; OPENING_TS="$(matv opening_ts)"   # 오프닝 잡(동적 첫인사 · 운영자 260707) — OPEN=1이면 유저발화 없이 캐릭터가 먼저 · OPENING_TS = nonce(finish 레이스 방어)
   RETRY_N="$(matv retry_n)"   # 자동 재시도 회차(사다리 260714) — 오프닝 JSON엔 키 없음 = 빈값(아래 -ge 가드가 흡수)

@@ -12,11 +12,32 @@ def load_places(path="apps/yeta/places.json"):
         return {"places": {}, "routine": {}}
 
 
+_FRZ_MS = 0   # 난입 정지 누적(현실 ms · 운영자 260728 "일단 들어오면 그 순간 시간이 멈추는 개념") — 세션 wfz에서 진입점이 1회 주입. 배속 리터럴은 안 건드린다(세계율 3점 게이트 불변).
+
+
+def set_freeze(ms):
+    """이 프로세스의 세계 시계를 ms(현실)만큼 뒤로 민다 — 난입 중 멈춰 있던 시간. 세션을 읽은 직후 1회 호출."""
+    global _FRZ_MS
+    try: _FRZ_MS = max(0, int(ms or 0))
+    except Exception: _FRZ_MS = 0
+
+
+def frz_ms(root, now_ms=None):
+    """세션 top-level wfz={since,acc,by} → 지금까지 멈춰 있던 총 현실 ms(진행 중인 정지분 포함). 필드 없음 = 0 = 종전 동작."""
+    import time as _t
+    f = (root or {}).get("wfz") or {}
+    if not isinstance(f, dict): return 0
+    now = now_ms if now_ms is not None else _t.time() * 1000
+    since = f.get("since") or 0
+    return int((f.get("acc") or 0) + ((now - since) if since else 0))
+
+
 def world_dh(now_ts=None):
     """무음동 세계 (날짜열 'w<일련일>', 시각 0~23) — 6배 가속(운영자 260716 지도 싱크: 동선·지도·근처·원거리 시간축을 세계 시각으로 통일).
-    공식 짝 3점(드리프트 금지): 뷰어 window.yWorldDH · 러너 state_block wmin(yeta_chat.sh) · 여기."""
+    공식 짝 3점(드리프트 금지): 뷰어 window.yWorldDH · 러너 state_block wmin(yeta_chat.sh) · 여기.
+    ⚠ 난입 정지(260728) = _FRZ_MS만큼 뺀 시각으로 계산 — 배속은 그대로다(멈춘 만큼 세계가 안 흐를 뿐)."""
     import time as _t
-    wt = (now_ts if now_ts is not None else _t.time()) / 60 * 6
+    wt = ((now_ts if now_ts is not None else _t.time()) - _FRZ_MS / 1000) / 60 * 6
     return f"w{int(wt // 1440)}", int(wt % 1440 // 60)
 
 

@@ -171,7 +171,9 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   #yetadlg.ydlg-out { animation:ydlgOut .18s var(--ease) both; }   /* 챗 닫기 = 페이드 퇴장(즉발 close 금지 · 북극성 260707) */
   @keyframes ydeadFade { to { opacity:1; } }
   #yetadlg.ydlg-dead::after { content:''; position:fixed; inset:0; z-index:var(--z-float); background:var(--bg); opacity:0; animation:ydeadFade .9s var(--ease) forwards; }   /* 유저 사망(운영자 260725 "대화창이 어두워지며 이탈") = 페이드 암전 후 이탈 — 색 = --bg 계승(새 색 0) · 퇴장 이징 = ydlgOut과 같은 --ease */
-  @media (prefers-reduced-motion:reduce){ #yetadlg.ydlg-dead::after { animation:none; opacity:1; } }   /* reduce = 즉시 암전(ydlg-in 결 계승) */
+  @media (prefers-reduced-motion:reduce){ #yetadlg.ydlg-dead::after { animation:none; opacity:1; } }
+  #yetadlg.ydlg-yank::after { content:''; position:fixed; inset:0; z-index:var(--z-float); background:var(--bg); opacity:0; animation:ydeadFade .62s var(--ease) forwards; }   /* 난입 종속 끌어당김(운영자 260728 "화면 움직이면서 거기로 다시 들어가져야함") — 위 .ydlg-dead 선언 100% 계승(값·커브·z 전부 동일), 다른 건 지속시간뿐(.9s = 죽음의 무게 / .62s = 회수는 빠르다)·클래스명(의미 축 분리) */
+  @media (prefers-reduced-motion:reduce){ #yetadlg.ydlg-yank::after { animation:none; opacity:1; } }   /* reduce = 즉시 암전(.ydlg-dead 가드 계승) */   /* reduce = 즉시 암전(ydlg-in 결 계승) */
   #yetadlg.ydlg-in::backdrop { animation:ydlgBd .3s var(--ease) both; }
   #yetadlg.ydlg-in .yeta-h { animation:ydlgUp .44s var(--ease) .05s both; }
   #yetadlg.ydlg-in .yeta-stage { animation:ydlgUp .46s var(--ease) .12s both; }
@@ -2580,7 +2582,6 @@ async function yLrAct(b) {   // 트레이 픽토 = 고정/나가기(구 .ylmenu 
   }, true);
 })();
 async function yOpenThread(t) {   // 행 탭 = 그 방으로(스레드 전환 후 챗)
-  if (yBargeBlock(t)) return;   // 난입 재실 = 목록에서 딴 방 진입 차단(260728)
   const c = yHost(t); if (!c) return;   // 단톡 = 호스트 기준(openYeta가 페르소나/단톡 분기 · 운영자 260712)
   if (yDead(c) && yPersona(t)) { yShowDetail(c.id); return; }   // 사망 = 방 대신 인물 카드(운영자 260725 "프로필 클릭하면 몇시에 죽었고 · 몇시간 부활 남았는지") — 종전엔 챗을 연 뒤 첫 렌더 게이트가 토스트+캐릭터 리스트로 튕겨 "왜 안 열려"만 남았다 · yEnterChat 사망 가드와 동형 · 단톡(g id) = 죽은 멤버가 이미 room에서 빠지므로 정상 진입
   navOpen('ydlg', yDlgClose);
@@ -2599,19 +2600,27 @@ function ySideRender() {
   }).join('');
   side.hidden = false;
 }
-function yBargeLock(t) {   // 난입 재실 잠금(운영자 260728 "껴들은 상황에선 그 단톡 말고 다른 채팅창을 못 가게") — 난입 등급 인물이 이 방에 앉아 있는 동안 = 자리를 못 뜬다.
-  const s = YTH(t); if (!s) return null;                       // 판정 창 = room 재실(barged 마커는 데뷔 첫 마디에 소거되므로 너무 짧다) · 내보내기(kick)·러너 이탈로 room에서 빠지면 즉시 자동 해제 = 영구잠금 없음
-  const id = ((s.room) || []).find(x => (yPersona(x) || {}).grade === 'barge');
-  return id ? (yPersona(id) || null) : null;                   // 반환 = 붙잡고 있는 인물(토스트 이름) · 없으면 null = 종전대로 자유 전환
+function yBargeRoom() {   // 난입자가 앉아 있는 방 id(운영자 260728 "다른 대화방으로는 진입해도 프리실라 방에 종속") — 전 스레드 스캔이라 유저가 어느 방으로 도망가든 이 판정은 그대로 걸린다.
+  const th = (YSESS || {}).threads || {};                        // 창 = room 재실(barged 마커는 데뷔 첫 마디에 소거돼 너무 짧다) · 내보내기·이탈로 room에서 빠지면 즉시 자동 해제 = 영구 종속 없음
+  for (const tid in th) { const r = (th[tid] || {}).room || []; for (let i = 0; i < r.length; i++) if ((yPersona(r[i]) || {}).grade === 'barge') return tid; }
+  return '';
 }
-function yBargeBlock(dest) {   // 이동 가드 — 목적지가 지금 보는 방이면 통과(같은 자리 재진입·재렌더는 이동이 아니다)
-  const cur = (YSESS || {}).cur || ''; if (dest && dest === cur) return false;
-  const p = yBargeLock(); if (!p) return false;
-  miniToast(`${p.name}${yJosa(p.name, '이', '가')} 아직 자리에 앉아 있어 — 지금은 다른 대화로 못 가`);   // 조사 = yJosa 정본 계승(260725 "이(가)" 병기 렌더 튐 봉합분) · 나가기·목록 보기는 그대로 열린다(앱 갇힘 0) · 막는 건 '다른 방 진입'뿐
-  return true;
+let _yYankOn = false;   // 끌어당김 진행 래치 — 연출 중 재진입·중복 예약 차단(_yKickOn 동형)
+async function yBargeYank(dest) {   // 되돌려 보내기 — 막지 않는다(진입은 된다). 잠깐 그 방을 보여준 뒤 화면이 움직이며 난입 방으로 도로 끌어온다.
+  if (_yYankOn) return; _yYankOn = true;
+  const p = yPersona(((YTH(dest) || {}).room || []).find(x => (yPersona(x) || {}).grade === 'barge')) || {};
+  const dlg = $('#yetadlg');
+  await new Promise(r => setTimeout(r, 620));                    // 딴 방이 실제로 보이는 시간 — 0이면 '못 들어간다'가 되고, 길면 도망친 게 성립한다(짧게 보여주고 회수)
+  if (yBargeRoom() !== dest) { _yYankOn = false; return; }       // 그 사이 내보내기·이탈로 풀렸으면 그냥 둔다(스테일 끌어당김 0)
+  if (dlg) dlg.classList.add('ydlg-yank');                       // 암전 = 사망 강제이동(.ydlg-dead) 선언 100% 계승 · 이름만 분리(의미 축이 다르다)
+  setTimeout(async () => {
+    try { await yOpenThread(dest); } catch {}
+    if (dlg) dlg.classList.remove('ydlg-yank');
+    _yYankOn = false;
+    miniToast(`${p.name || '그 사람'}${yJosa(p.name || '', '이', '가')} 아직 안 갔어 — 자리를 뜰 수 없다`);   // 조사 = yJosa 정본 계승(260725)
+  }, 620);
 }
 async function yThreadSwitch(c) {   // 스레드 전환 단일 함수(v3) — draw = 있으면 cur 전환·없으면 개설+오프닝 · 렌더 키드 전량 리셋(타 스레드 턴수 기준 오발 차단 · UX감사④4)
-  if (yBargeBlock(c && c.id)) return false;   // 난입 재실 = 좌레일 전환 차단(260728)
   if (yLockLabel(c) || yUnmet(c) || yEstranged(c)) { miniToast(yUnmet(c) ? '아직 만나지 못한 사람이야' : yEstranged(c) ? `${c.name}과는 한동안 뜸했어 — 다시 마주쳐야 해` : '아직 대화할 수 없는 상대야'); return false; }   // 잠금·미대면·소원 = 전환 차단(우회로 봉인)
   const aw = await yAway(c); _yFarOnly = false;   // 원거리 판정(운영자 260709) — yEnterChat 가드와 동형
   yRemoteSet(!!aw, aw);   // 원거리 배지 동기(260714)
@@ -3282,7 +3291,6 @@ function yRenderList() {   // 캐릭터 = SNS 리스트(.ypick-row 계승) + �
 function yShowList() { yRenderList(); yView('list'); }
 async function yEnterChat(c) {   // 리스트에서 캐릭터 선택 → 대화방 진입(draw)
   if (!c) return;
-  if (yBargeBlock(c.id)) { _yOpenGate = false; return; }   // 난입 재실 = 캐릭터 리스트·프로필·🎲·회신 경로 전부 차단(260728) — 사망 가드와 같은 자리(최우선) · _yOpenGate 해제 = 사망 가드 선례 계승
   if (yDead(c)) { _yOpenGate = false; miniToast(`${c.name}은(는) 죽었어 — 누가 신당에서 빌어주면 바로 돌아와`); yShowDetail(c.id); return; }   // 사망(운영자 260714 "락보다 한단계 위") = 최우선 게이트 · 그 시각 기준 24h 전면 차단 — 만료 = 자연 부활(같은 가드 자동 통과)
   if (yLockLabel(c)) { yShowDetail(c.id); return; }   // 잠금 캐릭터(카드 없음) = 진입 차단 → 미리보기만(READ ONLY · 운영자 260708)
   if (yUnmet(c)) { miniToast('아직 만나지 못한 사람이야 — 골목 어딘가에서 마주치면 열려'); yShowDetail(c.id); return; }   // 미대면 = 진입 차단(운영자 260709 "이벤트 발생해야 대화 가능") — 해금 = 난입·마주침 합석
@@ -4429,6 +4437,8 @@ async function yRevive(replyTo) {   // 부활 = 서버 me_dead 해제 단일 경
 }
 function yRender() {
   const _ct = (YSESS || {}).cur || '';
+  const _br = yBargeRoom();   // 난입 종속(운영자 260728) — 난입자가 앉은 방이 있는데 다른 방을 보고 있으면 되돌려 보낸다. 여기 = 방 전환 단일 깔때기라 좌레일·목록·프로필·🎲·회신·서버발 이동까지 경로 불문 전부 걸린다
+  if (_br && _ct && _br !== _ct && !_yYankOn) yBargeYank(_br);   // 막지 않는다 = 진입은 되고, 잠깐 보인 뒤 화면이 움직이며 끌려온다
   if (_yCurT !== _ct) {   // 방 정체 전환 감지(Q.06 평의회5) — 단톡 재합류·휘발 소멸로 서버가 cur을 옮기면 yThreadSwitch를 안 거쳐 키드가 이전 방 기준으로 남음 → 방 경계 리셋과 동형 처리(정규 전환 뒤 중복 실행은 무해·멱등)
     const _old = _yCurT; _yCurT = _ct;
     if (_old && _ct) {
@@ -4730,8 +4740,9 @@ try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(fun
   // ── 무음동 세계 시계(운영자 260715) — 실제 시각과 분리, 6배 가속(실제 4h = 무음동 하루 · 자는 새벽도 겪게). 러너 state_block wmin과 동일 공식(epoch분×6 mod 1440) = 저장 없이 동기. ──
   const YWORLD_RATE = 6;   // 6배(1배=현실, 24배=1시간 하루) — 조정 노브
   window.YWORLD_RATE = YWORLD_RATE;   // 배율 노출(260725) — 사망 경과·잔여를 무음동 단위로 적는 yWDur이 참조 · 노브 SSOT 유지(밖에서 재선언 금지)
-  window.yWorldMin = ts => Math.floor((ts || Date.now()) / 60000 * YWORLD_RATE) % 1440;   // 무음동 분(0~1439) · ts = 그 시각의 무음동 분(메시지 시각 환산 — 순수 함수라 저장·마이그레이션 0 · 운영자 260725)
-  window.yWorldDH = () => { const wt = Date.now() / 60000 * YWORLD_RATE; return { d: 'w' + Math.floor(wt / 1440), h: Math.floor(wt % 1440 / 60) }; };   // 무음동 (날짜열, 시각) — 동선·지도 시간축 SSOT(운영자 260716 지도 싱크: 지도·동선·근처·원거리 전부 세계 시각으로 통일 · 러너 yeta_place.world_dh와 동일 공식 = 드리프트 금지)
+  window.yWFrz = () => { const f = (YSESS || {}).wfz; if (!f || typeof f !== 'object') return 0; return (f.acc || 0) + (f.since ? Date.now() - f.since : 0); };   // 난입 정지 누적(현실 ms · 운영자 260728 "들어오면 그 순간 시간이 멈춘다") — 세션 top-level wfz{since,acc,by} 단일 SSOT(러너가 개시·게이트웨이 스위퍼가 해제) · 세션 로드 전/필드 없음 = 0 = 종전 동작
+  window.yWorldMin = ts => Math.floor(((ts || Date.now()) - yWFrz()) / 60000 * YWORLD_RATE) % 1440;   // 무음동 분(0~1439) · ts = 그 시각의 무음동 분(메시지 시각 환산 — 순수 함수라 저장·마이그레이션 0 · 운영자 260725)
+  window.yWorldDH = () => { const wt = (Date.now() - yWFrz()) / 60000 * YWORLD_RATE; return { d: 'w' + Math.floor(wt / 1440), h: Math.floor(wt % 1440 / 60) }; };   // 무음동 (날짜열, 시각) — 동선·지도 시간축 SSOT(운영자 260716 지도 싱크: 지도·동선·근처·원거리 전부 세계 시각으로 통일 · 러너 yeta_place.world_dh와 동일 공식 = 드리프트 금지)
   window.yWorldClock = ts => { const m = yWorldMin(ts), h = (m / 60) | 0, mm = m % 60, ap = h < 12 ? 'AM' : 'PM'; let hh = h % 12; if (!hh) hh = 12; return { h, txt: String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ' ' + ap, night: !ymIsDay(h) }; };   // night = ymIsDay 단일 정의 계승(Q.18 — 지도 배경·시계 픽토가 같은 경계)
   let _yWorldT = null, _yModeSig = null, _ywcT = 0;
   function yWorldTick() {   // 상단 시계 = 무음동 세계 시각 단독(운영자 260725 "여기 시간만 보이고 흐르게 · 다른 시간은 앱 안에 필요없음" — 구 현실 KST 풀포맷[Q.26] 폐지) · 낮/밤 픽토 = ymIsDay 단일 경계(지도 배경과 동기)

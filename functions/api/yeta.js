@@ -39,6 +39,7 @@ const KEY = 'sessions/main.json';
 const MAX_ROOM = 2;                 // 합석 정원(나 제외 캐릭터 수 · 운영자 260707 "한 명 정도는") — 3 확장은 실험 축
 const INVITE_TTL = 600000;          // 초대 pending 10분 — 러너 사망 시 스테일 마커가 다음 초대를 영구 차단하지 않게
 const RD_MAX = 1;                   // 리퍼 자동 재발사 상한(운영자 260725) — 러너 사망으로 증발한 답을 대신 한 번 눌러준다. 1인 이유 = 재발사분도 죽으면 원인이 일시장애가 아니라 계정·쿼터·코드 쪽이라 더 쏴봐야 쿼터만 태운다(뷰어 yAutoRetry 4회가 별도로 앞단에 있다)
+const FREEZE_MAX_MS = 10800000;   // 난입 정지 안전벨트(260728) — 현실 3시간. 넘기면 난입자를 강제 퇴장시키고 세계 시계를 재개(방치로 앱이 영구히 잠기는 것 차단 · 0으로 두면 무제한)
 const EXPIRE_MS = 86400000;         // 대화 휘발 TTL(운영자 260716 Q.06) — 무음동 6일 = 현실 24h(세계 시계 6배 가속: 실제 4h=하루 → 6일이 현실 하루와 정확히 맞아떨어져 7일[28h] 대신 채택)
 const josa = (s, a, b) => { const c = String(s || '').charCodeAt(String(s || '').length - 1); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 > 0 ? a : b; };   // 받침 → 을/은, 무받침 → 를/는
 const MODELS = new Set(['claude-opus-5', 'claude-sonnet-5', 'kimi-k3', 'kimi-k2.5']);   // §기틀 정확 ID — 집합 확장은 운영자 확인(kimi-k3 = 260719 · kimi-k2.5 = 260721 승인이나 문샷 /anthropic 게이트 404 실측 = 뷰어 미노출·배선 대기[Q.33] · 둘 다 러너 시크릿 KIMI_CODE_MUTE 경유)
@@ -181,8 +182,25 @@ export async function onRequestPost({ request, env }) {
     return true;
   };
   const sweepSess = (s) => {   // 휘발+재합류 스위퍼(운영자 260716 Q.06) — get 폴 단일 깔때기: 러너발 이탈(사망·거절·초대 만료)도 다음 폴에서 합류 = 러너/게이트웨이 이중 구현 0(드리프트 차단)
-    const now = Date.now(), cut = Math.floor((now - EXPIRE_MS) / 60000) * 60000;   // 분 양자화 — 폴 다발이 같은 경계를 보게 = 휘발 put ≤ 분당 1(폴 주기와 탈동조 · 평의회8④)
-    let ch = false;
+    const now = Date.now();
+    let ch2 = false;   // 정지 해제도 세션 변경분 — 아래 ch에 합류(put 유발)
+    // ── 난입 세계 시계 정지 해제(운영자 260728 "그게 끝나야 시간이 다시 흐르게") — 여기가 단일 깔때기다:
+    //    난입자가 room에서 빠지는 경로가 뭐였든(내보내기 op kick · 러너발 이탈 · 사망 · 방 소멸) 다음 폴에서 한 번에 회수된다 = 재개 누락 0.
+    //    판정에 로스터가 필요 없게 wfz.by(난입자 id)를 러너가 심어둔다 — 게이트웨이는 barge 등급을 모른다.
+    {
+      const f = s.wfz && typeof s.wfz === 'object' ? s.wfz : null;
+      if (f && f.since) {
+        const seated = Object.values(s.threads || {}).some(th => ((th || {}).room || []).includes(f.by));
+        const over = now - f.since > FREEZE_MAX_MS;   // 안전벨트 — 인사(<<LEAVE>>)도 내보내기도 없이 방치되면 세계가 영영 멈춘다(시간이 멈춰 있으니 시간 기반 탈출이 원리적으로 불가능). 상한을 넘기면 강제 회수.
+        if (!seated || over) {
+          if (over) for (const th of Object.values(s.threads || {})) { const r = (th || {}).room || []; if (r.includes(f.by)) { th.room = r.filter(x => x !== f.by); if ((th.barged || {}).id === f.by) th.barged = 0; } }   // 강제 퇴장 = op kick의 멤버 제거 계약과 동형(room 필터 + barged 마커 회수)
+          s.wfz = { since: 0, acc: (f.acc || 0) + (now - f.since), by: '' }; ch2 = true;
+        }
+      }
+    }
+    const frz = (s.wfz && (s.wfz.acc || 0) + (s.wfz.since ? now - s.wfz.since : 0)) || 0;   // 멈춰 있던 총 현실 ms
+    const cut = Math.floor((now - frz - EXPIRE_MS) / 60000) * 60000;   // 휘발도 같이 멈춘다(260728) — 세계는 정지했는데 기억만 증발하면 모순 · 정지분만큼 유예   // 분 양자화 — 폴 다발이 같은 경계를 보게 = 휘발 put ≤ 분당 1(폴 주기와 탈동조 · 평의회8④)
+    let ch = ch2;
     for (const [tid, th] of Object.entries(s.threads || {})) {   // ① 휘발 — 무음동 6일(=현실 24h) 지난 턴 롤링 제거(긴 대화도 머리부터 자연 소멸)
       if (th.pin || DEAD_ON(s, tid)) continue;   // 핀 = 대화까지 보존(고정의 의미 · 평의회6④) · 사망 두절 중 = 면제(부활 첫 답 "죽기 전 감정" 문맥 증발 차단 · 평의회6②)
       const t0 = th.turns || [], keep = t0.filter(x => x && (!x.ts || x.ts > cut));   // ts 없는 레거시 턴 = 휘발 제외(즉시 증발 오폭 차단 · 평의회7)
