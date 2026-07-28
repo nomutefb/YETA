@@ -767,6 +767,10 @@ export async function onRequestPost({ request, env }) {
       const room = Array.isArray(th.room) && th.room.length ? th.room : [t];
       if (!room.includes(persona)) return { abort: { error: '지금 방에 없는 사람이야' } };
       if (room.length <= 1) return { abort: { error: '마지막 한 명은 못 내보내' } };
+      // 난입 등급 = 내보내기 불가(운영자 260728) — 판정에 로스터가 필요 없게 wfz.by(난입자 id · 러너가 심는다)를 그대로 쓴다(위 sweepSess 해제 판정과 같은 축 · since>0 = 그 사람이 아직 앉아 있는 창).
+      // 뷰어가 pill·[보내기]를 안 그리는 것과 짝 — 여기가 최종 방어선(구버전 앱·직접 호출 우회 차단). 해제 = 인물의 <<LEAVE>> 퇴장 또는 정지 상한(FREEZE_MAX_MS) 강제 회수.
+      { const f = s.wfz && typeof s.wfz === 'object' ? s.wfz : null;
+        if (f && f.since && f.by === persona) return { abort: { error: '이 사람은 못 내보내 — 가는 시각도 저쪽이 정해' } }; }
       // ⚠️ 멤버 제거 계약(짝: yeta_chat.sh 사망 이탈) — room 필터 + last_sp/barged 인계를 반드시 동반. 한쪽만 고치면 헤더가 나간/죽은 인물을 가리킴(260714 사망 버그 재발원). 수정 시 사망 이탈도 같이.
       th.room = room.filter(id => id !== persona);
       if (th.last_sp === persona) th.last_sp = th.room[0];   // 주 화자가 나가면 남은 사람이 이어받음(v3 = last_sp)
