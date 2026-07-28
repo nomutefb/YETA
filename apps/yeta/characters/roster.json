@@ -771,7 +771,7 @@
   },
   {
     "id": "drusilla",
-    "name": "드루실라",
+    "name": "프리실라",
     "met": false,
     "locked": true,
     "grade": "barge",
@@ -782,7 +782,7 @@
     "color": "#ff5b4a",
     "bg": "characters/season/drusilla/main/base/drusilla_01.jpg",
     "season": "characters/season/drusilla/media.json",
-    "enter_line": "드루실라가 아무도 안 비켜준 자리에 이미 앉아 있다",
+    "enter_line": "프리실라가 아무도 안 비켜준 자리에 이미 앉아 있다",
     "avatar": "characters/season/drusilla/drusilla_face.webp",
     "desc": "부를 수 없는 사람 — 오는 시각은 언제나 저쪽이 정한다",
     "quote": "재밌는 얘기 중이었네. 나도 하나만 물어봐도 돼?",

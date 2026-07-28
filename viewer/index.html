@@ -248,6 +248,10 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yb { padding:10px 13px; border-radius:var(--r-l); font-size:var(--fs-body); line-height:var(--lh-base); white-space:pre-wrap; word-break:break-word; }
   .yb i.yn { font-style:italic; color:var(--fg-2); opacity:.75; }   /* *나레이션* = 이탤릭 톤다운("대화 폰트 이런식" — 제타 결) */
   .yb i.yjp { font-style:normal; color:var(--accent); opacity:.5; }   /* 일본어 원문 줄(운영자 260726 "일본어는 50% 불투명한 레몬강조색") — 바로 위 .yn 톤다운 패턴 계승(색만 강조색 · 원문은 강조가 아니라 병기라 이탤릭 해제) · 판정 = 가나 포함 줄(yFmt) */
+  /* 핵심 질문(운영자 260728) = 로더 shimmer 글자 스타일 투영 — 위 .nm-shim 선언 100% 계승(그라데이션 정지점·220% 배경·background-clip:text·nmshim 1.9s linear infinite 전부 동값 · 신규 값 0).
+     빼는 건 로더 전용 기하 3개뿐(font-size 13.5px·line-height 1·inline-flex = 로더 알약 정렬용 → 버블 본문 흐름에선 크기·행간을 본문에서 상속해야 줄이 안 튄다). 굵기는 로더와 같은 --fw-b. */
+  .yb .yq { font-weight:var(--fw-b); background:linear-gradient(100deg,var(--mut) 0%,var(--mut) 38%,var(--fg) 50%,var(--mut) 62%,var(--mut) 100%); background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:nmshim 1.9s linear infinite; }
+  @media (prefers-reduced-motion:reduce) { .yb .yq { animation:none; color:var(--fg); -webkit-text-fill-color:var(--fg); } }   /* 모션 줄이기 = 위 .nm-shim 가드 계승(정지 시 베이스색으로 착지 · 버블 본문은 --fg가 기본이라 그쪽으로) */
   .yb i.yjr { font-style:italic; font-size:.5em; color:var(--fg-2); opacity:.5; }   /* 일본어 읽는 발음 줄(운영자 260726 "아주 작게 거의 안보일듯한 컬러로 · 상황설명컬러 · 글자는 50% 작은 · 기울기 포함") — 색·이탤릭 = 바로 위 지문(.yn) 100% 계승(운영자가 지목한 "상황설명컬러" = .yn의 --fg-2) · 투명도는 .yn(.75)보다 낮은 .5 = 바로 위 .yjp 사다리 재사용("거의 안 보일") · 크기 .5em = 지시값(상대 기하라 토큰축 없음) · 판정 = 가나 줄 바로 다음 [대괄호] 줄(yFmt) */
   .yeta-noruby .yb i.yjr { display:none; }   /* 발음 끄기(설정 · 운영자 260726 "설정에 스위치를 달자 · 몰입도때문이니까 친밀도에 관계없이") — html 클래스 = 위 .yeta-reduce/.yeta-ptt 패턴 100% 계승 · 원문·번역은 그대로 남고 발음 줄만 사라진다(친밀도·해금과 무관 = 사람은 앱 밖에 있다) */
   .yb.ai.ov i.yjp, .yb.ai.ov i.yjr { color:inherit; }   /* 겹침 답장 = 전체 mut 통일(바로 아래 .yn 동형) */
@@ -259,6 +263,11 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yb.ai { background:var(--glass-2); border:1px solid var(--glass-line); border-top-left-radius:var(--r-s);
     backdrop-filter:blur(var(--blur-m)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-m)) saturate(1); box-shadow:inset 0 1px 0 var(--glass-line); }   /* 캐릭터 버블 = 글래스(.ycall-line 계승 · 배경 비침) */
   @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) { .yb.ai { background:var(--bubble-ai); } }   /* blur 미지원 = 불투명 폴백(--bubble-ai 배선 유지) */
+  /* 난입 인물 버블(운영자 260728 "빨간색+아주 살짝 보라 · 불투명 100%는 아니고 채색이 좀 많이 · 글래스 리버 유지") — .yb.ai 선언 100% 계승(blur·saturate·인셋·모서리 그대로 = 글래스 결 불변),
+     교체는 background/border 두 줄뿐. 색 = 난입 축 정본색 --danger(등급 플레이트 .ygrade.barge · 프로필 링 .yring-barge와 동일 축)에 --season(보라)을 16%만 섞은 계승 조합 = 신규 hex 0·:root 무변경.
+     알파 .26 = "채색 많이"(무채색 글래스 .yb.ai 대비 확연) + 배경 씬이 비치는 상한(가독 실측). border = .yb.fail의 rgba(var(--danger-rgb),.4) 선언 계승. */
+  .yb.ai.barge { background:color-mix(in srgb, color-mix(in srgb, var(--season) 16%, var(--danger)) 26%, transparent); border-color:rgba(var(--danger-rgb),.4); }
+  @supports not (background:color-mix(in srgb, red, blue)) { .yb.ai.barge { background:rgba(var(--danger-rgb),.24); } }   /* color-mix 미지원 = 보라 없는 붉은 채색만(글래스 결·알파 동일 = 결손 최소) */
   .yb.me { align-self:flex-end; max-width:78%; background:var(--bubble-me); color:var(--bg); border-top-right-radius:var(--r-s); }
   .yb.me i.yn { color:rgba(0,0,0,.6); }
   .yb.me i.yjp, .yb.me i.yjr { color:rgba(0,0,0,.6); }   /* 내 버블 = 라임 바탕이라 강조색이 안 보인다(바로 위 .yn me 가드 100% 계승 — 유저가 일본어를 칠 때) */
@@ -1717,6 +1726,7 @@ const yAmbOn = () => {   // 주변 사건(kind=amb) 표시 여부 = **L1 설정�
 };
 const yApi = (op, extra) => fetch('api/yeta', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op, ...(extra || {}) }) }).then(r => r.json());
 const yFmt = t => esc(t)   // *지문* → 이탤릭 + 줄바꿈 정규화(운영자 260712 — 지문 = 항상 제 줄 시작 · 지문 뒤 대사 = 빈 줄 하나 · .yb pre-wrap가 \n 렌더 · 과거 히스토리도 표시 시점 일괄 정규화)
+  .replace(/《([^》\n]{1,200})》/g, '<b class="yq">$1</b>')   // 《핵심 질문》 → 빛 스윕 글자(운영자 260728 "로딩·제작·페이지 전환 문구에 적용된 빛 지나가는 모션 · 그 포인트 글자 스타일을 핵심 질문에 투영") — 카드가 질문을 《》로 감싼다. 겹화살괄호 = 한국어 대사에 안 쓰이는 기호(오탐 0) · 표시에선 벗겨진다(마커일 뿐 대사가 아니다 = 일본어 [대괄호] 선례 계승) · 마커를 안 붙인 답은 이 치환이 안 걸리고 평문 그대로 = fail-soft. ⚠ 다른 치환보다 **먼저** = *지문*·가나 치환이 삽입한 태그 내부를 다시 훑지 않게
   .replace(/[ \t]*\*([^*\n]{1,200}?)\*[ \t]*/g, '\n<i class="yn">$1</i>\n\n')
   .replace(/^[ \t]*(\([^()\n]{2,300}\))[ \t]*$/gm, '<i class="yn">$1</i>')   // (괄호) 단독 줄 = 유저 연출 지문(운영자 260717 '#' 합성 메시지) — 괄호 표기 유지 · *지문*과 같은 .yn 결(이탤릭·톤다운)
   .replace(/^(?!<i )([^\n]*[\u3040-\u30FF][^\n]*)\n\[([^\]\n]{1,300})\]$/gm, '<i class="yjp" lang="ja">$1</i>\n<i class="yjr">$2</i>')   // 3단(원문/발음/번역)의 가운데 = 읽는 발음(운영자 260726 "일본어 아래에 아주 작게 읽는 발음까지 · 그래야 이입이 잘될듯"). 판정 = **가나 줄 바로 다음 + [대괄호]** 2중 조건 — 둘 다 만족해야 발음으로 본다(대괄호만 보면 유저가 친 `[ ]`가 오탐 · 위치만 보면 번역줄을 발음으로 오독). 대괄호는 표시에서 벗겨진다(마커일 뿐 대사가 아니다). 규칙을 안 지킨 카드는 이 치환이 안 걸리고 종전 2단 그대로 = 회귀 0. ⚠ 아래 yjp 치환보다 **먼저** 와야 한다(뒤면 첫 줄이 이미 `<i `로 감싸져 매칭이 죽는다)
@@ -2570,6 +2580,7 @@ async function yLrAct(b) {   // 트레이 픽토 = 고정/나가기(구 .ylmenu 
   }, true);
 })();
 async function yOpenThread(t) {   // 행 탭 = 그 방으로(스레드 전환 후 챗)
+  if (yBargeBlock(t)) return;   // 난입 재실 = 목록에서 딴 방 진입 차단(260728)
   const c = yHost(t); if (!c) return;   // 단톡 = 호스트 기준(openYeta가 페르소나/단톡 분기 · 운영자 260712)
   if (yDead(c) && yPersona(t)) { yShowDetail(c.id); return; }   // 사망 = 방 대신 인물 카드(운영자 260725 "프로필 클릭하면 몇시에 죽었고 · 몇시간 부활 남았는지") — 종전엔 챗을 연 뒤 첫 렌더 게이트가 토스트+캐릭터 리스트로 튕겨 "왜 안 열려"만 남았다 · yEnterChat 사망 가드와 동형 · 단톡(g id) = 죽은 멤버가 이미 room에서 빠지므로 정상 진입
   navOpen('ydlg', yDlgClose);
@@ -2588,7 +2599,19 @@ function ySideRender() {
   }).join('');
   side.hidden = false;
 }
+function yBargeLock(t) {   // 난입 재실 잠금(운영자 260728 "껴들은 상황에선 그 단톡 말고 다른 채팅창을 못 가게") — 난입 등급 인물이 이 방에 앉아 있는 동안 = 자리를 못 뜬다.
+  const s = YTH(t); if (!s) return null;                       // 판정 창 = room 재실(barged 마커는 데뷔 첫 마디에 소거되므로 너무 짧다) · 내보내기(kick)·러너 이탈로 room에서 빠지면 즉시 자동 해제 = 영구잠금 없음
+  const id = ((s.room) || []).find(x => (yPersona(x) || {}).grade === 'barge');
+  return id ? (yPersona(id) || null) : null;                   // 반환 = 붙잡고 있는 인물(토스트 이름) · 없으면 null = 종전대로 자유 전환
+}
+function yBargeBlock(dest) {   // 이동 가드 — 목적지가 지금 보는 방이면 통과(같은 자리 재진입·재렌더는 이동이 아니다)
+  const cur = (YSESS || {}).cur || ''; if (dest && dest === cur) return false;
+  const p = yBargeLock(); if (!p) return false;
+  miniToast(`${p.name}${yJosa(p.name, '이', '가')} 아직 자리에 앉아 있어 — 지금은 다른 대화로 못 가`);   // 조사 = yJosa 정본 계승(260725 "이(가)" 병기 렌더 튐 봉합분) · 나가기·목록 보기는 그대로 열린다(앱 갇힘 0) · 막는 건 '다른 방 진입'뿐
+  return true;
+}
 async function yThreadSwitch(c) {   // 스레드 전환 단일 함수(v3) — draw = 있으면 cur 전환·없으면 개설+오프닝 · 렌더 키드 전량 리셋(타 스레드 턴수 기준 오발 차단 · UX감사④4)
+  if (yBargeBlock(c && c.id)) return false;   // 난입 재실 = 좌레일 전환 차단(260728)
   if (yLockLabel(c) || yUnmet(c) || yEstranged(c)) { miniToast(yUnmet(c) ? '아직 만나지 못한 사람이야' : yEstranged(c) ? `${c.name}과는 한동안 뜸했어 — 다시 마주쳐야 해` : '아직 대화할 수 없는 상대야'); return false; }   // 잠금·미대면·소원 = 전환 차단(우회로 봉인)
   const aw = await yAway(c); _yFarOnly = false;   // 원거리 판정(운영자 260709) — yEnterChat 가드와 동형
   yRemoteSet(!!aw, aw);   // 원거리 배지 동기(260714)
@@ -3259,6 +3282,7 @@ function yRenderList() {   // 캐릭터 = SNS 리스트(.ypick-row 계승) + �
 function yShowList() { yRenderList(); yView('list'); }
 async function yEnterChat(c) {   // 리스트에서 캐릭터 선택 → 대화방 진입(draw)
   if (!c) return;
+  if (yBargeBlock(c.id)) { _yOpenGate = false; return; }   // 난입 재실 = 캐릭터 리스트·프로필·🎲·회신 경로 전부 차단(260728) — 사망 가드와 같은 자리(최우선) · _yOpenGate 해제 = 사망 가드 선례 계승
   if (yDead(c)) { _yOpenGate = false; miniToast(`${c.name}은(는) 죽었어 — 누가 신당에서 빌어주면 바로 돌아와`); yShowDetail(c.id); return; }   // 사망(운영자 260714 "락보다 한단계 위") = 최우선 게이트 · 그 시각 기준 24h 전면 차단 — 만료 = 자연 부활(같은 가드 자동 통과)
   if (yLockLabel(c)) { yShowDetail(c.id); return; }   // 잠금 캐릭터(카드 없음) = 진입 차단 → 미리보기만(READ ONLY · 운영자 260708)
   if (yUnmet(c)) { miniToast('아직 만나지 못한 사람이야 — 골목 어딘가에서 마주치면 열려'); yShowDetail(c.id); return; }   // 미대면 = 진입 차단(운영자 260709 "이벤트 발생해야 대화 가능") — 해금 = 난입·마주침 합석
@@ -4170,7 +4194,7 @@ function yGreet(c) {   // 첫인사 = 변주 풀 랜덤 픽(운영자 260707 "�
 function yModeOn(c) {   // 변신 모드 게이트 판정 — 배지(yJobBadge)·모드 프사(yCAva)·모드 배경(yCBg) 공용 SSOT(운영자 260717 Q "도깨비 모드 = 프사 자동 교체" · 판정 이원화 = 배지/프사 엇갈림 드리프트라 1함수)
   const m = c && c.mode;
   if (!m || !m.nm) return false;
-  if (Array.isArray(m.with) && m.with.length) {   // 동석 게이트(운영자 260726 드루실라 "고죠와 단톡에 있을때 또는 대화할때 난입" = 흉내 모드) — 시간대축과 직교, 둘 다 있으면 AND
+  if (Array.isArray(m.with) && m.with.length) {   // 동석 게이트(운영자 260726 프리실라 "고죠와 단톡에 있을때 또는 대화할때 난입" = 흉내 모드) — 시간대축과 직교, 둘 다 있으면 AND
     const rm = (YTH() || {}).room || [];          // 지금 열린 방의 정원(목록 행 = 방 미상 → 흉내 미발동 = 안전측)
     if (!m.with.some(id => rm.includes(id))) return false;
   }
@@ -4222,7 +4246,7 @@ function yAiMsg(t, fresh, cont) {   // 캐릭터 메시지 = 아바타 + 이름 
   let body = yFmt(t.text), est = '', ecls = '';
   if (emo) { const w = yEmoWrap(body); if (w.n) { body = w.h; ecls = ` yemo${Y_EMO_HI[emo] ? ' yemo-hi' : ''}`; est = ` style="--emo-s:${Math.min(Y_EMO_HI[emo] ? 22 : 14, Math.max(6, Math.round(1100 / w.n)))}ms"`; } }   // 스태거 간격 = 기본 14/22ms(beui TextCascade 25ms 결 · 격정이 더 또박또박), 장문은 총 지연 ≤1.1s로 압축
   else if (t.dc) { const w = yEmoWrap(body, t.dc); if (dmo) { body = w.h; if (w.n) { ecls = ` yemo${Y_EMO_HI[dmo] ? ' yemo-hi' : ''}`; est = ` style="--emo-s:${Math.min(Y_EMO_HI[dmo] ? 22 : 14, Math.max(6, Math.round(700 / w.n)))}ms"`; } } }   // dc 있으면 무드 없어도 커서는 전진(뒤늦게 온 무드가 본 글자를 재리졸브 못 하게) · 델타 총 지연 ≤0.7s = 다음 발행(MIN_GAP 1.2s) 전 정착
-  return `<div class="ymsg${fresh ? ' in' : ''}${cont ? ' cont' : ''}" data-k="a|${esc(t.persona || '')}|${cont ? 1 : 0}|${t.ov ? 1 : 0}|${yModeOn(p) ? 1 : 0}|${esc(t.text || '')}">${yAva(p)}<span class="ycol"><span class="yname">${esc(p.name || '')}</span><span class="ybrow"><div class="yb ai${t.ov ? ' ov' : ''}${ecls}"${est}>${body}</div>${tm ? `<time class="ytime">${tm}</time>` : ''}</span></span></div>`;   // data-k = 번호표(persona·그룹핑·ov·**모드**·텍스트) — time 제외 = 낙관/확정 재사용(분경계 무관) · 모드 자리(운영자 260725 "도깨비 모드면 도깨비 프사") = 변신 경계에서 번호표가 달라져야 이미 그린 말풍선의 프사가 교체된다(없으면 yReconcile이 옛 노드를 영구 재사용 = 프사 고착) · emo 마크업은 번호표 무관(같은 턴 재렌더 = 노드 재사용이라 애니 1회 보장)
+  return `<div class="ymsg${fresh ? ' in' : ''}${cont ? ' cont' : ''}" data-k="a|${esc(t.persona || '')}|${cont ? 1 : 0}|${t.ov ? 1 : 0}|${yModeOn(p) ? 1 : 0}|${esc(t.text || '')}">${yAva(p)}<span class="ycol"><span class="yname">${esc(p.name || '')}</span><span class="ybrow"><div class="yb ai${t.ov ? ' ov' : ''}${p.grade === 'barge' ? ' barge' : ''}${ecls}"${est}>${body}</div>${tm ? `<time class="ytime">${tm}</time>` : ''}</span></span></div>`;   // data-k = 번호표(persona·그룹핑·ov·**모드**·텍스트) — time 제외 = 낙관/확정 재사용(분경계 무관) · 모드 자리(운영자 260725 "도깨비 모드면 도깨비 프사") = 변신 경계에서 번호표가 달라져야 이미 그린 말풍선의 프사가 교체된다(없으면 yReconcile이 옛 노드를 영구 재사용 = 프사 고착) · emo 마크업은 번호표 무관(같은 턴 재렌더 = 노드 재사용이라 애니 1회 보장)
 }
 let _yLastN = -1, _yTypOn = false, _yFailOn = false, _yTypHold = 0, _yTypT = null;   // 촤르륵 키드 + 타이핑 지연 홀드(읽는 시간 · 운영자 260707)
 let _yCurT = '';   // 마지막 렌더한 방 id — 서버발 cur 이동(단톡 재합류·휘발 소멸 · Q.06) 감지용(yThreadSwitch 미경유 전환도 방 경계로 취급)

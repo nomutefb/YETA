@@ -275,11 +275,11 @@ SEASONS = {
     },
     "drusilla": {
         # 고죠 흉내 = 변신 모드(gojo 폴더) · mode_dir 지정 → viewer 모드 게이트가 경로로 필터.
-        # ⚠ 루시(도깨비)의 시간대 게이트와 축이 다르다 — 드루실라 mode는 roster mode.with=["gojo"](동석 게이트)라
+        # ⚠ 루시(도깨비)의 시간대 게이트와 축이 다르다 — 프리실라 mode는 roster mode.with=["gojo"](동석 게이트)라
         #    "고죠와 같은 방일 때만" gojo/ 폴더가 열린다(yModeOn 동석축 · 260726).
         "modes": {"main": ["base"], "gojo": ["base"]},
         "mode_dir": "gojo",
-        "comment": ("시즌 감정 미디어 manifest(드루실라) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+        "comment": ("시즌 감정 미디어 manifest(프리실라) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
                     "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
                     "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. "
                     "mode_dir=고죠 흉내 폴더 — viewer 모드 게이트(yModeOn 동석축 roster mode.with=[\"gojo\"])가 활성 시 이 폴더만, 평시 제외로 필터. "

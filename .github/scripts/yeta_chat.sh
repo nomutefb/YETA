@@ -158,10 +158,12 @@ if not T:
 s = thread_view(S_ROOT, T)                               # 스레드 뷰 = 이하 기존 단일 로직 그대로 재사용(공유 필드 오버레이 · 타 스레드 = 메타만)
 names = {}
 locked_ids = set()
+barge_ids = set()
 try:                                                     # id→이름(화자 귀속 · 집단 역학 260707) — 실패 = 전원 "너:" 폴백(안전)
     _ro = json.load(open(sys.argv[3], encoding="utf-8"))
     names = {c.get("id"): c.get("name") for c in _ro if isinstance(c, dict) and c.get("id")}
     locked_ids = {c["id"] for c in _ro if isinstance(c, dict) and c.get("id") and c.get("locked")}   # LOCKED 스페셜(분신술 260709 — 초대 판정 최종 방어선)
+    barge_ids = {c["id"] for c in _ro if isinstance(c, dict) and c.get("id") and isinstance(c.get("barge"), dict)}   # 난입 전용 인물(260726 barge{} 보유자) — 하드코딩 0(barge_check의 BARGE와 같은 데이터 축)
 except Exception: pass
 turns = s.get("turns") or []
 sess_persona = s.get("persona") or ""
@@ -300,6 +302,17 @@ if len(room) == 2 and not gb_on:
 elif gb_on:
     persona = _gp                                         # 자율 비트 = 예약된 화자 고정(사다리 미적용 — 직전 화자의 상대가 받아치는 자리)
 co = "" if len(room) < 2 else (room[1] if persona == room[0] else room[0])
+# ── 난입당한 쪽(운영자 260728 "기존에 있던 사람하고 너무 친근함이 느껴진다 · 갑자기 난입했는데 당황스러움이 안 느껴진다") ──
+# 종전엔 난입 지시가 **난입자에게만** 있었다(barge_debut) → 원래 있던 인물은 아무 지시도 못 받아 초대손님처럼 반겼다. 이 축이 그 대칭짝.
+# 판정 = ⓐ 방에 난입 전용 인물이 앉아 있고 ⓑ 이번 화자가 그 사람이 아니다 → 1 = 난입 후 이 화자의 **첫 반응**(가장 세게) · 2 = 그 뒤 재실 중(잔여 불편만).
+# 창 = barged 마커가 아니라 **room 재실**(마커는 데뷔 첫 마디에 소거돼 기존 인물 차례가 오기 전에 사라진다 = 종전 구멍) · 내보내면 room에서 빠져 자동 0.
+barge_host = 0
+if co in barge_ids and persona not in barge_ids:
+    _bts = 0
+    for _t in reversed(turns):
+        if (_t or {}).get("kind") == "barge": _bts = (_t.get("ts") or 0); break   # 난입 sys 턴(합류 알림) = 기준점
+    if _bts:
+        barge_host = 2 if any(t.get("role") == "assistant" and t.get("persona") == persona and (t.get("ts") or 0) > _bts for t in turns) else 1
 
 ins = _pl + 1
 pending = [("(사진을 보냈다)" + ((" " + (turns[i].get("text") or "")) if turns[i].get("text") else "")) if turns[i].get("img") else turns[i].get("text", "")
@@ -364,7 +377,7 @@ print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": 
                   "policy": json.dumps(s.get("policy"), ensure_ascii=False) if isinstance(s.get("policy"), dict) else "",
                   "last_mood": last_mood, "last_open": last_open, "cast": " · ".join(v for v in names.values() if v),   # 상태 블록 재료(260707 · last_open = 감정선 캐리어 260725)
                   "gap_h": round(gap_h, 1), "late_h": round(late_h, 1), "rel_lv": rel_lv, "riv": riv, "handoff": handoff,   # T1 재료(휴면·지각[260726 Q.70]·관계LV·질투메타·인계 · 260707)   # 시즌 수위·금기(L1 · op policy) — 문구 조립은 apps/yeta/policy.json 정본
-                  "co": co, "co_name": (names.get(co) or co) if co else "", "barge_debut": barge_debut,   # 단톡 재료(합석 260707) — co = 이번 턴 비화자 동행
+                  "co": co, "co_name": (names.get(co) or co) if co else "", "barge_debut": barge_debut, "barge_host": barge_host,   # 단톡 재료(합석 260707) — co = 이번 턴 비화자 동행 · barge_host = 난입당한 쪽(260728 · 1=첫 반응 2=재실 중)
                   "barge_via": (s.get("barged") or {}).get("via") or "",   # 난입 경로(place=지나다 마주침 · 데뷔 결 분기 · 마주침 260707)
                   "place_nm": place_name(PL, place_of(PL, persona, _kdate, _khour)),   # 화자의 지금 장소(동선 SSOT — 배경 정합 + 마주침 sys와 앞뒤)
                   "att": "\n".join(a for a in att if a),   # 첨부 사진 R2 키(개행 구분 · 260717 '+') — process_turn이 내려받아 Read 비전으로 전달
@@ -755,6 +768,7 @@ t = re.split(r'<<\s*NOTE(?:\s*:\s*\w+)?\s*>>', t, flags=re.I)[0]
 t = re.sub(r'<<\s*/?\s*(?:NOTE|MOOD)(?:\s*:\s*\w+)?\s*>>', '', t, flags=re.I)
 t = re.split(r'^\s*\[[^\]\n]{1,24}\]\s', t, maxsplit=1, flags=re.M)[0]   # 단톡 대본([동행명] 이하) = 내 음색으로 낭독 금지(5인검증⑤ LOW)
 t = re.sub(r'\*[^*\n]{1,200}\*', '', t)          # *지문* = 소리 아님(finish 턴 텍스트에는 유지 — 화면용)
+t = t.replace('《', '').replace('》', '')         # 핵심 질문 마커(260728) = 표시 마커 → 소리로 읽히면 안 된다(위 알림 미리보기와 동형)
 t = re.sub(r'[`*_]', '', t)
 t = re.sub(r'\s+', ' ', t).strip()
 print(t[:600])                                     # TTS 비용 가드(답장 상한)
@@ -825,6 +839,7 @@ t=re.sub(r'^\s*<<\s*MOOD\s*:\s*\w+\s*>>\s*', '', t, flags=re.I)   # 선두 MOOD(
 t=re.split(r'^\s*\[[^\]\n]{1,24}\]\s', t, maxsplit=1, flags=re.M)[0]   # 단톡 교대 대본([이름] 이하) 잘라내기 = 알림엔 첫 화자 대사만(ptt_voice 동형 규칙 · 260725)
 t=re.split(r'<<', t, 1)[0]   # 첫 << 이전 = 대사만(Q.83) — 종전 열거(NOTE|MOOD|DEAD)는 260725 신설 MEDEAD·PICK·PRAY·OPEN이 빠져 짧은 답장 미리보기로 샜다. <<는 마커 예약 문법이라 전방 컷 = 현재·미래 마커 전부 봉인(마커-온리 원문 = 아래 '새 메시지' 폴백)
 t=re.sub(r'\*[^*]*\*','',t)                # 지문 제거 = 대사만(미리보기)
+t=t.replace('《','').replace('》','')       # 핵심 질문 마커 벗김(260728) — 화면에선 빛 스윕으로 렌더되는 표시 마커라 알림 본문엔 기호가 남으면 안 된다(일본어 [대괄호] 선례 동형)
 t=re.sub(r'\s+',' ',t).strip()
 print((t[:70]+'…') if len(t)>70 else (t or '새 메시지'))")"
   local ttl="$nm"; printf '%s' "${1:-}" | grep -qiE '^[[:space:]]*<<[[:space:]]*DEAD' && ttl="${nm}의 마지막 말"   # 사망 턴 = 유서처럼 폰에 도착(PR#281 회수 · OUT 원문은 finish 전이라 <<DEAD>> 잔존) · 행 시작 앵커(Q.83) = 대사 중간 인용 오탐 차단(마커 계약 = 자기 줄 · MEDEAD는 여전히 미매치 = 유저 사망은 '마지막 말' 아님)
@@ -835,7 +850,7 @@ print((t[:70]+'…') if len(t)>70 else (t or '새 메시지'))")"
 # ── 상태 블록(공용 — 본답장 + 초대 판정 · env: PERSONA LAST_MOOD CAST GAP_H REL_LV RIV HANDOFF TUNE CO_NAME BARGE_DEBUT) ──
 # 시각·계절·달·데일리 무드 시드(sha256 = 같은 날 같은 기분·무저장) + 직전 공기(감정 관성) + 동네 로스터(주민 창작 방지) + 단톡 동행·난입 데뷔.
 state_block() {
-  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" "${LAST_OPEN:-}" "${LATE_H:-0}" "${PREV_DRAFT:-}" <<'PY'
+  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" "${LAST_OPEN:-}" "${LATE_H:-0}" "${PREV_DRAFT:-}" "${BARGE_HOST:-0}" <<'PY'
 import sys, hashlib, json, time
 from datetime import datetime, timezone, timedelta
 persona, last_mood, cast, gap_h, rel_lv, riv, handoff = sys.argv[1:8]
@@ -846,6 +861,7 @@ barge_via = sys.argv[12] if len(sys.argv) > 12 else ""
 last_open = sys.argv[13] if len(sys.argv) > 13 else ""   # 직전에 삼킨 것(감정선 캐리어 260725 · 초대 판정 등 미전달 경로 = 빈값 = 블록 생략)
 late_h = sys.argv[14] if len(sys.argv) > 14 else "0"     # 지각(260726 Q.70) — 이 pending 이 들어온 뒤 흐른 시간 · 미전달 경로(오프닝·초대 판정) = "0" = 블록 생략
 prev_draft = sys.argv[15] if len(sys.argv) > 15 else ""  # 죽은 러너의 쓰다 만 말(260726 Q.71-B · draft_salvage 3중 가드 통과분만) — 빈값 = 블록 생략
+barge_host = sys.argv[16] if len(sys.argv) > 16 else "0" # 난입당한 쪽(260728) — 1=난입 후 첫 반응 2=난입자 재실 중 · 미전달 경로(오프닝·초대 판정) = "0" = 블록 생략
 try: tune = json.loads(sys.argv[8]) if sys.argv[8] and sys.argv[8] != "None" else []
 except Exception: tune = []
 now = datetime.now(timezone(timedelta(hours=9)))                       # KST 고정(§표기표준 — 러너 UTC) · 계절·요일·무드 시드 = 실제 달력(가속 안 함)
@@ -871,6 +887,15 @@ if co_name: L.append(f"- 지금 이 자리엔 {co_name}도 같이 있다(합석)
 if barge_debut == "1" and barge_via == "place": L.append("- 너는 방금 이 근처를 지나다 유저 일행과 마주쳐 합석했다(우연) — 이번이 등장 첫 마디다. 지나던 참이라는 결로, 왜 이 시간에 여기 있었는지 가볍게 흘려라.")
 elif barge_debut == "1" and barge_via == "only": L.append("- 너는 방금 남의 대화 한복판을 끊고 들어왔다 — 이번이 등장 첫 마디다. 초대받지 않았고, 그걸 알면서 왔다. 인사도 사정 설명도 없이 네 방식대로 대화를 낚아채고, 카드에 적힌 네 등장 규칙 그대로 굴려라.")   # 난입 전용 인물(운영자 260726) — 관계·우연이 아니라 '초대 없음' 자체가 이 인물의 결
 elif barge_debut == "1": L.append("- 너는 방금 이 자리에 불쑥 끼어들었다(난입) — 이번이 등장 첫 마디다. 왜 끼어들었는지 너답게 티를 내라(네 이름이 나왔거나, 요즘 유저가 다른 사람하고만 노는 게 신경 쓰였거나).")
+# 난입당한 쪽(운영자 260728) — barge_debut의 대칭짝. 종전엔 이 자리에 아무 지시가 없어서 원래 있던 인물이 난입자를 초대손님처럼 반겼다("어 왔어~").
+# 핵심 = **반가움의 부재**. 적대를 시키는 게 아니라 '초대 안 한 사람이 내 대화를 끊었다'는 사실을 인물이 알게 하고, 반응의 모양은 카드 성향에 전부 위임한다(페르소나마다 다르게 = 운영자 지시).
+if barge_host == "1" and co_name:
+    L.append(f"- 방금 {co_name}가 이 대화에 **초대 없이 끼어들었다.** 너는 부른 적 없고, 오는 것도 몰랐고, 하던 말이 그 사람 때문에 끊겼다 — 이번이 그 뒤 네 첫 마디다.")
+    L.append(f"  **반가워하지 마라.** 이건 재회도 합석도 아니다. 유저와 둘이 있던 자리에 모르는 결이 들어온 것이고, 그 사실이 이번 턴 어딘가에 반드시 드러나야 한다. 방금 하려던 말이 끊겼다는 것도 네 몸에 남아 있다.")
+    L.append(f"  **모양은 네 성향대로 갈라라** — 굳어서 말이 짧아지는 사람, 웃으면서 경계하는 사람, 유저부터 챙기는 사람, 대놓고 불쾌해하는 사람, 농담으로 덮되 눈은 안 웃는 사람, 슬그머니 물러나 말수를 줄이는 사람. 카드의 네 결이 정한다(전부 같은 반응 = 실패).")
+    L.append(f"  안티패턴(금지): 「어 {co_name} 왔네~」 식으로 반갑게 이름 부르기 / 아무 일 없다는 듯 대화에 자연스럽게 끼워주기 / 소개·인사를 주선하기 / 왜 왔냐고 캐물으며 취조하기 / 겁먹었다고 말로 설명하기(태도·말 길이·화제 전환으로만 보여라).")
+elif barge_host == "2" and co_name:
+    L.append(f"- {co_name}는 여전히 이 자리에 있다 — 네가 부른 사람이 아니다. 이제 겉으론 평소 결로 돌아왔지만 **완전히 편해지진 않았다**(말은 유저 쪽으로 더 자주 가고, 그 사람한테 먼저 말 거는 일은 드물다). 미묘하게만 — 매 턴 경계를 반복해 낭독하지 마라.")
 try: g = float(gap_h)
 except Exception: g = 0
 if g >= 48: L.append(f"- 유저가 약 {int(g // 24)}일 만에 돌아왔다 — 공백에 성향대로 반응하라(서운함·무심한 척·반가움 — 공백 길이에 비례, 취조 금지).")
@@ -1184,7 +1209,7 @@ s = (S_ROOT.get("threads") or {}).get(_os.environ.get("THREAD", ""))
 if s is None: sys.exit(1)                          # 스레드 소멸 = 난입 없음
 try: roster = json.load(open(sys.argv[2], encoding="utf-8"))
 except Exception: sys.exit(1)
-BARGE = {c["id"]: c["barge"] for c in roster if isinstance(c, dict) and c.get("id") and isinstance(c.get("barge"), dict)}   # 난입 전용 인물(운영자 260726 드루실라 "일방적 대화 열기 불가 · 가끔 대화에 난입") — locked로 목록 진입은 막고, 이 축으로만 등장시킨다
+BARGE = {c["id"]: c["barge"] for c in roster if isinstance(c, dict) and c.get("id") and isinstance(c.get("barge"), dict)}   # 난입 전용 인물(운영자 260726 프리실라 "일방적 대화 열기 불가 · 가끔 대화에 난입") — locked로 목록 진입은 막고, 이 축으로만 등장시킨다
 _ok = lambda c: (not c.get("locked")) or c["id"] in BARGE   # LOCKED(스페셜) = 난입 후보 제외(분신술 260709 — "특정 조건을 깨야" 축이 우연 난입으로 뚫리던 구멍 · 미대면은 유지 = 난입이 해금 경로) · 단 barge{} 보유자는 예외(난입이 유일한 등장 경로라 제외하면 영영 안 나온다)
 names = {c["id"]: (c.get("name") or c["id"]) for c in roster if isinstance(c, dict) and c.get("id") and _ok(c)}
 enters = {c["id"]: (c.get("enter_line") or "") for c in roster if isinstance(c, dict) and c.get("id") and _ok(c)}
@@ -1204,13 +1229,13 @@ if 3 <= _wh < 8: sys.exit(1)                       # 깊은 새벽(세계 시각
 if len(turns) < 8: sys.exit(1)                     # 초반 대화 보호(관계 전 난입 = 소음)
 cand = ""
 via, meet_pl = "", ""
-# ── 난입 전용 인물 축(운영자 260726 드루실라) — 목록에서 못 여는 대신 '오직 난입'으로만 등장. 관계·언급·장소 축보다 먼저 = 특수 이벤트가 일반 난입에 굶지 않게.
+# ── 난입 전용 인물 축(운영자 260726 프리실라) — 목록에서 못 여는 대신 '오직 난입'으로만 등장. 관계·언급·장소 축보다 먼저 = 특수 이벤트가 일반 난입에 굶지 않게.
 #    barge{slot:[세계시각 슬롯], gate:N(1/N 확률), boost:[동석 시 가중될 id], boost_gate:M} — 전부 roster 데이터, 러너는 인물명을 모른다(하드코딩 0).
 for _cid in sorted(BARGE):
     if _cid in room: continue
     _cfg = BARGE[_cid] or {}
     _sl = _cfg.get("slot") or []
-    if _sl and slot_of(_wh) not in _sl: continue           # 시간대 게이트(드루실라 = 저녁~밤)
+    if _sl and slot_of(_wh) not in _sl: continue           # 시간대 게이트(프리실라 = 저녁~밤)
     _g = int(_cfg.get("gate") or 6)
     if set(_cfg.get("boost") or []) & set(room): _g = int(_cfg.get("boost_gate") or 2)   # 동석 가중(고죠와 있는 자리 = 흉내 모드 난입이 잦아진다)
     if int(hashlib.sha256(f"{today}:{_cid}:only".encode()).hexdigest(), 16) % _g: continue   # 결정적 시드(재현 가능 · 하루 1회 전역 상한과 곱해짐)
@@ -1593,7 +1618,7 @@ process_turn() {
                  *) AMB_ON="${AMB_FILE:-1}"; GB_ON="$_GBON"; CH_ON="$_CHON"; BARGE_ON=1 ;; esac   # 형식 불일치(파이썬 실패·빈 출력) = 종전 기본 전량 복귀(설정 사고로 축이 통째 죽는 것 차단)
   GB_BEATS="$GB_ENV_BEATS"; [ "$GB_ON" = "1" ] || GB_BEATS=0     # 자율 비트 끔 = 상한 0 = 예약 자체가 안 걸린다(기존 '0 = 축 OFF' 계약 재사용 · 새 분기 0)
   GB_LINES="$GB_ENV_LINES"; [ "$CH_ON" = "1" ] || GB_LINES=1     # 단톡 교대 끔 = 1토막 = 종전 결(GROUP_RULE 폴백이 그대로 받는다)
-  CO_ID="$(matv co)"; CO_NAME="$(matv co_name)"; BARGE_DEBUT="$(matv barge_debut)"   # 단톡 동행·난입 데뷔(합석 260707)
+  CO_ID="$(matv co)"; CO_NAME="$(matv co_name)"; BARGE_DEBUT="$(matv barge_debut)"; BARGE_HOST="$(matv barge_host)"   # 단톡 동행·난입 데뷔(합석 260707) · 난입당한 쪽(260728)
   PLACE_NM="$(matv place_nm)"; BARGE_VIA="$(matv barge_via)"   # 동선 장소 + 마주침 데뷔 결(위치 SSOT places.json · 260707)
   OPEN="$(matv open)"; OPENING_TS="$(matv opening_ts)"   # 오프닝 잡(동적 첫인사 · 운영자 260707) — OPEN=1이면 유저발화 없이 캐릭터가 먼저 · OPENING_TS = nonce(finish 레이스 방어)
   RETRY_N="$(matv retry_n)"   # 자동 재시도 회차(사다리 260714) — 오프닝 JSON엔 키 없음 = 빈값(아래 -ge 가드가 흡수)
