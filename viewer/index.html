@@ -113,7 +113,6 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .nm-toast .tg { flex:none; font-size:10.5px; font-weight:800; color:#fff; background:linear-gradient(135deg,#ff3b3b,#ff7a2f); border-radius:999px; padding:2px 8px; box-shadow:0 0 8px rgba(255,60,50,.5); }
   .nm-toast b { color:#ffd9cf; }
   .nm-toast .ft-msg { flex:1; min-width:0; }   /* 본문이 남는 폭 채움 → ✓·↻ 버튼 우측 정렬(운영자 260622) */
-  .nm-toast.pri .ft-msg { font-family:'MiraendaekyoVBatang', var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); font-weight:var(--fw-b); }   /* 프리실라가 부르는 소리(운영자 260728) = 명조 볼드 — 앱 안내(고딕)와 서체로 갈린다 · 폴백 = 상속(로드 실패해도 문구·레이아웃 불변) · 수식 클래스라 다른 토스트는 무영향 */
   .nm-toast .ft-act { flex:none; width:28px; height:28px; }   /* ✓확인·↻재시도·↗이동 = 28px(게이지 버튼 .sc-got/.unmerge-go 계승 높이) → 하단 토스트 액션 버튼 높이 정렬(운영자 260702). .sbtn 기틀(눌림 scale·.ok 플래시·ic-spin) 계승 */
   .nm-toast .ft-act svg { width:14px; height:14px; }   /* Q_ARR(원문·크기 미지정)·CHECK 아이콘 크기 통일 = 14(토스트 기존 유지) */
   @keyframes msgUnfold { from { opacity:0; transform:scale(.82) translateY(-8px); } to { opacity:1; transform:none; } }
@@ -259,8 +258,8 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
      빼는 건 로더 전용 기하 3개뿐(font-size 13.5px·line-height 1·inline-flex = 로더 알약 정렬용 → 버블 본문 흐름에선 크기·행간을 본문에서 상속해야 줄이 안 튄다). 굵기는 로더와 같은 --fw-b. */
   .yb .yq { font-weight:var(--fw-b); background:linear-gradient(100deg,var(--mut) 0%,var(--mut) 38%,var(--fg) 50%,var(--mut) 62%,var(--mut) 100%); background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:nmshim 1.9s linear infinite; }
   @media (prefers-reduced-motion:reduce) { .yb .yq { animation:none; color:var(--fg); -webkit-text-fill-color:var(--fg); } }   /* 모션 줄이기 = 위 .nm-shim 가드 계승(정지 시 베이스색으로 착지 · 버블 본문은 --fg가 기본이라 그쪽으로) */
-  .yb.ai:has(.yq) { font-family:'MiraendaekyoVBatang', var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); font-weight:var(--fw-b); }   /* 핵심 질문이 든 말풍선 = 명조 볼드(운영자 260728 "해당 말풍선에도 이 폰트") — 버블 **전체**에 걸어 질문 앞뒤 대사까지 한 덩어리로 결이 갈린다(질문만 갈면 한 버블 안에서 서체가 두 번 바뀌어 지저분) · 폴백 = 상속(로드 실패해도 레이아웃 불변 · font-display:swap과 짝) */
-  @supports not selector(:has(*)) { .yb.ai.barge { font-family:'MiraendaekyoVBatang', var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); } }   /* :has 미지원(구 사파리) = 난입 버블 전체로 폴백 — 질문 버블을 못 집느니 난입 전체가 명조인 게 의도에 가깝다 */
+  .yb.ai:has(.yq) { font-family:'MiraendaekyoVBatang', var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); font-weight:var(--fw-b); letter-spacing:-.025em; }   /* 핵심 질문이 든 말풍선 = 명조 볼드(운영자 260728 "해당 말풍선에도 이 폰트") — 버블 **전체**에 걸어 질문 앞뒤 대사까지 한 덩어리로 결이 갈린다(질문만 갈면 한 버블 안에서 서체가 두 번 바뀌어 지저분) · 폴백 = 상속(로드 실패해도 레이아웃 불변 · font-display:swap과 짝) */
+  @supports not selector(:has(*)) { .yb.ai.barge { font-family:'MiraendaekyoVBatang', var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); letter-spacing:-.025em; } }   /* :has 미지원(구 사파리) = 난입 버블 전체로 폴백 — 질문 버블을 못 집느니 난입 전체가 명조인 게 의도에 가깝다 */
   .yb i.yjr { font-style:italic; font-size:.5em; color:var(--fg-2); opacity:.5; }   /* 일본어 읽는 발음 줄(운영자 260726 "아주 작게 거의 안보일듯한 컬러로 · 상황설명컬러 · 글자는 50% 작은 · 기울기 포함") — 색·이탤릭 = 바로 위 지문(.yn) 100% 계승(운영자가 지목한 "상황설명컬러" = .yn의 --fg-2) · 투명도는 .yn(.75)보다 낮은 .5 = 바로 위 .yjp 사다리 재사용("거의 안 보일") · 크기 .5em = 지시값(상대 기하라 토큰축 없음) · 판정 = 가나 줄 바로 다음 [대괄호] 줄(yFmt) */
   .yeta-noruby .yb i.yjr { display:none; }   /* 발음 끄기(설정 · 운영자 260726 "설정에 스위치를 달자 · 몰입도때문이니까 친밀도에 관계없이") — html 클래스 = 위 .yeta-reduce/.yeta-ptt 패턴 100% 계승 · 원문·번역은 그대로 남고 발음 줄만 사라진다(친밀도·해금과 무관 = 사람은 앱 밖에 있다) */
   .yb.ai.ov i.yjp, .yb.ai.ov i.yjr { color:inherit; }   /* 겹침 답장 = 전체 mut 통일(바로 아래 .yn 동형) */
@@ -1697,10 +1696,9 @@ document.addEventListener('scroll', e => {   // 끝단 도달 인디케이터(�
 }, { capture: true, passive: true });
 /* ── miniToast(L6800-6807) ── */
 let _miniToastT;
-function miniToast(msg, cls) {   // 범용 미니 토스트(nm-toast 계승·초록·자동 사라짐). 병합 완료 안내 등. cls = 선택 수식 클래스(260728 — 미지정 = 종전과 완전 동일)
+function miniToast(msg) {   // 범용 미니 토스트(nm-toast 계승·초록·자동 사라짐). 병합 완료 안내 등.
   let t = document.getElementById('nmMiniToast');
   if (!t) { t = document.createElement('div'); t.id = 'nmMiniToast'; t.className = 'nm-toast mini'; document.body.appendChild(t); t.addEventListener('click', () => t.classList.remove('show')); }
-  t.className = 'nm-toast mini' + (cls ? ' ' + cls : '');   // 매 호출 재설정 = 앞선 호출의 수식 클래스가 눌러붙지 않게(노드 재사용 구조라 필수)
   t.innerHTML = `<span class="tg">${CHECK_SVG}</span><span class="ft-msg">${esc(msg)}</span>`;
   t.classList.add('show');
   clearTimeout(_miniToastT); _miniToastT = setTimeout(() => t.classList.remove('show'), 2800);
@@ -2617,7 +2615,6 @@ function yBargeRoom() {   // 난입자가 앉아 있는 방 id(운영자 260728 
 let _yYankOn = false;   // 끌어당김 진행 래치 — 연출 중 재진입·중복 예약 차단(_yKickOn 동형)
 async function yBargeYank(dest) {   // 되돌려 보내기 — 막지 않는다(진입은 된다). 잠깐 그 방을 보여준 뒤 화면이 움직이며 난입 방으로 도로 끌어온다.
   if (_yYankOn) return; _yYankOn = true;
-  const p = yPersona(((YTH(dest) || {}).room || []).find(x => (yPersona(x) || {}).grade === 'barge')) || {};
   const dlg = $('#yetadlg');
   await new Promise(r => setTimeout(r, 620));                    // 딴 방이 실제로 보이는 시간 — 0이면 '못 들어간다'가 되고, 길면 도망친 게 성립한다(짧게 보여주고 회수)
   if (yBargeRoom() !== dest) { _yYankOn = false; return; }       // 그 사이 내보내기·이탈로 풀렸으면 그냥 둔다(스테일 끌어당김 0)
@@ -2626,7 +2623,7 @@ async function yBargeYank(dest) {   // 되돌려 보내기 — 막지 않는다(
     try { await yOpenThread(dest); } catch {}
     if (dlg) dlg.classList.remove('ydlg-yank');
     _yYankOn = false;
-    miniToast(`${p.name || '그 사람'}${yJosa(p.name || '', '이', '가')} 아직 안 갔어 — 자리를 뜰 수 없다`, 'pri');   // 조사 = yJosa 정본 계승(260725) · 'pri' = 프리실라 결(명조 볼드 · 운영자 260728 "다른 방에 갔을때 오라고 하는 메세지의 폰트") — 이 말은 앱의 안내가 아니라 **그 사람이 부르는 소리**라 서체가 갈려야 한다
+    // 안내 토스트 없음(운영자 260728 "프리실라가 하면서 안내문자하지말고 · 경고문구는 필없을듯") — 끌려왔다는 사실은 암전+회수 연출이 이미 다 말한다. 말로 한 번 더 설명하면 세계가 아니라 앱이 말을 거는 게 된다(몰입 차단). 문구가 사라져 난입자 조회(yPersona)도 함께 제거 = 죽은 변수 0
   }, 620);
 }
 async function yThreadSwitch(c) {   // 스레드 전환 단일 함수(v3) — draw = 있으면 cur 전환·없으면 개설+오프닝 · 렌더 키드 전량 리셋(타 스레드 턴수 기준 오발 차단 · UX감사④4)
