@@ -2212,7 +2212,8 @@ async function ySettingRender() {
   const l2rows = ySortChars(YCHARS).filter(c => !yLockLabel(c) && !yUnmet(c)).map(c => `<button type="button" class="ypick-row" data-l2="${esc(c.id)}">${yAva(c)}<span class="yp-col"><span class="yp-name">${esc(c.name)}</span><span class="yp-tag">${esc(c.tagline || '')}</span></span></button>`).join('');   // L2 = 열린(만난) 캐릭터 픽커 — 탭 = 그 캐릭터 성향 창(운영자 260709 "별도로 만들지 말고 기존 설정창으로")
   // 라벨 = "L0/L1/L2 설정" 단순화 + 세부 설명 전면 폐지 + 내부 위계 통일 = 전 계층 .ypol-grp/.ypol-gh 골격(운영자 260709 "글래스 박스 구분 · 그 안 위계 동일")
   const l1html = `<div class="ypol-grp"><div class="ypol-gh"><b>${esc(L1.label || '시즌 — 수위·금기')}</b><i${admin ? '' : ' class="lk"'}>${admin ? '관리자' : YLOCK_SVG + ' 관리자 전용'}</i></div>${(L1.axes || []).map(axRow).join('')}</div>`
-    + ((L1.switches || []).length ? `<div class="ypol-grp"><div class="ypol-gh"><b>${esc(L1.switches_label || '연출 — 자동 개입')}</b><i${admin ? '' : ' class="lk"'}>${admin ? '관리자' : YLOCK_SVG + ' 관리자 전용'}</i></div>${(L1.switches || []).map(axRow).join('')}</div>` : '');   // 연출 축(운영자 260727 「껐다 킬 수 있는 설정은 모두 UI에」) — 수위(axes)와 성격이 달라 박스만 가르고, 행·칩·저장 경로는 axes 것을 100% 계승(새 컴포넌트·새 스타일 0) · 라벨도 policy.json 정본(뷰어 하드코딩 0)
+    + ((L1.switches || []).length ? `<div class="ypol-grp"><div class="ypol-gh"><b>${esc(L1.switches_label || '연출 — 자동 개입')}</b><i${admin ? '' : ' class="lk"'}>${admin ? '관리자' : YLOCK_SVG + ' 관리자 전용'}</i></div>${(L1.switches || []).map(axRow).join('')}</div>` : '')
+    + ((L1.world || []).length ? `<div class="ypol-grp"><div class="ypol-gh"><b>${esc(L1.world_label || '세계 — 시간 흐름')}</b><i${admin ? '' : ' class="lk"'}>${admin ? '관리자' : YLOCK_SVG + ' 관리자 전용'}</i></div>${(L1.world || []).map(axRow).join('')}</div>` : '');   // 세계 시간(운영자 260728 "배속 설정값에서 조정 · L1급") — 바로 위 switches 그룹 선언 100% 계승(행·칩·저장 경로 전부 axes 것 · 새 컴포넌트·스타일 0) · 라벨도 policy.json 정본(뷰어 하드코딩 0) · vals 매핑은 렌더가 아니라 소비처(yWRate)가 읽는다   // 연출 축(운영자 260727 「껐다 킬 수 있는 설정은 모두 UI에」) — 수위(axes)와 성격이 달라 박스만 가르고, 행·칩·저장 경로는 axes 것을 100% 계승(새 컴포넌트·새 스타일 0) · 라벨도 policy.json 정본(뷰어 하드코딩 0)
   const l2html = `<div class="ypol-grp"><div class="ypol-gh"><b>${esc(L2.label || '캐릭터 — 성향')}</b><i>게스트 가능</i></div>${l2rows || '<div class="ypol-lock"><span>아직 열린 캐릭터가 없어</span></div>'}</div>`;
   box.innerHTML =
     roleTag
@@ -3430,7 +3431,7 @@ function yRevived(id) {   // 귀환 흔적(운영자 260725) — 러너가 부�
   return (v && typeof v === 'object' && (v.at || 0) + YMEREV_MS / 2 > Date.now()) ? v : null;   // 보존창 = 러너 REVD_KEEP_MS(무음동 24h = 하한 48h의 절반)와 같은 값
 }
 function yWDur(ms) {   // 현실 경과(ms) → 무음동 경과 문구 — 배율 = yWorldStart의 YWORLD_RATE 단일 정의(window 노출분 참조 = 드리프트 0 · 폴백 6)
-  const m = Math.max(0, Math.floor(ms / 60000 * (window.YWORLD_RATE || 6)));
+  const m = Math.max(0, Math.floor(ms / 60000 * (window.yWRate ? yWRate() : (window.yWORLD_RATE || 6))));   // 배율 = yWRate() 단일 조회(260728 L1 노브) — 옛 window.YWORLD_RATE 상수 직참조는 정책 변경을 못 따라가 "무음동 며칠 전"이 실제 세계 시각과 어긋났다
   const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60);
   return d ? `${d}일 ${h}시간` : h ? `${h}시간 ${m % 60}분` : `${m % 60}분`;
 }
@@ -4741,8 +4742,20 @@ try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(fun
   const YWORLD_RATE = 6;   // 6배(1배=현실, 24배=1시간 하루) — 조정 노브
   window.YWORLD_RATE = YWORLD_RATE;   // 배율 노출(260725) — 사망 경과·잔여를 무음동 단위로 적는 yWDur이 참조 · 노브 SSOT 유지(밖에서 재선언 금지)
   window.yWFrz = () => { const f = (YSESS || {}).wfz; if (!f || typeof f !== 'object') return 0; return (f.acc || 0) + (f.since ? Date.now() - f.since : 0); };   // 난입 정지 누적(현실 ms · 운영자 260728 "들어오면 그 순간 시간이 멈춘다") — 세션 top-level wfz{since,acc,by} 단일 SSOT(러너가 개시·게이트웨이 스위퍼가 해제) · 세션 로드 전/필드 없음 = 0 = 종전 동작
-  window.yWorldMin = ts => Math.floor(((ts || Date.now()) - yWFrz()) / 60000 * YWORLD_RATE) % 1440;   // 무음동 분(0~1439) · ts = 그 시각의 무음동 분(메시지 시각 환산 — 순수 함수라 저장·마이그레이션 0 · 운영자 260725)
-  window.yWorldDH = () => { const wt = (Date.now() - yWFrz()) / 60000 * YWORLD_RATE; return { d: 'w' + Math.floor(wt / 1440), h: Math.floor(wt % 1440 / 60) }; };   // 무음동 (날짜열, 시각) — 동선·지도 시간축 SSOT(운영자 260716 지도 싱크: 지도·동선·근처·원거리 전부 세계 시각으로 통일 · 러너 yeta_place.world_dh와 동일 공식 = 드리프트 금지)
+  window.yWRate = () => {   // 세계 배속 = L1 정책값 우선(운영자 260728 "설정값에서 조정 · L1급") — policy.json L1.world[wrate]의 opts 인덱스를 vals로 매핑 · 미로드·미설정·깨짐 = 폴백 YWORLD_RATE(종전 6 = 회귀 0)
+    try {
+      const e = (((YPOLDEF || {}).L1 || {}).world || []).find(x => x && x.key === 'wrate');
+      if (!e || !Array.isArray(e.vals)) return YWORLD_RATE;
+      const v = e.vals[Number.isInteger(_ypolCur[e.key]) ? _ypolCur[e.key] : e.default];   // 저장은 종전대로 enum 정수(인덱스) · 실값 해석은 여기 한 곳
+      return (typeof v === 'number' && v > 0) ? v : YWORLD_RATE;
+    } catch { return YWORLD_RATE; }
+  };
+  window.yWTotal = ts => {   // 무음동 총 분(정수 아님) — 배속 축의 단일 계산점(아래 두 함수가 이걸 자른다 · 러너 yeta_place.world_dh와 동일 공식 = 드리프트 금지)
+    const eff = (ts || Date.now()) - yWFrz(), a = (YSESS || {}).wrb;   // eff = 정지(wfz) 제외 유효 현실 경과 · wrb = 배속 변경 앵커
+    return (a && typeof a === 'object' && a.eff) ? (a.wmin || 0) + (eff - a.eff) / 60000 * yWRate() : eff / 60000 * yWRate();
+  };   // ⚠ 앵커 없이 배속만 갈면 wt = eff × rate 라 세계 날짜가 통째로 점프한다 → 게이트웨이 op policy SET이 변경 순간 {eff, wmin}을 찍고 여기서 그 뒤만 새 배속으로 적산 · 앵커 없는 구세션 = 종전 공식 그대로(회귀 0)
+  window.yWorldMin = ts => Math.floor(yWTotal(ts)) % 1440;   // 무음동 분(0~1439) · ts = 그 시각의 무음동 분(메시지 시각 환산 — 순수 함수라 저장·마이그레이션 0 · 운영자 260725)
+  window.yWorldDH = () => { const wt = yWTotal(); return { d: 'w' + Math.floor(wt / 1440), h: Math.floor(wt % 1440 / 60) }; };   // 무음동 (날짜열, 시각) — 동선·지도 시간축 SSOT(운영자 260716 지도 싱크: 지도·동선·근처·원거리 전부 세계 시각으로 통일)
   window.yWorldClock = ts => { const m = yWorldMin(ts), h = (m / 60) | 0, mm = m % 60, ap = h < 12 ? 'AM' : 'PM'; let hh = h % 12; if (!hh) hh = 12; return { h, txt: String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ' ' + ap, night: !ymIsDay(h) }; };   // night = ymIsDay 단일 정의 계승(Q.18 — 지도 배경·시계 픽토가 같은 경계)
   let _yWorldT = null, _yModeSig = null, _ywcT = 0;
   function yWorldTick() {   // 상단 시계 = 무음동 세계 시각 단독(운영자 260725 "여기 시간만 보이고 흐르게 · 다른 시간은 앱 안에 필요없음" — 구 현실 KST 풀포맷[Q.26] 폐지) · 낮/밤 픽토 = ymIsDay 단일 경계(지도 배경과 동기)

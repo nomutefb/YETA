@@ -473,9 +473,29 @@ export async function onRequestPost({ request, env }) {
       for (const [k, v] of Object.entries(raw)) {
         if (Object.keys(p).length >= 16) break;   // 축 캡 도달 = 조기 종료(초대형 페이로드 전량 순회 컷 · 기틀검증 보안 권고) — 8→16(260727 L1 switches 4축 신설로 정확히 8이 되어 여유 0이던 것 · 키 화이트폼·0~2 클램프는 그대로라 확장해도 주입 표면 불변)
         if (!/^[a-z]{1,16}$/.test(k)) continue;
-        p[k] = Math.max(0, Math.min(2, Math.round(Number(v) || 0)));
+        p[k] = Math.max(0, Math.min(7, Math.round(Number(v) || 0)));   // enum 인덱스 상한 2→7(260728) — 옛 상한은 3지선다(axes)·2지선다(switches) 기준이라 opts 5개인 세계 배속의 12배·24배가 조용히 2로 잘렸다. 방어의 핵심은 "정수만"이고 범위 밖 인덱스는 소비처가 vals 미존재 = 폴백으로 흡수(뷰어 yWRate·러너 rate_of 양쪽 가드 있음)
       }
-      const { abort } = await casPut(s => { s.policy = p; });
+      // ── 세계 배속 변경 앵커(운영자 260728 L1) — 배속만 갈면 세계시각 = 유효경과 × 배속이라 무음동 날짜가 통째로 점프한다.
+      //    바꾸기 **직전** 배속으로 현재 세계 총분을 계산해 {eff, wmin}으로 박아두고, 소비처 3점이 앵커 이후만 새 배속으로 적산한다(뷰어 yWTotal · 러너 wmin · yeta_place.world_dh).
+      let wrb = null;
+      if ((sess.policy || {}).wrate !== p.wrate) {
+        let vals = null;
+        try {   // vals 매핑 = policy.json 정본(게이트웨이 하드코딩 0) · 실패 = 앵커 생략(배속도 폴백 6로 해석되니 점프 없음)
+          const d = await fetch(`https://raw.githubusercontent.com/${REPO}/main/apps/yeta/policy.json`, { headers: { 'user-agent': 'nomute-viewer' }, cf: { cacheTtl: 60, cacheEverything: true } });
+          if (d.ok) { const j = await d.json(); const ax = (((j || {}).L1 || {}).world || []).find(x => x && x.key === 'wrate'); if (ax && Array.isArray(ax.vals)) vals = ax; }
+        } catch {}
+        if (vals) {
+          const rateOf = i => { const v = vals.vals[Number.isInteger(i) ? i : vals.default]; return (typeof v === 'number' && v > 0) ? v : 6; };
+          const now = Date.now();
+          const f = sess.wfz && typeof sess.wfz === 'object' ? sess.wfz : null;
+          const eff = now - ((f ? (f.acc || 0) + (f.since ? now - f.since : 0) : 0));   // 정지(wfz) 제외 유효 현실 경과 — 뷰어 yWFrz·러너 frz_ms와 동일 정의
+          const a0 = sess.wrb && typeof sess.wrb === 'object' && sess.wrb.eff ? sess.wrb : null;   // 직전 앵커(있으면 그 위에 누적)
+          const prev = rateOf((sess.policy || {}).wrate);
+          const wmin = a0 ? (a0.wmin || 0) + (eff - a0.eff) / 60000 * prev : eff / 60000 * prev;
+          wrb = { eff, wmin };   // 이 순간의 세계시각을 그대로 이어받는다 = 전환 전후 연속(점프 0)
+        }
+      }
+      const { abort } = await casPut(s => { s.policy = p; if (wrb) s.wrb = wrb; });
       if (abort) return json(abort, 409);
       return json({ ok: true, p });
     }
