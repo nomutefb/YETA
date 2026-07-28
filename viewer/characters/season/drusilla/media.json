@@ -1,5 +1,5 @@
 {
- "_comment": "시즌 감정 미디어 manifest(드루실라) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. mode_dir=고죠 흉내 폴더 — viewer 모드 게이트(yModeOn 동석축 roster mode.with=[\"gojo\"])가 활성 시 이 폴더만, 평시 제외로 필터. 정본=viewer/characters/season/drusilla/{main,gojo}/<감정>/.",
+ "_comment": "시즌 감정 미디어 manifest(프리실라) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. mode_dir=고죠 흉내 폴더 — viewer 모드 게이트(yModeOn 동석축 roster mode.with=[\"gojo\"])가 활성 시 이 폴더만, 평시 제외로 필터. 정본=viewer/characters/season/drusilla/{main,gojo}/<감정>/.",
  "base": [
   "characters/season/drusilla/main/base/drusilla_01.jpg",
   "characters/season/drusilla/gojo/base/drusilla_g01.jpg"
