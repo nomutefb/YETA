@@ -163,7 +163,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   /* ── yeta 말벗 제타(#yetadlg · 260703 v2 제타결) — 랜덤 페르소나 톡방. 다크 창(--yeta-bg) + 캐릭터 버블(--bubble-ai·아바타+이름) + 내 버블 제타 보라(--bubble-me) + *나레이션* 이탤릭. 페르소나 색 = --yeta-ac(JS가 roster color 주입 = "캐릭터 따라 톤" 운영자 컨셉) ── */
   /* 챗 = 풀스크린 글래스모피즘(운영자 260705 "팝업 아닌 화면 전체 + 딱 저 글래스 느낌"). base = 스포티파이 블랙 솔리드(--bg) · 유일 배경 = .ybg 씬 레이어(캐릭터 시그니처→장소). 초록 계단 포스터(yeta-bg.webp)는 대화창에서 폐기(운영자 260707 "계단 오버레이 폐기 — 대화창 한정") = 로드 틈 비침·오버레이 0. 표면(헤더·버블·입력·인트로)은 글래스로 .ybg 씬이 비쳐 글래스모피즘 성립. */
   #yetadlg { width:100vw; height:100dvh; max-width:100vw; max-height:100dvh; margin:0; padding:0; border:none; border-radius:0; box-shadow:none;
-    background:var(--bg); color:var(--fg); overflow:hidden; --yeta-ac:var(--bubble-me);   /* 챗 base = 스포티파이 블랙 솔리드(계단 포스터 폐기 260707) · 실제 배경 = .ybg(#ybgA/B) 씬 레이어 · .ybg 자체 스크림(yPaintBg 딤 = 캐릭터 아트 .28/.34 · 환경 씬 .18/.26 — 운영자 260729 "반으로")이 가독 담당 */
+    background:var(--bg); color:var(--fg); overflow:hidden; --yeta-ac:var(--bubble-me);   /* 챗 base = 스포티파이 블랙 솔리드(계단 포스터 폐기 260707) · 실제 배경 = .ybg(#ybgA/B) 씬 레이어 · .ybg 자체 스크림(yPaintBg 딤 = 설정 「화면 어둡기」 3단 YDIM_SET · 기본 = 캐릭터 아트 .28/.34 · 환경 씬 .18/.26 — 운영자 260729 "반으로")이 가독 담당 */
     backdrop-filter:none; -webkit-backdrop-filter:none; }   /* 풀스크린 배경 이미지 = 글래스 표면이 비칠 base(불투명 --yeta-bg 폐지) */
   #yetadlg::backdrop { background:rgba(0,0,0,.6); }
   /* 챗 진입 촤르륵(운영자 260706 "메뉴2→3 넘어가는 게 어색 → 자연스럽게 촤르륵 나오게") — showModal 즉발 팝 제거. 원샷 .ydlg-in(openYeta가 열 때만 부여·내부 뷰 토글 재트리거 방지) = 창·배경 페이드 → 헤더·무대·입력 계단 부상(ypickIn/ynavRise 결 계승·--ease). reduce=즉시. */
@@ -227,14 +227,14 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ys-nm { font-size:var(--fs-xs); font-weight:var(--fw-x); max-width:88px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .ys-last { font-size:10px; color:var(--mut); max-width:88px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }   /* 최근대화 스니펫(5음절대 + …) */
   .ybg { position:absolute; inset:0; background-size:cover; background-position:center; opacity:0; transition:opacity .6s var(--ease); pointer-events:none; }
-  .ybg.on { opacity:.92; }   /* 시그니처/무드 배경 전경화(운영자 260707 항목9 "배경 항상 나오게" — 은은한 .32 반려) · 가독 = yPaintBg 딤 그라데(캐릭터 아트 .28/.34 · 환경 씬 .18/.26 — 운영자 260729 "반으로")가 스크림 담당 · 버블은 글래스라 위에 뜸 */
+  .ybg.on { opacity:.92; }   /* 시그니처/무드 배경 전경화(운영자 260707 항목9 "배경 항상 나오게" — 은은한 .32 반려) · 가독 = yPaintBg 딤 그라데(설정 「화면 어둡기」 3단 · 기본 = 캐릭터 아트 .28/.34 · 환경 씬 .18/.26 — 운영자 260729 "반으로")가 스크림 담당 · 버블은 글래스라 위에 뜸 */
   .ybg { transition:opacity .6s var(--ease), background-position-x .05s linear; }
   /* 애도 모드(PR#281 회수 · 운영자 260714) — 사망 24h 동안 그 방 배경이 흑백으로 식는다. 부활 = 클래스 해제로 자연 색복귀.
      filter(grayscale·brightness) = 토큰 없는 축(§🎨 raw 허용) · 신규 색 토큰 0. 260725 사망 표기(프사 채색 소거)와 층이 다르다 — 저건 인물, 이건 방. */
   #yetadlg.ymourn .ybg { filter:grayscale(1) brightness(.6); transition:filter 1.2s var(--ease), opacity .6s var(--ease); }
   #yetadlg.ymourn .ybg video { filter:grayscale(1) brightness(.32); }   /* 클립도 탈색(밝기 .32 = 시즌 스크림 유지) */   /* 좌우 드래그 패닝(항목5) = position-x 즉응 */
-  .ybg video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:brightness(.72); }
-  .ybg.wdim video { filter:brightness(.36); }   /* 윈터 클립 = 블라인드 +50% 등가(운영자 260726 "윈터꺼는 배경 앞에 블라인드 투명도 50% 더" — .72 × 50% 추가 딤 = .36 · 이미지 스크림 .64/.67과 짝 = yPaintBg) */   /* 시즌 클립 = muted 상시(운영자 "소리만 빼고") · 밝기 필터 = 이미지 스크림 등가(딤 d1의 여집합 = 1−.28 = .72 · 운영자 260729 "반으로"로 .45→.72 동반 = 이미지·클립 같은 밝기로 보이게) · 시즌 표시농도 = 전경화 .92 상속 */
+  .ybg video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:brightness(var(--ydim-br,.72)); }   /* --ydim-br = 설정 「화면 어둡기」 3단(yDimApply가 #yetadlg에 주입 · 폴백 .72 = 기본단 = 딤 .28의 여집합) */
+  .ybg.wdim video { filter:brightness(calc(var(--ydim-br,.72) * .5)); }   /* 윈터 클립 = 블라인드 +50% 등가(운영자 260726 "윈터꺼는 배경 앞에 블라인드 투명도 50% 더" — 밝기 × 50% 추가 딤 · 기본단 .36 · 어둡게단 .225 ≈ 종전 정본 .22 · 이미지 스크림 짝 = yPaintBg wcomp) */   /* 시즌 클립 = muted 상시(운영자 "소리만 빼고") · 밝기 필터 = 이미지 스크림 등가(딤 d1의 여집합 = 1−.28 = .72 · 운영자 260729 "반으로"로 .45→.72 동반 = 이미지·클립 같은 밝기로 보이게) · 시즌 표시농도 = 전경화 .92 상속 */
   @media (prefers-reduced-motion:reduce) { .ybg { transition:none; } }
   .yeta-log { position:relative; flex:1; min-width:0; overflow-y:auto; padding:calc(88px + env(safe-area-inset-top)) var(--sp-2) calc(76px + env(safe-area-inset-bottom)) 6px; display:flex; flex-direction:column; gap:10px;
     -webkit-mask-image:linear-gradient(to bottom, transparent 0, transparent calc(51px + env(safe-area-inset-top)), #000 calc(83px + env(safe-area-inset-top)));
@@ -1565,6 +1565,19 @@ function yFsApply() {
   }
 }
 yFsApply();
+// ── 화면 어둡기(운영자 260729 "화면 그 어둡기를 사용자가 조절하게") — 챗 배경 딤 3단 순환. 위 글자 크기 3단(YFS_OPTS·yFs*·탭 순환) 패턴 100% 계승 = 새 컴포넌트 0.
+//    값은 전부 **계보값**: 어둡게 = 260709~260727 정본(.55/.68 · 환경 .35/.52 · 클립 .45) · 기본 = 260729 반감(.28/.34 · .18/.26 · .72) · 밝게 = 그 반감 한 칸 더.
+//    노브는 이 표 하나뿐 — yPaintBg(이미지 딤)와 `--ydim-br`(클립 밝기 = 딤 여집합·윈터는 CSS가 ×.5)가 같은 칸을 읽는다.
+const YDIM_OPTS = [['soft', '밝게'], ['base', '기본'], ['dark', '어둡게']];   // 순환 순서 = 옅음 → 진함(글자 크기 사다리와 같은 단조 배열)
+const YDIM_SET = { soft: { s: ['.14', '.17'], e: ['.09', '.13'], br: '.86' }, base: { s: ['.28', '.34'], e: ['.18', '.26'], br: '.72' }, dark: { s: ['.55', '.68'], e: ['.35', '.52'], br: '.45' } };   // s=캐릭터 아트 · e=환경 씬 · br=시즌 클립 밝기(1−s[0])
+const yDimGet = () => { try { const v = localStorage.getItem('yeta_dim') || 'base'; return YDIM_SET[v] ? v : 'base'; } catch { return 'base'; } };
+const yDimSet = v => { try { localStorage.setItem('yeta_dim', v); } catch {} };
+const yDimCur = () => YDIM_SET[yDimGet()];
+function yDimApply() {   // 클립 밝기만 CSS로 밀어넣는다(이미지 딤 = yPaintBg가 페인트 때 계산) · 변수 = #yetadlg 로컬(--yeta-ac 런타임 주입 선례 계승 · :root 신규 토큰 0)
+  const d = document.getElementById('yetadlg');
+  if (d) d.style.setProperty('--ydim-br', yDimCur().br);
+}
+yDimApply();
 const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));   // ' 포함(분신술 260709 — url('...') 단따옴표 속성 컨텍스트 잠재 이스케이프 탈출 차단)
 // ── 내 프로필 + 앱 설정(운영자 260707 "미구현 설정 다 동작하게" · 호칭·소개 서버동기 260708) ──────────────
 //    프로필(호칭·소개·아바타·무드색) + 토글(진동·타이핑·모션·읽음·알림) = localStorage 편집 SSOT.
@@ -2949,6 +2962,7 @@ const ySetVal = k => {   // 설정 값 라벨 + 기본값 이탈 판정 — 초�
   if (k === 'effort') return YDIAL.vfast ? ['매우 빠름', true] : [(YDIAL_EFFS.find(x => x[0] === YDIAL.effort) || YDIAL_EFFS[0])[1], YDIAL.effort !== 'low'];   // 매우 빠름(운영자 260709) = sonnet 자동 결합 · 항상 2강조(비기본)
   if (k === 'latin') return [yFontGet('latin') === 'lemonmilk' ? 'LEMON MILK' : 'Pretendard', yFontGet('latin') !== 'lemonmilk'];   // 기본 = LEMONMILK(운영자 260708) — 옛 "기본(Pretendard)" 라벨은 기본값 전환 전 잔재라 정정
   if (k === 'hangul') return [yFontGet('hangul') === 'paperlogy' ? 'Paperlogy' : 'Pretendard', yFontGet('hangul') !== 'paperlogy'];
+  if (k === 'dim') return [(YDIM_OPTS.find(o => o[0] === yDimGet()) || YDIM_OPTS[1])[1], yDimGet() !== 'base'];   // 화면 어둡기(기본 = 정본 딤 · 운영자 260729)
   return [(YFS_OPTS.find(o => o[0] === yFsGet()) || YFS_OPTS[0])[1], yFsGet() !== '1'];   // 'fs' 글자 크기(기본 = 보통)
 };
 const ySetVt = k => { const [t, d] = ySetVal(k); return `<span class="si-vt${d ? ' mod' : ''}">${t}</span>`; };
@@ -3017,6 +3031,7 @@ function yShowSettings(noNav) {
     + `<div class="yset-sec">대화</div>` + yDepthRow() + yTodayRow() + yUsageRow() + sw(I.type, '타이핑 표시', '답장 전 “입력 중…”', 'typing', true) + sw(I.chat, '읽음 표시', '내 메시지 옆 안읽음 ‘1’', 'read', true) + sw(I.type, '일본어 발음', '일본어 밑에 읽는 법 — 몰입용', 'ruby', true)
     + `<div class="yset-sec">음성 · 통화</div>` + sw(I.phone, '걸려오는 전화', '끄면 벨 없이 대사만 남아', 'call', true) + sw(I.radio, '무전기(PTT)', '입력행 마이크 — 켜면 복원', 'ptt', false) + info(I.phone, '일일 통화 상한', '유료 가드 — 서버 설정', '3회')
     + `<div class="yset-sec">화면</div>` + info(I.screen, '테마', '다크 고정(브랜드)', '다크') + sw(I.screen, '배경 영상', '끄면 정지 이미지만 — 배터리·데이터 절약', 'bgvid', true) + sw(I.screen, '배경 소리', '대화 배경 영상의 소리 — 시작·끝 페이드', 'bgaud', true) + sw(I.screen, '모션 줄이기', '애니메이션 최소화', 'reduce', false) + `<button type="button" class="yset-item" data-fs="1"><span class="si-ic">${I.type}</span><span class="si-lbl"><span class="si-t">글자 크기</span><span class="si-d">탭 = 보통 → 크게 → 아주 크게</span></span><span class="si-v">${ySetVt('fs')}${I.chev}</span></button>`
+    + `<button type="button" class="yset-item" data-dim="1"><span class="si-ic">${I.screen}</span><span class="si-lbl"><span class="si-t">화면 어둡기</span><span class="si-d">대화 배경 딤 — 탭 = 밝게 → 기본 → 어둡게</span></span><span class="si-v">${ySetVt('dim')}${I.chev}</span></button>`
     + `<div class="yset-sec">데이터</div>` + act(I.trash, '대화 초기화', '모든 대화 기록 삭제', 'reset') + act(I.data, '캐시 비우기', '읽음·로컬 캐시 정리', 'cache')
     + `<div class="yset-sec">정보</div>` + info(I.info, '버전', '', 'v1') + act(I.info, '이용약관 · 문의', '15개조 열람', 'terms');   // 하단 잔여 설명 노트 폐지(운영자 260709 "이거도 없애주고")
   const d = yCdShow('#ycsettings');
@@ -3217,6 +3232,14 @@ $('#ycsettingsCard').addEventListener('click', e => {
     const i = YFS_OPTS.findIndex(o => o[0] === yFsGet()), nx = YFS_OPTS[(i + 1) % YFS_OPTS.length];
     yFsSet(nx[0]); yFsApply();
     const v = fs.querySelector('.si-v'); if (v) v.innerHTML = ySetVt('fs') + YICO.chev;   // 라벨+강조색 = ySetVal SSOT
+    return;
+  }
+  const dm = e.target.closest('.yset-item[data-dim]');   // 화면 어둡기 = 3단 순환(운영자 260729 "어둡기를 사용자가 조절") — 위 글자 크기 분기 100% 계승
+  if (dm) {
+    const i = YDIM_OPTS.findIndex(o => o[0] === yDimGet()), nx = YDIM_OPTS[(i + 1) % YDIM_OPTS.length];
+    yDimSet(nx[0]); yDimApply();
+    _yStageKey = ''; try { yStage(yLastMood()); } catch (x) {}   // 열려 있는 무대 즉시 재페인트(배경 영상 스위치와 같은 자리·같은 관용구) · 방이 안 열렸으면 YCUR 가드가 빠진다
+    const v = dm.querySelector('.si-v'); if (v) v.innerHTML = ySetVt('dim') + YICO.chev;   // 라벨+강조색 = ySetVal SSOT
     return;
   }
   const sw = e.target.closest('.yset-item.sw[data-pref]');   // 토글 = 저장(localStorage) + 즉시 적용
@@ -3705,8 +3728,9 @@ function yBgReset() {   // 두 레이어 전부 소거 — 비디오 정지·제
   });
 }
 function yPaintBg(bgUrl, tint, season) {   // 레이어 페인트(페르소나 전환·무드 전환 공용) — 같은 그림 재페인트는 키 가드가 막음 · season = 감정 미디어 모드(캐릭터 아트 스크림·클립 muted)
-  const wd = !!(YCUR && YCUR.id === 'winter');   // 윈터 = 블라인드 +50% 합성(운영자 260726 "배경 앞에 블라인드 투명도 50% 더") — .28/.34 + (1−x)×.5 = .64/.67(클립은 .ybg.wdim 필터가 짝 · 노브: 여기 한 곳)
-  const [d1, d2] = wd ? ['.64', '.67'] : ['.28', '.34'];   // 캐릭터 아트 스크림 = 딤 절반(운영자 260729 "배경 불투명 강도 반으로") — .55/.68 ÷2 = .28/.34 · 사다리 계보 유지(플그 viewer/pg/20260727_160936_챗배경딤투명도_v1.html 7단 .28/.45 근방) · 윈터 블라인드·클립 밝기는 같은 노브에서 파생(공식 불변)
+  const wd = !!(YCUR && YCUR.id === 'winter');   // 윈터 = 블라인드 +50% 합성(운영자 260726 "배경 앞에 블라인드 투명도 50% 더") — d + (1−d)×.5(클립은 .ybg.wdim 필터가 짝 · 노브: 설정 「화면 어둡기」 한 곳)
+  const DM = yDimCur(), wcomp = v => { const x = parseFloat(v); return (x + (1 - x) * .5).toFixed(2).replace(/^0/, ''); };   // 어둡기 3단 = YDIM_SET SSOT(밝게/기본/어둡게 · 기본 = 운영자 260729 "반으로" = .28/.34)
+  const [d1, d2] = wd ? DM.s.map(wcomp) : DM.s;   // 캐릭터 아트 스크림(윈터는 블라인드 재합성 — 기본단 .64/.67 · 어둡게단 .78/.84 = 종전 정본 그대로)
   const layers = [$('#ybgA'), $('#ybgB')], next = layers[1 - _ybgCur], curL = layers[_ybgCur];
   yBgKillVid(next.querySelector('video'));   // 레이어 재사용 = 이전 클립 결정적 회수
   const curV = curL.querySelector('video'); if (curV) { try { curV.pause(); } catch {} }   // 밀려나는 레이어 클립 = 즉시 정지(불투명 0 뒤 무한 디코드 차단 — 평의회1·7 공통 지적 · 제거는 레이어 재사용/리셋 때)
@@ -3721,7 +3745,7 @@ function yPaintBg(bgUrl, tint, season) {   // 레이어 페인트(페르소나 �
     try { const pr = v.play(); pr && pr.catch(() => { v.muted = true; v.setAttribute('muted', ''); yVidFadeStop(v); v.volume = 1; try { v.play().catch(() => {}); } catch {} }); } catch {}   // 음소거 아닌 자동재생이 막히면 **무음으로 되살린다** — 그림이 멈추는 것보다 소리를 포기하는 쪽이 낫다(재생 = 종전 동작으로 안전 강등)
   } else next.style.backgroundImage = bgUrl
     ? (season ? `linear-gradient(rgba(18,18,18,${d1}),rgba(18,18,18,${d2})), url("${bgUrl}")`   // 캐릭터 아트 = 스포티파이 블랙 스크림(운영자 260729 "반으로" · .55/.68 → .28/.34 · 윈터만 +50% 블라인드 재합성 .64/.67 = 위 d1/d2)
-            : `linear-gradient(rgba(18,18,18,.18),rgba(18,18,18,.26)), url("${bgUrl}")`)   // 환경(장소·무드 씬) = 딤 절반(운영자 260729 "배경 불투명 강도 반으로") — .35/.52 ÷2 = .18/.26 · 캐릭터 아트 축과 같은 배율(두 축 관계 보존)
+            : `linear-gradient(rgba(18,18,18,${DM.e[0]}),rgba(18,18,18,${DM.e[1]})), url("${bgUrl}")`)   // 환경(장소·무드 씬) = 같은 어둡기 칸의 env 쌍(기본 = 운영자 260729 "반으로" .18/.26 · 어둡게 = 종전 정본 .35/.52) — 캐릭터 아트 축과 같은 배율(두 축 관계 보존)
     : `radial-gradient(120% 90% at 50% 0%, ${tint}14, transparent 55%)`;                            // 이미지 없으면 페르소나색 은은한 무드 틴트
   next.classList.toggle('season', !!season);
   next.classList.toggle('wdim', !!season && wd);   // 윈터 시즌 클립 딤 짝(.ybg.wdim video) — 타 캐릭터 레이어 재사용 시 자동 해제

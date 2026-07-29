@@ -37,6 +37,9 @@
   /* ── 전/후 2열(모바일=1열) ── */
   .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
   @media (max-width:820px) { .pair { grid-template-columns:1fr; } }
+  .trio { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-3); align-items:start; }
+  @media (max-width:820px) { .trio { grid-template-columns:1fr; } }
+  .bdg.rung { color:var(--think); border:1px solid rgba(var(--think-rgb),.4); }
   .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; }
   .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
   .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
@@ -174,28 +177,35 @@
   </div>
 
   <div class="sect grp">
-    <h2>③ 배경 고르기 — 어두운 원화 → 밝은 원화</h2>
+    <h2>③ 설정 「화면 어둡기」 3단 — 사용자가 직접 고른다</h2>
+    <p class="note" style="margin:0 0 10px">설정 → 화면 → <b>화면 어둡기</b>(탭 = 밝게 → 기본 → 어둡게 순환 · 글자 크기 3단과 같은 행 형식). <b>어둡게</b> = 260709~260727 정본 그대로 · <b>기본</b> = 260729 반감 · <b>밝게</b> = 한 칸 더. 칸마다 환경 씬·윈터 블라인드·클립 밝기가 공식대로 같이 따라온다.</p>
+    <div class="trio" id="trio"></div>
+  </div>
+
+  <div class="sect grp">
+    <h2>④ 배경 고르기 — 어두운 원화 → 밝은 원화</h2>
     <div class="thumbs" id="thumbs"></div>
     <p class="note">밝기 실측 순(canvas 평균휘도) — 맨 왼쪽(무디 18)이 가장 어둡고 맨 오른쪽(레제 200)이 가장 밝다. 한 값이 양 끝을 동시에 통과하는지가 이 노브의 조건.</p>
   </div>
 
   <div class="sect grp">
-    <h2>④ 전수 확인 — 9장 전부 좌(전)/우(후)</h2>
+    <h2>⑤ 전수 확인 — 9장 전부 좌(전)/우(후)</h2>
     <div class="wall" id="wall"></div>
   </div>
 
   <div class="sect grp">
-    <h2>⑤ 바뀐 값 전부</h2>
+    <h2>⑥ 바뀐 값 전부 — 어둡기 3단 × 5축</h2>
     <table>
-      <tr><th>축</th><th>배선 지점</th><th>전 → 후</th><th>파생 공식</th></tr>
-      <tr><td>캐릭터 아트 스크림</td><td class="v">yPaintBg <code>[d1,d2]</code></td><td class="v"><span class="b">.55/.68</span> → <span class="a">.28/.34</span></td><td class="v">÷2 (운영자 지시)</td></tr>
-      <tr><td>환경(장소·무드) 씬</td><td class="v">yPaintBg else 분기</td><td class="v"><span class="b">.35/.52</span> → <span class="a">.18/.26</span></td><td class="v">÷2 (같은 배율)</td></tr>
-      <tr><td>윈터 블라인드 합성</td><td class="v">yPaintBg <code>wd</code></td><td class="v"><span class="b">.78/.84</span> → <span class="a">.64/.67</span></td><td class="v">d + (1−d)×.5 (불변)</td></tr>
-      <tr><td>시즌 클립 밝기</td><td class="v">.ybg video</td><td class="v"><span class="b">.45</span> → <span class="a">.72</span></td><td class="v">1 − d1 (불변)</td></tr>
-      <tr><td>윈터 클립 밝기</td><td class="v">.ybg.wdim video</td><td class="v"><span class="b">.22</span> → <span class="a">.36</span></td><td class="v">밝기 × .5 (불변)</td></tr>
-      <tr><td>배경 레이어 자체</td><td class="v">.ybg.on</td><td class="v"><span class="b">.92</span> → <span class="a">.92</span></td><td class="v">무변경</td></tr>
-      <tr><td>애도 모드 탈색</td><td class="v">#yetadlg.ymourn</td><td class="v"><span class="b">.6 / .32</span> → <span class="a">.6 / .32</span></td><td class="v">무변경(별개 상태)</td></tr>
+      <tr><th>축</th><th>배선 지점</th><th>밝게</th><th>기본</th><th>어둡게</th><th>파생 공식</th></tr>
+      <tr><td>캐릭터 아트 스크림</td><td class="v">yPaintBg <code>DM.s</code></td><td class="v">.14/.17</td><td class="v"><span class="a">.28/.34</span></td><td class="v"><span class="b">.55/.68</span></td><td class="v">칸마다 표에 박제(YDIM_SET)</td></tr>
+      <tr><td>환경(장소·무드) 씬</td><td class="v">yPaintBg <code>DM.e</code></td><td class="v">.09/.13</td><td class="v"><span class="a">.18/.26</span></td><td class="v"><span class="b">.35/.52</span></td><td class="v">같은 칸의 env 쌍</td></tr>
+      <tr><td>윈터 블라인드 합성</td><td class="v">yPaintBg <code>wcomp</code></td><td class="v">.57/.58</td><td class="v"><span class="a">.64/.67</span></td><td class="v"><span class="b">.78/.84</span></td><td class="v">d + (1−d)×.5</td></tr>
+      <tr><td>시즌 클립 밝기</td><td class="v">--ydim-br</td><td class="v">.86</td><td class="v"><span class="a">.72</span></td><td class="v"><span class="b">.45</span></td><td class="v">1 − s[0]</td></tr>
+      <tr><td>윈터 클립 밝기</td><td class="v">.ybg.wdim video</td><td class="v">.43</td><td class="v"><span class="a">.36</span></td><td class="v"><span class="b">.225</span></td><td class="v">calc(밝기 × .5)</td></tr>
+      <tr><td>배경 레이어 자체</td><td class="v">.ybg.on</td><td class="v" colspan="3" style="text-align:center">.92 — 3단 공통 무변경</td><td class="v">무변경</td></tr>
+      <tr><td>애도 모드 탈색</td><td class="v">#yetadlg.ymourn</td><td class="v" colspan="3" style="text-align:center">.6 / .32 — 3단 공통 무변경</td><td class="v">별개 상태</td></tr>
     </table>
+    <p class="note"><span style="color:var(--accent)">기본</span> = 지금 라이브 · <span style="color:var(--mut)">어둡게</span> = 260709~260727 정본 그대로 되돌아가는 칸. 계보값 2칸이 사다리 양 끝을 잡고 있어 새 값 창작은 「밝게」의 한 번 더 반감뿐이다.</p>
   </div>
 </div>
 
@@ -212,7 +222,12 @@ const IMGS = [
   { n:'루시 ★',     f:'../characters/season/lucy/lucy_02.webp',                  l:155 },
   { n:'레제',       f:'../characters/season/reze/main/base/reze_02.jpg',         l:200 },
 ];
-const BEF = ['.55', '.68'], AFT = ['.28', '.34'];   // 전 = 260727 정본 / 후 = 그 절반(운영자 260729)
+const BEF = ['.55', '.68'], AFT = ['.28', '.34'];
+const RUNGS = [   // 설정 「화면 어둡기」 3단 = viewer/index.html YDIM_SET 그대로(값 SSOT는 그쪽)
+  { k:'soft', n:'밝게',   s:['.14','.17'], br:'.86' },
+  { k:'base', n:'기본',   s:['.28','.34'], br:'.72' },
+  { k:'dark', n:'어둡게', s:['.55','.68'], br:'.45' },
+];   // 전 = 260727 정본 / 후 = 그 절반(운영자 260729)
 const $ = s => document.querySelector(s);
 const dim = (a, b) => `linear-gradient(rgba(18,18,18,${a}),rgba(18,18,18,${b}))`;
 let cur = 7;
@@ -226,6 +241,7 @@ function paint() {
   ['#hAvaB','#hAvaA','#hAvaS','#bAvaB','#bAvaA','#bAvaS'].forEach(s => $(s).style.backgroundImage = `url("${im.f}")`);
   ['#hNameB','#hNameA','#hNameS','#bNameB','#bNameA','#bNameS'].forEach(s => $(s).textContent = im.n);
   document.querySelectorAll('#thumbs .th').forEach((b, i) => b.classList.toggle('cur', i === cur));
+  trio();
 }
 $('#thumbs').innerHTML = IMGS.map((im, i) =>
   `<button class="th" data-i="${i}" style="background-image:${dim(AFT[0], AFT[1])}, url('${im.f}')"><em>${im.n}<br>${im.l}</em></button>`).join('');
@@ -235,6 +251,24 @@ $('#wall').innerHTML = IMGS.map(im =>
      <div class="half" style="background-image:${dim(AFT[0], AFT[1])}, url('${im.f}')"></div>
      <em>${im.n} · 좌 전 / 우 후</em>
    </div>`).join('');
+function trio() {   // 3단 프레임 = 위 프레임 마크업 계승(표면 동일 · 딤만 칸별)
+  const im = IMGS[cur];
+  $('#trio').innerHTML = RUNGS.map(r =>
+    `<div>
+       <p class="cap"><span class="bdg ${r.k === 'base' ? 'after' : 'rung'}">${r.n}</span><span class="val">${r.s[0]} / ${r.s[1]}</span></p>
+       <div class="frame">
+         <div class="ybg" style="background-image:${dim(r.s[0], r.s[1])}, url('${im.f}')"></div>
+         <div class="ysurf">
+           <div class="yeta-h"><span style="color:var(--fg-2)">‹</span><span class="yh-ava" style="background-image:url('${im.f}')"></span><b>${im.n}</b></div>
+           <div class="ylog">
+             <div class="ymsg"><span class="yava" style="background-image:url('${im.f}')"></span><div class="ycol"><span class="yname">${im.n}</span><div class="yb ai">갑자기 왜 소리질러, 놀랐잖아.</div></div></div>
+             <div class="yb me">뭘또저질렀냐느니</div>
+           </div>
+           <div class="yeta-in"><span>메시지</span><span class="snd">➤</span></div>
+         </div>
+       </div>
+     </div>`).join('');
+}
 $('#sw').addEventListener('input', e => { $('#swA').style.setProperty('--ab', e.target.value + '%'); $('#swo').textContent = e.target.value + '%'; });
 paint();
 </script>
