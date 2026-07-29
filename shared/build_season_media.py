@@ -253,7 +253,9 @@ SEASONS = {
         "rules": [
             ("shy",   ["tsundere", "hesitant_to_speak", "flustered", "giggle_bashfully", "act_cute", "play_cute", "playful_cute"]),
             ("love",  ["seduce", "flirty", "love_u", "how_do_i_look", "miss_someone", "fond_look"]),
-            ("blue",  ["sob", "crying", "heartbroken", "worried", "brooding", "sleepy", "asleep", "dozing", "heavy_eyes", "gotosleep", "go_sleep", "helpless", "at_a_loss", "let_down", "overwhelmed", "sad"]),
+            # bored/listless(260729 운영자 「soso · 따분 · 심심 이런느낌으로 기존에 있는거에」) = 각성 낮은 무기력 결로 blue 편입.
+            #   새 버킷을 안 만든 이유 = EMOS 9종은 러너 <<MOOD>> 화이트리스트와 짝인 불변 계약(신설 = 양쪽 동시 개정).
+            ("blue",  ["sob", "crying", "heartbroken", "worried", "brooding", "sleepy", "asleep", "dozing", "heavy_eyes", "gotosleep", "go_sleep", "helpless", "at_a_loss", "let_down", "overwhelmed", "sad", "bored", "listless"]),
             # 삐짐(260726 독립) — 서운해서 토라진 결. mad보다 **위**여야 좁은 토큰이 먼저 잡힌다.
             #   glaring_cut* = "귀엽게 째려봄" = 삐짐 표정 그 자체(종전 shy에 있었으나 볼 붉힘 축과 다르다 · tsundere만 shy 잔류)
             #   faux_furious·feigning_mad·low_key_mad = 화난 '척'·은근한 화 = 대놓고 화난 mad와 반대쪽 결
@@ -266,7 +268,8 @@ SEASONS = {
         ],
         "comment": ("시즌 감정 미디어 manifest(윈터) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
                     "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립). "
-                    "클립 3종(go_for_a_walk_date) = love·shy 버킷 · clip_w=3 = 다른 사진 대비 3배 빈도(등간격 · 260727). "
+                    "클립 = 파일명에 감정 토큰이 있으면 그 버킷(bored_photoshoot_01 → blue · 260729), 없으면 clip_to 폴백(love·shy) · "
+                    "clip_w=3 = 다른 사진 대비 3배 빈도(등간격 · 260727). "
                     "⚠ 다른 인물과 축이 다르다 = **평면(flat) 폴더** — 사진이 감정 하위폴더가 아니라 `characters/idol/winter/`에 "
                     "감정이 적힌 파일명(happy_01 · are_u_kidding_02 · glaring_cutely_03 …)으로 모여 있고, SEASONS['winter']['rules']의 "
                     "토큰 규칙이 그걸 읽어 버킷에 넣는다(파일 이동 0 = roster avatar·bg·카드 폴백 경로 불변). "
@@ -348,10 +351,24 @@ def build_flat(cid: str, cfg: dict) -> dict:
         raise SystemExit(f"평면 폴더 없음: {fdir}")
     buckets = {e: [] for e in EMOS}
     rules = cfg["rules"]
-    # 클립(mp4/webm) = clip_to 버킷 선두(미지정 = base) — build_one과 동형(260726 실측: 이 처리가 빠져 있어 운영자가 넣은 영상 3개가 통째로 무시됐다).
-    _clips = sorted(p for p in fdir.iterdir() if p.is_file() and p.suffix.lower() in CLIP_EXT)
+    # 클립(mp4/webm) — 260726엔 clip_to 버킷 일괄이었다(그 처리가 아예 빠져 운영자가 넣은 영상 3개가 통째로 무시됐던 자리).
+    # ⚠ 260729 보강: 클립도 **사진과 같은 파일명 규칙**을 먼저 탄다. 종전엔 clip_to가 폴더 안 모든 클립을 강제 흡수해서
+    #   「이 영상은 다른 감정」을 파일명으로 지정할 방법이 없었다(운영자 260729 = 따분·심심 클립을 blue로).
+    #   토큰 미매치 = 종전 clip_to 폴백 → 기존 3종(go_for_a_walk_date_*)은 어느 토큰에도 안 걸려 love·shy 그대로(회귀 0 · 실측).
+    _named_clips, _fallback_clips = [], []
+    for _c in sorted(p for p in fdir.iterdir() if p.is_file() and p.suffix.lower() in CLIP_EXT):
+        _nm = _c.stem.lower()
+        for _emo, _toks in rules:
+            if any(t in _nm for t in _toks):
+                buckets[_emo].append(_c)
+                _named_clips.append((_c.name, _emo))
+                break
+        else:
+            _fallback_clips.append(_c)
     for _b in clip_buckets(cfg):
-        buckets[_b].extend(_clips)
+        buckets[_b].extend(_fallback_clips)
+    for _n, _e in _named_clips:
+        print(f"🎬 {cid}: 클립 파일명 분류 — {_n} → {_e} (clip_to 폴백 미적용)")
     for p in sorted(fdir.iterdir()):
         if not p.is_file() or p.suffix.lower() not in IMG_EXT:
             continue

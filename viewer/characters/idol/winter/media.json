@@ -1,5 +1,5 @@
 {
- "_comment": "시즌 감정 미디어 manifest(윈터) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립). 클립 3종(go_for_a_walk_date) = love·shy 버킷 · clip_w=3 = 다른 사진 대비 3배 빈도(등간격 · 260727). ⚠ 다른 인물과 축이 다르다 = **평면(flat) 폴더** — 사진이 감정 하위폴더가 아니라 `characters/idol/winter/`에 감정이 적힌 파일명(happy_01 · are_u_kidding_02 · glaring_cutely_03 …)으로 모여 있고, SEASONS['winter']['rules']의 토큰 규칙이 그걸 읽어 버킷에 넣는다(파일 이동 0 = roster avatar·bg·카드 폴백 경로 불변). 새 사진 = 같은 폴더에 감정 단어가 들어간 이름으로 넣기만 · 어디에도 안 걸리면 base 폴백. 정본=viewer/characters/idol/winter/.",
+ "_comment": "시즌 감정 미디어 manifest(윈터) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립). 클립 = 파일명에 감정 토큰이 있으면 그 버킷(bored_photoshoot_01 → blue · 260729), 없으면 clip_to 폴백(love·shy) · clip_w=3 = 다른 사진 대비 3배 빈도(등간격 · 260727). ⚠ 다른 인물과 축이 다르다 = **평면(flat) 폴더** — 사진이 감정 하위폴더가 아니라 `characters/idol/winter/`에 감정이 적힌 파일명(happy_01 · are_u_kidding_02 · glaring_cutely_03 …)으로 모여 있고, SEASONS['winter']['rules']의 토큰 규칙이 그걸 읽어 버킷에 넣는다(파일 이동 0 = roster avatar·bg·카드 폴백 경로 불변). 새 사진 = 같은 폴더에 감정 단어가 들어간 이름으로 넣기만 · 어디에도 안 걸리면 base 폴백. 정본=viewer/characters/idol/winter/.",
  "base": [
   "characters/idol/winter/background_backstage_02.jpg",
   "characters/idol/winter/background_backstage_03.jpg",
@@ -140,6 +140,7 @@
   "characters/idol/winter/tsundere_cute_01.png"
  ],
  "blue": [
+  "characters/idol/winter/bored_photoshoot_01.mp4",
   "characters/idol/winter/at_a_loss_01.jpg",
   "characters/idol/winter/brooding_01.jpg",
   "characters/idol/winter/brooding_02.jpg",
@@ -147,6 +148,7 @@
   "characters/idol/winter/crying_02.png",
   "characters/idol/winter/dozing_off_01.png",
   "characters/idol/winter/fake_crying_01.jpg",
+  "characters/idol/winter/bored_photoshoot_01.mp4",
   "characters/idol/winter/go_sleep_01.jpg",
   "characters/idol/winter/gotosleep_01.jpg",
   "characters/idol/winter/half_asleep_01.jpg",
@@ -154,6 +156,7 @@
   "characters/idol/winter/heartbroken_01.jpg",
   "characters/idol/winter/heavy_eyes_01.jpg",
   "characters/idol/winter/helpless_pleading.png",
+  "characters/idol/winter/bored_photoshoot_01.mp4",
   "characters/idol/winter/overwhelmed_hectic.png",
   "characters/idol/winter/sleepy_02.jpg",
   "characters/idol/winter/sleepy_03.jpg",
