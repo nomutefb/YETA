@@ -9,8 +9,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@latest/dist/web/variable/pretendardvariable.min.css">
 <link rel="stylesheet" href="tokens.css">
 <link rel="icon" href="favicon.ico" sizes="32x32"><!-- PC 브라우저 탭 파비콘(운영자 260706 · 데스크톱 누락 보강) -->
-<link rel="icon" type="image/png" href="assets/brand/yeta-splash-192-v2.png" sizes="192x192"><!-- PC 파비콘 = 검정+YETA 워드마크(운영자 260729 "로고 파비콘 등 이때로 돌려줘 · 통일하는데 복원의 느낌") — 260706~260725 캐릭터 얼굴판을 되돌린 것 -->
-<link rel="apple-touch-icon" href="assets/brand/yeta-splash-192-v2.png"><!-- iOS 홈화면 아이콘 = 같은 워드마크(운영자 260729) — 260725에 얼굴로 통일했던 것을 워드마크 쪽으로 되돌린다. ⚠ 파일명은 반드시 `-v2` — 접미사 없는 yeta-splash-192.png는 실존하지 않아 404였던 전례(260725 실측) -->
+<link rel="icon" type="image/png" href="assets/brand/yeta-face-icon-192.png" sizes="192x192"><!-- PC 파비콘 = 영상 캐릭터 얼굴(운영자 260706) -->
+<link rel="apple-touch-icon" href="assets/brand/yeta-face-icon-192.png"><!-- iOS 홈화면 아이콘(운영자 260725 "탭에 뜨는 저게 뜨면 됨") — 종전 yeta-splash-192.png는 **실존하지 않는 파일**이라 404 = 아이콘 없음이었다(실측). PC 파비콘·manifest와 같은 얼굴로 통일 -->
 <link rel="manifest" href="manifest.json">
 <!-- PWA 웹앱(홈화면 설치·전체화면) — 안드로이드=manifest, iOS=아래 apple 메타(운영자 260704 "웹앱 형태로 여는것") -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -533,7 +533,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
       radial-gradient(circle at 12% 90%, rgba(var(--cobalt-rgb),.10), transparent 36%),
       var(--bg); color:var(--fg); }
   /* step1 로그인창 = 살아있는 레이어 스택(운영자 260705 픽 이식 — 정적 포스터 폐지 · 소년 컷아웃 + CSS 원/밴드 + 효과 4종) */
-  .ymain { position:fixed; inset:0; display:flex; flex-direction:column; z-index:1; background:var(--bg); overflow:clip; }   /* clip = 스크롤 컨테이너 자체를 안 만든다(hidden은 만든다) — .ym-fit/.ym-stage가 9:16 커버라 폭 100dvh×9/16(844폰 = 474.75px)로 좌우 42.375px씩 의도적 넘침이고, hidden이면 그 넘침이 그대로 "숨은 가로 스크롤 영역"이 돼 브라우저 자동 스크롤(클릭·포커스 scrollIntoView)에 화면 전체가 -42px 밀렸다. 밀리면 스크롤바가 없어 되돌릴 길도 없다(실측 260729: 잠금 터치 후 로고 cx 195→153 = Y자 화면 밖 절단·PIN 격자 쏠림). */
+  .ymain { position:fixed; inset:0; display:flex; flex-direction:column; z-index:1; background:var(--bg); overflow:hidden; }
   .ymain.unlocked { background:radial-gradient(circle at 62% 30%, rgba(var(--accent-rgb),.14), transparent 52%), radial-gradient(circle at 12% 90%, rgba(var(--cobalt-rgb),.03), transparent 42%), var(--bg); }   /* 언락 후 배경 = 배경 영상(.ybgvid) · 앰비언트 = 라임 .14 + 코발트 .03(언락 밝기 플그 운영자 확정) · 포스터 = PIN 잠금 화면 전용 */
   /* ═══ 언락 배경 영상(운영자 260706 "계단 대신 이 영상 · 앞이 잘 보이게 적당히 검정 처리 + 그 위에 글래스") — CSS 3D 계단(.ystair) 대체.
      스크림 = ::after 균일 검정 + 기존 탭 ::before 그라데 딤(언락 밝기 플그 확정값) 병행 · 글래스 카드(--glass-0)가 그 위 = 자연스러운 글래스모피즘. ys-hold 계약 승계(챗 열림 = 정지·숨김). */
@@ -1374,7 +1374,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
      세로 좁은 폰(뷰포트가 9:16보다 좁음)=풀블리드 유지. 뷰포트가 9:16보다 넓으면(가로·데스크톱·태블릿) 중앙 9:16 프레임+측면 딤. 비율=기하 raw 예외축. */
   @media (min-aspect-ratio:9/16) {
     .ymain { inset:0; margin:auto; height:100dvh; width:auto; aspect-ratio:9/16; max-width:100vw;
-      border-inline:1px solid var(--glass-line); box-shadow:var(--shadow-card); overflow:clip; }   /* 베이스 .ymain과 같은 축(clip = 숨은 가로 스크롤 봉인) */
+      border-inline:1px solid var(--glass-line); box-shadow:var(--shadow-card); overflow:hidden; }
     #yetadlg { height:100dvh; width:auto; aspect-ratio:9/16; max-width:100vw; border-radius:0; margin:auto; inset:0; }   /* 챗 = 메인(.ymain)과 동일 9:16 프레임·동일 중앙정렬(margin:auto+inset:0 — 없으면 base margin:0으로 좌상단 쏠려 앱프레임과 "따로 놀던" 것 교정 260705) */
     .ycd { height:100dvh; width:auto; aspect-ratio:9/16; max-width:100vw; margin:auto; inset:0; border-inline:1px solid var(--glass-line); }   /* 디테일·설정 시트 = 동일 9:16 프레임(운영자 260707 "UI 범위 안에서만" — 와이드에서 전폭 퍼짐 교정 · 챗 dialog 공식 그대로 계승) */
   }

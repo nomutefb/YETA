@@ -14,19 +14,19 @@
   "theme_color": "#161716",
   "icons": [
     {
-      "src": "assets/brand/yeta-splash-192-v2.png",
+      "src": "assets/brand/yeta-face-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/brand/yeta-splash-512-v2.png",
+      "src": "assets/brand/yeta-face-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "assets/brand/yeta-splash-maskable-512-v2.png",
+      "src": "assets/brand/yeta-face-icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
