@@ -511,6 +511,8 @@ _FACE_RATIO_OK = {
     'characters/season/gojo/main/joy/gojo_n09.jpg',        # 736×736 헬스장 전신 풍경(인물 작음·배경 넓음) — 260726 육안
     'characters/season/lucy/dokkaebi/base/dokkaebi_21.jpg', # 735×825 비 오는 지붕 착석 전신 — 260726 육안
     'characters/season/lucy/dokkaebi/joy/dokkaebi_11.jpg',  # 1600×1600 소품 든 상반신 일러스트(여백 큼) — 260726 육안
+    'characters/season/san/main/base/san_06.jpg',      # 750×750 런던 거리 전신(인물 중앙·좌우 여백 = cover 생존) — 260730 육안
+    'characters/season/san/main/base/san_07.jpg',      # 750×750 런던 거리 보행 전신(동일 세트) — 260730 육안
 }
 
 def check_face_bg():
