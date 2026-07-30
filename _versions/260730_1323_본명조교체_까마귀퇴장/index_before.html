@@ -33,15 +33,12 @@
   @font-face{font-family:'Paperlogy';font-weight:700;src:url('fonts/Paperlogy-7Bold.ttf') format('truetype');font-display:swap;ascent-override:116%;descent-override:29%;line-gap-override:0%}
   @font-face{font-family:'Paperlogy';font-weight:800;src:url('fonts/Paperlogy-8ExtraBold.ttf') format('truetype');font-display:swap;ascent-override:116%;descent-override:29%;line-gap-override:0%}
   @font-face{font-family:'Paperlogy';font-weight:900;src:url('fonts/Paperlogy-9Black.ttf') format('truetype');font-display:swap;ascent-override:116%;descent-override:29%;line-gap-override:0%}
-  /* ── 본명조(Noto Serif KR · SIL OFL · 라이선스 전문 = `fonts/NotoSerifKR-OFL.txt`) — 프리실라 전용 명조. 난입은 "다른 결이 들어온 것"이라 본문 고딕(Paperlogy)과 서체 자체가 갈려야 티가 난다.
-     ⚠ 260730 교체(운영자 "그냥 명조로 대체해주고, 아무 본명조 인터넷에 무료있을거야 그거로") — 종전 미래엔대교 V바탕은 **글리프가 빈 껍데기인 코드포인트를 cmap에 올려둔 폰트**였다:
-       CJK 한자 4620 + 호환한자 268 + **한글 음절 8822자**(11172 중 실제로 그려지는 건 완성형 2350자뿐)가 `bounds=None`·advance만 1000. cmap에 있으니 브라우저가 폴백을 안 하고 **글자가 통째로 사라지고 전각 공백만 남는다**.
-       이게 운영자 스샷의 「へえ、い　されるのは　らの　なんだ。」(한자 4자 증발)이고, 한글 쪽은 희귀 음절이 나오는 순간 똑같이 터질 시한폭탄이었다. 종전 폰트는 `_소재/폰트/`로 보관(미채택 Batang과 같은 자리).
-     조달·가공(재현 가능): `google/fonts` ofl/notoserifkr `NotoSerifKR[wght].ttf`(가변 23.8MB) → fontTools로 **wght 700 인스턴스** → 한글 음절 전량 + 자모 + 라틴 + 문장부호로 서브셋 → woff2 **1.27MB**(종전 otf 1.23MB와 동급).
-     실측 검증: 한글 음절 **11172/11172** 실외곽선 · 빈 글리프 = 채움문자 3개(U+115F·U+1160·U+3164 = 정의상 비어 있는 글자)뿐 = **0**.
-     700 단일 인스턴스 = 이 서체가 쓰이는 자리가 항상 볼드(`.yb.ai.barge:has(.yq)`·프리실라 토스트)라서다 — 종전의 브라우저 합성(faux) 볼드가 진짜 볼드로 바뀐다. override 3종 = 위 Paperlogy 선언 100% 계승(행간 기준선 통일 = 다른 서체와 섞여도 줄이 안 튄다).
-     unicode-range = **서브셋한 범위와 같은 값**(넘치는 선언 0) — 커버 밖 문자는 cmap에도 없어 자동 폴백이고, 한글 없는 버블에선 1.27MB를 아예 안 내려받는다. */
-  @font-face{font-family:'NotoSerifKR';font-weight:700;src:url('fonts/NotoSerifKR-Bold.subset.woff2') format('woff2');font-display:swap;ascent-override:116%;descent-override:29%;line-gap-override:0%;unicode-range:U+0020-007E,U+00A0-00FF,U+1100-11FF,U+2000-206F,U+20A0-20BF,U+2100-214F,U+2190-21FF,U+2200-22FF,U+25A0-25FF,U+2600-26FF,U+3000-303F,U+3130-318F,U+A960-A97F,U+AC00-D7A3,U+D7B0-D7FF,U+FF01-FF60,U+FFE0-FFE6}
+  /* ── 미래엔대교 V바탕(운영자 260728 업로드 2종 중 채택) — 프리실라 전용 명조. 난입은 "다른 결이 들어온 것"이라 본문 고딕(Paperlogy)과 서체 자체가 갈려야 티가 난다.
+     채택 근거 = 헤드리스 실렌더 대조: 같은 문장이 Batang은 2줄로 넘치고(자간 과대) VBatang은 한 줄에 들어간다 = 말풍선·토스트처럼 폭이 갇힌 자리에 맞는 쪽. 미채택 Batang은 `_소재/폰트/`로 보관.
+     단일 웨이트라 400으로 등재하고 볼드는 브라우저 합성(faux) — 실렌더에서 확실히 두꺼워지는 것 확인. override 3종 = 위 Paperlogy 선언 100% 계승(행간 기준선 통일 = 다른 서체와 섞여도 줄이 안 튄다).
+     ⚠ 260730 unicode-range 추가 — 이 폰트는 CJK 한자(U+4E00-9FFF 4620자·U+F900-FAFF 268자)를 **cmap엔 올려두고 외곽선은 비워놨다**(실측: 追·出·僕·方 전부 bounds=None, advance만 1000).
+     cmap에 있으니 브라우저가 폴백을 안 하고 그 폰트로 그리려다 **글자가 통째로 사라지고 전각 공백만 남는다**(운영자 260730 "이렇게 무너지는거" = 고죠 일본어에서 재현). 범위에서 빼면 글리프 없는 폰트 취급 → 본문 고딕으로 자동 폴백. */
+  @font-face{font-family:'MiraendaekyoVBatang';font-weight:400;src:url('fonts/MiraendaekyoVBatang.otf') format('opentype');font-display:swap;ascent-override:116%;descent-override:29%;line-gap-override:0%;unicode-range:U+0-33FF,U+4DC0-4DFF,U+A000-F8FF,U+FB00-10FFFF}
 /* ── :root 토큰(색+구조) — 원본 viewer :root 계승(L19-80) ── */
   :root {
     /* 중립 표면·텍스트 — 흰색 + 스포티파이 블랙(운영자 260704 브랜드 통일) */
@@ -302,11 +299,11 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
      inline-block·transform·filter는 전부 새 페인트 컨텍스트라, 조상 .yq의 background-clip:text 배경이 그 안까지 안 칠해진다 → color:transparent만 남아 **질문 글자가 통째로 증발**하고 앞뒤 평문만 띄엄띄엄 떠 있다(헤드리스 실렌더로 운영자 스샷 그대로 재현).
      질문 안에서만 스태거를 해제한다 — 《핵심 질문》은 원래 한 박자로 떨어져야 하는 한 덩어리고(빛 스윕이 이미 자기 모션을 갖는다), 버블의 나머지 글자는 종전대로 촤르륵 = 연출 손실 0. */
   .yb.ai.yemo .yq .ye { display:inline; animation:none; }
-  .yb.ai.barge:has(.yq) { font-family:'NotoSerifKR', var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); font-weight:var(--fw-b); letter-spacing:-.025em; }   /* 핵심 질문이 든 말풍선 = 명조 볼드(운영자 260728 "해당 말풍선에도 이 폰트") — 버블 **전체**에 걸어 질문 앞뒤 대사까지 한 덩어리로 결이 갈린다(질문만 갈면 한 버블 안에서 서체가 두 번 바뀌어 지저분) · 폴백 = 상속(로드 실패해도 레이아웃 불변 · font-display:swap과 짝) */
+  .yb.ai.barge:has(.yq) { font-family:'MiraendaekyoVBatang', var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); font-weight:var(--fw-b); letter-spacing:-.025em; }   /* 핵심 질문이 든 말풍선 = 명조 볼드(운영자 260728 "해당 말풍선에도 이 폰트") — 버블 **전체**에 걸어 질문 앞뒤 대사까지 한 덩어리로 결이 갈린다(질문만 갈면 한 버블 안에서 서체가 두 번 바뀌어 지저분) · 폴백 = 상속(로드 실패해도 레이아웃 불변 · font-display:swap과 짝) */
   /* 지문·발음줄만 예외 = 본문 고딕 복귀(운영자 260728 "그 대화에서 상황 설명하는 부분은 원래 글자체 사용해야") — 명조는 **그 사람이 하는 말**의 결이지 장면 설명의 결이 아니다.
      지문은 화자가 누구든 같은 목소리(서술)라 난입 버블 안에서도 다른 버블의 지문과 서체가 같아야 한다(위 .yn 톤다운 축과 같은 위계). 값 = body 전역 스택 100% 계승(신규 0) · 자간도 명조 상속(-.025em)을 normal로 원복. */
   .yb.ai.barge:has(.yq) i.yn, .yb.ai.barge:has(.yq) i.yjr { font-family:var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); font-weight:400; letter-spacing:normal; }
-  @supports not selector(:has(*)) { .yb.ai.barge { font-family:'NotoSerifKR', var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); letter-spacing:-.025em; } }   /* :has 미지원(구 사파리) = 난입 버블 전체로 폴백 — 질문 버블을 못 집느니 난입 전체가 명조인 게 의도에 가깝다 */
+  @supports not selector(:has(*)) { .yb.ai.barge { font-family:'MiraendaekyoVBatang', var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); letter-spacing:-.025em; } }   /* :has 미지원(구 사파리) = 난입 버블 전체로 폴백 — 질문 버블을 못 집느니 난입 전체가 명조인 게 의도에 가깝다 */
   .yb i.yjr { font-style:italic; font-size:.5em; color:var(--fg-2); opacity:.5; }   /* 일본어 읽는 발음 줄(운영자 260726 "아주 작게 거의 안보일듯한 컬러로 · 상황설명컬러 · 글자는 50% 작은 · 기울기 포함") — 색·이탤릭 = 바로 위 지문(.yn) 100% 계승(운영자가 지목한 "상황설명컬러" = .yn의 --fg-2) · 투명도는 .yn(.75)보다 낮은 .5 = 바로 위 .yjp 사다리 재사용("거의 안 보일") · 크기 .5em = 지시값(상대 기하라 토큰축 없음) · 판정 = 가나 줄 바로 다음 [대괄호] 줄(yFmt) */
   .yeta-noruby .yb i.yjr { display:none; }   /* 발음 끄기(설정 · 운영자 260726 "설정에 스위치를 달자 · 몰입도때문이니까 친밀도에 관계없이") — html 클래스 = 위 .yeta-reduce/.yeta-ptt 패턴 100% 계승 · 원문·번역은 그대로 남고 발음 줄만 사라진다(친밀도·해금과 무관 = 사람은 앱 밖에 있다) */
   .yb.ai.ov i.yjp, .yb.ai.ov i.yjr { color:inherit; }   /* 겹침 답장 = 전체 mut 통일(바로 아래 .yn 동형) */
@@ -326,14 +323,6 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yb.ai.barge:has(.yq) { background:color-mix(in srgb, color-mix(in srgb, var(--season) 16%, var(--danger)) 26%, transparent); border-color:rgba(var(--danger-rgb),.4); }
   @supports not (background:color-mix(in srgb, red, blue)) { .yb.ai.barge:has(.yq) { background:rgba(var(--danger-rgb),.24); } }   /* color-mix 미지원 = 보라 없는 붉은 채색만(글래스 결·알파 동일 = 결손 최소) */
   @supports not selector(:has(*)) { .yb.ai.barge { background:rgba(var(--danger-rgb),.24); border-color:rgba(var(--danger-rgb),.4); } }   /* :has 미지원(구 사파리) = 난입 버블 전체 착색으로 폴백 — 위 폰트 폴백(.yb.ai.barge 전체 명조)과 같은 판단: 질문 버블을 못 집느니 난입 전체가 갈리는 게 의도에 가깝다 */
-  /* 난입 퇴장 = 까마귀가 한 박자 늦게 따라 나간다(운영자 260730 "까마귀 그거 ㄱㄱ") — drusilla.md §겉모습 「프리실라보다 먼저 자리에 앉고, 나갈 땐 늘 한 박자 늦게 따라 나간다」의 화면 대응.
-     발동 = 난입 등급 인물의 퇴장 sys가 **새로** 붙는 순간 = `<<LEAVE>>`가 달린 턴 전부. 합격 퇴장이든 불합격(사망) 퇴장이든 같다 — 카드상 두 결말 모두 LEAVE로 나가므로 「사망일 때만」이 아니다.
-     사망 결말에선 이 연출이 먼저 끝나고 그 뒤에 .ydlg-dead 암전이 온다(순서 = sys 렌더 → yMeDeadCheck).
-     값 계승: 색 --fg-2(지문 톤) · 커브 --ease · z --z-float(.ydlg-yank 계승) · 지속 .9s(.ydlg-dead 「무게」 계승) · 지연 .62s(.ydlg-yank 계승 = 「한 박자 늦게」). 신규 시간·색 0 · 기하(px·scale·키프레임 %) = raw 예외 축. */
-  .ycrowfly { position:fixed; z-index:var(--z-float); pointer-events:none; color:var(--fg-2); opacity:0; animation:ycrowFly .9s var(--ease) .62s forwards; will-change:transform, opacity; }
-  .ycrowfly svg { display:block; width:40px; height:27px; fill:currentColor; }   /* 40×27 = viewBox 48×32(3:2) 비율 유지 · 34px에선 실루엣이 뭉개지고 40px부터 새로 읽힌다(헤드리스 6단 대조 실측) */
-  @keyframes ycrowFly { 0% { opacity:0; transform:translate(-50%,-40%) scale(.72); } 18% { opacity:.92; transform:translate(-50%,-95%) scale(1); } 72% { opacity:.7; transform:translate(-5%,-300%) scale(.78); } 100% { opacity:0; transform:translate(45%,-460%) scale(.58); } }   /* 안무 = 앉아 있던 자리에서 한 번 떠올랐다가 오른쪽 위로 빠진다 · 72% 정지점 = 비행 대부분을 보이게 잡아두는 자리(없으면 뜨자마자 흐려져 뭐가 지나갔는지 안 보인다 · 실렌더 대조) */
-  @media (prefers-reduced-motion:reduce) { .ycrowfly { display:none; } }   /* 모션 줄이기 = 연출 생략(.yemo·.ydlg-dead 가드 계승 — 정보가 아니라 결이라 대체 표기 불필요) */
   .yb.me { align-self:flex-end; max-width:78%; background:var(--bubble-me); color:var(--bg); border-top-right-radius:var(--r-s); }
   .yb.me i.yn { color:rgba(0,0,0,.6); }
   .yb.me i.yjp, .yb.me i.yjr { color:rgba(0,0,0,.6); }   /* 내 버블 = 라임 바탕이라 강조색이 안 보인다(바로 위 .yn me 가드 100% 계승 — 유저가 일본어를 칠 때) */
@@ -3733,20 +3722,6 @@ setInterval(() => { try {   // 분침 타이머(분신술 260709 3건 일괄): �
 } catch (x) {} }, 60000);
 const YGEM_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14l3 5.5L12 21 2 8.5z"/><path d="M5 3 8.2 8.5 12 21 15.8 8.5 19 3M2 8.5h20" fill="none" stroke="#000" stroke-opacity=".22" stroke-width="1"/><path d="M9 3h6l-3 5.5z" fill="#fff" fill-opacity=".33"/><path d="M5 3 8.2 8.5H2z" fill="#fff" fill-opacity=".16"/></svg>';   // 보석 젬(브릴리언트 파셋 컷 = 음각 결 + 테이블 set 광 · 운영자 260707 "더 보석같이 박게")
 const YSKULL_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6c-4.3 0-7.8 3.4-7.8 7.5 0 2.3 1.1 4.4 2.8 5.8.26.2.4.52.4.85v1.2c0 .6.5 1.05 1.1 1.05h7c.6 0 1.1-.45 1.1-1.05v-1.2c0-.33.14-.65.4-.85 1.7-1.4 2.8-3.5 2.8-5.8 0-4.1-3.5-7.5-7.8-7.5Z"/><ellipse cx="9.1" cy="10.2" rx="2.1" ry="2.45" fill="#000" fill-opacity=".55"/><ellipse cx="14.9" cy="10.2" rx="2.1" ry="2.45" fill="#000" fill-opacity=".55"/><path d="M12 12.7c.42 0 .8.42.8.94s-.38.94-.8.94-.8-.42-.8-.94.38-.94.8-.94Z" fill="#000" fill-opacity=".55"/></svg>';   // 해골(난입 등급 전용 · 운영자 260726 "해골 모양") — YGEM_SVG와 같은 인라인 상수 결(nm-svg.js 공유 아이콘 아님 = SSOT 게이트 무저촉) · 눈·코 구멍 = currentColor 위 검정 저투명(배지 색 자동 추종)
-const YCROW_SVG = '<svg viewBox="0 0 48 32" aria-hidden="true"><path d="M23.5 16.6c-3.6-4.9-5.9-9.2-6.9-12.9 3 2.2 6.6 6.2 10.8 12z"/><path d="M20.6 21.4c-5.1 1.3-9.2 3.4-12.4 6.3 4.2-.4 8.8-1.8 13.9-4.2z"/><ellipse cx="23.5" cy="20" rx="12.4" ry="4.1" transform="rotate(-13 23.5 20)"/><circle cx="35.4" cy="13.9" r="3.5"/><path d="M38.2 12.1 46.6 9.9 38.6 15.4z"/><path d="M13.2 22.6 2.4 26.9l11.4.6z"/></svg>';   // 까마귀(난입 퇴장 전용 · 운영자 260730 "까마귀 그거 ㄱㄱ") — 위 YSKULL_SVG와 같은 인라인 상수 결(nm-svg.js 공유 아이콘 아님 = SSOT 게이트 무저촉) · 눈 = currentColor 위 검정 저투명(해골 눈구멍 패턴 계승)
-function yCrowFly(pill) {   // 난입 인물 퇴장 = 그 퇴장 지문 위에서 까마귀가 한 박자 늦게 떠오른다(카드 「나갈 땐 늘 한 박자 늦게 따라 나간다」)
-  try {
-    const r = pill.getBoundingClientRect();
-    if (!r.width) return;                                   // 화면 밖·미레이아웃 = 조용히 생략(연출은 없어도 대화가 깨지지 않는다)
-    const el = document.createElement('div');
-    el.className = 'ycrowfly'; el.setAttribute('aria-hidden', 'true');
-    el.style.left = (r.left + r.width / 2) + 'px'; el.style.top = r.top + 'px';   // 앵커 = 퇴장 지문 알약의 위 가운데(고정 좌표 = position:fixed와 짝 · 스크롤 추종 안 함 = 1.5초짜리 연출이라 무해)
-    el.innerHTML = YCROW_SVG;
-    document.body.appendChild(el);
-    el.addEventListener('animationend', () => el.remove());
-    setTimeout(() => el.remove(), 2600);                    // 애니 미발화(reduce = display:none이라 animationend가 안 온다) 대비 회수 — 고아 노드 0
-  } catch (e) {}
-}
 const YGRADE_SVG = { barge: YSKULL_SVG };   // 등급별 아이콘 오버라이드 — 미지정 = 젬(기존 전부)
 function yGradeBadge(c) { const g = c && YGRADE[c.grade]; return g ? `<span class="ygrade ${esc(c.grade)}" title="스페셜 등급 — ${g}">${YGRADE_SVG[c.grade] || YGEM_SVG}${g}</span>` : ''; }   // grade 미정·미등록 값 = 일반(옵트인 가드)
 function yGradeRing(c) { return (c && c.voice) ? ' yring-voice' : c && c.grade === 'season' ? ' yring-season' : c && c.grade === 'idol' ? ' yring-idol' : c && c.grade === 'barge' ? ' yring-barge' : ''; }   // 특별 등급 프로필 링 클래스(운영자 260708) — 보이스→라임·시즌→보라·IDOL→실버·난입→자몽(260726) · yGradeBadge와 짝(픽커·상세카드 아바타)
@@ -4585,7 +4560,6 @@ function yAiMsg(t, fresh, cont) {   // 캐릭터 메시지 = 아바타 + 이름 
   else if (t.dc) { const w = yEmoWrap(body, t.dc); if (dmo) { body = w.h; if (w.n) { ecls = ` yemo${Y_EMO_HI[dmo] ? ' yemo-hi' : ''}`; est = ` style="--emo-s:${Math.min(Y_EMO_HI[dmo] ? 22 : 14, Math.max(6, Math.round(700 / w.n)))}ms"`; } } }   // dc 있으면 무드 없어도 커서는 전진(뒤늦게 온 무드가 본 글자를 재리졸브 못 하게) · 델타 총 지연 ≤0.7s = 다음 발행(MIN_GAP 1.2s) 전 정착
   return `<div class="ymsg${fresh ? ' in' : ''}${cont ? ' cont' : ''}" data-k="a|${esc(t.persona || '')}|${cont ? 1 : 0}|${t.ov ? 1 : 0}|${yModeOn(p) ? 1 : 0}|${esc(t.text || '')}">${yAva(p)}<span class="ycol"><span class="yname">${esc(p.name || '')}</span><span class="ybrow"><div class="yb ai${t.ov ? ' ov' : ''}${p.grade === 'barge' ? ' barge' : ''}${ecls}"${est}>${body}</div>${tm ? `<time class="ytime">${tm}</time>` : ''}</span></span></div>`;   // data-k = 번호표(persona·그룹핑·ov·**모드**·텍스트) — time 제외 = 낙관/확정 재사용(분경계 무관) · 모드 자리(운영자 260725 "도깨비 모드면 도깨비 프사") = 변신 경계에서 번호표가 달라져야 이미 그린 말풍선의 프사가 교체된다(없으면 yReconcile이 옛 노드를 영구 재사용 = 프사 고착) · emo 마크업은 번호표 무관(같은 턴 재렌더 = 노드 재사용이라 애니 1회 보장)
 }
-let _yCrowPend = 0;   // 난입 퇴장 까마귀 예약(260730) — 렌더 조립 중 발견 → reconcile 뒤 발화(1회성 래치)
 let _yLastN = -1, _yTypOn = false, _yFailOn = false, _yTypHold = 0, _yTypT = null;   // 촤르륵 키드 + 타이핑 지연 홀드(읽는 시간 · 운영자 260707)
 let _yCurT = '';   // 마지막 렌더한 방 id — 서버발 cur 이동(단톡 재합류·휘발 소멸 · Q.06) 감지용(yThreadSwitch 미경유 전환도 방 경계로 취급)
 let _yKickOn = false;   // 난입 내보내기 pill 등장 래치(_yFailOn 동형 — 재렌더 재애니 방지 · 합석 260707)
@@ -4838,8 +4812,7 @@ function yRender() {
     if (t.kind === 'amb') return (!yAmbOn() && !YQA) ? mk : mk + `<div class="ysit${fresh ? ' in' : ''}">${esc(t.text)}</div>`   // 축 OFF(L1 주변 사건 = 끔) = 지문 줄만 건너뛴다(기분 마커 mk는 그대로 흘려보낸다 — 여기서 삼키면 그 마커가 영영 안 뜬다) · ?qa=1은 진단 위해 항상 노출
       + (YQA && t.hook ? `<div class="ysit-qa">🎲 고리 = ${esc(t.hook)}</div>` : '');   // [QA] 사건이 무엇에 걸었다고 선언했는지(러너 ambient_store가 박제 · turn.hook) — 뜬금없는 사건이 또 나오면 「고리가 낱말이었나 / 아예 없었나 / 고리는 맞는데 사건이 튀었나」가 한 번에 갈린다. 라이브 미노출(?qa=1 전용)
       ;   // 주변 사건(운영자 260725 "주변에서 계속 이슈가 터지게") = 장면 지문 결(.ysit 계승 — 상황 턴·기분 마커와 동일 문법 · 새 스타일 창작 0) · 씨앗 SSOT = apps/yeta/ambient.json · 생성 = 러너 ambient_refill
-    if (t.kind === 'leave' && fresh && (yPersona(t.who) || {}).grade === 'barge') _yCrowPend = 1;   // 난입 인물 퇴장(260730) — 이 렌더에 새로 붙은 퇴장 지문 = 까마귀 연출 예약(실제 발화는 reconcile 뒤 = DOM에 붙어야 좌표가 나온다)
-    return mk + `<div class="yb sys${fresh ? ' in' : ''}${t.kind === 'leave' ? ' yleave' : ''}">${esc(t.text)}</div>`;   // sys = 페르소나 합류 등(그룹 끊음) · .yleave = 까마귀 앵커 표식(스타일 0 = 선택자 전용)
+    return mk + `<div class="yb sys${fresh ? ' in' : ''}">${esc(t.text)}</div>`;   // sys = 페르소나 합류 등(그룹 끊음)
   }).join('');
   for (; _mj < _mks.length; _mj++) h += _mkH(_mks[_mj]);   // 마지막 턴 이후 기분(대개 방금 바꾼 것) = 로그 말미
   if (!first && turns.length > prevN && (turns[turns.length - 1] || {}).role === 'assistant' && yPrefOn('haptic', true)) { try { if (navigator.vibrate) navigator.vibrate(26); } catch (x) {} }   // 소리·진동(설정 — 기본 ON · 분신술 260709: 스위치 디폴트 true(150차)와 소비자 false 불일치로 신규 사용자 진동 무음이던 것 정정)
@@ -4893,7 +4866,6 @@ function yRender() {
   else {
     yReconcile(log, h);   // 통짜 innerHTML 폐지 → 증분(안 바뀐 말풍선 파괴 0 · 스트리밍은 마지막 버블만 교체) = 자연스러운 채팅의 뿌리
     yAttHydrate(log);   // 첨부 사진 지연 로드(260717 '+') — data-att → op att blob(캐시) · reconcile 후 새/재사용 노드 처리(멱등)
-    if (_yCrowPend) { _yCrowPend = 0; const _lv = log.querySelector('.yb.sys.yleave:last-of-type'); if (_lv) requestAnimationFrame(() => yCrowFly(_lv)); }   // 난입 퇴장 까마귀(260730) — reconcile 뒤에 부른다(노드가 붙어야 getBoundingClientRect가 0이 아니다) · rAF = 레이아웃 확정 후 · 조합 유예 경로(_yComposing)에선 예약이 남아 다음 렌더에 뜬다
     _yNoAnim = false; _yDrSwap = null;   // 스왑 무애니·스왑 델타(Q.81) = 1회성(다음 렌더부터 정상 촤르륵 · 조합 유예 중엔 유지 = _yNoAnim 동수명)
     if (atBottom) log.scrollTop = log.scrollHeight;
   }

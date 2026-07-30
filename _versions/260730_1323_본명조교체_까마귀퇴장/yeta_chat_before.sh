@@ -678,7 +678,7 @@ if kind == "ok":
                     _th3["room"] = [r for r in _rm3 if r != turn_persona]
                     if _th3.get("last_sp") == turn_persona: _th3["last_sp"] = _th3["room"][0]
                     if (_th3.get("barged") or {}).get("id") == turn_persona: _th3["barged"] = 0
-            turns.insert(ins + k, {"role": "sys", "kind": "leave", "who": turn_persona, "text": f"{_lnm}{'은' if (ord(_lnm[-1]) - 0xAC00) % 28 else '는'} 자리에서 일어났다", "ts": now + k}); k += 1   # 퇴장 지문(합류 sys 대칭) · kind/who(260730) = 뷰어 퇴장 연출 판정용(난입 인물이면 까마귀가 한 박자 늦게 따라 나간다) — amb·barge sys의 kind 규약 계승, 소비처 없으면 그냥 무시되는 필드
+            turns.insert(ins + k, {"role": "sys", "text": f"{_lnm}{'은' if (ord(_lnm[-1]) - 0xAC00) % 28 else '는'} 자리에서 일어났다", "ts": now + k}); k += 1   # 퇴장 지문(합류 sys 대칭)
             # 세계 시계 재개는 여기서 손대지 않는다 — room에서 빠진 사실만 남기면 게이트웨이 sweepSess(단일 깔때기)가 다음 폴에서 wfz를 회수한다(러너/게이트웨이 이중 구현 0 · Q.06 계보).
         if dead_tag and not open_job and turn_persona:   # 사망 반영(운영자 260714) — dead[persona]={t:부활ts, d:사망ts, mood:장면 공기, why:직전 상황 한 줄, pray:기도 대기, wit:목격자, nm:이름} · 전 방 이탈 · 두절 지문 sys · 이 방 잡 정지(idle — extract_mat 픽 제외와 짝)
             _dd = {p: u for p, u in (S_ROOT.get("dead") or {}).items() if (((u.get("t") if isinstance(u, dict) else u) or 0) + 604800000) > now}   # 7일+ 스테일만 소거(만료 엔트리 = 부활 첫 답 재료라 보존)
