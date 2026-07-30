@@ -1,48 +1,48 @@
 {
- "_comment": "감정 미디어 manifest(최산) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립). ⚠ 축 = **평면(flat) 폴더**(윈터와 동일 · 운영자 260730 「윈터랑 같은급 · 트리 구조 계승」) — 사진이 감정 하위폴더가 아니라 `characters/idol/san/`에 감정이 적힌 파일명(happy_thumbs_up_01 · so_cold_02 · pouty_headphones_01 …)으로 모여 있고, IDOL_FLAT_RULES 토큰 규칙이 그걸 읽어 버킷에 넣는다. 새 사진 = 같은 폴더에 감정 단어가 들어간 이름으로 넣기만 · 어디에도 안 걸리면 base 폴백. 클립 = 파일명 토큰 우선(seduce_vest_clip_01 → love) · 미매치 시 clip_to(love·shy) · clip_w=3(등간격 3배). 얼빡 프사 `san_face.webp`는 같은 폴더에 두지만 `<id>_face*` 규약으로 배경 풀에서 자동 제외된다. 정본=viewer/characters/idol/san/.",
+ "_comment": "감정 미디어 manifest(최산) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립). ⚠ 축 = **평면(flat) 폴더**(윈터와 동일 · 운영자 260730 「윈터랑 같은급 · 트리 구조 계승」) — 사진이 감정 하위폴더가 아니라 `characters/idol/san/`에 **`san_` 접두 + 감정 단어** 파일명(san_happy_thumbs_up_01 · san_so_cold_02 · san_pouty_headphones_01 …)으로 모여 있고, SAN_FLAT_RULES 토큰 규칙이 그걸 읽어 버킷에 넣는다(부분일치라 접두는 무해). ⚠ `san_` 접두 = **윈터와 파일명이 절대 안 겹치게** 하는 구조 장치(운영자 260730) — 새 사진도 접두를 붙일 것 · 어디에도 안 걸리면 base 폴백. 클립 = 파일명 토큰 우선(seduce_vest_clip_01 → love) · 미매치 시 clip_to(love·shy) · clip_w=3(등간격 3배). 얼빡 프사 `san_face.webp`는 같은 폴더에 두지만 `<id>_face*` 규약으로 배경 풀에서 자동 제외된다. 정본=viewer/characters/idol/san/.",
  "base": [
-  "characters/idol/san/backstage_tanktop_01.jpg",
-  "characters/idol/san/beach_white_shirt_01.jpg",
-  "characters/idol/san/event_greeting_01.jpg",
-  "characters/idol/san/event_nars_01.jpg",
-  "characters/idol/san/parking_garage_coat_01.jpg",
-  "characters/idol/san/street_london_01.jpg",
-  "characters/idol/san/street_london_02.jpg"
+  "characters/idol/san/san_backstage_tanktop_01.jpg",
+  "characters/idol/san/san_beach_white_shirt_01.jpg",
+  "characters/idol/san/san_event_greeting_01.jpg",
+  "characters/idol/san/san_event_nars_01.jpg",
+  "characters/idol/san/san_parking_garage_coat_01.jpg",
+  "characters/idol/san/san_street_london_01.jpg",
+  "characters/idol/san/san_street_london_02.jpg"
  ],
  "warm": [
-  "characters/idol/san/chuckle_pool_01.jpg",
-  "characters/idol/san/smile_beach_02.jpg",
-  "characters/idol/san/smile_soft_01.jpg"
+  "characters/idol/san/san_chuckle_pool_01.jpg",
+  "characters/idol/san/san_smile_beach_02.jpg",
+  "characters/idol/san/san_smile_soft_01.jpg"
  ],
  "joy": [
-  "characters/idol/san/excited_award_01.jpg",
-  "characters/idol/san/happy_open_arms_02.jpg",
-  "characters/idol/san/happy_thumbs_up_01.jpg"
+  "characters/idol/san/san_excited_award_01.jpg",
+  "characters/idol/san/san_happy_open_arms_02.jpg",
+  "characters/idol/san/san_happy_thumbs_up_01.jpg"
  ],
  "love": [
-  "characters/idol/san/seduce_vest_clip_01.mp4",
-  "characters/idol/san/seduce_vest_clip_01.mp4",
-  "characters/idol/san/fond_look_01.jpg",
-  "characters/idol/san/seduce_vest_clip_01.mp4",
-  "characters/idol/san/how_do_i_look_01.jpg"
+  "characters/idol/san/san_seduce_vest_clip_01.mp4",
+  "characters/idol/san/san_seduce_vest_clip_01.mp4",
+  "characters/idol/san/san_fond_look_01.jpg",
+  "characters/idol/san/san_seduce_vest_clip_01.mp4",
+  "characters/idol/san/san_how_do_i_look_01.jpg"
  ],
  "shy": [
-  "characters/idol/san/playful_cute_01.jpg"
+  "characters/idol/san/san_playful_cute_01.jpg"
  ],
  "blue": [
-  "characters/idol/san/brooding_01.jpg",
-  "characters/idol/san/brooding_02.jpg",
-  "characters/idol/san/worried_01.jpg"
+  "characters/idol/san/san_brooding_01.jpg",
+  "characters/idol/san/san_brooding_02.jpg",
+  "characters/idol/san/san_worried_01.jpg"
  ],
  "tense": [
-  "characters/idol/san/so_cold_01.jpg",
-  "characters/idol/san/so_cold_02.jpg",
-  "characters/idol/san/so_cold_stage_03.jpg"
+  "characters/idol/san/san_so_cold_01.jpg",
+  "characters/idol/san/san_so_cold_02.jpg",
+  "characters/idol/san/san_so_cold_stage_03.jpg"
  ],
  "mad": [
-  "characters/idol/san/glaring_stage_01.jpg"
+  "characters/idol/san/san_glaring_stage_01.jpg"
  ],
  "sulky": [
-  "characters/idol/san/pouty_headphones_01.jpg"
+  "characters/idol/san/san_pouty_headphones_01.jpg"
  ]
 }
