@@ -589,12 +589,26 @@ export async function onRequestPost({ request, env }) {
   if (op === 'pray') {   // 신당 기도 — **유저가 직접** 북동쪽 언덕 신당(성당)까지 찾아가 죽은 주민을 위해 비는 경로(운영자 260730 "신당에 가서 죽은사람한테 기도드릴 수 있는 걸 · 지도에 붙이던가").
     // 종전엔 비는 주체가 러너 <<PRAY>>(주민)뿐 = 유저는 죽음을 보고도 아무것도 못 하고 무음동 48h를 기다리는 수밖에 없었다.
     // 세션 변형 = 러너 pray_who 분기와 **한 식**(t를 now로 당김 · pray 플래그 제거 · by 박제 · note_pub 사건 1줄) = 기존 부활 파이프 그대로 재사용(새 상태·새 필드 0).
+    // 게이트(운영자 260730 "미니 게임 만들어서 그 안에서 이겨야 · 난이도 좀 어렵게 · 3연속 실패 시 도전 불가 24시간 뒤 가능")
+    //   res='win' = 향불 3연속 성공 → 부활 · res='lose' = 실패 1건 적립. 3연속 실패 = 현실 24h 잠금(무음동 48h 하한 = 현실 8h보다 **길다** = 그땐 이미 스스로 돌아와 있다 — 운영자가 알고 고른 벌).
+    //   ⚠️ 잠금 판정은 **서버 단독**(뷰어는 표시만) — 클라 게이트만이면 새로고침 한 번에 뚫린다. 잠금은 사람 단위가 아니라 **유저 단위**(그 죽음만 못 비는 게 아니라 신당 자체가 닫힌다).
+    const PRAY_LOCK_MS = 24 * 3600e3, PRAY_FAIL_N = 3;
     const pid = String(body.persona || '');
     if (!ID_RE.test(pid)) return json({ error: '누구를 위해 빌지 모르겠어' }, 400);
-    let nm = '';
+    const win = body.res === 'win';
+    let nm = '', locked = 0, left = 0;
     const { sess, abort } = await casPut(s => {
+      const pf = (s.pray_fail = s.pray_fail || {});
+      if ((pf.until || 0) > Date.now()) { locked = pf.until; return { abort: { locked: pf.until } }; }   // 잠금 중 = 승패 무관 무변경(실패 적립도 안 한다 = 잠금 연장 루프 차단)
+      if (!win) {   // 실패 적립 — 3연속이면 그 자리에서 신당이 닫힌다(성공 1회 = pf.n 0으로 리셋 = '연속' 계약)
+        pf.n = (pf.n || 0) + 1;
+        if (pf.n >= PRAY_FAIL_N) { pf.until = Date.now() + PRAY_LOCK_MS; pf.n = 0; locked = pf.until; }
+        else left = PRAY_FAIL_N - pf.n;
+        return;   // 쓰기(실패 기록) 후 정상 반환 — abort 아님
+      }
       const v = (s.dead || {})[pid];
       if (!v || typeof v !== 'object' || !v.pray) return { abort: { noop: 1 } };   // 죽은 적 없음 · 이미 돌아옴 · 이미 누가 빌어줌(러너 <<PRAY>>와 경합) = 무변경(연타 멱등)
+      pf.n = 0;   // 성공 = 연속 실패 카운터 리셋
       nm = String(v.nm || pid).slice(0, 40);
       const by = String((s.me || {}).call || '').trim().slice(0, 24) || '너를 아는 사람';   // 빌어준 사람 = 유저 호칭(op me) — 러너 [부활] 블록 `by`(≤40) · 뷰어 yPrayBy 표기 공용
       delete v.pray; v.t = Date.now(); v.by = by;   // 즉시 만료 = 부활 대기(뷰어 yRevPend = 성당 앞뜰 · 그 방의 다음 답이 엔트리를 소비하며 첫 마디)
@@ -604,7 +618,9 @@ export async function onRequestPost({ request, env }) {
       const np = String(s.note_pub || s.note || '').replace(/\s+$/, '');
       if (!np.includes(ev)) s.note_pub = ((np ? np + '\n' : '') + ev).slice(-600);
     });
+    if (abort && abort.locked) return json({ ok: false, locked: abort.locked }, 409);   // 잠금 = 뷰어가 남은 시간을 그린다(에러 문구는 뷰어 정본 — 서버는 ts만)
     if (abort) return json({ ok: true, noop: 1, sess: sess || null });   // noop = 화면만 새로고침(에러 아님 — 그새 딴 사람이 빌었어도 결과는 같다)
+    if (!win) return json({ ok: true, lost: 1, locked, left, sess: sess || null });   // left = 잠기기까지 남은 기회
     return json({ ok: true, nm, sess: sess || null });
   }
 

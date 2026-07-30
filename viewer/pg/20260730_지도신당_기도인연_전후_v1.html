@@ -34,6 +34,8 @@
   .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
     backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
 
+  .trio { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-3); align-items:start; }
+  @media (max-width:820px) { .trio { grid-template-columns:1fr; } }
   .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
   @media (max-width:820px) { .pair { grid-template-columns:1fr; } }
   .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
@@ -96,7 +98,38 @@
   </div>
 
   <div class="sect">
-    <h2>③ 기도 인연 — 은혜가 확률로 남는다</h2>
+    <h2>③ 향불 타이밍 링 — 이겨야 빌 수 있다(신설)</h2>
+    <div class="grp">
+      <div class="cap"><span class="bdg after">AFTER</span><span class="val">운영자 260730 「A · 3연속 실패 시 도전 불가 24시간 뒤 가능」</span></div>
+      <div class="trio">
+        <div>
+          <img class="shot" src="20260730_지도신당_전후_sn_list.webp" alt="신당 목록 — 빌어주기 필">
+          <p class="note"><b>① 목록</b> — [빌어주기] 2탭(armed) → 게임 진입. 기도받은 사람은 상태만.</p>
+        </div>
+        <div>
+          <img class="shot" src="20260730_지도신당_전후_sn_game.webp" alt="향불 타이밍 링 게임 화면">
+          <p class="note"><b>② 향불 링</b> — 도는 표식이 향불 자리(강조색 호)를 지날 때 탭. pip 3개 = 남은 라운드.</p>
+        </div>
+        <div>
+          <img class="shot" src="20260730_지도신당_전후_sn_lock.webp" alt="신당 잠금 안내">
+          <p class="note"><b>③ 잠금</b> — 3연속 실패 시 [빌어주기] 자체가 사라지고 잔여 시간만.</p>
+        </div>
+      </div>
+      <table style="margin-top:12px">
+        <tr><th>라운드</th><th>회전</th><th>향불 자리</th><th>허용 오차(환산)</th></tr>
+        <tr><td>1</td><td>0.95 rev/s</td><td>34°</td><td class="ok">±50 ms</td></tr>
+        <tr><td>2</td><td>1.25 rev/s</td><td>24°</td><td class="wait">±27 ms</td></tr>
+        <tr><td>3</td><td>1.55 rev/s</td><td>18°</td><td class="bad">±16 ms</td></tr>
+      </table>
+      <p class="note">한 번이라도 빗나가면 그 도전은 <b>거기서 끝</b>(실패 1건 적립) · 성공 1회 = 연속 실패 카운터 리셋 · <b>3연속 실패 = 현실 24시간 잠금</b>.<br>
+      잠금은 <b>사람 단위가 아니라 유저 단위</b> — 그 죽음만 못 비는 게 아니라 신당 자체가 닫힌다. 표기는 앱 시간축 단일화 계승상 무음동 환산(<b>현실 24h = 무음동 6일</b>) — 자연 부활 하한(무음동 48h = 현실 8h)보다 <b>길다</b> = 잠기면 그 사람은 이미 스스로 돌아와 있다.<br>
+      ⚠️ 승패·잠금 판정은 <b>서버 단독</b>(<code>op pray</code>의 <code>pray_fail</code>) — 뷰어 게이트만이면 새로고침 한 번에 뚫린다.</p>
+      <p class="note"><b>헤드리스 실증</b> — 3정타 → <code>{op:'pray', res:'win'}</code> 전송 · 1빗맞 → <code>{res:'lose'}</code> 즉시 종료 + 토스트 「남은 기회 2번」 · 잠금 상태 → 버튼 <b>0개</b> + 「무음동 5일 23시간 뒤에」. 부제 오버플로(199&gt;197px 말줄임)도 실측 후 문구 축약으로 해소.</p>
+    </div>
+  </div>
+
+  <div class="sect">
+    <h2>④ 기도 인연 — 은혜가 확률로 남는다</h2>
     <div class="grp">
       <table>
         <tr><th>축</th><th>전</th><th>후</th></tr>
@@ -111,7 +144,7 @@
   </div>
 
   <div class="sect">
-    <h2>④ 실측 — 지도에 실제로 보이는 사람 수</h2>
+    <h2>⑤ 실측 — 지도에 실제로 보이는 사람 수</h2>
     <div class="grp">
       <div class="cap"><span class="bdg rung">헤드리스 실측</span><span class="val">_ymapWalkers 덤프 · 같은 시각</span></div>
       <table>
@@ -125,7 +158,7 @@
   </div>
 
   <div class="sect">
-    <h2>⑤ 남은 과제(이 판 범위 밖)</h2>
+    <h2>⑥ 남은 과제(이 판 범위 밖)</h2>
     <div class="grp">
       <table>
         <tr><th>항목</th><th>실측</th><th>상태</th></tr>
@@ -134,7 +167,6 @@
         <tr><td>차량이 <code>ymZSort</code> z정렬 제외</td><td><code>#ymCars</code>가 항상 워커 아래 별도 그룹</td><td class="wait">미착수</td></tr>
         <tr><td>신호등 ↔ 정지선 엇짝</td><td>등 (45.5, 40.5) ↔ 정지선 (37.5, 42.75) = <b>약 40px</b></td><td class="wait">미착수</td></tr>
         <tr><td>존 내부 좌표 비시드 랜덤</td><td><code>ymZonePt</code>의 <code>Math.random()</code> — 「지도 킬 때마다 초기화」의 근원</td><td class="wait">설계안 확보</td></tr>
-        <tr><td>신당 기도 미니게임 게이트</td><td>—</td><td class="wait">후보 선택 대기</td></tr>
         <tr><td>신당 배경 씬</td><td>현재 <code>var_moon_stairs</code> 전용(전용 성당 씬 미생성) — 어두워서 판독 낮음</td><td class="wait">교체 후보</td></tr>
       </table>
       <p class="note">3번 좌석 지적: 게이트가 <b>스테일 여부만 보고 품질(커버리지 %)을 안 봐서</b>, 「게이트 초록 = 됐다」로 반복 보고됐다. 마스크 커버리지 ≥90% · 로스터↔동선표 커버리지 같은 <b>수치 게이트</b>를 먼저 박는 게 재발 차단의 핵심.</p>

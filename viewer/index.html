@@ -790,6 +790,22 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yin-ttl i { font-style:normal; font-size:var(--fs-xs); color:var(--mut); }
   .yin-look { font-size:var(--fs-xs); color:var(--mut); line-height:var(--lh-base); padding:0 8px 8px; }
   .yin-empty { font-size:var(--fs-sm); color:var(--mut); font-style:italic; text-align:center; padding:8px 8px 14px; }   /* 아무도 없음 = 장면 지문 결(.ysit 문법 계승) */
+  /* ── 향불 타이밍 링(운영자 260730 "미니 게임 · 그 안에서 이겨야 · 난이도 좀 어렵게") — 신당 시트 안에서 그대로 자란다(새 모달·새 표면 0 · #yin 내용만 교체).
+     색·굵기·라운드 = 전부 토큰. SVG 기하(반지름·각도·stroke-dasharray)만 raw = 기하 계산 예외(§🎨 raw 허용). */
+  .ysng { padding:var(--sp-2) 8px 10px; text-align:center; }
+  .ysng-ring { display:block; width:min(200px,64%); margin:2px auto 4px; touch-action:manipulation; cursor:pointer; }
+  .ysng-ring .trk { fill:none; stroke:var(--glass-line); stroke-width:6; }
+  .ysng-ring .tgt { fill:none; stroke:var(--accent); stroke-width:6; stroke-linecap:round; filter:drop-shadow(0 0 6px rgba(var(--accent-rgb),.55)); }   /* 향불 자리 = 강조색 호(그림자 = 토큰 없는 축) */
+  .ysng-ring .mk { fill:var(--fg); }
+  .ysng-ring.hit .tgt { stroke:var(--think); filter:drop-shadow(0 0 9px rgba(var(--think-rgb),.7)); }   /* 성공 순간 = 터콰이즈 플래시(생각 축 색 계승 · 신규 색 0) */
+  .ysng-ring.miss .tgt { stroke:var(--danger); filter:drop-shadow(0 0 9px rgba(var(--danger-rgb),.7)); }
+  .ysng-pip { display:flex; justify-content:center; gap:7px; margin:2px 0 8px; }
+  .ysng-pip i { width:7px; height:7px; border-radius:50%; background:var(--glass-line); }
+  .ysng-pip i.on { background:var(--accent); }
+  .ysng-pip i.no { background:var(--danger); }
+  .ysng-t { font-size:var(--fs-sm); color:var(--fg-2); line-height:var(--lh-base); }
+  .ysng-s { font-size:var(--fs-xs); color:var(--mut); line-height:var(--lh-base); margin-top:4px; }
+  .ysng-lock { font-size:var(--fs-sm); color:var(--arm); font-weight:var(--fw-b); }   /* 잠금 = 2탭 재확인 armed와 같은 주의색(신규 색 0) */
   .ypick-row.ydead { opacity:.85; }   /* 신당 행(260730) = 사망 표기 3처방(.ylist-row.ydead) **동값** 계승 — 픽커 행에 옮긴 것뿐(새 값 0) · [빌어주기] 필은 .yp-col 밖 = 라임 유지(살아 있는 유일한 축) */
   .ypick-row.ydead .yava { filter:grayscale(1) brightness(.5); }
   .ypick-row.ydead .yp-col { filter:grayscale(1); }
@@ -2175,35 +2191,105 @@ function ySnRender() {
   const dd = ((YSESS || {}).dead) || {};
   const ids = Object.keys(dd).filter(id => yPersona(id) && yDeadT(id));
   const wait = ids.filter(id => yDead({ id }) && !yPrayed(id));   // 아직 아무도 안 빌어준 죽은 주민 = 기도 대상
+  const lock = ySnLockLeft();   // 3연속 실패 잠금(운영자 260730) — 잠긴 동안엔 [빌어주기] 자체를 안 그린다(서버가 또 막지만, 누를 수 있는 버튼을 두는 게 더 나쁘다)
   const rows = ids.map(id => {
-    const c = yPersona(id), pray = wait.includes(id);
-    const sub = pray ? `무음동 ${yWDur(Date.now() - ((dd[id] || {}).d || Date.now()))}째 — 부활까지 ${yWDur(yDeadT(id) - Date.now())}` : (yDead({ id }) ? `${yPrayBy(id) || '누군가'}의 기도가 닿았어` : '성당 앞뜰에서 눈을 뜨는 중');
+    const c = yPersona(id), pray = !lock && wait.includes(id);
+    const sub = pray ? `부활까지 무음동 ${yWDur(yDeadT(id) - Date.now())}` : (yDead({ id }) ? `${yPrayBy(id) || '누군가'}의 기도가 닿았어` : '성당 앞뜰에서 눈을 뜨는 중');   // 죽은 시각·경과는 인물 카드(yDeadInfo)가 이미 전담 — 여기 한 줄에 3칸을 우겨넣으면 말줄임(실측 199>197px)
     return `<div class="ypick-row ydead">${yAva(c)}<span class="yp-col"><span class="yp-name">${esc(c.name || '')}</span><span class="yp-tag">${esc(sub)}</span></span>${pray ? `<button type="button" class="yinv-go" data-pray="${esc(id)}">빌어주기</button>` : ''}</div>`;   // 행 = 초대 팝업 정본(div + 내부 필 · 중첩 버튼 금지 · armed 2탭) · 채색 소거 = .ydead 계승
   }).join('');
   box.innerHTML = `<img class="yin-bg" src="assets/yeta_bg/var_${esc(YSN_SCENE)}.webp" alt="${esc(info.name || '신당')}으로 오르는 길">`
     + `<div class="yin-ttl"><b>신당</b><i>${wait.length ? `${wait.length}명이 기다려` : '기다리는 사람 없음'}</i></div>`
     + (info.look ? `<div class="yin-look">${esc(String(info.look).split(' — ')[0])}</div>` : '')
     + (rows || `<div class="yin-empty">지금 무음동엔 죽은 사람이 없다.</div>`)
-    + `<div class="yinv-note">여기까지 찾아와 간절히 빌면 그 자리에서 눈을 떠 — 아무도 안 빌면 무음동의 이틀을 다 기다려야 해.</div>`;   // 힌트 = 초대 팝업 .yinv-note 결 계승
+    + (lock ? `<div class="yinv-note"><span class="ysng-lock">신당이 닫혔다 — 무음동 ${esc(yWDur(lock))} 뒤에 다시 올 수 있어.</span><br>세 번 다 빗나갔으니 이 죽음은 네 손을 떠났다.</div>`
+            : `<div class="yinv-note">빌려면 <b>향불 세 번</b>을 연속으로 맞혀야 해 — 한 번이라도 빗나가면 거기서 끝이고, <b>세 번 실패하면 하루 동안 신당이 닫힌다</b>.</div>`);   // 힌트 = 초대 팝업 .yinv-note 결 계승
   box.hidden = false;
 }
+// ── 향불 타이밍 링(운영자 260730 "미니 게임 만들어서 그 안에서 이겨야 · 난이도 조금 어렵게 · 3연속 실패 시 도전 불가 24시간 뒤 가능")
+//   규칙 = 도는 표식이 향불 자리(강조색 호)를 지날 때 탭. **3연속** 성공해야 기도가 닿는다. 한 번이라도 빗나가면 그 도전은 거기서 끝(실패 1건).
+//   난이도 = 회전이 빨라지고 향불 자리가 좁아진다(허용 오차 ±50ms → ±27ms → ±16ms 실측 환산). 판정·잠금의 진짜 게이트는 **서버 op pray**(뷰어는 표시만 — 새로고침 우회 차단).
+const YSNG_R = [{ v: .95, w: 34 }, { v: 1.25, w: 24 }, { v: 1.55, w: 18 }];   // v = 회전/초 · w = 향불 자리 폭(도). 3라운드 = 운영자 "3연속"
+let _ysng = null;   // {id, i, hits, ang, tgt, raf, last, done}
+function ySnLockLeft() { const u = ((YSESS || {}).pray_fail || {}).until || 0; return u > Date.now() ? u - Date.now() : 0; }   // 신당 잠금 잔여(서버 박제 pray_fail.until · 유저 단위 = 신당 자체가 닫힌다)
+function ySnGameStop() { if (_ysng && _ysng.raf) cancelAnimationFrame(_ysng.raf); _ysng = null; }
+function ySnGame(id) {
+  const box = document.getElementById('yin'), c = yPersona(id); if (!box || !c) return;
+  ySnGameStop();
+  _ysng = { id, i: 0, hits: 0, ang: 0, tgt: Math.random() * 360, raf: 0, last: 0, done: 0 };
+  const pips = () => `<div class="ysng-pip">${YSNG_R.map((_, k) => `<i class="${k < _ysng.hits ? 'on' : ''}"></i>`).join('')}</div>`;
+  box.innerHTML = `<div class="ysng">`
+    + `<svg class="ysng-ring" id="ysngRing" viewBox="0 0 100 100" role="button" tabindex="0" aria-label="향불 자리를 지날 때 탭">`
+    +   `<circle class="trk" cx="50" cy="50" r="40"/><path class="tgt" id="ysngTgt"/><circle class="mk" id="ysngMk" cx="50" cy="10" r="4.6"/></svg>`
+    + pips()
+    + `<div class="ysng-t" id="ysngT">향불 자리를 지날 때 탭 — <b>세 번 연속</b></div>`
+    + `<div class="ysng-s">${esc(c.name || '')}을(를) 위해 비는 중 · 한 번이라도 빗나가면 거기서 끝</div>`
+    + `</div>`;
+  box.hidden = false;
+  const ring = document.getElementById('ysngRing');
+  const tap = e => { e.preventDefault(); e.stopPropagation(); ySnTap(); };
+  ring.addEventListener('pointerdown', tap);
+  ring.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') tap(e); });
+  ySnRoundPaint();
+  _ysng.last = performance.now(); _ysng.raf = requestAnimationFrame(ySnTick);
+}
+function ySnArc(mid, w) {   // 향불 자리 = 중심각 mid·폭 w의 원호 path(기하 계산 = raw 예외)
+  const r = 40, a0 = (mid - w / 2 - 90) * Math.PI / 180, a1 = (mid + w / 2 - 90) * Math.PI / 180;
+  return `M ${50 + r * Math.cos(a0)} ${50 + r * Math.sin(a0)} A ${r} ${r} 0 0 1 ${50 + r * Math.cos(a1)} ${50 + r * Math.sin(a1)}`;
+}
+function ySnRoundPaint() {
+  const R = YSNG_R[_ysng.i], t = document.getElementById('ysngTgt');
+  if (t) t.setAttribute('d', ySnArc(_ysng.tgt, R.w));
+}
+function ySnTick(now) {
+  if (!_ysng || _ysng.done) return;
+  const dt = Math.min(.05, (now - _ysng.last) / 1000); _ysng.last = now;
+  _ysng.ang = (_ysng.ang + YSNG_R[_ysng.i].v * 360 * dt) % 360;
+  const mk = document.getElementById('ysngMk');
+  if (mk) { const a = (_ysng.ang - 90) * Math.PI / 180; mk.setAttribute('cx', (50 + 40 * Math.cos(a)).toFixed(2)); mk.setAttribute('cy', (50 + 40 * Math.sin(a)).toFixed(2)); }
+  _ysng.raf = requestAnimationFrame(ySnTick);
+}
+function ySnTap() {
+  if (!_ysng || _ysng.done) return;
+  const R = YSNG_R[_ysng.i], d = Math.abs(((_ysng.ang - _ysng.tgt + 540) % 360) - 180);   // 각 최단거리(0~180)
+  const ring = document.getElementById('ysngRing');
+  if (d > R.w / 2) { _ysng.done = 1; if (ring) ring.classList.add('miss'); ySnFinish(false); return; }
+  _ysng.hits++;
+  if (ring) { ring.classList.add('hit'); setTimeout(() => ring.classList.remove('hit'), 220); }
+  const pip = document.querySelectorAll('#yin .ysng-pip i')[_ysng.hits - 1]; if (pip) pip.classList.add('on');
+  if (_ysng.hits >= YSNG_R.length) { _ysng.done = 1; ySnFinish(true); return; }
+  _ysng.i++; _ysng.tgt = Math.random() * 360; _ysng.ang = (_ysng.tgt + 180) % 360;   // 다음 라운드 = 향불 반대편에서 재출발(탭 직후 우연 적중 차단)
+  ySnRoundPaint();
+  const t = document.getElementById('ysngT'); if (t) t.innerHTML = `<b>${_ysng.hits}</b>번 닿았어 — 남은 <b>${YSNG_R.length - _ysng.hits}</b>번, 더 빨라진다`;
+}
+async function ySnFinish(win) {
+  const id = _ysng.id, c = yPersona(id) || {};
+  if (_ysng.raf) cancelAnimationFrame(_ysng.raf);
+  const t = document.getElementById('ysngT');
+  if (t) t.innerHTML = win ? '향이 끝까지 탔어 — <b>기도가 닿는다</b>' : '향이 꺼졌다 — <b>빗나갔어</b>';
+  const r = await yApi('pray', { persona: id, res: win ? 'win' : 'lose' }).catch(() => null);
+  ySnGameStop();
+  if (r && r.sess) YSESS = r.sess;
+  if (r && r.locked) { miniToast('세 번 다 빗나갔어 — 신당이 닫혔다'); ySnRender(); ymPlaceAll(); return; }   // 잠금 = 목록 대신 잠금 안내(ySnRender가 판정)
+  if (r && r.ok && win) { miniToast(`${c.name || ''}이(가) 성당 앞뜰에서 눈을 떴어`); }
+  else if (r && r.lost) miniToast(`빗나갔어 — 남은 기회 ${r.left}번`);
+  else if (!r || !r.ok) miniToast('기도가 닿지 않았어 — 잠시 후 다시');
+  ySnRender(); ymPlaceAll(); yListRender();
+}
 function yInOpen(pl) { if (pl === YSHRINE) { _yinOpen = pl; ySnRender(); return; } if (!YIN_PLACES[pl]) return; _yinOpen = pl; yInRender(pl); }
-function yInClose() { _yinOpen = ''; const b = document.getElementById('yin'); if (b) { b.hidden = true; b.innerHTML = ''; } }
+function yInClose() { ySnGameStop(); _yinOpen = ''; const b = document.getElementById('yin'); if (b) { b.hidden = true; b.innerHTML = ''; } }   // 향불 게임 rAF 동반 회수(시트 닫힘에 루프 잔류 금지)
 document.addEventListener('click', e => {   // 위임 1핸들러(개별 배선 금지 · 레포 관례) — 주민 행 = 그 방 직행(워커 탭과 동일 정본 openYeta) · 바깥 탭 = 닫힘(팝오버 관례 계승)
   const go = e.target.closest('[data-yin-go]');
   if (go) { if (go.dataset.yinUm) { miniToast('아직 만나지 못한 사람이야'); return; } yInClose(); openYeta(go.dataset.yinGo); return; }
   const pb = e.target.closest('.yinv-go[data-pray]');
-  if (pb && !pb.disabled) {   // 신당 기도(260730) — 2탭 재확인 = 초대 필 armed 정본 100% 계승(비가역 = 그 죽음이 여기서 끝난다)
+  if (pb && !pb.disabled) {   // 신당 기도(260730) — 2탭 재확인 = 초대 필 armed 정본 100% 계승 · 확정 = 부활이 아니라 **향불 게임 진입**(운영자 260730 "그 안에서 이겨야")
+    if (ySnLockLeft()) { miniToast(`신당이 닫혔어 — 무음동 ${yWDur(ySnLockLeft())} 뒤에`); return; }
     if (!pb.classList.contains('armed')) {
       document.querySelectorAll('#yin .yinv-go[data-pray]').forEach(x => { x.classList.remove('armed'); x.textContent = '빌어주기'; x.removeAttribute('aria-label'); });
-      pb.classList.add('armed'); pb.textContent = '간절히?'; pb.setAttribute('aria-label', '한 번 더 누르면 기도 확정'); return;
+      pb.classList.add('armed'); pb.textContent = '간절히?'; pb.setAttribute('aria-label', '한 번 더 누르면 향불을 올린다'); return;
     }
     pb.disabled = true;
     const c = yPersona(pb.dataset.pray); if (!c) return;
-    yApi('pray', { persona: c.id }).then(r => {
-      if (r && r.ok) { if (r.sess) YSESS = r.sess; miniToast(r.noop ? `${c.name}은(는) 이미 돌아오는 중이야` : `${c.name}이(가) 성당 앞뜰에서 눈을 떴어`); ySnRender(); ymPlaceAll(); yListRender(); }   // 지도 재판정 = 성당 앞뜰 이설·부활 발광 즉시 반영 · 목록 = 사망 도색 해제
-      else { pb.disabled = false; miniToast((r && r.error) || '기도가 닿지 않았어 — 잠시 후 다시'); }
-    }).catch(() => { pb.disabled = false; miniToast('기도가 닿지 않았어 — 잠시 후 다시'); });
+    ySnGame(c.id);
     return;
   }
   if (_yinOpen && !e.target.closest('#yin')) yInClose();
