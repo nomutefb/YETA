@@ -400,7 +400,7 @@ print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": 
                   "policy": json.dumps(s.get("policy"), ensure_ascii=False) if isinstance(s.get("policy"), dict) else "",
                   "last_mood": last_mood, "last_open": last_open, "cast": " · ".join(v for v in names.values() if v),   # 상태 블록 재료(260707 · last_open = 감정선 캐리어 260725)
                   "gap_h": round(gap_h, 1), "late_h": round(late_h, 1), "rel_lv": rel_lv, "riv": riv, "handoff": handoff,   # T1 재료(휴면·지각[260726 Q.70]·관계LV·질투메타·인계 · 260707)   # 시즌 수위·금기(L1 · op policy) — 문구 조립은 apps/yeta/policy.json 정본
-                  "co": co, "co_name": (names.get(co) or co) if co else "", "barge_debut": barge_debut, "barge_host": barge_host, "barge_self": barge_self, "barge_seat": barge_seat, "barge_room": barge_room, "omen_react": omen_react, "wfrz": frz_ms(S_ROOT), "wrate": rate_of(S_ROOT), "notice": ((S_ROOT.get("notice") or {}).get("text") or "") if isinstance(S_ROOT.get("notice"), dict) else "",   # 오늘 자 무음동 라디오 방송(260728 → Q.143) — 주민이라면 흘려들었을 소식 "wrb": json.dumps(anchor_of(S_ROOT) or {}, ensure_ascii=False),   # 세계 배속·변경 앵커(L1 · 260728)   # 단톡 재료(합석 260707) — co = 이번 턴 비화자 동행 · barge_host = 난입당한 쪽(260728 · 1=첫 반응 2=재실 중)
+                  "co": co, "co_name": (names.get(co) or co) if co else "", "barge_debut": barge_debut, "barge_host": barge_host, "barge_self": barge_self, "barge_seat": barge_seat, "barge_room": barge_room, "omen_react": omen_react, "wfrz": frz_ms(S_ROOT), "wrate": rate_of(S_ROOT), "notice": ((S_ROOT.get("notice") or {}).get("text") or "") if isinstance(S_ROOT.get("notice"), dict) else "",   # 오늘 자 전광판(260728) — 주민이라면 지나며 봤을 소식 "wrb": json.dumps(anchor_of(S_ROOT) or {}, ensure_ascii=False),   # 세계 배속·변경 앵커(L1 · 260728)   # 단톡 재료(합석 260707) — co = 이번 턴 비화자 동행 · barge_host = 난입당한 쪽(260728 · 1=첫 반응 2=재실 중)
                   "barge_via": (s.get("barged") or {}).get("via") or "",   # 난입 경로(place=지나다 마주침 · 데뷔 결 분기 · 마주침 260707)
                   "place_nm": place_name(PL, place_of(PL, persona, _kdate, _khour)),   # 화자의 지금 장소(동선 SSOT — 배경 정합 + 마주침 sys와 앞뒤)
                   "att": "\n".join(a for a in att if a),   # 첨부 사진 R2 키(개행 구분 · 260717 '+') — process_turn이 내려받아 Read 비전으로 전달
@@ -909,7 +909,7 @@ prev_draft = sys.argv[15] if len(sys.argv) > 15 else ""  # 죽은 러너의 쓰�
 wfrz_ms = sys.argv[17] if len(sys.argv) > 17 else "0"
 wrate = sys.argv[18] if len(sys.argv) > 18 else "6"   # 세계 배속(L1 · 260728) — 미전달 경로 = 종전 6배
 wanch = sys.argv[19] if len(sys.argv) > 19 else ""    # 배속 변경 앵커 JSON {eff,wmin} — 빈값 = 앵커 없음(종전 공식)
-notice_txt = sys.argv[20] if len(sys.argv) > 20 else ""  # 오늘 자 무음동 라디오 방송(260728 → Q.143 라디오) — 빈값 = 블록 생략    # 난입 정지 누적(현실 ms · 260728) — 미전달 경로 = "0" = 종전 세계 시각
+notice_txt = sys.argv[20] if len(sys.argv) > 20 else ""  # 오늘 자 전광판 소식(260728) — 빈값 = 블록 생략    # 난입 정지 누적(현실 ms · 260728) — 미전달 경로 = "0" = 종전 세계 시각
 barge_host = sys.argv[16] if len(sys.argv) > 16 else "0" # 난입당한 쪽(260728) — 1=난입 후 첫 반응 2=난입자 재실 중 · 미전달 경로(오프닝·초대 판정) = "0" = 블록 생략
 barge_self = sys.argv[21] if len(sys.argv) > 21 else "0" # 난입자 본인(260730) — 1 = 이번 화자가 난입 전용 인물
 try: barge_seat = int(sys.argv[22]) if len(sys.argv) > 22 else 0   # 난입 후 이 사람이 이미 말한 횟수(0 = 첫 마디)
@@ -941,8 +941,7 @@ L.append(f"- 오늘의 너: {daily} — 사건 없는 그날 기분, 미묘하�
 if moon: L.append("- 오늘 밤 달이 차오른다 — 본능이 증폭되는 며칠(해당 없는 캐릭터는 무시).")
 if mood_ko: L.append(f"- 직전 장면의 공기: {mood_ko}. 감정은 스위치가 아니라 곡선이다 — 급변하지 말고 이 공기에서 자연스럽게 이어가라(유지·심화·서서히 이완). 단 진짜 계기(진심 어린 사과·충격·제대로 꽂힌 농담)가 오면 곡선을 꺾어도 된다.")
 if last_open: L.append(f"- 직전에 네가 삼킨 것: {last_open} — 아직 안 끝났다. 이번 턴 어딘가에서 티가 나게 하라(설명·재론 금지 · 말끝·행동·딴소리로 새어나오는 정도). 유저가 화제를 옮겼으면 억지로 끌고 오지 말고 그냥 흘려보내라.")   # 감정선 캐리어(평의회 260725) — MOOD가 겉 공기라면 이건 속. 질문으로 넘기지 않고 대화가 이어지는 재료(대화분석 SC3 회피 · 운영자 "묻자는 건 아니고")
-if notice_txt and persona == "desk": L.append(f"- 오늘 무음동 라디오에서 **네가 직접 읽은** 그날 방송(Q.143): 「{notice_txt}」 — 남한테 들은 소식이 아니라 네가 원고를 쓰고 마이크 앞에서 읽은 것이다. **먼저 꺼내 낭독하지 마라**(방송을 두 번 트는 셈이다). 대화가 그 언저리로 오면 취재한 사람의 얼굴로 받아라 — 어디까지 확인했고 뭘 못 실었는지, 그 정도만.")   # 진행자 본인 분기(Q.143) — 종전엔 원고를 쓴 당사자에게도 "지나면서 봤을 것"이라고 넣어 제 방송을 남의 소식처럼 알던 구멍
-elif notice_txt: L.append(f"- 오늘 무음동 라디오에서 나온 소식(데스크가 그날 일 몇 건을 훑는 브리핑 · Q.133·Q.143): 「{notice_txt}」 — 이 동네 사람이면 가게 스피커나 집 라디오로 흘려들었을 것이다. **먼저 꺼내 낭독하지 마라**(공지를 읽어주는 인물이 되면 사람이 아니라 게시판이 된다). 대화가 그 언저리로 오면 아는 티만 내라 — 한 마디 얹거나, 남 얘기 하듯 흘리거나, 관계된 인물이면 반응이 달라지거나. 관심 없는 성격이면 무시해도 된다.")
+if notice_txt: L.append(f"- 오늘 무음동 전광판에 걸린 소식(그날 일 몇 건을 훑는 브리핑 · Q.133): 「{notice_txt}」 — 이 동네 사람이면 지나면서 봤을 것이다. **먼저 꺼내 낭독하지 마라**(공지를 읽어주는 인물이 되면 사람이 아니라 게시판이 된다). 대화가 그 언저리로 오면 아는 티만 내라 — 한 마디 얹거나, 남 얘기 하듯 흘리거나, 관계된 인물이면 반응이 달라지거나. 관심 없는 성격이면 무시해도 된다.")
 if cast: L.append(f"- 이 동네 사람들: {cast}. 이 밖의 주민을 창작하지 마라 — 최근 대화에 이름표로 등장한 다른 주민의 말은 그 사람 얘기로 자연스럽게 인용해도 된다.")
 if place_nm: L.append(f"- 네 평소 동선상 지금 너는 {place_nm} 언저리다 — **장소 낭독은 금지**(\"난 지금 ○○에 있어\" 식 보고 금지)지만, 종결부 지문의 **소품은 여기서 가져와라**: 그곳에 있을 법한 물건·풍경·이름 없는 사람(옆자리 아이·점원·지나가던 사람)이 지문의 재료다(운영자 260725 3차). 단 대화 흐름이 이미 다른 곳을 가리키면 그쪽이 우선이다.")
 if co_name: L.append(f"- 지금 이 자리엔 {co_name}도 같이 있다(합석). 대화는 셋이서다 — 그리고 {co_name}는 네가 유저와 주고받는 말을 **처음부터 다 듣고 있다**(운영자 260725 \"모니터링 하는 느낌\"). 없는 사람처럼 굴지 마라: 걔가 걸릴 만한 대목에선 말을 고르거나 시선을 의식하는 티가 나야 한다. 유저 말이 {co_name}를 향한 것 같으면 짧게 반응만 얹거나 물러나도 된다 — 그 자리는 걔가 자기 차례에 직접 받는다(네가 걔 속을 대신 말하지 마라).")
@@ -1687,14 +1686,8 @@ PY
   return 0
 }
 
-# ── 무음동 라디오(운영자 260728 "채팅창 상단에 공지로 전광판처럼 · 그날의 공지 · 누구 사망하면 알 수 있게 · 별별이슈" → 260730 Q.143 "확성기 대신 라디오로") ──
-# 하루 **1건**만. 진행 주체 = 편집국 데스크(조지 로이스 — 이미 있는 인물이라 세계관 신설 0).
-#
-# 260730 Q.143(운영자 "데스크가 지금 무음동 확성기 라디오 방송을 담당하고 있잖아? 확성기 대신 라디오로 해주고, 데스크가 죽었을때는 그게 안나오게해줘"):
-#   ⓐ 매체 = 확성기 → **라디오 방송**. 문안은 「지나가며 읽는 띠 광고판」이 아니라 **읽어서 귀에 들어가는 방송 원고**로 쓴다(뷰어 띠 = 그 방송의 자막).
-#   ⓑ **진행자 사망 = 그날 방송 없음**(NT_BY 게이트) — 죽은 사람이 오늘 소식을 읽고 있는 모순 차단. 뷰어도 같은 id(YNT_BY)로 화면을 멎춘다.
-#   ⓒ 같은 축 정합 2건: **부고에서 flee 제외**(flee = 위협을 피해 벗어난 것이지 죽음이 아닌데 부고가 나가던 구멍) ·
-#      **[이 동네 사람들] 명단에서 사망자 제외**(부고에 올린 사람을 같은 방송에서 산 사람처럼 또 쓰던 구멍).
+# ── 무음동 전광판(운영자 260728 "채팅창 상단에 공지로 전광판처럼 · 그날의 공지 · 누구 사망하면 알 수 있게 · 별별이슈") ──
+# 하루 **1건**만. 발행 주체 = 편집국 데스크(조지 로이스 — 이미 있는 인물이라 세계관 신설 0).
 # 사망·부활은 **창작이 아니라 사실 주입** — dead{}에 있는 것만 쓴다(없는 죽음을 지어내면 대화와 세계가 갈라진다).
 #
 # 260730 Q.133 개편(운영자 "확성기 쓸데없는소리 나오게 하지말고, 그날 무음동에 있었던 사건 전반에 대해 서술하게 해줘.
@@ -1702,7 +1695,7 @@ PY
 #   ⓐ **대화 추론 폐지** — 초판은 최근 답장 6턴을 [요즘 골목에서 오간 말]로 넣어 그걸 소재로 삼게 했다. 그게 "쓸데없는소리"의 뿌리였다
 #      (내가 방금 한 대화를 동네 소식으로 되돌려주는 자기참조 = 새 정보 0). 그 블록을 통째로 뺐다.
 #   ⓑ **재료 = 오늘 자 현실 뉴스 헤드라인**(yeta_news.headlines · 제목만) → 무음동 골목 규모로 **번안**. 실명·실지명·실기관은 금지고
-#      「구조(무슨 일이 어떻게 틀어졌나)」만 가져온다. 재료 0건 + 부고 0건 = **그날 방송 생략**(없는 소식을 지어내는 것보다 안 뜨는 게 낫다).
+#      「구조(무슨 일이 어떻게 틀어졌나)」만 가져온다. 재료 0건 + 부고 0건 = **그날 전광판 생략**(없는 소식을 지어내는 것보다 안 뜨는 게 낫다).
 #   ⓒ **한 줄 헤드라인 → 그날 사건 전반 브리핑**(2~4건 이어붙임 · 200자 안). 띠가 두 번 지나가는 동안 그날을 훑는다.
 #   ⓓ 모델 = Sonnet 5 x effort **max**(지시값 · 종전 low). 하루 1회라 비용은 사실상 고정.
 notice_prompt() {
@@ -1724,22 +1717,16 @@ names = {c.get("id"): (c.get("name") or c.get("id")) for c in roster if isinstan
 if not names: sys.exit(1)
 _wd, _wh = world_dh()
 now_ms = time.time() * 1000
-NT_BY = "desk"                             # 방송 진행자 = 편집국 데스크 — 뷰어 YNT_BY와 **같은 id 하나**(진행자 교체 = 두 곳만)
-_dead_now = {k: v for k, v in (S.get("dead") or {}).items()
-             if ((v.get("t") if isinstance(v, dict) else v) or 0) > now_ms}   # 지금 두절 중인 사람 전부(사망 + flee 이탈)
-if NT_BY in _dead_now: sys.exit(1)         # 진행자 사망·이탈 = 그날 방송 없음(운영자 260730 Q.143 "데스크가 죽었을때는 그게 안나오게") · LLM 호출 0 · 부활 = 이 게이트 자연 통과 = 그날 안에 재개
-dead = [(names.get(k) or k) for k, v in _dead_now.items()
-        if not (isinstance(v, dict) and v.get("flee")) and (names.get(k) or k)]   # 부고 = **진짜 죽음만**(Q.143) — flee(위협 회피 이탈 · 60분 두절)는 죽은 게 아닌데 부고가 나가던 구멍 차단(dead_wait의 pray 게이트와 같은 결)
-alive = {k: v for k, v in names.items() if k not in _dead_now}   # 오늘 살아 움직이는 사람만 소재 명단에(Q.143) — 부고에 올린 사람을 같은 방송에서 산 사람처럼 또 쓰던 구멍 차단
-if not alive: sys.exit(1)                  # 동네가 통째로 두절 = 방송할 사람도 소재도 없음
+dead = [(names.get(k) or k) for k, v in (S.get("dead") or {}).items()
+        if ((v.get("t") if isinstance(v, dict) else v) or 0) > now_ms and (names.get(k) or k)]
 news = headlines(8)                        # 오늘 자 현실 헤드라인(제목만 · 실패 = 빈 리스트)
 if not news and not dead: sys.exit(1)      # 재료 0 = 발행 안 함(= LLM 호출 0 · "쓸데없는소리" 원천 차단)
 L = []
-L.append("너는 무음동 편집국의 데스크(조지 로이스)다. 골목 하나짜리 동네 소식지를 혼자 굴리고, 하루 한 번 그 소식을 **무음동 라디오**로 직접 읽는다 — 각 하나에 목숨을 걸고, 확인 안 된 건 안 내보낸다.")
-L.append("오늘 방송 원고를 쓴다. 골목 가게 스피커·집 라디오에서 흘러나와 **귀로 듣는 소리**고, **그날 무음동에 있었던 일 전반을 훑는 브리핑**이다.")
+L.append("너는 무음동 편집국의 데스크(조지 로이스)다. 골목 하나짜리 동네 소식지를 혼자 굴린다 — 각 하나에 목숨을 걸고, 확인 안 된 건 안 싣는다.")
+L.append("오늘 자 전광판 문구를 쓴다. 마을 사람들이 지나가며 읽는 띠 광고판이고, **그날 무음동에 있었던 일 전반을 훑는 브리핑**이다.")
 L.append("")
-L.append("[이 동네 사람들] " + " · ".join(v for v in alive.values() if v))   # 사망·이탈자 제외(Q.143) — 죽은 사람이 오늘 소식 속에서 멀쩡히 돌아다니던 것 차단
-if dead: L.append("[확인된 부고] " + " · ".join(dead) + " — 사실이다. 오늘은 이걸 맨 앞에 읽는다. 이 사람들은 **죽은 사람으로만** 다뤄라(오늘 뭘 하고 다녔다는 식으로 쓰지 마라).")
+L.append("[이 동네 사람들] " + " · ".join(v for v in names.values() if v))
+if dead: L.append("[확인된 부고] " + " · ".join(dead) + " — 사실이다. 오늘은 이걸 맨 앞에 싣는다.")
 L.append("[지금] 무음동 %02d시경" % _wh)
 if news:
     L.append("")
@@ -1752,17 +1739,16 @@ L.append("- 실제 인물명·기관명·회사명·지명·정당·국가는 **
 L.append("- 예: 「대형 정산 지연 사태」 → 골목 상인들이 한 달째 대금을 못 받는 일 / 「폭염 특보」 → 낮 동안 골목이 통째로 말라붙은 일 / 「유명인 소속사 분쟁」 → 이 동네 두 사람이 가게 지분으로 갈라선 일.")
 L.append("- 사건 규모를 **동네로 축소**해라. 나라가 흔들리는 일은 여기서 골목 하나가 흔들리는 일이다.")
 L.append("")
-L.append("[원고 규칙]")
+L.append("[문구 규칙]")
 L.append("- **한 줄 · 200자 안.** 그날 일 **2~4건**을 「 · 」로 이어 붙인 브리핑. 문장은 짧고 건조하게 끊어라.")
-L.append("- **소리 내어 읽는 원고다**(Q.143 라디오). 눈으로 훑는 게시물이 아니라 귀로 듣는 말이니 입에 붙게 써라 — 다만 「안녕하십니까」·「무음동 라디오입니다」 같은 방송 인사말·오프닝 멘트·클로징 인사는 넣지 마라(띠는 이미 방송 중간부터 흘러간다).")
 L.append("- **쓸데없는 소리 금지.** '자전거가 부딪혔다' 같은 아무 사건 금지. 각 건은 (a) 확인된 부고 (b) 위 바깥 소식의 번안 (c) 편집국 알림(제보·구인·분실물) 중 하나에 반드시 걸려야 한다.")
-L.append("- 없는 죽음·없는 사람을 만들지 마라. 위 명단(부고 포함) 밖 인물 창작 금지.")
+L.append("- 없는 죽음·없는 사람을 만들지 마라. 위 명단 밖 인물 창작 금지.")
 L.append("- **유저(플레이어)를 소재로 삼지 마라** — 이건 마을 소식이지 그 사람 얘기가 아니다. 그 사람이 한 대화를 되돌려 싣지도 마라.")
 L.append("- 데스크 말투: 짧고 건조하고 살짝 능청. 마지막 한 칸은 편집국 알림으로 닫아도 좋다. 예) 「제보는 desk@desk.com. 카메라 들고 뛰어갑니다.」")
 L.append("")
 L.append("[출력 계약]")
 L.append("- 첫 줄: 종류 한 단어만 — dead(부고 포함) / ad(편집국 알림이 중심) / issue(그 외 동네 소식)")
-L.append("- 둘째 줄: 방송 원고 한 줄. 따옴표·머리표·군더더기 없이 원고만.")
+L.append("- 둘째 줄: 전광판 문구 한 줄. 따옴표·머리표·군더더기 없이 문구만.")
 print("\n".join(L))
 NPY
 }
@@ -1882,14 +1868,14 @@ process_turn() {
   INS="$(matv ins)"; ANCHOR_TS="$(matv anchor_ts)"; PERSONA="$(matv persona)"; PTT="$(matv ptt)"; FAR="$(matv far)"   # FAR = 원거리(다른 장소 · 260714)
   ME_CALL="$(matv me_call)"; ME_ABOUT="$(matv me_about)"   # 유저 프로필(호칭+소개 · "AI가 나를 부르는 법" · 260708)
   RAW_MODEL="$(matv model)"; RAW_EFF="$(matv effort)"; TUNE="$(matv tune)"; POL="$(matv policy)"; LAST_MOOD="$(matv last_mood)"; LAST_OPEN="$(matv last_open)"; CAST="$(matv cast)"; GAP_H="$(matv gap_h)"; LATE_H="$(matv late_h)"; REL_LV="$(matv rel_lv)"; RIV="$(matv riv)"; HANDOFF="$(matv handoff)"   # LAST_OPEN = 직전에 삼킨 것(감정선 캐리어 260725) · LATE_H = 지각(260726 Q.70)
-  # L1 연출 축 유효값(260727 → 260730 확성기 증설) — 이 턴 동안만 유효한 5개 스위치. 아래 소비처: AMB_ON(주변 사건 생성·심기·HIST) · GB_BEATS(자율 비트) · GB_LINES(단톡 교대) · BARGE_ON(난입) · NT_ON(라디오 생성+프롬프트).
+  # L1 연출 축 유효값(260727 → 260730 확성기 증설) — 이 턴 동안만 유효한 5개 스위치. 아래 소비처: AMB_ON(주변 사건 생성·심기·HIST) · GB_BEATS(자율 비트) · GB_LINES(단톡 교대) · BARGE_ON(난입) · NT_ON(전광판 생성+프롬프트).
   _GBON=0; [ "${GB_ENV_BEATS:-0}" -gt 0 ] 2>/dev/null && _GBON=1; _CHON=0; [ "${GB_ENV_LINES:-1}" -gt 1 ] 2>/dev/null && _CHON=1   # env 기본의 '켬/끔' 환산 = 정책 미설정 시 폴백
   _PA="$(pol_axes "$POL" "${AMB_FILE:-1}" "$_GBON" "$_CHON" 1 1)"
   case "$_PA" in [01]" "[01]" "[01]" "[0-2]" "[01]) AMB_ON="${_PA%% *}"; _PA="${_PA#* }"; GB_ON="${_PA%% *}"; _PA="${_PA#* }"; CH_ON="${_PA%% *}"; _PA="${_PA#* }"; BARGE_ON="${_PA%% *}"; NT_ON="${_PA##* }" ;;
                  *) AMB_ON="${AMB_FILE:-1}"; GB_ON="$_GBON"; CH_ON="$_CHON"; BARGE_ON=1; NT_ON=1 ;; esac   # 형식 불일치(파이썬 실패·빈 출력) = 종전 기본 전량 복귀(설정 사고로 축이 통째 죽는 것 차단)
   GB_BEATS="$GB_ENV_BEATS"; [ "$GB_ON" = "1" ] || GB_BEATS=0     # 자율 비트 끔 = 상한 0 = 예약 자체가 안 걸린다(기존 '0 = 축 OFF' 계약 재사용 · 새 분기 0)
   GB_LINES="$GB_ENV_LINES"; [ "$CH_ON" = "1" ] || GB_LINES=1     # 단톡 교대 끔 = 1토막 = 종전 결(GROUP_RULE 폴백이 그대로 받는다)
-  CO_ID="$(matv co)"; CO_NAME="$(matv co_name)"; BARGE_DEBUT="$(matv barge_debut)"; BARGE_HOST="$(matv barge_host)"; WFRZ_MS="$(matv wfrz)"; WRATE="$(matv wrate)"; WANCH="$(matv wrb)"; NOTICE_TXT="$(matv notice)"; [ "${NT_ON:-1}" = "1" ] || NOTICE_TXT=""   # 단톡 동행·난입 데뷔(합석 260707) · 난입당한 쪽(260728) · 라디오 축 OFF = 프롬프트에서도 소거(Q.133 — 화면만 끄면 캐릭터가 안 들은 방송을 계속 알던 구멍)
+  CO_ID="$(matv co)"; CO_NAME="$(matv co_name)"; BARGE_DEBUT="$(matv barge_debut)"; BARGE_HOST="$(matv barge_host)"; WFRZ_MS="$(matv wfrz)"; WRATE="$(matv wrate)"; WANCH="$(matv wrb)"; NOTICE_TXT="$(matv notice)"; [ "${NT_ON:-1}" = "1" ] || NOTICE_TXT=""   # 단톡 동행·난입 데뷔(합석 260707) · 난입당한 쪽(260728) · 확성기 축 OFF = 프롬프트에서도 소거(Q.133 — 화면만 끄면 캐릭터가 안 보이는 공지를 계속 알던 구멍)
   BARGE_SELF="$(matv barge_self)"; BARGE_SEAT="$(matv barge_seat)"; BARGE_ROOM="$(matv barge_room)"; OMEN_REACT="$(matv omen_react)"   # 난입자 본인 축(260730) — self=이번 화자가 난입자 · seat=난입 후 앉아서 말한 횟수 · room=이 방에 난입자가 있다
   [ "$BARGE_ROOM" = "1" ] && GB_LINES=1   # 난입 자리 = 대본 교대 금지(운영자 260730 "왜 둘이 있을때는 오히려 고죠사토루가 프리실라처럼 얘기함") — 한 사람이 두 사람 대사를 쓰는 구조가 표기 규칙 교차 오염의 뿌리. 아래 CO_BLOCK 게이트와 짝.
   PLACE_NM="$(matv place_nm)"; BARGE_VIA="$(matv barge_via)"   # 동선 장소 + 마주침 데뷔 결(위치 SSOT places.json · 260707)

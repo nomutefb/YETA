@@ -245,9 +245,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     -webkit-mask-image:linear-gradient(to bottom, transparent 0, transparent calc(51px + env(safe-area-inset-top)), #000 calc(83px + env(safe-area-inset-top)));
     mask-image:linear-gradient(to bottom, transparent 0, transparent calc(51px + env(safe-area-inset-top)), #000 calc(83px + env(safe-area-inset-top))); }   /* 상단 = 네비 뒤로 대화가 새지 않게 완전투명 0→51 → 불투명 83(운영자 20260714 플그 확정값 · 구 밴드 마스크[0-52 불투명·60-76만 숨김] 폐지 · #yetatopblur z1 5레이어 그라데 블러와 합작) · 상하 패딩 = 플로팅 알약 클리어런스(운영자 260705) · px=기하 예외축 */
   /* 상단 그라데 블러(운영자 20260714 확정 — 플그 5레이어 프로그레시브 채택 · docs/reports/20260714_184051_상단그라데블러_스와이프모션_플레이그라운드) — 네비(.yeta-h z3)·미터(z2) 아래(z1)서 스크롤 대화를 위로 갈수록 블러+어둠으로 뭉갬 → "보이는 영역"처럼 새어오름 차단 · 확정값 blur 30→0·각도180·존 24→83·스크림.54 · 블러 max = --blur-m 계승(30≈29 광학동일)·레이어 램프(.8/.6/.4/.2) = 안무축 · 스크림/마스크 px = 기하 예외축 */
-  /* ── 무음동 라디오(운영자 260728 "채팅창 상단에 공지로 전광판처럼 쭉 우>좌 · 그날의 공지 · 누구 사망하면 알 수 있게 · 별별이슈" → 260730 Q.143 "확성기 대신 라디오로") ──
-     ⚠ Q.143 = **매체 교체만**(확성기 → 라디오). 이 띠는 이제 「지금 무음동 라디오에서 흘러나오는 방송을 글로 받아 적은 자막」이다 —
-       픽토는 RADIO_SVG, 설정 라벨·프롬프트 문안도 라디오 축. 아래 표면·기하·색축·수명은 Q.128/Q.130 선언 그대로 계승(신규 값 0).
+  /* ── 무음동 전광판(운영자 260728 "채팅창 상단에 공지로 전광판처럼 쭉 우>좌 · 그날의 공지 · 누구 사망하면 알 수 있게 · 별별이슈") ──
      발행 주체 = 편집국 데스크(조지 로이스) — 이미 있는 인물이라 세계관 신설 0. 표면 = .yb.sys 글래스 알약 선언 100% 계승(배경·테두리·모서리·blur 동값),
      색축 = 종류별 정본 토큰 계승만: 사망 --danger · 홍보/제보 --accent · 그 외 무채색(신규 hex 0).
      ⚠ 표면은 글래스가 아니라 **스포티파이 블랙 솔리드 판**(운영자 260728 "스포티파이 블랙으로 도형 하나 감싸서 배경으로 놔") — 뒤 배경이 비치면 흐르는 글자가 그림에 묻혀 전광판으로 안 읽힌다.
@@ -262,7 +260,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card);
     color:var(--fg-2); font-size:var(--fs-xs); pointer-events:none; }   /* pointer-events:none = 스크롤·탭을 안 먹는다(읽기 전용 띠) */
   #yetanotice[hidden] { display:none; }
-  #yetanotice .ynt-ico { flex:none; display:inline-flex; align-items:center; margin-right:5px; color:var(--mut); }   /* 라디오 = 발행 표식(SSOT RADIO_SVG 주입 · 인라인 재선언 0 · 운영자 260730 "확성기 대신 라디오로" = 260728 확성기 픽토 대체) — 라벨과 한 덩어리로 왼쪽 고정 */
+  #yetanotice .ynt-ico { flex:none; display:inline-flex; align-items:center; margin-right:5px; color:var(--mut); }   /* 확성기 = 발행 표식(SSOT MEGAPHONE_SVG 주입 · 인라인 재선언 0) — 라벨과 한 덩어리로 왼쪽 고정 */
   #yetanotice .ynt-tag { flex:none; margin-right:8px; font-weight:var(--fw-x); color:var(--mut); letter-spacing:.04em; }   /* 발행처 라벨 — 흐르지 않고 왼쪽 고정(무엇을 읽는지가 먼저) */
   #yetanotice .ynt-win { position:relative; flex:1; min-width:0; overflow:hidden; height:100%; }
   #yetanotice .ynt-txt { position:absolute; top:50%; left:0; display:flex; will-change:transform;
@@ -1889,9 +1887,9 @@ const yAmbOn = () => {   // 주변 사건(kind=amb) 표시 여부 = **L1 설정�
   const v = Number.isInteger((_ypolCur || {}).ambient) ? _ypolCur.ambient : (sw ? sw.default : 0);   // 정의 미로드(부팅 직후 프리페치 전) = 기본 0 = 숨김 = 안전측(껐다고 믿은 게 반짝 보이는 사고 차단)
   return v !== 0;
 };
-const yNtOn = () => {   // 라디오(무음동 방송) on/off = **L1 설정값 단일 정본**(운영자 260730 Q.133 "확성기 on/off 가능하게" · Q.143에서 매체명만 라디오로 · 저장 키 `notice`는 불변 = 구세션 회귀 0) — 위 yAmbOn 선언 100% 계승(조회 문법·미로드 폴백 규약 동일 · 새 저장 축 0). 러너도 같은 키(policy.notice → NT_ON)를 읽어 스위치 하나가 생성·프롬프트·화면을 동시에 지배한다
+const yNtOn = () => {   // 확성기(전광판) on/off = **L1 설정값 단일 정본**(운영자 260730 Q.133 "확성기 on/off 가능하게") — 위 yAmbOn 선언 100% 계승(조회 문법·미로드 폴백 규약 동일 · 새 저장 축 0). 러너도 같은 키(policy.notice → NT_ON)를 읽어 스위치 하나가 생성·프롬프트·화면을 동시에 지배한다
   const sw = ((YPOLDEF && YPOLDEF.L1 || {}).switches || []).find(x => x.key === 'notice');   // 정의 = 정책 문서(뷰어 하드코딩 0)
-  const v = Number.isInteger((_ypolCur || {}).notice) ? _ypolCur.notice : (sw ? sw.default : 1);   // 정의 미로드(부팅 직후 프리페치 전) = 정의 기본 1 = 켬. ⚠ yAmbOn과 폴백 방향이 반대인 이유 = 주변 사건은 「꺼둔 게 반짝 보이는」 사고가 치명적이라 안전측이 숨김이지만, 라디오는 기본 켬 축이라 프리페치 전 1회를 숨기면 그날 유일한 방송을 놓친다(하루 1건 = 재시도 없음)
+  const v = Number.isInteger((_ypolCur || {}).notice) ? _ypolCur.notice : (sw ? sw.default : 1);   // 정의 미로드(부팅 직후 프리페치 전) = 정의 기본 1 = 켬. ⚠ yAmbOn과 폴백 방향이 반대인 이유 = 주변 사건은 「꺼둔 게 반짝 보이는」 사고가 치명적이라 안전측이 숨김이지만, 확성기는 기본 켬 축이라 프리페치 전 1회를 숨기면 그날 유일한 발화를 놓친다(하루 1건 = 재시도 없음)
   return v !== 0;
 };
 const yApi = (op, extra) => fetch('api/yeta', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op, ...(extra || {}) }) }).then(r => r.json());
@@ -4078,23 +4076,18 @@ function yApply(c) {   // 페르소나 적용 — 이름·태그·포인트색·
   yMeter();   // 좌상단 기록 미터 = 방 전환 즉시 갱신(운영자 260709)
   if (window.YCALL && YCALL.sync) { try { YCALL.sync(); } catch {} }   // [call 모듈 훅] 방 전환 = 수화기 락·연락처 버튼 즉시 동기(폴 전 스테일 교정 260709 · 모듈 부재 = no-op)
 }
-// ── 무음동 라디오 = 이벤트 띠(Q.128 → Q.143 260730 라디오 전환) ──
-//   ⚠ 260730 Q.143: 매체를 **확성기 → 라디오**로 바꿨다(운영자 "확성기 대신 라디오로"). 바뀐 건 매체 이름·픽토(RADIO_SVG)·문안 결뿐 —
-//      띠 구조·자리·수명·색축·1회성 규약은 Q.128/Q.130 그대로 계승(신규 값·신규 컴포넌트 0). 흐르는 띠 = 지금 라디오에서 나오는 방송을 글로 받아 적은 자막이다.
-//   ⚠ 같은 Q.143: **진행자(데스크)가 죽어 있으면 띠 자체가 안 뜬다**(아래 YNT_BY 가드) — 러너의 생성 게이트와 짝.
+// ── 전광판 = 이벤트 띠(Q.128 260730) ──
 //   구조: 상주 상단 띠(항시 표시)였던 것을 **새 공지 1건당 딱 한 번** 내 말풍선 바로 위로 지나가는 이벤트로 바꿨다.
 //   운영자 260730: "확성기가 모델명이랑 토큰 얼마 썼는지를 가려 / 내 채팅 바로 위에 붙어서 지나가게 / 2번 지나가면 사라지는 느낌 / 매번 나오지않고 이벤트성으로".
 //   ⓐ 가림 해소 = 옛 자리(헤더 바닥+6)가 .ymeter(top 62)와 같은 높이여서 계기판을 덮고 있었다 → 하단(.ypickbar 규약)으로 이설.
 //   ⓑ 2주기 = 흐름 애니(--ynt-d)는 그대로 무한이고 **타이머가 2주기 뒤 퇴장**시킨다(글이 멈춘 뒤 사라지지 않고 흘러가면서 사라진다 = "지나가면 사라지는 느낌").
 //   ⓒ 1회성 = 본 공지 키(d|text)를 localStorage에 박아 폴 갱신·방 전환·재진입에 재발화 0(운영자 "매번 나오지않고").
-const YNT_BY = 'desk';   // 방송 진행자 = 편집국 데스크(조지 로이스) 고정 — 러너 notice_prompt의 진행자 게이트와 **같은 id 하나**(드리프트 0). 진행자가 바뀌면 여기와 러너 두 곳만 고친다.
 const yntSeen = () => { try { return localStorage.getItem('yeta_ynt_seen') || ''; } catch { return ''; } };
 const yntMark = k => { try { localStorage.setItem('yeta_ynt_seen', k); } catch {} };   // yeta_ 접두 = 캐시 비우기 커버(yeta_read_* 선례 계승)
 let _yntT = 0;
 function yNotice() {   // 무음동 전광판(운영자 260728 → 260730 이벤트화) — 세션 top-level notice{d,text,kind}. 러너가 하루 1건 생성·저장하고 뷰어는 읽기만(생성 0 = 렌더 비용 0).
   const el = $('#yetanotice'); if (!el) return;
-  if (!yNtOn()) { yNoticeEnd(); return; }                       // L1 라디오 축 OFF(Q.133) = 화면에서 즉시 회수 · 러너도 같은 키로 생성·프롬프트를 끊는다(한쪽만 꺼져 어긋나던 구멍 없음)
-  if (yDead({ id: YNT_BY })) { yNoticeEnd(); return; }          // 진행자 사망 = 방송 정지(운영자 260730 "데스크가 죽었을때는 그게 안나오게") — 죽은 사람이 오늘 소식을 읽고 있는 모순 차단 · 판정 = yDead 단일(사망·기도 대기·flee 두절 전부 커버) · 러너도 같은 축(notice_prompt 진행자 게이트)이라 화면·생성·프롬프트가 한 몸으로 멎는다 · 부활 = 이 가드 자연 통과 = 다음 폴에서 방송 재개
+  if (!yNtOn()) { yNoticeEnd(); return; }                       // L1 확성기 축 OFF(Q.133) = 화면에서 즉시 회수 · 러너도 같은 키로 생성·프롬프트를 끊는다(한쪽만 꺼져 어긋나던 구멍 없음)
   const n = (YSESS || {}).notice;
   const txt = n && typeof n === 'object' ? String(n.text || '').trim() : '';
   if (!txt) return;                                             // 공지 없음 = 아무것도 안 한다(흐르던 띠가 있으면 자기 타이머로 마무리)
@@ -4107,7 +4100,7 @@ function yNotice() {   // 무음동 전광판(운영자 260728 → 260730 이벤
   const kind = String((n.kind || '')).toLowerCase();
   const k = kind === 'dead' || kind === 'revive' ? 'k-dead' : (kind === 'ad' || kind === 'notice' ? 'k-ad' : '');
   const ico = el.querySelector('.ynt-ico');
-  if (ico && !ico.firstChild) ico.innerHTML = (typeof RADIO_SVG !== 'undefined' ? RADIO_SVG : '');   // 1회만 주입(재렌더마다 파싱 안 함) · 미로드 = 빈 칸(문구는 그대로 = fail-soft)
+  if (ico && !ico.firstChild) ico.innerHTML = (typeof MEGAPHONE_SVG !== 'undefined' ? MEGAPHONE_SVG : '');   // 1회만 주입(재렌더마다 파싱 안 함) · 미로드 = 빈 칸(문구는 그대로 = fail-soft)
   if (tag) tag.textContent = n.by_name || '데스크';             // 발행처 = 러너가 준 이름(기본 = 편집국 데스크)
   clearTimeout(_yntT);
   el.className = (k ? k + ' ' : '') + 'in';                      // 등장 = .yeta-log .in 정본 애니 공유(ybIn)
