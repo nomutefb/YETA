@@ -242,6 +242,19 @@ SEASONS = {
                     "기존 전용 배경 var_persona_<id>.webp보다 나빴다. 수집분 들어오면 main/<감정>/에 부어 확장. "
                     "정본=viewer/characters/season/aeri/main/<감정>/."),
     },
+    "san": {
+        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
+        # ⚠ 아이돌 등급인데 왜 idol/ 이 아니라 season/ 인가 — 윈터의 `characters/idol/winter/`는 189장이 감정 폴더 없이
+        #    먼저 모여버린 데서 나온 **평면(flat) 예외 축**이고, 등급(roster grade)과 에셋 경로는 별개 축이다.
+        #    새로 붓는 인물은 15인이 쓰는 감정 하위폴더 축(= _소재/README 정본 경로)이 낫다: 파일명 규율 0 · 오분류 0.
+        "modes": {"main": ["base"]},
+        "comment": ("시즌 감정 미디어 manifest(최산) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
+                    "사진 = main/<감정>/에 붓기만(파일명 자유) · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
+                    "⚠ 260730 현재 = **배경 풀 0장**(빈 껍데기 = 뷰어 시그니처·틴트 폴백 유지 · 애리 선례). 얼빡 프사는 캐릭터 루트 "
+                    "`san_face.webp`에 둔다 — 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라·애리 선례). "
+                    "정본=viewer/characters/season/san/main/<감정>/."),
+    },
     "winter": {
         # 평면 축(flat) — 감정 하위폴더 없이 파일명 토큰으로 분류. 파일을 안 옮기는 이유 = build_flat 독스트링.
         "flat": "characters/idol/winter",
