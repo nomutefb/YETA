@@ -94,6 +94,28 @@ def img_size(p: Path):
         return None
     return None
 
+# ── 평면(flat) 축 공용 파일명 규칙 — 아이돌 등급 `characters/idol/<id>/` 계보(윈터 260726 · 최산 260730) ──────
+# 왜 상수로 뽑았나: 최산이 윈터와 같은 축으로 들어오면서(운영자 260730 「최산도 윈터랑 같은급 · 트리 구조 계승」)
+#   같은 어휘 표를 두 곳에 복제하면 한쪽만 고쳐지는 드리프트가 난다 → **한 곳(SSOT)에서 두 캐릭터가 참조**.
+# ⚠ 위에서부터 첫 일치 승 — 좁은 토큰을 먼저.
+#   (예: glaring_cut → sulky 가 glaring → mad 보다 위 · faux_furious → sulky 가 furious → mad 보다 위 · playful_cute → shy 가 playful → joy 보다 위)
+IDOL_FLAT_RULES = [
+    ("shy",   ["tsundere", "hesitant_to_speak", "flustered", "giggle_bashfully", "act_cute", "play_cute", "playful_cute"]),
+    ("love",  ["seduce", "flirty", "love_u", "how_do_i_look", "miss_someone", "fond_look"]),
+    # bored/listless(260729 운영자 「soso · 따분 · 심심 이런느낌으로 기존에 있는거에」) = 각성 낮은 무기력 결로 blue 편입.
+    #   새 버킷을 안 만든 이유 = EMOS 9종은 러너 <<MOOD>> 화이트리스트와 짝인 불변 계약(신설 = 양쪽 동시 개정).
+    ("blue",  ["sob", "crying", "heartbroken", "worried", "brooding", "sleepy", "asleep", "dozing", "heavy_eyes", "gotosleep", "go_sleep", "helpless", "at_a_loss", "let_down", "overwhelmed", "sad", "bored", "listless"]),
+    # 삐짐(260726 독립) — 서운해서 토라진 결. mad보다 **위**여야 좁은 토큰이 먼저 잡힌다.
+    #   glaring_cut* = "귀엽게 째려봄" = 삐짐 표정 그 자체(종전 shy에 있었으나 볼 붉힘 축과 다르다 · tsundere만 shy 잔류)
+    #   faux_furious·feigning_mad·low_key_mad = 화난 '척'·은근한 화 = 대놓고 화난 mad와 반대쪽 결
+    ("sulky", ["sulky", "pouty", "offend", "grumpy", "upset", "low_key_mad", "feigning_mad", "faux_furious", "cold_shoulder", "curt", "glaring_cut", "glaring_cuty"]),
+    ("mad",   ["angry", "furious", "annoy", "irritat", "disgusting", "glaring"]),
+    ("tense", ["suspicious", "taken_aback", "confused", "clueless", "dumbfounded", "panick", "freaking", "is_this_happening", "no_way", "for_real", "oh_really", "are_u_kidding", "what_now", "speechless", "so_cold", "poker_face", "fake_smile", "i_told_you_so", "smirk", "distracted"]),
+    ("joy",   ["happy", "excited", "eureka", "goofy", "proud", "full_of_oneself", "playful", "hopeful"]),
+    ("warm",  ["smile", "chuckle", "cheerup", "hi_", "its_you", "love"]),
+    # 나머지(무대·연습·일상·배경·모델컷 등) = base 폴백
+]
+
 # 캐릭터별 구성 — modes: {모드폴더: 루트(미분류) 파일이 흡수될 버킷들} · mode_dir: 변신 모드 폴더(viewer 게이트 축)
 SEASONS = {
     "lucy": {
@@ -243,17 +265,23 @@ SEASONS = {
                     "정본=viewer/characters/season/aeri/main/<감정>/."),
     },
     "san": {
-        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
-        # ⚠ 아이돌 등급인데 왜 idol/ 이 아니라 season/ 인가 — 윈터의 `characters/idol/winter/`는 189장이 감정 폴더 없이
-        #    먼저 모여버린 데서 나온 **평면(flat) 예외 축**이고, 등급(roster grade)과 에셋 경로는 별개 축이다.
-        #    새로 붓는 인물은 15인이 쓰는 감정 하위폴더 축(= _소재/README 정본 경로)이 낫다: 파일명 규율 0 · 오분류 0.
-        "modes": {"main": ["base"]},
-        "comment": ("시즌 감정 미디어 manifest(최산) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
-                    "사진 = main/<감정>/에 붓기만(파일명 자유) · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
-                    "⚠ 260730 현재 = **배경 풀 0장**(빈 껍데기 = 뷰어 시그니처·틴트 폴백 유지 · 애리 선례). 얼빡 프사는 캐릭터 루트 "
-                    "`san_face.webp`에 둔다 — 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라·애리 선례). "
-                    "정본=viewer/characters/season/san/main/<감정>/."),
+        # 평면 축(flat) — 운영자 260730 「최산도 윈터랑 같은급. 아이돌로 취급해지고 리포지토리 위치랑 그 트리 구조 계승도 맞춰줘」.
+        #   종전(260730 오전)엔 season/san/main/<감정>/ 하위폴더 축이었다 → 같은 날 오후 지시로 윈터와 **같은 경로·같은 트리**로 이관.
+        #   등급(roster grade "idol")과 에셋 경로를 한 축으로 정렬 = 아이돌은 `characters/idol/<id>/` 평면 + 감정 파일명.
+        "flat": "characters/idol/san",
+        # 클립 노브 = 윈터와 같은 계약(파일명 토큰이 먼저 · 미매치면 clip_to 폴백 · clip_w배 등간격).
+        #   현 클립 seduce_vest_clip_01 은 파일명에 seduce 가 있어 love로 확정 = clip_to는 다음 클립용 폴백.
+        "clip_to": ["love", "shy"],
+        "clip_w": 3,
+        "rules": IDOL_FLAT_RULES,   # 윈터와 같은 표(SSOT) — 어휘가 갈라지면 같은 단어가 캐릭터마다 다른 버킷에 가는 사고가 난다
+        "comment": ("감정 미디어 manifest(최산) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립). "
+                    "⚠ 축 = **평면(flat) 폴더**(윈터와 동일 · 운영자 260730 「윈터랑 같은급 · 트리 구조 계승」) — 사진이 감정 하위폴더가 아니라 "
+                    "`characters/idol/san/`에 감정이 적힌 파일명(happy_thumbs_up_01 · so_cold_02 · pouty_headphones_01 …)으로 모여 있고, "
+                    "IDOL_FLAT_RULES 토큰 규칙이 그걸 읽어 버킷에 넣는다. 새 사진 = 같은 폴더에 감정 단어가 들어간 이름으로 넣기만 · "
+                    "어디에도 안 걸리면 base 폴백. 클립 = 파일명 토큰 우선(seduce_vest_clip_01 → love) · 미매치 시 clip_to(love·shy) · clip_w=3(등간격 3배). "
+                    "얼빡 프사 `san_face.webp`는 같은 폴더에 두지만 `<id>_face*` 규약으로 배경 풀에서 자동 제외된다. "
+                    "정본=viewer/characters/idol/san/."),
     },
     "winter": {
         # 평면 축(flat) — 감정 하위폴더 없이 파일명 토큰으로 분류. 파일을 안 옮기는 이유 = build_flat 독스트링.
@@ -262,23 +290,8 @@ SEASONS = {
         #   → clip_to로 버킷을 지정한다. 종전 = base 66장 선두 = 66턴에 1번(사실상 안 보임).
         "clip_to": ["love", "shy"],
         "clip_w": 3,
-        # ⚠ 위에서부터 첫 일치 승 — 좁은 토큰을 먼저. (예: glaring_cut → sulky 가 glaring → mad 보다 위 · faux_furious → sulky 가 furious → mad 보다 위)
-        "rules": [
-            ("shy",   ["tsundere", "hesitant_to_speak", "flustered", "giggle_bashfully", "act_cute", "play_cute", "playful_cute"]),
-            ("love",  ["seduce", "flirty", "love_u", "how_do_i_look", "miss_someone", "fond_look"]),
-            # bored/listless(260729 운영자 「soso · 따분 · 심심 이런느낌으로 기존에 있는거에」) = 각성 낮은 무기력 결로 blue 편입.
-            #   새 버킷을 안 만든 이유 = EMOS 9종은 러너 <<MOOD>> 화이트리스트와 짝인 불변 계약(신설 = 양쪽 동시 개정).
-            ("blue",  ["sob", "crying", "heartbroken", "worried", "brooding", "sleepy", "asleep", "dozing", "heavy_eyes", "gotosleep", "go_sleep", "helpless", "at_a_loss", "let_down", "overwhelmed", "sad", "bored", "listless"]),
-            # 삐짐(260726 독립) — 서운해서 토라진 결. mad보다 **위**여야 좁은 토큰이 먼저 잡힌다.
-            #   glaring_cut* = "귀엽게 째려봄" = 삐짐 표정 그 자체(종전 shy에 있었으나 볼 붉힘 축과 다르다 · tsundere만 shy 잔류)
-            #   faux_furious·feigning_mad·low_key_mad = 화난 '척'·은근한 화 = 대놓고 화난 mad와 반대쪽 결
-            ("sulky", ["sulky", "pouty", "offend", "grumpy", "upset", "low_key_mad", "feigning_mad", "faux_furious", "cold_shoulder", "curt", "glaring_cut", "glaring_cuty"]),
-            ("mad",   ["angry", "furious", "annoy", "irritat", "disgusting", "glaring"]),
-            ("tense", ["suspicious", "taken_aback", "confused", "clueless", "dumbfounded", "panick", "freaking", "is_this_happening", "no_way", "for_real", "oh_really", "are_u_kidding", "what_now", "speechless", "so_cold", "poker_face", "fake_smile", "i_told_you_so", "smirk", "distracted"]),
-            ("joy",   ["happy", "excited", "eureka", "goofy", "proud", "full_of_oneself", "playful", "hopeful"]),
-            ("warm",  ["smile", "chuckle", "cheerup", "hi_", "its_you", "love"]),
-            # 나머지(무대·연습·일상·배경·모델컷 등) = base 폴백
-        ],
+        # ⚠ 위에서부터 첫 일치 승 — 표는 IDOL_FLAT_RULES(모듈 상단 SSOT · 최산과 공유 · 260730 뽑아냄).
+        "rules": IDOL_FLAT_RULES,
         "comment": ("시즌 감정 미디어 manifest(윈터) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
                     "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립). "
                     "클립 = 파일명에 감정 토큰이 있으면 그 버킷(bored_photoshoot_01 → blue · 260729), 없으면 clip_to 폴백(love·shy) · "
@@ -386,6 +399,12 @@ def build_flat(cid: str, cfg: dict) -> dict:
         if not p.is_file() or p.suffix.lower() not in IMG_EXT:
             continue
         nm = p.stem.lower()
+        # 얼빡 프사 제외(260730) — 평면 축엔 이 제외가 없어서 프사가 배경 풀에 섞여 있었다(윈터 winter_face.webp = base 62번째 · 실측).
+        #   운영자 260726 「얼빡은 배경에 깔지마」가 감정 폴더 축(build_one의 is_face)에만 걸려 있던 자리다.
+        #   ⚠ 판정은 넓은 FACE_PAT(is_face)이 아니라 **`<id>_face…` 규약 이름만** — 평면 축 어휘엔 poker_face·fake_smile처럼
+        #     'face'가 든 **정상 배경**이 있어서 넓게 잡으면 그걸 같이 떨어뜨린다(윈터 poker_face_01 = tense · 실측).
+        if nm.startswith(f"{cid}_face"):
+            continue
         for emo, toks in rules:
             if any(t in nm for t in toks):
                 buckets[emo].append(p)
