@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>최산 배경 이관 — 전/후 비교 v1</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260729_챗배경딤_반감_전후_v1.html 계승(재설계 0 · 내용만 캐릭터 편입 축으로 교체) ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --think:#3EE0C8; --think-rgb:62,224,200;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --glass-0:rgba(255,255,255,.002); --glass-line-0:rgba(255,255,255,.066);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+    --yeta-bg:var(--bg);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .pair { display:flex; gap:var(--sp-2); flex-wrap:wrap; }
+  .col { flex:1 1 320px; min-width:0; background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-l); padding:var(--sp-2); box-shadow:var(--shadow-card); }
+  .col > h3 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 6px; }
+  .col.now > h3 { color:var(--mut); }
+  .col.next > h3 { color:var(--accent); }
+  .col img { display:block; width:100%; max-width:100%; border-radius:var(--r-m); border:1px solid var(--glass-line); }
+  .cap { font-size:var(--fs-xs); color:var(--mut); margin:6px 0 0; }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  .tw { overflow-x:auto; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); white-space:nowrap; }
+  td b { color:var(--accent); font-weight:var(--fw-b); }
+  ul { margin:0; padding-left:18px; font-size:var(--fs-sm); color:var(--fg-2); }
+  li { margin:3px 0; }
+  code { font-size:var(--fs-xs); color:var(--think); }
+  @media (max-width:700px) { .pair { flex-direction:column; } }
+
+  /* ── 추가 표면 = 이 페이지 고유(무대 미리보기) · 값은 전부 계승: 무대비 420×900 = viewer 챗 무대 · 스크림 = yPaintBg 캐릭터 아트 딤 기본단 .28/.34(YDIM_SET.base.s) ── */
+  .stg { background-size:cover; background-position:center; border-radius:var(--r-m); border:1px solid var(--glass-line); position:relative; overflow:hidden; background-color:var(--bg); }
+  .stg video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .stg .scrim { position:absolute; inset:0; background:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)); }
+  .strip { display:flex; gap:var(--sp-2); flex-wrap:wrap; }
+  figure { margin:0; }
+  figcaption { font-size:var(--fs-xs); color:var(--mut); margin-top:5px; }
+  .bkt { margin-bottom:var(--sp-3); }
+  .bkt > h3 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; }
+  .bkt > h3 em { color:var(--accent); font-style:normal; font-weight:var(--fw-b); }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>최산 — 배경 이관 전/후 <span style="color:var(--mut);font-weight:var(--fw-b)">v1</span></h1>
+  <p class="lead">운영자가 레포 루트에 올린 56개(사진 55 + 영상 1)를 <code>viewer/characters/season/san/main/&lt;감정&gt;/</code>로 이관 —
+  배경 적합 <b style="color:var(--accent)">24장 + 클립 1개</b>(= 풀 25칸)가 감정 9버킷에 붙고, 시그니처 배경(<code>roster.bg</code>)이 배선됐다.
+  무대 미리보기 = 실제 챗 무대비 420×900 · 스크림 = <code>yPaintBg</code> 캐릭터 아트 딤 기본단 <code>.28/.34</code>(<code>YDIM_SET.base.s</code>) 그대로.</p>
+
+  <div class="sect">
+    <h2>① 챗 무대 — 전 / 후</h2>
+    <div class="pair">
+      <div class="col now"><h3>전 — 배경 풀 0장(빈 manifest)</h3>
+        <div class="stg" style="width:296px;height:634px;background-image:radial-gradient(120% 90% at 50% 0%, #e8b13b14, transparent 55%)"></div>
+        <p class="cap">이미지가 없으니 <code>yPaintBg</code>가 페르소나색 틴트 폴백으로 착지 —
+        <code>radial-gradient(120% 90% at 50% 0%, #e8b13b14, transparent 55%)</code>. 감정이 바뀌어도 그림은 그대로(무대 = 사실상 검정).</p></div>
+      <div class="col next"><h3>후 — 시그니처 + 감정 24장·클립 1</h3>
+        <div class="stg" style="width:296px;height:634px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/base/san_01.jpg&quot;)"></div>
+        <p class="cap">진입 = <code>roster.bg</code>(<code>base/san_01.jpg</code>) 프리로드·클립 poster·폴백 착지.
+        답장 <code>&lt;&lt;MOOD&gt;&gt;</code>마다 <code>media.json</code> 버킷에서 <code>pool[n%len]</code> 결정적 로테이션.</p></div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <h2>② 감정 9버킷 전수 — 실제 무대에 깔리는 그림 그대로</h2>
+    <div class="bkt"><h3>base · 기본 무대 <em>7장</em></h3><div class="strip"><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/base/san_01.jpg&quot;)"></div><figcaption>san_01.jpg</figcaption></figure><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/base/san_02.jpg&quot;)"></div><figcaption>san_02.jpg</figcaption></figure><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/base/san_03.jpg&quot;)"></div><figcaption>san_03.jpg</figcaption></figure><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/base/san_04.png&quot;)"></div><figcaption>san_04.png</figcaption></figure><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/base/san_05.jpg&quot;)"></div><figcaption>san_05.jpg</figcaption></figure><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/base/san_06.jpg&quot;)"></div><figcaption>san_06.jpg</figcaption></figure><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/base/san_07.jpg&quot;)"></div><figcaption>san_07.jpg</figcaption></figure></div></div><div class="bkt"><h3>warm · 다정 <em>3장</em></h3><div class="strip"><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/warm/san_08.jpg&quot;)"></div><figcaption>san_08.jpg</figcaption></figure><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/warm/san_09.jpg&quot;)"></div><figcaption>san_09.jpg</figcaption></figure><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/warm/san_10.jpg&quot;)"></div><figcaption>san_10.jpg</figcaption></figure></div></div><div class="bkt"><h3>joy · 기쁨 <em>3장</em></h3><div class="strip"><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/joy/san_12.jpg&quot;)"></div><figcaption>san_12.jpg</figcaption></figure><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/joy/san_13.jpg&quot;)"></div><figcaption>san_13.jpg</figcaption></figure><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/joy/san_14.jpg&quot;)"></div><figcaption>san_14.jpg</figcaption></figure></div></div><div class="bkt"><h3>love · 애정 <em>3장</em></h3><div class="strip"><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/love/san_15.jpg&quot;)"></div><figcaption>san_15.jpg</figcaption></figure><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/love/san_16.jpg&quot;)"></div><figcaption>san_16.jpg</figcaption></figure><figure><div class="stg" style="width:196px;height:420px"><video src="../characters/season/san/main/love/san_clip_17.mp4" muted loop autoplay playsinline poster="../characters/season/san/main/base/san_01.jpg"></video><i class="scrim"></i></div><figcaption>san_clip_17.mp4</figcaption></figure></div></div><div class="bkt"><h3>shy · 수줍음 <em>1장</em></h3><div class="strip"><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/shy/san_18.jpg&quot;)"></div><figcaption>san_18.jpg</figcaption></figure></div></div><div class="bkt"><h3>blue · 가라앉음 <em>3장</em></h3><div class="strip"><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/blue/san_19.jpg&quot;)"></div><figcaption>san_19.jpg</figcaption></figure><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/blue/san_20.jpg&quot;)"></div><figcaption>san_20.jpg</figcaption></figure><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/blue/san_21.jpg&quot;)"></div><figcaption>san_21.jpg</figcaption></figure></div></div><div class="bkt"><h3>tense · 서늘·압박 <em>3장</em></h3><div class="strip"><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/tense/san_22.jpg&quot;)"></div><figcaption>san_22.jpg</figcaption></figure><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/tense/san_23.jpg&quot;)"></div><figcaption>san_23.jpg</figcaption></figure><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/tense/san_24.jpg&quot;)"></div><figcaption>san_24.jpg</figcaption></figure></div></div><div class="bkt"><h3>mad · 화남 <em>1장</em></h3><div class="strip"><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/mad/san_25.jpg&quot;)"></div><figcaption>san_25.jpg</figcaption></figure></div></div><div class="bkt"><h3>sulky · 삐짐 <em>1장</em></h3><div class="strip"><figure><div class="stg" style="width:196px;height:420px;background-image:linear-gradient(rgba(18,18,18,.28),rgba(18,18,18,.34)),url(&quot;../characters/season/san/main/sulky/san_26.jpg&quot;)"></div><figcaption>san_26.jpg</figcaption></figure></div></div>
+  </div>
+
+  <div class="sect">
+    <h2>③ 이관 매핑 — 새 경로 ← 업로드 원본</h2>
+    <div class="tw"><table><thead><tr><th>버킷</th><th>새 파일</th><th>원본(루트 업로드)</th></tr></thead><tbody>
+      <tr><td><b>base</b></td><td><code>san_01.jpg</code></td><td>imgi_148_40a36785-….jpg (1199×1473 · 지하주차장 코트)</td></tr><tr><td><b>base</b></td><td><code>san_02.jpg</code></td><td>imgi_152_16121571_1954252_35.jpg (969×1280 · 대기실 탱크톱)</td></tr><tr><td><b>base</b></td><td><code>san_03.jpg</code></td><td>imgi_154_BF.45092613.1.jpg (1200×1821 · NARS 행사)</td></tr><tr><td><b>base</b></td><td><code>san_04.png</code></td><td>imgi_172_style_…-788x1400.png (788×1400 · 행사 인사)</td></tr><tr><td><b>base</b></td><td><code>san_05.jpg</code></td><td>imgi_197_162475ff….jpg (736×1308 · 해변 흰 셔츠)</td></tr><tr><td><b>base</b></td><td><code>san_06.jpg</code></td><td>imgi_225_01.44956479.1.jpg (750×750 · 런던 거리 전신)</td></tr><tr><td><b>base</b></td><td><code>san_07.jpg</code></td><td>imgi_246_01.44956480.1.jpg (750×750 · 런던 거리 보행)</td></tr><tr><td><b>warm</b></td><td><code>san_08.jpg</code></td><td>imgi_150_789521_1279773_595.jpg (900×1260 · 손 얼굴·분홍)</td></tr><tr><td><b>warm</b></td><td><code>san_09.jpg</code></td><td>imgi_165_202407111045271746_l.jpg (800×1109 · 해변 여유)</td></tr><tr><td><b>warm</b></td><td><code>san_10.jpg</code></td><td>imgi_182_cf23b7e9….jpg (1440×1800 · 수영장)</td></tr><tr><td><b>joy</b></td><td><code>san_12.jpg</code></td><td>imgi_147_AKR20230320078100052….jpg (768×1024 · 엄지척)</td></tr><tr><td><b>joy</b></td><td><code>san_13.jpg</code></td><td>imgi_153_015bdcd6….jpg (800×1120 · 시상식 눈웃음)</td></tr><tr><td><b>joy</b></td><td><code>san_14.jpg</code></td><td>imgi_185_975cdc2f….jpg (736×1635 · 후디·하늘)</td></tr><tr><td><b>love</b></td><td><code>san_15.jpg</code></td><td>imgi_166_63d8a419….jpg (736×1104 · 근접 반신)</td></tr><tr><td><b>love</b></td><td><code>san_16.jpg</code></td><td>imgi_191_HMyKGByakAE8AwJ.jpg (900×1200 · 하트 스티커)</td></tr><tr><td><b>love</b></td><td><code>san_clip_17.mp4</code></td><td>kling_20260730_VIDEO_이미지1의_남성이__2569_0.mp4 (10.0s · 세로 · 무음 재생)</td></tr><tr><td><b>shy</b></td><td><code>san_18.jpg</code></td><td>imgi_204_G7o8cvQawAAyZT-.jpg (900×1200 · 윙크)</td></tr><tr><td><b>blue</b></td><td><code>san_19.jpg</code></td><td>imgi_169_2eff337f….jpg (3072×3840 · 시퀸·복도)</td></tr><tr><td><b>blue</b></td><td><code>san_20.jpg</code></td><td>imgi_198_15987329_1869821_723.jpg (961×1280 · 와인잔)</td></tr><tr><td><b>blue</b></td><td><code>san_21.jpg</code></td><td>imgi_224_472744_497042_5519.jpg (588×806 · 안경·어두움)</td></tr><tr><td><b>tense</b></td><td><code>san_22.jpg</code></td><td>imgi_155_97aa69ad….jpg (1000×1250 · ELLE 응시)</td></tr><tr><td><b>tense</b></td><td><code>san_23.jpg</code></td><td>imgi_159_GcoUPP4XAAAeVPc.jpg (800×1200 · 정장 시선)</td></tr><tr><td><b>tense</b></td><td><code>san_24.jpg</code></td><td>imgi_190_aff9592b….jpg (1200×1600 · 하네스 무대)</td></tr><tr><td><b>mad</b></td><td><code>san_25.jpg</code></td><td>imgi_200_1VPFZ9ZSIX_1.jpg (640×833 · 무대 도발)</td></tr><tr><td><b>sulky</b></td><td><code>san_26.jpg</code></td><td>imgi_199_9511_15265_239.jpg (600×832 · 헤드폰·입술 삐죽)</td></tr>
+    </tbody></table></div>
+  </div>
+
+  <div class="sect">
+    <h2>④ 배경 풀에서 뺀 것 — 근거</h2>
+    <div class="tw"><table><thead><tr><th>대상</th><th>수</th><th>왜</th></tr></thead><tbody>
+      <tr><td>썸네일급 저해상</td><td>24</td><td>가로 500px 미만·세로 600px 미만(최소 192×263) — 420×900 무대에 <code>cover</code>로 깔면 확대 뭉개짐. 실측 후 제거.</td></tr>
+      <tr><td>큰 자막·타이틀 오버레이</td><td>2</td><td><code>imgi_167</code>(「무신사 메가스토어에 등장한 북부대공」)·<code>imgi_250</code>(「SAN / TREASURE EP.1」) — 말풍선과 글자가 겹친다.</td></tr>
+      <tr><td>동일 바이트 중복</td><td>1</td><td><code>imgi_205</code> = <code>imgi_155</code>(md5 동일) — 로테이션에 같은 그림이 두 번 나온다.</td></tr>
+      <tr><td>저해상 중복 크롭·불확실</td><td>3</td><td><code>imgi_24</code>(<code>imgi_148</code>의 저해상 크롭)·<code>imgi_206</code>(540×787)·<code>imgi_261</code>(520×780).</td></tr>
+      <tr><td>얼빡(반신 근접) → 프사 축으로</td><td>1</td><td><code>imgi_201</code> 650×750 흉상 = 세로 무대 <code>cover</code> 시 얼굴만 확대 — 배경 풀에서 빼고
+        <code>viewer/characters/season/san/san_face_cand.jpg</code>(캐릭터 루트 = 배경 풀 자동 제외 자리)로 보관.</td></tr>
+    </tbody></table></div>
+    <p class="cap">제거분은 커밋 <code>3317c9a</code>에 그대로 남아 있다 — 되살리려면 <code>git checkout 3317c9a -- &lt;파일명&gt;</code>.</p>
+  </div>
+
+  <div class="sect">
+    <h2>⑤ 게이트 — 정사각 3장을 어떻게 갈랐나</h2>
+    <ul>
+      <li><code>check_refs.py</code> 얼빡 배경 게이트가 종횡비 &gt; <code>0.85</code> 3장을 <b>차단</b>(설계된 동작 = 육안 확인 강제).</li>
+      <li><b>등재</b> 2장 — <code>san_06</code>·<code>san_07</code>(750×750 런던 거리 <b>전신</b> · 인물 중앙 · 좌우 여백 = <code>cover</code> 생존) → <code>_FACE_RATIO_OK</code>에 근거 주석과 함께 추가(고죠 <code>gojo_n09</code> 736×736 전신 선례와 같은 축).</li>
+      <li><b>제외</b> 1장 — <code>san_11</code>(650×750 <b>흉상</b>) → 캐릭터 루트로 이동(위 ④).</li>
+      <li>재빌드 후 <code>✅ 얼빡 배경 게이트 — 배경 풀 247장 프사 0 · 정사각 미확인 0(승인 5건)</code> · 전체 <code>rc=0</code>.</li>
+    </ul>
+  </div>
+
+  <div class="sect">
+    <h2>⑥ 아직 안 된 것 — 프사(<code>avatar</code>)</h2>
+    <ul>
+      <li>운영자가 채팅에 첨부한 얼빡(가죽 장갑·퍼 코트)은 <b>레포에 없다</b> — 채팅 첨부는 파일로 꺼낼 수 없어 <code>san_face.webp</code>를 만들 수 없었다. 그래서 <code>roster.avatar</code>는 <b>비워 뒀다</b>(= 이니셜 「산」 링 유지 · 엉뚱한 얼굴을 대신 박지 않음).</li>
+      <li>처방 = 그 사진을 레포에 올리면 <code>viewer/characters/season/san/san_face.webp</code>로 변환·<code>roster.avatar</code> 1줄 배선(커밋 1개).</li>
+      <li>임시로 쓸 만한 대안은 이미 이관분 안에 있다 → <code>san_face_cand.jpg</code>(위 ④). 원하면 그걸로 먼저 깔 수 있다.</li>
+    </ul>
+  </div>
+
+  <div class="sect">
+    <h2>⑦ 검증</h2>
+    <ul>
+      <li><code>python3 shared/build_season_media.py</code> → <code>WROTE san (base 7 · warm 3 · joy 3 · love 3 · shy 1 · blue 3 · tense 3 · mad 1 · sulky 1)</code> = 풀 <b>25칸</b>(사진 24 + 클립 1).</li>
+      <li><code>python3 shared/check_refs.py</code> <b>rc=0</b> — 얼빡·디자인 토큰·토큰 락 54개·앵커·원장 번호 전부 초록.</li>
+      <li>신규 CSS 토큰·<code>:root</code> 변경·컴포넌트 = <b>0</b>(이 시안의 무대 미리보기도 값 전부 계승 · <code>.stg</code>는 시안 국소 표면).</li>
+      <li>루트 정리 = 업로드 56개 전부 루트에서 사라짐(이관 26 / 제거 30) · 롤백 = 이 커밋 revert.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

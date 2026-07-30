@@ -1,3 +1,46 @@
 {
- "_comment": "시즌 감정 미디어 manifest(최산) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — 사진 = main/<감정>/에 붓기만(파일명 자유) · 미분류(main 루트) = base 흡수. 변신 모드 없음. ⚠ 260730 현재 = **배경 풀 0장**(빈 껍데기 = 뷰어 시그니처·틴트 폴백 유지 · 애리 선례). 얼빡 프사는 캐릭터 루트 `san_face.webp`에 둔다 — 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라·애리 선례). 정본=viewer/characters/season/san/main/<감정>/."
+ "_comment": "시즌 감정 미디어 manifest(최산) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — 사진 = main/<감정>/에 붓기만(파일명 자유) · 미분류(main 루트) = base 흡수. 변신 모드 없음. ⚠ 260730 현재 = **배경 풀 0장**(빈 껍데기 = 뷰어 시그니처·틴트 폴백 유지 · 애리 선례). 얼빡 프사는 캐릭터 루트 `san_face.webp`에 둔다 — 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라·애리 선례). 정본=viewer/characters/season/san/main/<감정>/.",
+ "base": [
+  "characters/season/san/main/base/san_01.jpg",
+  "characters/season/san/main/base/san_02.jpg",
+  "characters/season/san/main/base/san_03.jpg",
+  "characters/season/san/main/base/san_04.png",
+  "characters/season/san/main/base/san_05.jpg",
+  "characters/season/san/main/base/san_06.jpg",
+  "characters/season/san/main/base/san_07.jpg"
+ ],
+ "warm": [
+  "characters/season/san/main/warm/san_08.jpg",
+  "characters/season/san/main/warm/san_09.jpg",
+  "characters/season/san/main/warm/san_10.jpg"
+ ],
+ "joy": [
+  "characters/season/san/main/joy/san_12.jpg",
+  "characters/season/san/main/joy/san_13.jpg",
+  "characters/season/san/main/joy/san_14.jpg"
+ ],
+ "love": [
+  "characters/season/san/main/love/san_15.jpg",
+  "characters/season/san/main/love/san_16.jpg",
+  "characters/season/san/main/love/san_clip_17.mp4"
+ ],
+ "shy": [
+  "characters/season/san/main/shy/san_18.jpg"
+ ],
+ "blue": [
+  "characters/season/san/main/blue/san_19.jpg",
+  "characters/season/san/main/blue/san_20.jpg",
+  "characters/season/san/main/blue/san_21.jpg"
+ ],
+ "tense": [
+  "characters/season/san/main/tense/san_22.jpg",
+  "characters/season/san/main/tense/san_23.jpg",
+  "characters/season/san/main/tense/san_24.jpg"
+ ],
+ "mad": [
+  "characters/season/san/main/mad/san_25.jpg"
+ ],
+ "sulky": [
+  "characters/season/san/main/sulky/san_26.jpg"
+ ]
 }
