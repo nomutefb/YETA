@@ -5,17 +5,17 @@ name: yeta-kimi-selftest
 #   ④ 턴당 입력 실측(신레시피 기준 — 260721 K3 구레시피 실측: 한 단어에 18,678tok = 도구 스키마가 본체)
 #   ⑤ 캐시 히트 실측 = 동일 프롬프트 재발사(260721 K3 실측: 히트 7,168tok = 문샷 자동 캐시 /anthropic 게이트 작동 확인)
 #   실패 시 = stderr 꼬리 + stdout(JSON 에러 본문) 머리 둘 다 출력(K2.5 260721 1차 실패가 본문 미포집으로 원인불명이던 구멍 봉합).
-# ⚠️ 실호출 2발 → 수동 dispatch 전용 · 크론 부착 금지(§[8]). 260730 구독 전환 후 = 실과금 대신 구독 쿼터(5시간 창) 2회 소비.
+# ⚠️ 종량제 실과금(2발 · 신레시피면 수천 토큰 이내) → 수동 dispatch 전용 · 크론 부착 금지(§[8]).
 on:
   workflow_dispatch:
     inputs:
       model:
         description: '검증 모델(챗 다이얼과 동일 ID)'
         required: false
-        default: 'k3'
+        default: 'kimi-k3'
         type: choice
         options:
-          - k3
+          - kimi-k3
           - kimi-k2.5
 permissions:
   contents: read
@@ -30,11 +30,11 @@ jobs:
         env:
           KIMI_API_KEY: ${{ secrets.KIMI_CODE_MUTE }}
           KIMI_BASE_URL: ${{ vars.KIMI_BASE_URL || '' }}
-          MODEL: ${{ inputs.model || 'k3' }}
+          MODEL: ${{ inputs.model || 'kimi-k3' }}
         run: |
           [ -n "$KIMI_API_KEY" ] || { echo "::error::FAIL① 레포 Actions 시크릿 KIMI_CODE_MUTE 미등재 — Settings → Secrets and variables → Actions 에 정확히 이 이름으로"; exit 1; }
           echo "① 시크릿 KIMI_CODE_MUTE OK(존재) · 대상 모델 = $MODEL"
-          export ANTHROPIC_BASE_URL="${KIMI_BASE_URL:-https://api.kimi.com/coding/}" ANTHROPIC_AUTH_TOKEN="$KIMI_API_KEY" ANTHROPIC_API_KEY="$KIMI_API_KEY"
+          export ANTHROPIC_BASE_URL="${KIMI_BASE_URL:-https://api.moonshot.ai/anthropic}" ANTHROPIC_AUTH_TOKEN="$KIMI_API_KEY" ANTHROPIC_API_KEY="$KIMI_API_KEY"
           unset CLAUDE_CODE_OAUTH_TOKEN
           NOTOOLS="Write,Edit,NotebookEdit,Bash,Task,WebFetch,WebSearch,Read,Glob,Grep"
           call() { printf '%s' "인사 한 단어로만 답해" | timeout 150 claude -p --model "$MODEL" --output-format json --system-prompt "너는 테스트 봇이다. 한국어 한 단어로만 답한다." --tools "" --disallowedTools "$NOTOOLS" --max-turns 1 "$@" 2>/tmp/err; }

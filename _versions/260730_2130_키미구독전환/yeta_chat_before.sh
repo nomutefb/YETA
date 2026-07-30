@@ -16,10 +16,9 @@ CHAR="${YETA_CHAR:?세션 id 필요(env YETA_CHAR — 단일 스레드 = main)}"
 
 DEFAULT_MODEL="claude-opus-5"   # D1 = 세션급(운영자 확정)
 DEFAULT_EFF="low"                 # 30초 컷 — effort 미지정은 CLI 기본(high)로 돌아 느림 → 기본 low(아이데이션①)
-# KIMI-K3(운영자 260719 도입 · 260730 구독 전환) = 키미 Anthropic 호환 게이트 경유 — 다이얼 k3 턴만 gen_out이 BASE_URL·키를 서브셸 국소 주입(클로드 구독 OAuth·폴오버 체인 무오염).
-#   env: KIMI_API_KEY(= 레포 시크릿 KIMI_CODE_MUTE · yeta-chat.yml) · KIMI_BASE_URL(선택 노브 · 기본 https://api.kimi.com/coding/).
-#   ⚠️ 엔드포인트↔키↔모델ID는 3점 세트 — Kimi Code 구독 = api.kimi.com/coding/ + 구독 콘솔 키 + `k3`(Moderato 이상) · 구 종량제 = api.moonshot.ai/anthropic + platform.kimi.ai 키 + 구 문샷 ID. 섞으면 401/404.
-KIMI_MODEL="k3"
+# KIMI-K3(운영자 260719 종량제) = 문샷 Anthropic 호환 게이트 경유 — 다이얼 kimi-k3 턴만 gen_out이 BASE_URL·키를 서브셸 국소 주입(구독 OAuth·폴오버 체인 무오염).
+#   env: KIMI_API_KEY(= 레포 시크릿 KIMI_CODE_MUTE · yeta-chat.yml) · KIMI_BASE_URL(선택 노브 · 기본 https://api.moonshot.ai/anthropic).
+KIMI_MODEL="kimi-k3"
 KIMI25_MODEL="kimi-k2.5"          # KIMI-2.5(운영자 260721 저가축 승인 · 입력 $0.6/출력 $3 = K3의 1/5) — ⚠️ 260721 실측: 문샷 /anthropic 게이트 404(미서빙 · 과금 0) → 뷰어 다이얼 미노출·백엔드 배선만 대기(문샷이 게이트에 열면 뷰어 12단만 재개방 = Q.33)
 is_kimi() { case "$1" in "$KIMI_MODEL"|"$KIMI25_MODEL") return 0 ;; esac; return 1; }   # kimi 패밀리 판별 SSOT — 리라우트·폴오버 스킵·키 게이트·책빼기 공용(개방 글롭 금지 = 화이트리스트 정신)
 SAFE=""
@@ -1063,8 +1062,8 @@ gen_out() {
   fb_sys "${_sys[0]:-}"   # 관찰축 각인(Q.61) — 이 턴의 실제 모드를 이탈 리포트에 싣는다
   T0=$SECONDS; GEN_T0MS="$(date +%s%3N)"; OUT=""; TOK_I=0; TOK_O=0; TOK_CR=0; TOK_CW=0; rm -f /tmp/yeta_meter_last.json   # 이 생성의 실측 토큰(METER_LAST) — finish가 답장 턴 tok으로 박제(뷰어 좌상단 미터 · 운영자 260709) · GEN_T0MS = 계기판 lat(픽업 w·첫문장 f) 기준점(260714)
   for attempt in $(seq 1 "$INLINE_TRIES"); do
-    # kimi 턴 = 키미 Anthropic 호환 게이트 리라우트(운영자 260719 · 260730 구독 엔드포인트로 기본값 전환) — 파이프 그룹 = 서브셸이라 주입·unset이 이 호출에만 국소(다음 턴 Claude·폴오버 체인 무오염) · AUTH_TOKEN+API_KEY 겸장 = CLI 판독 축 이중 커버
-    OUT="$(printf '%s' "$prompt" | { if is_kimi "$MODEL"; then export ANTHROPIC_BASE_URL="${KIMI_BASE_URL:-https://api.kimi.com/coding/}" ANTHROPIC_AUTH_TOKEN="${KIMI_API_KEY:-}" ANTHROPIC_API_KEY="${KIMI_API_KEY:-}"; unset CLAUDE_CODE_OAUTH_TOKEN; fi
+    # kimi 턴 = 문샷 Anthropic 호환 게이트 리라우트(운영자 260719) — 파이프 그룹 = 서브셸이라 주입·unset이 이 호출에만 국소(다음 턴 Claude·폴오버 체인 무오염) · AUTH_TOKEN+API_KEY 겸장 = CLI 판독 축 이중 커버
+    OUT="$(printf '%s' "$prompt" | { if is_kimi "$MODEL"; then export ANTHROPIC_BASE_URL="${KIMI_BASE_URL:-https://api.moonshot.ai/anthropic}" ANTHROPIC_AUTH_TOKEN="${KIMI_API_KEY:-}" ANTHROPIC_API_KEY="${KIMI_API_KEY:-}"; unset CLAUDE_CODE_OAUTH_TOKEN; fi
           METER_SRC=yeta METER_REF="$PERSONA" METER_MODEL="$MODEL" METER_EFFORT="$EFF" METER_LAST=/tmp/yeta_meter_last.json claude_meter 240 \
           --model "$MODEL" $SAFE "${_sys[@]}" "${EFF_ARGS[@]}" "${_tools[@]}" \
           --disallowedTools "$_dis" "${_allow[@]}" \
