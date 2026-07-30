@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>전광판(확성기) 상주 띠 → 이벤트 띠 — 전/후 비교 v1</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260729_챗배경딤_반감_전후_v1.html 계승(재설계 0 · 전광판 배치·수명만 전/후로 비교) ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --danger:#FF7A59; --danger-rgb:255,122,89;
+    --cobalt:#3D6BFF; --cobalt-rgb:61,107,255;
+    --think:#3EE0C8; --think-rgb:62,224,200;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+    --bubble-me:var(--accent); --bubble-ai:#1e2023; --yeta-bg:var(--bg);
+    --lgap:6px;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  @media (max-width:820px) { .pair { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .cap .val { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--fg-2); }
+
+  /* ── 미리보기 = 9:16 프레임(챗 화면 재현 · 표면 CSS는 index.html 정본 계승) ── */
+  .frame { position:relative; width:100%; aspect-ratio:9/16; max-height:74vh; margin-inline:auto; border-radius:var(--r-modal); overflow:hidden;
+    background:var(--bg); border:1px solid var(--glass-line); box-shadow:var(--shadow-card); }
+  .frame .ybg { position:absolute; inset:0; background:radial-gradient(120% 80% at 50% 12%, #2a2d31 0%, #14161a 62%, #0e0f12 100%); }
+  .frame .ysurf { position:absolute; inset:0; }
+
+  .yeta-h { position:absolute; top:10px; left:10px; right:10px; z-index:3; display:flex; align-items:center; gap:8px; padding:7px 9px;
+    background:linear-gradient(var(--glass), var(--glass)), rgba(18,18,18,.75); border:1px solid var(--glass-line); border-radius:var(--r-pill);
+    backdrop-filter:blur(var(--blur-l)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-l)) saturate(1);
+    box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card); }
+  .yh-ava { flex:none; width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); }
+  .yeta-h b { font-size:var(--fs-h2); font-weight:var(--fw-x); flex:none; }
+  .yeta-h .yh-tag { font-size:var(--fs-xs); color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* 계기판(.ymeter 정본 계승) — 이번 건의 피해자: 전(前)에는 전광판 띠가 이 줄을 덮었다 */
+  .ymeter { position:absolute; top:62px; left:0; right:0; z-index:2; text-align:center; font-size:10px; color:var(--mut); }
+  .ymeter .ym-seg { color:var(--mut); font:inherit; }
+  .ymeter .ym-seg.ym-model { color:var(--accent); }
+  .ymeter .ym-sep { opacity:.5; margin:0 3px; }
+
+  .ylog { position:absolute; inset:80px 12px 0; padding-bottom:76px; z-index:2; display:flex; flex-direction:column; gap:10px; justify-content:flex-end; overflow:hidden; }
+  .ylog.ntroom { padding-bottom:114px; }   /* 띠 자리 = 76 + 6 + 띠 26 + 6 (뷰어 yNoticeRoom과 같은 값) — 내 말풍선이 띠 위로 올라앉는다 */
+  .ymsg { display:flex; gap:8px; align-items:flex-start; max-width:86%; }
+  .ymsg .yava { flex:none; width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); margin-top:2px; }
+  .ymsg .ycol { display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .ymsg .yname { font-size:var(--fs-xs); color:var(--fg); font-weight:var(--fw-b); padding-left:2px; }
+  .yb { padding:10px 13px; border-radius:var(--r-l); font-size:var(--fs-body); line-height:var(--lh-base); white-space:pre-wrap; word-break:break-word; }
+  .yb i.yn { font-style:italic; color:var(--fg-2); opacity:.75; }
+  .yb.ai { background:var(--glass-2); border:1px solid var(--glass-line); border-top-left-radius:var(--r-s);
+    backdrop-filter:blur(var(--blur-m)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-m)) saturate(1); box-shadow:inset 0 1px 0 var(--glass-line); }
+  .yb.me { align-self:flex-end; max-width:78%; background:var(--bubble-me); color:var(--bg); border-top-right-radius:var(--r-s); }
+  .ytime { font-size:var(--fs-xs); color:var(--fg-2); opacity:.8; align-self:flex-end; }
+
+  .yeta-in { position:absolute; bottom:12px; left:10px; right:10px; z-index:3; display:flex; align-items:center; gap:4px; padding:5px 6px;
+    background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-pill);
+    backdrop-filter:blur(var(--blur-l)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-l)) saturate(1);
+    box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card); }
+  .yeta-in span.ph { flex:1; padding:6px 10px; color:var(--mut); font-size:var(--fs-body); }
+  .yeta-in .snd { width:var(--btn); height:var(--btn); display:grid; place-items:center; color:var(--accent); }
+
+  /* ── 전광판 띠 = viewer/index.html #yetanotice 선언 100% 계승(값 복제 아님 · 시안 사본) ── */
+  .ynt { position:absolute; left:10px; right:10px; z-index:2; overflow:hidden; display:flex; align-items:center; height:26px; padding:0 10px;
+    background:var(--bg); border:1px solid var(--glass-line); border-radius:var(--r-pill);
+    box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card);
+    color:var(--fg-2); font-size:var(--fs-xs); pointer-events:none; }
+  .ynt[hidden] { display:none; }
+  .ynt .ynt-ico { flex:none; display:inline-flex; align-items:center; margin-right:5px; color:var(--mut); }
+  .ynt .ynt-tag { flex:none; margin-right:8px; font-weight:var(--fw-x); color:var(--mut); letter-spacing:.04em; }
+  .ynt .ynt-win { position:relative; flex:1; min-width:0; overflow:hidden; height:100%; }
+  .ynt .ynt-txt { position:absolute; top:50%; left:0; display:flex; will-change:transform; animation:yntFlow var(--ynt-d,18s) linear infinite; }
+  .ynt .ynt-txt i { font-style:normal; white-space:nowrap; padding-right:48px; }
+  @keyframes yntFlow { from { transform:translate(0,-50%); } to { transform:translate(-50%,-50%); } }
+  .ynt.k-dead { border-color:rgba(var(--danger-rgb),.4); }
+  .ynt.k-dead .ynt-ico, .ynt.k-dead .ynt-tag, .ynt.k-dead .ynt-txt { color:var(--danger); }
+
+  /* BEFORE = 상주 · 헤더 바닥+6(= top 64) → .ymeter(top 62)를 통째로 덮는다 */
+  .ynt.pos-before { top:64px; }
+  /* AFTER = 이벤트 · .yeta-log 하단 패딩(76)+6 = 내 마지막 말풍선 바로 위 */
+  .ynt.pos-after { bottom:82px; }
+  /* ㉯ 대안 = 대화 흐름 안(로그 자식) — 오버레이가 아니라 한 줄을 차지한다 */
+  .ynt.pos-flow { position:static; flex:none; align-self:stretch; left:auto; right:auto; }
+  /* 등퇴장 = .yeta-log .in/.out 정본(ybIn/ybOut) 계승 */
+  @keyframes ybIn { from { opacity:0; transform:translateY(10px) scale(.92); } }
+  @keyframes ybOut { to { opacity:0; transform:translateY(8px) scale(.92); } }
+  .ynt.in { animation:ybIn .3s cubic-bezier(.22,.61,.36,1) both; transform-origin:bottom left; }
+  .ynt.out { animation:ybOut .2s var(--ease) both; }
+
+  /* 가림 표식 — BEFORE 프레임에서 덮인 계기판을 짚어준다 */
+  .hitbox { position:absolute; left:10px; right:10px; top:58px; height:34px; z-index:4; border-radius:var(--r-pill);
+    border:1px dashed rgba(var(--danger-rgb),.55); pointer-events:none; }
+  .hitlbl { position:absolute; z-index:4; top:96px; left:10px; font-size:var(--fs-meta); letter-spacing:.06em;
+    padding:3px 8px; border-radius:var(--r-pill); background:rgba(18,18,18,.75); border:1px solid rgba(var(--danger-rgb),.4); color:var(--danger); }
+
+  .btnrow { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .pgbtn { font:inherit; font-size:var(--fs-sm); padding:8px 14px; border-radius:var(--r-pill); cursor:pointer;
+    background:var(--glass-2); border:1px solid var(--glass-line); color:var(--fg);
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); transition:border-color .28s var(--ease); }
+  .pgbtn:active { transform:scale(var(--press-m,.9)); }
+  .pgbtn.pri { background:var(--accent); border-color:var(--accent); color:var(--bg); font-weight:var(--fw-b); }
+  .live { font-size:var(--fs-xs); color:var(--mut); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; align-self:center; }
+
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); }
+  td.v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); }
+  td.v .b { color:var(--mut); } td.v .a { color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>전광판(확성기) — 상주 상단 띠 → 이벤트 하단 띠 (전/후)</h1>
+  <p class="lead">운영자 260730 “확성기가 모델명이랑 토큰 얼마 썼는지가 가려 / 내 채팅 바로 위에 붙어서 지나가게 / 2번 지나가면 사라지는 느낌 / 매번 나오지않고 이벤트성으로”. 노브 = <code>viewer/index.html · #yetanotice</code> + <code>yNotice()</code>. 표면(스포티파이 블랙 판·확성기 픽토·종류별 색)은 손대지 않았다 — <b>배치</b>와 <b>수명</b>만 갈았다.</p>
+
+  <div class="sect grp">
+    <h2>① 챗 화면 전/후 — 가림 해소 + 지나가는 띠</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">BEFORE</span><span class="val">top 64 · 상주 · 무한 반복</span></p>
+        <div class="frame">
+          <div class="ybg"></div>
+          <div class="ysurf">
+            <div class="yeta-h"><span style="color:var(--fg-2)">‹</span><span class="yh-ava"></span><b>루시</b><span class="yh-tag">낮엔 시크한 자동…</span></div>
+            <div class="ymeter"><span class="ym-seg ym-model">Opus 5</span><span class="ym-sep">·</span><span class="ym-seg">빠름</span><span class="ym-seg">&nbsp;&nbsp;|&nbsp;&nbsp;128.4k tok</span></div>
+            <div class="ynt pos-before k-dead" id="ntB"><span class="ynt-ico"></span><span class="ynt-tag">데스크</span><span class="ynt-win"><span class="ynt-txt"><i></i><i></i></span></span></div>
+            <div class="hitbox"></div><span class="hitlbl">계기판(모델·노력·토큰)이 띠 아래 깔려 안 보인다</span>
+            <div class="ylog">
+              <div class="ymsg"><span class="yava"></span><div class="ycol"><span class="yname">루시</span><div class="yb ai"><i class="yn">담배 든 손이 움찔한다.</i>
+갑자기 왜 소리질러, 놀랐잖아.</div></div></div>
+              <div class="yb me">뭘 또 저질렀냐니까</div>
+              <span class="ytime">오후 6:40</span>
+            </div>
+            <div class="yeta-in"><span class="ph">메시지</span><span class="snd">➤</span></div>
+          </div>
+        </div>
+        <p class="note">띠가 화면에 <b>항상</b> 있고 글이 끝없이 돈다. 자리가 <code>.ymeter</code>(top 62)와 같은 높이 + 같은 z2라 소스 순서로 띠가 이겨 계기판을 통째로 덮었다.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">AFTER</span><span class="val">bottom 82 · 2주기 후 소멸</span></p>
+        <div class="frame">
+          <div class="ybg"></div>
+          <div class="ysurf">
+            <div class="yeta-h"><span style="color:var(--fg-2)">‹</span><span class="yh-ava"></span><b>루시</b><span class="yh-tag">낮엔 시크한 자동…</span></div>
+            <div class="ymeter"><span class="ym-seg ym-model">Opus 5</span><span class="ym-sep">·</span><span class="ym-seg">빠름</span><span class="ym-seg">&nbsp;&nbsp;|&nbsp;&nbsp;128.4k tok</span></div>
+            <div class="ylog" id="logA">
+              <div class="ymsg"><span class="yava"></span><div class="ycol"><span class="yname">루시</span><div class="yb ai"><i class="yn">담배 든 손이 움찔한다.</i>
+갑자기 왜 소리질러, 놀랐잖아.</div></div></div>
+              <div class="yb me">뭘 또 저질렀냐니까</div>
+              <span class="ytime">오후 6:40</span>
+            </div>
+            <div class="ynt pos-after k-dead" id="ntA" hidden><span class="ynt-ico"></span><span class="ynt-tag">데스크</span><span class="ynt-win"><span class="ynt-txt"><i></i><i></i></span></span></div>
+            <div class="yeta-in"><span class="ph">메시지</span><span class="snd">➤</span></div>
+          </div>
+        </div>
+        <div class="btnrow">
+          <button class="pgbtn pri" id="play" type="button">이벤트 발생 — 다시 재생</button>
+          <button class="pgbtn" id="fast" type="button">빠르게(×4)로 보기</button>
+          <span class="live" id="live">대기</span>
+        </div>
+        <p class="note">계기판이 다시 보인다. 띠는 <b>내 말풍선 바로 위 6px</b>에 붙어 나타나(<code>ybIn</code>) 문장이 두 번 지나가고 흘러가면서 사라진다(<code>ybOut</code>). 같은 공지는 다시 안 뜬다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect grp">
+    <h2>③ “내 채팅 바로 위” 두 갈래 — 지금 넣은 건 ㉮</h2>
+    <p class="note" style="margin:0 0 10px">문장이 한 곳에서 두 갈래로 읽힌다. ㉮ 내 채팅<b>칸</b>(입력행) 바로 위 · ㉯ 내 <b>말풍선</b> 바로 위. 표면·모션·수명은 둘이 완전히 같고 <b>끼는 자리만</b> 다르다.</p>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg after">㉮ 채택</span><span class="val">입력행 위 · 오버레이(bottom 82)</span></p>
+        <div class="frame">
+          <div class="ybg"></div>
+          <div class="ysurf">
+            <div class="yeta-h"><span style="color:var(--fg-2)">‹</span><span class="yh-ava"></span><b>루시</b><span class="yh-tag">낮엔 시크한 자동…</span></div>
+            <div class="ymeter"><span class="ym-seg ym-model">Opus 5</span><span class="ym-sep">·</span><span class="ym-seg">빠름</span><span class="ym-seg">&nbsp;&nbsp;|&nbsp;&nbsp;128.4k tok</span></div>
+            <div class="ylog ntroom">
+              <div class="ymsg"><span class="yava"></span><div class="ycol"><span class="yname">루시</span><div class="yb ai">갑자기 왜 소리질러, 놀랐잖아.</div></div></div>
+              <div class="yb me">뭘 또 저질렀냐니까</div>
+              <span class="ytime">오후 6:40</span>
+            </div>
+            <div class="ynt pos-after k-dead" id="ntO1"><span class="ynt-ico"></span><span class="ynt-tag">데스크</span><span class="ynt-win"><span class="ynt-txt"><i></i><i></i></span></span></div>
+            <div class="yeta-in"><span class="ph">메시지</span><span class="snd">➤</span></div>
+          </div>
+        </div>
+        <p class="note">대화 줄 사이에 끼지 않는다 — 히스토리 순서를 안 건드리고, 스크롤을 올려도 띠는 제자리(읽는 중 방해 0). 내 말풍선이 답장 뒤에 묻혀도 띠는 늘 눈에 보이는 자리.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg before">㉯ 대안</span><span class="val">내 말풍선 위 · 대화 흐름 안</span></p>
+        <div class="frame">
+          <div class="ybg"></div>
+          <div class="ysurf">
+            <div class="yeta-h"><span style="color:var(--fg-2)">‹</span><span class="yh-ava"></span><b>루시</b><span class="yh-tag">낮엔 시크한 자동…</span></div>
+            <div class="ymeter"><span class="ym-seg ym-model">Opus 5</span><span class="ym-sep">·</span><span class="ym-seg">빠름</span><span class="ym-seg">&nbsp;&nbsp;|&nbsp;&nbsp;128.4k tok</span></div>
+            <div class="ylog">
+              <div class="ymsg"><span class="yava"></span><div class="ycol"><span class="yname">루시</span><div class="yb ai">갑자기 왜 소리질러, 놀랐잖아.</div></div></div>
+              <div class="ynt pos-flow k-dead" id="ntO2"><span class="ynt-ico"></span><span class="ynt-tag">데스크</span><span class="ynt-win"><span class="ynt-txt"><i></i><i></i></span></span></div>
+              <div class="yb me">뭘 또 저질렀냐니까</div>
+              <span class="ytime">오후 6:40</span>
+            </div>
+            <div class="yeta-in"><span class="ph">메시지</span><span class="snd">➤</span></div>
+          </div>
+        </div>
+        <p class="note">내 말에 딱 붙는다 — “말하던 중에 이 소식이 들어왔다”는 결. 대신 대화 줄 사이에 검은 판이 한 칸 끼고, 스크롤하면 띠가 같이 밀려 올라가 사라진다. 원하면 이쪽으로 바꾼다(한 줄 교체).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect grp">
+    <h2>④ 바뀐 값 — 3줄</h2>
+    <table>
+      <tr><th style="width:16%">축</th><th style="width:34%">전</th><th style="width:34%">후</th><th>왜</th></tr>
+      <tr>
+        <td>배치</td>
+        <td class="v"><span class="b">top = 헤더바닥+6 (≈64) · JS 실측</span></td>
+        <td class="v"><span class="a">bottom = calc(82px + safe-area)</span></td>
+        <td>82 = <code>.yeta-log</code> 하단 패딩 76 + 6(옛 헤더 간격 계승) = 내 마지막 말풍선 바로 위. 배치 규약은 <code>.ypickbar</code>(“입력행 바로 위”) 계승.</td>
+      </tr>
+      <tr>
+        <td>수명</td>
+        <td class="v"><span class="b">상주 · yntFlow infinite</span></td>
+        <td class="v"><span class="a">2 × --ynt-d 후 퇴장</span></td>
+        <td>흐름은 <code>infinite</code>인 채로 두고 타이머가 띠를 뺀다 → 글이 <b>멈춰 선 뒤</b>가 아니라 <b>흘러가면서</b> 사라진다. 속도 42px/s·캡 10~45s는 종전 그대로.</td>
+      </tr>
+      <tr>
+        <td>발화</td>
+        <td class="v"><span class="b">렌더마다 표시(폴·방전환 포함)</span></td>
+        <td class="v"><span class="a">공지 키(d|text) 1회</span></td>
+        <td><code>localStorage.yeta_ynt_seen</code>에 박아 재진입·폴 갱신·방 전환에 재발화 0. 로그 상단 패딩 밀어내기도 함께 폐지(레이아웃 점프 0).</td>
+      </tr>
+    </table>
+    <p class="note">신규 토큰·신규 색·신규 커브 0 — 등퇴장은 말풍선 정본 <code>ybIn/ybOut</code> 선언을 셀렉터에 얹어 공유하고, 82·6px은 기하 계산축(raw 예외).</p>
+  </div>
+</div>
+
+<script>
+  var MEGAPHONE_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M3 11v3l15 5V6L3 11z"/><path d="M3 11H2.5A1.5 1.5 0 0 0 1 12.5v0A1.5 1.5 0 0 0 2.5 14H3"/><path d="M21 10.5v4"/><path d="M7 12.7V18a2 2 0 0 0 4 0v-4"/></svg>';
+  var TXT = '오늘 새벽, 무음동 3구역에서 한 명이 숨졌다는 소식 — 이름은 아직 확인 중. 제보는 desk@desk.com, 카메라 들고 뛰어갑니다.';
+  var live = document.getElementById('live'), speed = 1, timer = 0, tick = 0;
+
+  function fill(el) {   // 아이콘·문구 주입 = 뷰어 yNotice와 같은 순서(SSOT 픽토 · 2벌 문장)
+    el.querySelector('.ynt-ico').innerHTML = MEGAPHONE_SVG;
+    el.querySelectorAll('.ynt-txt i').forEach(function (c) { c.textContent = TXT; });
+  }
+  function per(el) {   // 1주기 = 실측 폭 / 42px/s · 캡 10~45s(뷰어 정본 공식 그대로)
+    var w = el.querySelector('.ynt-txt i').getBoundingClientRect().width;
+    return Math.max(10, Math.min(45, Math.round(w / 42)));
+  }
+  var B = document.getElementById('ntB'), A = document.getElementById('ntA');
+  var O1 = document.getElementById('ntO1'), O2 = document.getElementById('ntO2');
+  [B, A, O1, O2].forEach(fill);
+  requestAnimationFrame(function () { [B, O1, O2].forEach(function (el) { el.style.setProperty('--ynt-d', per(el) + 's'); }); });
+
+  var logA = document.getElementById('logA');
+  function stop() { clearTimeout(timer); clearInterval(tick); A.hidden = true; A.classList.remove('in', 'out'); logA.classList.remove('ntroom'); }
+  function play() {
+    stop();
+    A.hidden = false; A.classList.add('in'); logA.classList.add('ntroom');
+    var t = A.querySelector('.ynt-txt');
+    t.style.animation = 'none'; void t.offsetWidth; t.style.animation = '';
+    setTimeout(function () { A.classList.remove('in'); }, 400);
+    requestAnimationFrame(function () {
+      var p = per(A) / speed;
+      A.style.setProperty('--ynt-d', p + 's');
+      var end = Date.now() + p * 2000;
+      live.textContent = '1주기 ' + p.toFixed(1) + 's · 2주기 = ' + (p * 2).toFixed(1) + 's';
+      tick = setInterval(function () {
+        var left = Math.max(0, end - Date.now()) / 1000;
+        live.textContent = '남은 시간 ' + left.toFixed(1) + 's (1주기 ' + p.toFixed(1) + 's × 2)';
+      }, 100);
+      timer = setTimeout(function () {
+        clearInterval(tick);
+        A.classList.remove('in'); A.classList.add('out');
+        live.textContent = '2주기 통과 — 퇴장(ybOut)';
+        setTimeout(function () { A.hidden = true; A.classList.remove('out'); logA.classList.remove('ntroom'); live.textContent = '사라짐 · 같은 공지는 다시 안 뜬다'; }, 400);
+      }, p * 2000);
+    });
+  }
+  document.getElementById('play').addEventListener('click', play);
+  document.getElementById('fast').addEventListener('click', function () {
+    speed = speed === 1 ? 4 : 1;
+    this.textContent = speed === 1 ? '빠르게(×4)로 보기' : '실제 속도로 보기';
+    play();
+  });
+  play();
+</script>
+</body>
+</html>
