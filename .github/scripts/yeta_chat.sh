@@ -145,12 +145,12 @@ import hashlib, json, os, sys, time   # hashlib(260730) = 전조 반응 확률 �
 import re as _re
 from datetime import datetime, timezone, timedelta
 sys.path.insert(0, ".github/scripts")
-from yeta_place import load_places, place_of, place_name, world_dh, set_freeze, frz_ms, set_rate, rate_of, anchor_of   # 위치 SSOT = apps/yeta/places.json(마주침·지도 공용 · 260707)
+from yeta_place import load_places, place_of, place_name, world_dh, world_dhm, transit_of, set_freeze, frz_ms, set_rate, rate_of, anchor_of   # 위치 SSOT = apps/yeta/places.json(마주침·지도 공용 · 260707 · 이동 구간 260730 Q.144)
 PL = load_places()
 from yeta_v3 import migrate_v3, pick_thread, thread_view   # v3 다중 채팅방(260707 · 어댑터 SSOT — JS migrateV3 동형)
 S_ROOT = migrate_v3(json.load(open(sys.argv[1], encoding="utf-8"))); n = int(sys.argv[2])
 set_freeze(frz_ms(S_ROOT)); set_rate(rate_of(S_ROOT), anchor_of(S_ROOT))   # 난입 정지 + 세계 배속(L1 · 260728) — 세션 wfz만큼 세계 시계를 뒤로 민다(배속 불변) · ⚠️ 반드시 S_ROOT 확정 뒤(형제 3곳과 동일 순서 — 앞에 두면 NameError로 러너 즉사)
-_kdate, _khour = world_dh()   # 동선 시간축 = 무음동 세계 시각(운영자 260716 지도 싱크 — 뷰어 지도·근처·원거리와 동일 공식) · 구 _kst(현실 KST)는 소비처 0으로 제거(평의회4)
+_kdate, _khour, _kmin = world_dhm()   # 동선 시간축 = 무음동 세계 시각(운영자 260716 지도 싱크 — 뷰어 지도·근처·원거리와 동일 공식) · 구 _kst(현실 KST)는 소비처 0으로 제거(평의회4)
 _dead = {k: v for k, v in (S_ROOT.get("dead") or {}).items() if (((v.get("t") if isinstance(v, dict) else v) or 0)) > time.time() * 1000}   # 사망 활성(운영자 260714) — 24h 두절 · v = {t,d,mood,why}(구형 숫자 흡수)
 _S_PICK = dict(S_ROOT); _S_PICK["threads"] = {k: v for k, v in (S_ROOT.get("threads") or {}).items() if k not in _dead}   # 사망 1:1 방 = 잡 큐 제외(레이스 잔여 pending이 다른 방 기아 못 만들게 · 만료 = 자연 복귀 → 밀린 메시지에 부활 답)
 T = pick_thread(_S_PICK)                                 # 통합 age 큐(invite/pending/opening 최고령 스레드 · 기아 방지)
@@ -403,6 +403,8 @@ print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": 
                   "co": co, "co_name": (names.get(co) or co) if co else "", "barge_debut": barge_debut, "barge_host": barge_host, "barge_self": barge_self, "barge_seat": barge_seat, "barge_room": barge_room, "omen_react": omen_react, "wfrz": frz_ms(S_ROOT), "wrate": rate_of(S_ROOT), "notice": ((S_ROOT.get("notice") or {}).get("text") or "") if isinstance(S_ROOT.get("notice"), dict) else "",   # 오늘 자 무음동 라디오 방송(260728 → Q.143) — 주민이라면 흘려들었을 소식 "wrb": json.dumps(anchor_of(S_ROOT) or {}, ensure_ascii=False),   # 세계 배속·변경 앵커(L1 · 260728)   # 단톡 재료(합석 260707) — co = 이번 턴 비화자 동행 · barge_host = 난입당한 쪽(260728 · 1=첫 반응 2=재실 중)
                   "barge_via": (s.get("barged") or {}).get("via") or "",   # 난입 경로(place=지나다 마주침 · 데뷔 결 분기 · 마주침 260707)
                   "place_nm": place_name(PL, place_of(PL, persona, _kdate, _khour)),   # 화자의 지금 장소(동선 SSOT — 배경 정합 + 마주침 sys와 앞뒤)
+                  "place_from": (lambda _t: place_name(PL, _t["from"]) if _t["p"] < 1 and _t["from"] and _t["from"] != _t["to"] else "")(transit_of(PL, persona, _kdate, _khour, _kmin)),   # 이동 중이면 **떠나온 자리**(운영자 260730 Q.144 "움직여야 돼") — 빈값 = 도착해 머무는 중 = 종전 문구 그대로(회귀 0)
+
                   "att": "\n".join(a for a in att if a),   # 첨부 사진 R2 키(개행 구분 · 260717 '+') — process_turn이 내려받아 Read 비전으로 전달
                   "anchor_ts": (last_u.get("ts") if pend_idx else (turns[-1].get("ts") if turns else "")),   # insert 앵커 = 마지막 pending 유저 턴 ts(인덱스 대신 = 400 트림/시프트 면역) · 자율 비트 = 직전 화자 턴 ts
                   "retry_n": int(s.get("retry_n") or 0),   # 자동 재시도 회차(op retry 박제 · 사다리 260714) — 3회차+ = 뉘앙스 전환 블록 주입
@@ -895,7 +897,7 @@ print((t[:70]+'…') if len(t)>70 else (t or '새 메시지'))")"
 # ── 상태 블록(공용 — 본답장 + 초대 판정 · env: PERSONA LAST_MOOD CAST GAP_H REL_LV RIV HANDOFF TUNE CO_NAME BARGE_DEBUT) ──
 # 시각·계절·달·데일리 무드 시드(sha256 = 같은 날 같은 기분·무저장) + 직전 공기(감정 관성) + 동네 로스터(주민 창작 방지) + 단톡 동행·난입 데뷔.
 state_block() {
-  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" "${LAST_OPEN:-}" "${LATE_H:-0}" "${PREV_DRAFT:-}" "${BARGE_HOST:-0}" "${WFRZ_MS:-0}" "${WRATE:-6}" "${WANCH:-}" "${NOTICE_TXT:-}" "${BARGE_SELF:-0}" "${BARGE_SEAT:-0}" "${OMEN_REACT:-0}" <<'PY'
+  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" "${LAST_OPEN:-}" "${LATE_H:-0}" "${PREV_DRAFT:-}" "${BARGE_HOST:-0}" "${WFRZ_MS:-0}" "${WRATE:-6}" "${WANCH:-}" "${NOTICE_TXT:-}" "${BARGE_SELF:-0}" "${BARGE_SEAT:-0}" "${OMEN_REACT:-0}" "${PLACE_FROM:-}" <<'PY'
 import sys, hashlib, json, time
 from datetime import datetime, timezone, timedelta
 persona, last_mood, cast, gap_h, rel_lv, riv, handoff = sys.argv[1:8]
@@ -914,6 +916,7 @@ barge_host = sys.argv[16] if len(sys.argv) > 16 else "0" # 난입당한 쪽(2607
 barge_self = sys.argv[21] if len(sys.argv) > 21 else "0" # 난입자 본인(260730) — 1 = 이번 화자가 난입 전용 인물
 try: barge_seat = int(sys.argv[22]) if len(sys.argv) > 22 else 0   # 난입 후 이 사람이 이미 말한 횟수(0 = 첫 마디)
 except Exception: barge_seat = 0
+place_from = sys.argv[24] if len(sys.argv) > 24 else ""   # 이동 중이면 떠나온 자리 이름(260730 Q.144) — 빈값·미전달 경로(초대 판정 등) = 종전 「~ 언저리다」 문구
 omen_react = sys.argv[23] if len(sys.argv) > 23 else "0"   # 전조 반응 당첨(260730) — 1 = 이번 턴에 한 번만 알아챈 티를 낸다(확률·결정적 시드는 extract_mat가 판정)
 try: tune = json.loads(sys.argv[8]) if sys.argv[8] and sys.argv[8] != "None" else []
 except Exception: tune = []
@@ -944,7 +947,8 @@ if last_open: L.append(f"- 직전에 네가 삼킨 것: {last_open} — 아직 �
 if notice_txt and persona == "desk": L.append(f"- 오늘 무음동 라디오에서 **네가 직접 읽은** 그날 방송(Q.143): 「{notice_txt}」 — 남한테 들은 소식이 아니라 네가 원고를 쓰고 마이크 앞에서 읽은 것이다. **먼저 꺼내 낭독하지 마라**(방송을 두 번 트는 셈이다). 대화가 그 언저리로 오면 취재한 사람의 얼굴로 받아라 — 어디까지 확인했고 뭘 못 실었는지, 그 정도만.")   # 진행자 본인 분기(Q.143) — 종전엔 원고를 쓴 당사자에게도 "지나면서 봤을 것"이라고 넣어 제 방송을 남의 소식처럼 알던 구멍
 elif notice_txt: L.append(f"- 오늘 무음동 라디오에서 나온 소식(데스크가 그날 일 몇 건을 훑는 브리핑 · Q.133·Q.143): 「{notice_txt}」 — 이 동네 사람이면 가게 스피커나 집 라디오로 흘려들었을 것이다. **먼저 꺼내 낭독하지 마라**(공지를 읽어주는 인물이 되면 사람이 아니라 게시판이 된다). 대화가 그 언저리로 오면 아는 티만 내라 — 한 마디 얹거나, 남 얘기 하듯 흘리거나, 관계된 인물이면 반응이 달라지거나. 관심 없는 성격이면 무시해도 된다.")
 if cast: L.append(f"- 이 동네 사람들: {cast}. 이 밖의 주민을 창작하지 마라 — 최근 대화에 이름표로 등장한 다른 주민의 말은 그 사람 얘기로 자연스럽게 인용해도 된다.")
-if place_nm: L.append(f"- 네 평소 동선상 지금 너는 {place_nm} 언저리다 — **장소 낭독은 금지**(\"난 지금 ○○에 있어\" 식 보고 금지)지만, 종결부 지문의 **소품은 여기서 가져와라**: 그곳에 있을 법한 물건·풍경·이름 없는 사람(옆자리 아이·점원·지나가던 사람)이 지문의 재료다(운영자 260725 3차). 단 대화 흐름이 이미 다른 곳을 가리키면 그쪽이 우선이다.")
+if place_nm and place_from: L.append(f"- 지금 너는 {place_from}에서 나와 {place_nm} 쪽으로 **가는 길**이다(운영자 260730 Q.144 동선 이동 구간) — **낭독 금지**(\"어디 가는 중이야\" 식 보고 금지). 대신 종결부 지문의 소품을 **길 위에서** 가져와라: 걷는 발·건널목·들고 나온 물건·뒤에 두고 온 자리의 잔상. 대화 흐름이 다른 곳을 가리키면 그쪽이 우선이다.")   # 이동 구간(전체의 약 1/10 시간) = 장소 문장만 갈아끼운다 — 아래 정주 문구와 배타(둘 다 나가면 "있으면서 가는 중"이 된다)
+elif place_nm: L.append(f"- 네 평소 동선상 지금 너는 {place_nm} 언저리다 — **장소 낭독은 금지**(\"난 지금 ○○에 있어\" 식 보고 금지)지만, 종결부 지문의 **소품은 여기서 가져와라**: 그곳에 있을 법한 물건·풍경·이름 없는 사람(옆자리 아이·점원·지나가던 사람)이 지문의 재료다(운영자 260725 3차). 단 대화 흐름이 이미 다른 곳을 가리키면 그쪽이 우선이다.")
 if co_name: L.append(f"- 지금 이 자리엔 {co_name}도 같이 있다(합석). 대화는 셋이서다 — 그리고 {co_name}는 네가 유저와 주고받는 말을 **처음부터 다 듣고 있다**(운영자 260725 \"모니터링 하는 느낌\"). 없는 사람처럼 굴지 마라: 걔가 걸릴 만한 대목에선 말을 고르거나 시선을 의식하는 티가 나야 한다. 유저 말이 {co_name}를 향한 것 같으면 짧게 반응만 얹거나 물러나도 된다 — 그 자리는 걔가 자기 차례에 직접 받는다(네가 걔 속을 대신 말하지 마라).")
 if barge_debut == "1" and barge_via == "place": L.append("- 너는 방금 이 근처를 지나다 유저 일행과 마주쳐 합석했다(우연) — 이번이 등장 첫 마디다. 지나던 참이라는 결로, 왜 이 시간에 여기 있었는지 가볍게 흘려라.")
 elif barge_debut == "1" and barge_via == "only": L.append("- 너는 방금 남의 대화 한복판을 끊고 들어왔다 — 이번이 등장 첫 마디다. 초대받지 않았고, 그걸 알면서 왔다. 인사도 사정 설명도 없이 네 방식대로 대화를 낚아채고, 카드에 적힌 네 등장 규칙 그대로 굴려라.")   # 난입 전용 인물(운영자 260726) — 관계·우연이 아니라 '초대 없음' 자체가 이 인물의 결
@@ -1892,7 +1896,7 @@ process_turn() {
   CO_ID="$(matv co)"; CO_NAME="$(matv co_name)"; BARGE_DEBUT="$(matv barge_debut)"; BARGE_HOST="$(matv barge_host)"; WFRZ_MS="$(matv wfrz)"; WRATE="$(matv wrate)"; WANCH="$(matv wrb)"; NOTICE_TXT="$(matv notice)"; [ "${NT_ON:-1}" = "1" ] || NOTICE_TXT=""   # 단톡 동행·난입 데뷔(합석 260707) · 난입당한 쪽(260728) · 라디오 축 OFF = 프롬프트에서도 소거(Q.133 — 화면만 끄면 캐릭터가 안 들은 방송을 계속 알던 구멍)
   BARGE_SELF="$(matv barge_self)"; BARGE_SEAT="$(matv barge_seat)"; BARGE_ROOM="$(matv barge_room)"; OMEN_REACT="$(matv omen_react)"   # 난입자 본인 축(260730) — self=이번 화자가 난입자 · seat=난입 후 앉아서 말한 횟수 · room=이 방에 난입자가 있다
   [ "$BARGE_ROOM" = "1" ] && GB_LINES=1   # 난입 자리 = 대본 교대 금지(운영자 260730 "왜 둘이 있을때는 오히려 고죠사토루가 프리실라처럼 얘기함") — 한 사람이 두 사람 대사를 쓰는 구조가 표기 규칙 교차 오염의 뿌리. 아래 CO_BLOCK 게이트와 짝.
-  PLACE_NM="$(matv place_nm)"; BARGE_VIA="$(matv barge_via)"   # 동선 장소 + 마주침 데뷔 결(위치 SSOT places.json · 260707)
+  PLACE_NM="$(matv place_nm)"; PLACE_FROM="$(matv place_from)"; BARGE_VIA="$(matv barge_via)"   # 동선 장소 + 떠나온 자리(이동 중 · 260730 Q.144) + 마주침 데뷔 결(위치 SSOT places.json · 260707)
   OPEN="$(matv open)"; OPENING_TS="$(matv opening_ts)"   # 오프닝 잡(동적 첫인사 · 운영자 260707) — OPEN=1이면 유저발화 없이 캐릭터가 먼저 · OPENING_TS = nonce(finish 레이스 방어)
   RETRY_N="$(matv retry_n)"   # 자동 재시도 회차(사다리 260714) — 오프닝 JSON엔 키 없음 = 빈값(아래 -ge 가드가 흡수)
   GB="$(matv gb)"; GB_N="$(matv gb_n)"; GB_FROM="$(matv gb_from)"; GB_KIND="$(matv gb_kind)"   # 단톡 자율 비트(260725) — GB=1 = 유저 발화 없는 교대 턴 · GB_FROM = 받아칠 직전 화자 이름 · GB_KIND = watch(모니터링 반응)/on(이어가기)
