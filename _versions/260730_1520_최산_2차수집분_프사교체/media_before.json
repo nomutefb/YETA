@@ -6,8 +6,6 @@
   "characters/idol/san/san_event_greeting_01.jpg",
   "characters/idol/san/san_event_nars_01.jpg",
   "characters/idol/san/san_parking_garage_coat_01.jpg",
-  "characters/idol/san/san_stairs_tanktop_01.jpg",
-  "characters/idol/san/san_street_knit_01.jpg",
   "characters/idol/san/san_street_london_01.jpg",
   "characters/idol/san/san_street_london_02.jpg"
  ],
@@ -18,35 +16,30 @@
  ],
  "joy": [
   "characters/idol/san/san_excited_award_01.jpg",
-  "characters/idol/san/san_goofy_peach_01.jpg",
-  "characters/idol/san/san_happy_open_arms_02.jpg"
+  "characters/idol/san/san_happy_open_arms_02.jpg",
+  "characters/idol/san/san_happy_thumbs_up_01.jpg"
  ],
  "love": [
   "characters/idol/san/san_seduce_vest_clip_01.mp4",
+  "characters/idol/san/san_seduce_vest_clip_01.mp4",
   "characters/idol/san/san_fond_look_01.jpg",
   "characters/idol/san/san_seduce_vest_clip_01.mp4",
-  "characters/idol/san/san_how_do_i_look_01.jpg",
-  "characters/idol/san/san_seduce_vest_clip_01.mp4",
-  "characters/idol/san/san_love_u_01.jpg"
+  "characters/idol/san/san_how_do_i_look_01.jpg"
  ],
  "shy": [
-  "characters/idol/san/san_flustered_01.jpg",
   "characters/idol/san/san_playful_cute_01.jpg"
  ],
  "blue": [
   "characters/idol/san/san_brooding_01.jpg",
   "characters/idol/san/san_brooding_02.jpg",
-  "characters/idol/san/san_sad_sunset_01.jpg",
   "characters/idol/san/san_worried_01.jpg"
  ],
  "tense": [
   "characters/idol/san/san_so_cold_01.jpg",
   "characters/idol/san/san_so_cold_02.jpg",
-  "characters/idol/san/san_so_cold_04.jpg",
   "characters/idol/san/san_so_cold_stage_03.jpg"
  ],
  "mad": [
-  "characters/idol/san/san_angry_stage_02.jpg",
   "characters/idol/san/san_glaring_stage_01.jpg"
  ],
  "sulky": [
