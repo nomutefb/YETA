@@ -790,6 +790,10 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yin-ttl i { font-style:normal; font-size:var(--fs-xs); color:var(--mut); }
   .yin-look { font-size:var(--fs-xs); color:var(--mut); line-height:var(--lh-base); padding:0 8px 8px; }
   .yin-empty { font-size:var(--fs-sm); color:var(--mut); font-style:italic; text-align:center; padding:8px 8px 14px; }   /* 아무도 없음 = 장면 지문 결(.ysit 문법 계승) */
+  .ypick-row.ydead { opacity:.85; }   /* 신당 행(260730) = 사망 표기 3처방(.ylist-row.ydead) **동값** 계승 — 픽커 행에 옮긴 것뿐(새 값 0) · [빌어주기] 필은 .yp-col 밖 = 라임 유지(살아 있는 유일한 축) */
+  .ypick-row.ydead .yava { filter:grayscale(1) brightness(.5); }
+  .ypick-row.ydead .yp-col { filter:grayscale(1); }
+  .ypick-row.ydead .yp-name { opacity:.5; }
   .ymp-name { fill:var(--fg-2); font-size:9px; font-weight:var(--fw-b); paint-order:stroke; stroke:rgba(18,18,18,.85); stroke-width:2.6px; }
   .ymp-node { fill:rgba(18,18,18,.4); stroke:rgba(255,255,255,.28); stroke-width:1; }
   .ymp-node.zone { fill:rgba(18,18,18,.14); stroke:rgba(255,255,255,.2); stroke-dasharray:3 4; }   /* 야외 배회 구획(운영자 260709) = 은은한 점선 링(워커 시인성 우선) */
@@ -1440,7 +1444,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     <div class="ymapp" id="ymapp">   <!-- 지도 탭(운영자 260707) — 위치 SSOT = apps/yeta/places.json(raw) · 워커 탭 = 그 캐릭터와 대화 -->
       <div class="ymap-head"><b>무음동</b><i id="ymapClock"></i></div>
       <div class="ymap-frame"><svg id="ymapSvg" viewBox="0 0 500 500" aria-label="무음동 지도"></svg></div>
-      <div class="ymap-cap">지금 이 시각의 동네 — 쪼만한 주민을 탭하면 바로 대화. <span style="color:var(--accent)">라임 링</span> = 지금 붐비는 곳. 찻집 <b>무음</b>은 탭하면 안으로 들어가진다.</div>
+      <div class="ymap-cap">지금 이 시각의 동네 — 쪼만한 주민을 탭하면 바로 대화. <span style="color:var(--accent)">라임 링</span> = 지금 붐비는 곳. 찻집 <b>무음</b>은 탭하면 안으로 들어가진다. 언덕 위 <b>성당</b>은 신당 — 죽은 사람을 위해 빌 수 있는 자리.</div>
       <div class="yeta-pick yin" id="yin" hidden></div>   <!-- 실내 뷰 시트(운영자 260725 시범) — 표면 = .yeta-pick 정본 크롬 그대로 · 내용 = yInRender -->
     </div>
     <div class="ycd" id="ycdetail" aria-modal="true" role="dialog">   <!-- 캐릭터 세부 디테일 → [대화 시작](운영자 260706) -->
@@ -2010,6 +2014,7 @@ ySwipeBind(document.getElementById('ymain'), dir => {   // 메인 좌우 스와�
 //    워커 10인 = 현재 KST 실위치 + 어슬렁 · 차량 = 엣지(길) 순회 · 전부 rAF + style.transform(합성만 = 60fps · 운영자 260707) · 탭 이탈 = 루프 정지.
 let YMAPD = null, _ymapRaf = 0, _ymapIv = 0, _ymapWalkers = [], _ymapCars = [], _ymapLast = 0, _ymapTone = '';
 let _ymapAt = {}, _yinOpen = '';   // 실내 뷰(운영자 260725 "무음 시범 하나") — _ymapAt = 장소별 재실자(ymPlaceAll 캐시 공유) · _yinOpen = 열린 장소 id
+const YSHRINE = 'cathedral', YSN_SCENE = 'moon_stairs';   // 신당(운영자 260730) = 지도 성당 노드 = 죽은 주민에게 비는 자리. 씬 = 기존 자산 재사용(언덕으로 오르는 달빛 계단 — 전용 성당 씬 미생성 · 생기면 이 한 값만 교체)
 const YIN_PLACES = { tea: 'tea_sunset' };   // 실내 뷰 개방 장소 → 배경 씬(assets/yeta_bg/var_*.webp · Y_PLACE_POOL의 tea 매핑과 동일 정본값 계승). ⚠️ 시범 = 찻집 '무음' 하나만(운영자 260725) — 확장 = 이 표에 {장소id: 씬} 한 줄 추가로 끝(코드 무수정).
 const YMAP_SC = 5, YMAP_RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 // ── 맵 시각 레이어(운영자 260707 "자연스럽게 배치 · 차는 차도로 · 신호등 정지 · 건물 안이면 이름표") — map_night.png 좌표계(0~100) · 논리 SSOT(places.json)와 별개 축.
@@ -2162,11 +2167,45 @@ function yInRender(pl) {
     + (rows || `<div class="yin-empty">지금은 아무도 없다.</div>`);
   box.hidden = false;
 }
-function yInOpen(pl) { if (!YIN_PLACES[pl]) return; _yinOpen = pl; yInRender(pl); }
+// ── 신당(운영자 260730 "신당에 가서 죽은사람 한테 기도드릴 수 있는 걸 · 지도에 붙이던가") — 지도 성당 탭 = 실내 뷰와 **같은 시트**(#yin · .yin-* 부품 100% 계승 · 신규 부품 0).
+//   종전엔 비는 주체가 러너 <<PRAY>>(주민)뿐 = 유저는 누가 죽어도 무음동 48h를 기다리는 것 말고 할 수 있는 게 없었다. 여기서 [빌어주기] = op pray(러너 기도와 한 식) = 그 자리에서 돌아온다.
+function ySnRender() {
+  const box = document.getElementById('yin'); if (!box || !YMAPD) return;
+  const info = ((YMAPD.places || {})[YSHRINE]) || {};
+  const dd = ((YSESS || {}).dead) || {};
+  const ids = Object.keys(dd).filter(id => yPersona(id) && yDeadT(id));
+  const wait = ids.filter(id => yDead({ id }) && !yPrayed(id));   // 아직 아무도 안 빌어준 죽은 주민 = 기도 대상
+  const rows = ids.map(id => {
+    const c = yPersona(id), pray = wait.includes(id);
+    const sub = pray ? `무음동 ${yWDur(Date.now() - ((dd[id] || {}).d || Date.now()))}째 — 부활까지 ${yWDur(yDeadT(id) - Date.now())}` : (yDead({ id }) ? `${yPrayBy(id) || '누군가'}의 기도가 닿았어` : '성당 앞뜰에서 눈을 뜨는 중');
+    return `<div class="ypick-row ydead">${yAva(c)}<span class="yp-col"><span class="yp-name">${esc(c.name || '')}</span><span class="yp-tag">${esc(sub)}</span></span>${pray ? `<button type="button" class="yinv-go" data-pray="${esc(id)}">빌어주기</button>` : ''}</div>`;   // 행 = 초대 팝업 정본(div + 내부 필 · 중첩 버튼 금지 · armed 2탭) · 채색 소거 = .ydead 계승
+  }).join('');
+  box.innerHTML = `<img class="yin-bg" src="assets/yeta_bg/var_${esc(YSN_SCENE)}.webp" alt="${esc(info.name || '신당')}으로 오르는 길">`
+    + `<div class="yin-ttl"><b>신당</b><i>${wait.length ? `${wait.length}명이 기다려` : '기다리는 사람 없음'}</i></div>`
+    + (info.look ? `<div class="yin-look">${esc(String(info.look).split(' — ')[0])}</div>` : '')
+    + (rows || `<div class="yin-empty">지금 무음동엔 죽은 사람이 없다.</div>`)
+    + `<div class="yinv-note">여기까지 찾아와 간절히 빌면 그 자리에서 눈을 떠 — 아무도 안 빌면 무음동의 이틀을 다 기다려야 해.</div>`;   // 힌트 = 초대 팝업 .yinv-note 결 계승
+  box.hidden = false;
+}
+function yInOpen(pl) { if (pl === YSHRINE) { _yinOpen = pl; ySnRender(); return; } if (!YIN_PLACES[pl]) return; _yinOpen = pl; yInRender(pl); }
 function yInClose() { _yinOpen = ''; const b = document.getElementById('yin'); if (b) { b.hidden = true; b.innerHTML = ''; } }
 document.addEventListener('click', e => {   // 위임 1핸들러(개별 배선 금지 · 레포 관례) — 주민 행 = 그 방 직행(워커 탭과 동일 정본 openYeta) · 바깥 탭 = 닫힘(팝오버 관례 계승)
   const go = e.target.closest('[data-yin-go]');
   if (go) { if (go.dataset.yinUm) { miniToast('아직 만나지 못한 사람이야'); return; } yInClose(); openYeta(go.dataset.yinGo); return; }
+  const pb = e.target.closest('.yinv-go[data-pray]');
+  if (pb && !pb.disabled) {   // 신당 기도(260730) — 2탭 재확인 = 초대 필 armed 정본 100% 계승(비가역 = 그 죽음이 여기서 끝난다)
+    if (!pb.classList.contains('armed')) {
+      document.querySelectorAll('#yin .yinv-go[data-pray]').forEach(x => { x.classList.remove('armed'); x.textContent = '빌어주기'; x.removeAttribute('aria-label'); });
+      pb.classList.add('armed'); pb.textContent = '간절히?'; pb.setAttribute('aria-label', '한 번 더 누르면 기도 확정'); return;
+    }
+    pb.disabled = true;
+    const c = yPersona(pb.dataset.pray); if (!c) return;
+    yApi('pray', { persona: c.id }).then(r => {
+      if (r && r.ok) { if (r.sess) YSESS = r.sess; miniToast(r.noop ? `${c.name}은(는) 이미 돌아오는 중이야` : `${c.name}이(가) 성당 앞뜰에서 눈을 떴어`); ySnRender(); ymPlaceAll(); yListRender(); }   // 지도 재판정 = 성당 앞뜰 이설·부활 발광 즉시 반영 · 목록 = 사망 도색 해제
+      else { pb.disabled = false; miniToast((r && r.error) || '기도가 닿지 않았어 — 잠시 후 다시'); }
+    }).catch(() => { pb.disabled = false; miniToast('기도가 닿지 않았어 — 잠시 후 다시'); });
+    return;
+  }
   if (_yinOpen && !e.target.closest('#yin')) yInClose();
 });
 
@@ -2201,7 +2240,7 @@ function ymBuild(svg) {   // 정적 레이어 — 배경(낮/밤 = KST 시각 ·
   S.push(`<mask id="ymRoadM" maskUnits="userSpaceOnUse" x="0" y="0" width="500" height="500"><image id="ymRoadImg" href="assets/yeta_map/road_mask_${ymIsDay(yWorldDH().h) ? 'day' : 'night'}.png" x="0" y="0" width="500" height="500"/></mask>`);   // 픽셀 도로 마스크(v5 — 운영자 260716 "픽셀 단위 레이어 분리"): 백색 = 아스팔트. 차 레이어를 이 마스크로 클리핑 = 도로 밖·건물 위 렌더 불가 · 건물이 도로를 덮는 픽셀 = 구멍 = 차가 건물 뒤로 숨음(z)
   S.push(`<g id="ymLights"></g><g id="ymCars" mask="url(#ymRoadM)"></g><g id="ymWalkers"></g><g id="ymTags"></g>`);   // 태그 = 워커에서 분리(구역 앵커 고정 · 운영자 260709 "이름 태그는 구획 원 위에 지금처럼")
   svg.innerHTML = S.join('');
-  for (const pid of Object.keys(YIN_PLACES)) {   // 실내 뷰 개방 장소(260725 시범 = 찻집 '무음') — 노드 원 + 이름 라벨 둘 다 탭 표면(작은 원만이면 폰에서 놓침)
+  for (const pid of [...Object.keys(YIN_PLACES), YSHRINE]) {   // 실내 뷰 개방 장소(260725 시범 = 찻집 '무음') + 신당(260730 성당) — 노드 원 + 이름 라벨 둘 다 탭 표면(작은 원만이면 폰에서 놓침)
     for (const el of [svg.querySelector('#ymn-' + pid), svg.querySelector('#ymnl-' + pid)]) {
       if (!el) continue;
       el.style.cursor = 'pointer'; el.style.pointerEvents = 'auto';

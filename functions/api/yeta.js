@@ -586,6 +586,26 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: true, sess: sess || null });
   }
 
+  if (op === 'pray') {   // 신당 기도 — **유저가 직접** 북동쪽 언덕 신당(성당)까지 찾아가 죽은 주민을 위해 비는 경로(운영자 260730 "신당에 가서 죽은사람한테 기도드릴 수 있는 걸 · 지도에 붙이던가").
+    // 종전엔 비는 주체가 러너 <<PRAY>>(주민)뿐 = 유저는 죽음을 보고도 아무것도 못 하고 무음동 48h를 기다리는 수밖에 없었다.
+    // 세션 변형 = 러너 pray_who 분기와 **한 식**(t를 now로 당김 · pray 플래그 제거 · by 박제 · note_pub 사건 1줄) = 기존 부활 파이프 그대로 재사용(새 상태·새 필드 0).
+    const pid = String(body.persona || '');
+    if (!ID_RE.test(pid)) return json({ error: '누구를 위해 빌지 모르겠어' }, 400);
+    let nm = '';
+    const { sess, abort } = await casPut(s => {
+      const v = (s.dead || {})[pid];
+      if (!v || typeof v !== 'object' || !v.pray) return { abort: { noop: 1 } };   // 죽은 적 없음 · 이미 돌아옴 · 이미 누가 빌어줌(러너 <<PRAY>>와 경합) = 무변경(연타 멱등)
+      nm = String(v.nm || pid).slice(0, 40);
+      const by = String((s.me || {}).call || '').trim().slice(0, 24) || '너를 아는 사람';   // 빌어준 사람 = 유저 호칭(op me) — 러너 [부활] 블록 `by`(≤40) · 뷰어 yPrayBy 표기 공용
+      delete v.pray; v.t = Date.now(); v.by = by;   // 즉시 만료 = 부활 대기(뷰어 yRevPend = 성당 앞뜰 · 그 방의 다음 답이 엔트리를 소비하며 첫 마디)
+      const ev = `[사건] 신당 — ${by}의 간절한 기도로 ${nm} 돌아옴(죽음을 겪고 이어 붙은 사람)`;   // 마을 공용 기억 = 러너 문안·캡 600 동일(부활 후 재회에서 '아무 일 없던 척' 차단)
+      const np = String(s.note_pub || s.note || '').replace(/\s+$/, '');
+      if (!np.includes(ev)) s.note_pub = ((np ? np + '\n' : '') + ev).slice(-600);
+    });
+    if (abort) return json({ ok: true, noop: 1, sess: sess || null });   // noop = 화면만 새로고침(에러 아님 — 그새 딴 사람이 빌었어도 결과는 같다)
+    return json({ ok: true, nm, sess: sess || null });
+  }
+
   if (op === 'quizpick') {   // 성향 퀴즈 선택(운영자 260725 "내가 고르면 그걸 계속 누적시켜서 캐릭터 성격 일원화 · 주기적으로 반영되게 내가 터치안해도 자동으로")
     // 한 문항 = 무음동 2시간 단축(현실 20분) · 선택지가 가리키는 축을 tune_votes에 쌓고, 같은 캐릭터로 3표가 모이면 **그 자리에서** tunes에 ±1 반영(별도 크론·유저 조작 0).
     const QI = Math.max(0, parseInt(body.i, 10) || 0), OI = Math.max(0, parseInt(body.o, 10) || 0);
