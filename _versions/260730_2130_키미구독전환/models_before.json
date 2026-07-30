@@ -18,12 +18,10 @@
   },
   "vendors": {
     "kimi": {
-      "id": "k3",
-      "family": "kimi-k[0-9][0-9a-z.]*|kimi-for-coding(?:-highspeed)?|\\bk3(?:-256k)?\\b",
-      "allow": [
-        "kimi-k2.5"
-      ],
-      "축": "키미 대화 축(yeta_chat.sh `KIMI_MODEL` · 게이트웨이 화이트리스트 · 뷰어 다이얼 3번째) — 키 = 러너 시크릿 KIMI_CODE_MUTE · **260730 전환**: 종량제(platform.kimi.ai `kimi-k3` @ api.moonshot.ai/anthropic) → Kimi Code 구독(`k3` @ api.kimi.com/coding/) · family에 구독 ID군(k3·k3-256k·kimi-for-coding[-highspeed]) 편입 · k2.5 = 구 종량제 저가축(260721 /anthropic 404 실측 = 뷰어 미노출·배선만 · 구독 엔드포인트엔 미서빙)"
+      "id": "kimi-k3",
+      "family": "kimi-k[0-9][0-9a-z.]*",
+      "allow": ["kimi-k2.5"],
+      "축": "문샷 종량제 대화 축(yeta_chat.sh `KIMI_MODEL` · 게이트웨이 화이트리스트 · 뷰어 다이얼 3번째) — 키 = 러너 시크릿 KIMI_CODE_MUTE · k2.5 = 저가축(260721 승인이나 /anthropic 게이트 404 실측 = 뷰어 미노출·배선만)"
     },
     "openai_image": {
       "id": "gpt-image-2",
@@ -43,9 +41,7 @@
     "elevenlabs_tts": {
       "id": "eleven_multilingual_v2",
       "family": "eleven_[a-z0-9_]+",
-      "allow": [
-        "eleven_flash_v2_5"
-      ],
+      "allow": ["eleven_flash_v2_5"],
       "축": "전화 TTS 정본(한국어 클론 음색 보존 1순위) · 저지연 대안 = eleven_flash_v2_5(allow) · vars `ELEVENLABS_TTS_MODEL`"
     }
   },

@@ -82,9 +82,11 @@ jobs:
           # 무전기(PTT) 답장 음성 — ⚠️유료 TTS·ptt 턴에서만 발동(yeta_tts.py — 클론 el: 우선·OpenAI 폴백 · 없으면 텍스트만)
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY_nomute || secrets.OPENAI_API_KEY }}
-          # KIMI-K3(문샷 종량제 · 운영자 260719 "KIMI_CODE_MUTE 키로 대화 연결") — 다이얼 kimi-k3 턴만 gen_out이
-          #   Anthropic 호환 게이트로 국소 리라우트(서브셸 주입 = 구독 OAuth·폴오버 체인 무오염 · 아래 unset ANTHROPIC_* 과 무충돌)
+          # KIMI-K3(운영자 260719 "KIMI_CODE_MUTE 키로 대화 연결" · 260730 Kimi Code 구독 전환) — 다이얼 k3 턴만 gen_out이
+          #   Anthropic 호환 게이트로 국소 리라우트(서브셸 주입 = 클로드 구독 OAuth·폴오버 체인 무오염 · 아래 unset ANTHROPIC_* 과 무충돌)
           KIMI_API_KEY: ${{ secrets.KIMI_CODE_MUTE }}
+          # 엔드포인트 노브 — 미설정이면 스크립트 기본 https://api.kimi.com/coding/(구독). 구 종량제 회귀 = vars에 https://api.moonshot.ai/anthropic + 모델 ID 되돌림.
+          KIMI_BASE_URL: ${{ vars.KIMI_BASE_URL || '' }}
           # YETA_SAFE 기본 ON(스크립트) = 런타임 CLAUDE.md 미주입(개발 세션 전용 · 운영자 260704) · 회귀 = YETA_SAFE: '0'
           YETA_SYS: '2'   # 운영자 260721 Q.35 승인 — 전 모델 시스템 '교체'(CC 기저 텍스트 미전송 = 구독 쿼터·종량제 공동 절감). 이탈 관찰축 = fb_report(이슈) + 세션훅 자동 부각 · 롤백 = 이 줄 제거(append 복귀)
           # 단톡 대화 이어가기(운영자 260725 "자기들끼리 얘기를 이어나가야") — ① 대본 교대 LINES(한 호출 안 토막 수) ② 자율 비트 BEATS(유저 침묵 시 추가 턴 = 턴당 생성 +N).
