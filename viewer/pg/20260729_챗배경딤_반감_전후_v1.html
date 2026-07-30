@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>챗 배경 딤 반으로 — 전/후 비교 v1</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260727_160936_챗배경딤투명도_v1.html 계승(재설계 0 · 딤 값만 전/후로 고정 비교) ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --cobalt:#3D6BFF; --cobalt-rgb:61,107,255;
+    --think:#3EE0C8; --think-rgb:62,224,200;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --glass-0:rgba(255,255,255,.002); --glass-line-0:rgba(255,255,255,.066);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+    --bubble-me:var(--accent); --bubble-ai:#1e2023; --yeta-bg:var(--bg);
+    --lgap:6px;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+
+  /* ── 전/후 2열(모바일=1열) ── */
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  @media (max-width:820px) { .pair { grid-template-columns:1fr; } }
+  .trio { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-3); align-items:start; }
+  @media (max-width:820px) { .trio { grid-template-columns:1fr; } }
+  .bdg.rung { color:var(--think); border:1px solid rgba(var(--think-rgb),.4); }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .cap .val { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--fg-2); }
+
+  /* ── 미리보기 = 9:16 프레임(챗 화면 재현 · 표면 CSS는 index.html 정본 계승) ── */
+  .frame { position:relative; width:100%; aspect-ratio:9/16; max-height:76vh; margin-inline:auto; border-radius:var(--r-modal); overflow:hidden;
+    background:var(--bg); border:1px solid var(--glass-line); box-shadow:var(--shadow-card); }
+  .frame .ybg { position:absolute; inset:0; background-size:cover; background-position:center; opacity:.92; }   /* .ybg.on = .92 계승 */
+  .frame .ysurf { position:absolute; inset:0; }
+
+  .yeta-h { position:absolute; top:10px; left:10px; right:10px; z-index:3; display:flex; align-items:center; gap:8px; padding:7px 9px;
+    background:linear-gradient(var(--glass), var(--glass)), rgba(18,18,18,.75); border:1px solid var(--glass-line); border-radius:var(--r-pill);
+    backdrop-filter:blur(var(--blur-l)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-l)) saturate(1);
+    box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card); }
+  .yh-ava { flex:none; width:32px; height:32px; border-radius:50%; background-size:cover; background-position:center; background-color:rgba(255,255,255,.06); }
+  .yeta-h b { font-size:var(--fs-h2); font-weight:var(--fw-x); flex:none; }
+  .yeta-h .yh-tag { font-size:var(--fs-xs); color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .ylog { position:absolute; inset:64px 12px 66px; z-index:2; display:flex; flex-direction:column; gap:10px; justify-content:flex-end; overflow:hidden; }
+  .ymsg { display:flex; gap:8px; align-items:flex-start; max-width:86%; }
+  .ymsg .yava { flex:none; width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); background-size:cover; background-position:center; margin-top:2px; }
+  .ymsg .ycol { display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .ymsg .yname { font-size:var(--fs-xs); color:var(--fg); font-weight:var(--fw-b); padding-left:2px; }
+  .yb { padding:10px 13px; border-radius:var(--r-l); font-size:var(--fs-body); line-height:var(--lh-base); white-space:pre-wrap; word-break:break-word; }
+  .yb i.yn { font-style:italic; color:var(--fg-2); opacity:.75; }
+  .yb.ai { background:var(--glass-2); border:1px solid var(--glass-line); border-top-left-radius:var(--r-s);
+    backdrop-filter:blur(var(--blur-m)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-m)) saturate(1); box-shadow:inset 0 1px 0 var(--glass-line); }
+  .yb.me { align-self:flex-end; max-width:78%; background:var(--bubble-me); color:var(--bg); border-top-right-radius:var(--r-s); }
+  .ytime { font-size:var(--fs-xs); color:var(--fg-2); opacity:.8; align-self:flex-end; }
+
+  .yeta-in { position:absolute; bottom:12px; left:10px; right:10px; z-index:3; display:flex; align-items:center; gap:4px; padding:5px 6px;
+    background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-pill);
+    backdrop-filter:blur(var(--blur-l)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-l)) saturate(1);
+    box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card); }
+  .yeta-in span { flex:1; padding:6px 10px; color:var(--mut); font-size:var(--fs-body); }
+  .yeta-in .snd { width:var(--btn); height:var(--btn); display:grid; place-items:center; color:var(--accent); }
+
+  /* 스와이프 = 한 프레임 안에서 좌(전)/우(후) 갈라보기 */
+  .frame .ab { position:absolute; inset:0; z-index:1; background-size:cover; background-position:center; opacity:.92; clip-path:inset(0 0 0 var(--ab,50%)); }
+  .ab-lbl { position:absolute; z-index:4; bottom:64px; font-size:var(--fs-meta); letter-spacing:.14em; font-weight:var(--fw-x);
+    padding:3px 8px; border-radius:var(--r-pill); background:rgba(18,18,18,.75); border:1px solid var(--glass-line); color:var(--fg-2); }
+  .ab-lbl.l { left:12px; } .ab-lbl.r { right:12px; }
+
+  .sl { display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; margin-top:10px; font-size:var(--fs-sm); }
+  .sl input[type=range] { width:100%; accent-color:var(--accent); }
+  .sl output { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--fg-2); min-width:34px; text-align:right; }
+
+  /* 썸네일 선택 */
+  .thumbs { display:grid; grid-template-columns:repeat(auto-fill,minmax(84px,1fr)); gap:8px; }
+  .th { position:relative; aspect-ratio:9/16; border-radius:var(--r-s); overflow:hidden; border:1px solid var(--glass-line);
+    background-size:cover; background-position:center; cursor:pointer; padding:0; transition:transform .28s var(--ease), border-color .28s var(--ease); }
+  .th:active { transform:scale(var(--press-l,.95)); }
+  .th.cur { border-color:rgba(var(--accent-rgb),.5); box-shadow:0 0 14px rgba(var(--accent-rgb),.14); }
+  .th em { position:absolute; left:0; right:0; bottom:0; padding:3px 4px; font-style:normal; font-size:var(--fs-meta); line-height:1.3;
+    background:rgba(18,18,18,.75); color:var(--fg-2); display:block; text-align:center; }
+
+  /* 전수 확인 = 9장 각각 좌(전)/우(후) 반반 */
+  .wall { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; }
+  .wcell { position:relative; aspect-ratio:9/16; border-radius:var(--r-s); overflow:hidden; border:1px solid var(--glass-line); background-size:cover; background-position:center; }
+  .wcell .half { position:absolute; inset:0; background-size:cover; background-position:center; clip-path:inset(0 0 0 50%); }
+  .wcell em { position:absolute; left:0; right:0; bottom:0; padding:3px 4px; font-style:normal; font-size:var(--fs-meta); line-height:1.3;
+    background:rgba(18,18,18,.75); color:var(--fg-2); display:block; text-align:center; }
+
+  /* 값 표 */
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--glass-line); }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); }
+  td.v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); }
+  td.v .b { color:var(--mut); } td.v .a { color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>챗 배경 딤 — 반으로 (전/후)</h1>
+  <p class="lead">운영자 260729 “예타 채팅창 배경 불투명 강도를 반으로”. 노브 1곳 = <code>viewer/index.html · yPaintBg</code>의 <code>[d1, d2]</code>. 검정 스크림 알파를 정확히 ÷2 → 배경이 두 배로 비친다. 윈터 블라인드(+50%)·클립 밝기는 같은 노브에서 공식 그대로 파생(새 값 창작 0).</p>
+
+  <div class="sect grp">
+    <h2>① 챗 화면 전/후 — 캐릭터 아트 스크림</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">BEFORE</span><span class="val">.55 / .68</span></p>
+        <div class="frame">
+          <div class="ybg" id="bgB"></div>
+          <div class="ysurf">
+            <div class="yeta-h"><span style="color:var(--fg-2)">‹</span><span class="yh-ava" id="hAvaB"></span><b id="hNameB">루시</b><span class="yh-tag">낮엔 시크한 자동…</span></div>
+            <div class="ylog">
+              <div class="ymsg"><span class="yava" id="bAvaB"></span><div class="ycol"><span class="yname" id="bNameB">루시</span><div class="yb ai"><i class="yn">담배 든 손이 움찔한다.</i>
+갑자기 왜 소리질러, 놀랐잖아.</div></div></div>
+              <div class="yb me">뭘또저질렀냐느니</div>
+              <span class="ytime">오후 6:40</span>
+            </div>
+            <div class="yeta-in"><span>메시지</span><span class="snd">➤</span></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">AFTER</span><span class="val">.28 / .34 &nbsp;(÷2)</span></p>
+        <div class="frame">
+          <div class="ybg" id="bgA"></div>
+          <div class="ysurf">
+            <div class="yeta-h"><span style="color:var(--fg-2)">‹</span><span class="yh-ava" id="hAvaA"></span><b id="hNameA">루시</b><span class="yh-tag">낮엔 시크한 자동…</span></div>
+            <div class="ylog">
+              <div class="ymsg"><span class="yava" id="bAvaA"></span><div class="ycol"><span class="yname" id="bNameA">루시</span><div class="yb ai"><i class="yn">담배 든 손이 움찔한다.</i>
+갑자기 왜 소리질러, 놀랐잖아.</div></div></div>
+              <div class="yb me">뭘또저질렀냐느니</div>
+              <span class="ytime">오후 6:40</span>
+            </div>
+            <div class="yeta-in"><span>메시지</span><span class="snd">➤</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note">표면(헤더 알약·글래스 버블·입력바)은 손대지 않았다 — 가독을 떠받치는 층은 그대로고, 뒤에 깔린 검정 딤만 절반이 됐다.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>② 한 화면에서 갈라보기 — 좌 BEFORE / 우 AFTER</h2>
+    <div class="frame" style="max-width:360px">
+      <div class="ybg" id="swB"></div>
+      <div class="ab" id="swA"></div>
+      <div class="ysurf">
+        <div class="yeta-h"><span style="color:var(--fg-2)">‹</span><span class="yh-ava" id="hAvaS"></span><b id="hNameS">루시</b><span class="yh-tag">낮엔 시크한 자동…</span></div>
+        <div class="ylog">
+          <div class="ymsg"><span class="yava" id="bAvaS"></span><div class="ycol"><span class="yname" id="bNameS">루시</span><div class="yb ai">말을 하다 말면 어떡해, 또 뭔 일 벌어진 건데.</div></div></div>
+          <span class="ytime">오후 6:41</span>
+        </div>
+        <div class="yeta-in"><span>메시지</span><span class="snd">➤</span></div>
+      </div>
+      <span class="ab-lbl l">BEFORE .55/.68</span>
+      <span class="ab-lbl r">AFTER .28/.34</span>
+    </div>
+    <div class="sl"><label for="sw">경계</label><input type="range" id="sw" min="0" max="100" step="1" value="50"><output id="swo">50%</output></div>
+  </div>
+
+  <div class="sect grp">
+    <h2>③ 설정 「화면 어둡기」 3단 — 사용자가 직접 고른다</h2>
+    <p class="note" style="margin:0 0 10px">설정 → 화면 → <b>화면 어둡기</b>(탭 = 밝게 → 기본 → 어둡게 순환 · 글자 크기 3단과 같은 행 형식). <b>어둡게</b> = 260709~260727 정본 그대로 · <b>기본</b> = 260729 반감 · <b>밝게</b> = 한 칸 더. 칸마다 환경 씬·윈터 블라인드·클립 밝기가 공식대로 같이 따라온다.</p>
+    <div class="trio" id="trio"></div>
+  </div>
+
+  <div class="sect grp">
+    <h2>④ 배경 고르기 — 어두운 원화 → 밝은 원화</h2>
+    <div class="thumbs" id="thumbs"></div>
+    <p class="note">밝기 실측 순(canvas 평균휘도) — 맨 왼쪽(무디 18)이 가장 어둡고 맨 오른쪽(레제 200)이 가장 밝다. 한 값이 양 끝을 동시에 통과하는지가 이 노브의 조건.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>⑤ 전수 확인 — 9장 전부 좌(전)/우(후)</h2>
+    <div class="wall" id="wall"></div>
+  </div>
+
+  <div class="sect grp">
+    <h2>⑥ 바뀐 값 전부 — 어둡기 3단 × 5축</h2>
+    <table>
+      <tr><th>축</th><th>배선 지점</th><th>밝게</th><th>기본</th><th>어둡게</th><th>파생 공식</th></tr>
+      <tr><td>캐릭터 아트 스크림</td><td class="v">yPaintBg <code>DM.s</code></td><td class="v">.14/.17</td><td class="v"><span class="a">.28/.34</span></td><td class="v"><span class="b">.55/.68</span></td><td class="v">칸마다 표에 박제(YDIM_SET)</td></tr>
+      <tr><td>환경(장소·무드) 씬</td><td class="v">yPaintBg <code>DM.e</code></td><td class="v">.09/.13</td><td class="v"><span class="a">.18/.26</span></td><td class="v"><span class="b">.35/.52</span></td><td class="v">같은 칸의 env 쌍</td></tr>
+      <tr><td>윈터 블라인드 합성</td><td class="v">yPaintBg <code>wcomp</code></td><td class="v">.57/.58</td><td class="v"><span class="a">.64/.67</span></td><td class="v"><span class="b">.78/.84</span></td><td class="v">d + (1−d)×.5</td></tr>
+      <tr><td>시즌 클립 밝기</td><td class="v">--ydim-br</td><td class="v">.86</td><td class="v"><span class="a">.72</span></td><td class="v"><span class="b">.45</span></td><td class="v">1 − s[0]</td></tr>
+      <tr><td>윈터 클립 밝기</td><td class="v">.ybg.wdim video</td><td class="v">.43</td><td class="v"><span class="a">.36</span></td><td class="v"><span class="b">.225</span></td><td class="v">calc(밝기 × .5)</td></tr>
+      <tr><td>배경 레이어 자체</td><td class="v">.ybg.on</td><td class="v" colspan="3" style="text-align:center">.92 — 3단 공통 무변경</td><td class="v">무변경</td></tr>
+      <tr><td>애도 모드 탈색</td><td class="v">#yetadlg.ymourn</td><td class="v" colspan="3" style="text-align:center">.6 / .32 — 3단 공통 무변경</td><td class="v">별개 상태</td></tr>
+    </table>
+    <p class="note"><span style="color:var(--accent)">기본</span> = 지금 라이브 · <span style="color:var(--mut)">어둡게</span> = 260709~260727 정본 그대로 되돌아가는 칸. 계보값 2칸이 사다리 양 끝을 잡고 있어 새 값 창작은 「밝게」의 한 번 더 반감뿐이다.</p>
+  </div>
+</div>
+
+<script>
+// ── 이미지 = 실제 정본 자산(밝기 l = 헤드리스 canvas 평균휘도 0~255 실측 260727 · 플그 v1 계승) ──
+const IMGS = [
+  { n:'무디',       f:'../characters/season/mudi/main/base/mudi_01.webp',        l:18 },
+  { n:'데스크',     f:'../characters/season/desk/main/base/desk_04.jpg',         l:49 },
+  { n:'루시(안드)', f:'../characters/season/lucy/android/base/android_10.jpg',   l:58 },
+  { n:'세라',       f:'../characters/season/sera/main/base/sera_k03.jpg',        l:66 },
+  { n:'드루실라',   f:'../characters/season/drusilla/main/base/drusilla_01.jpg', l:79 },
+  { n:'루시(네온)', f:'../characters/season/lucy/lucy_neon.webp',                l:91 },
+  { n:'고죠',       f:'../characters/season/gojo/main/base/gojo_02.jpg',         l:102 },
+  { n:'루시 ★',     f:'../characters/season/lucy/lucy_02.webp',                  l:155 },
+  { n:'레제',       f:'../characters/season/reze/main/base/reze_02.jpg',         l:200 },
+];
+const BEF = ['.55', '.68'], AFT = ['.28', '.34'];
+const RUNGS = [   // 설정 「화면 어둡기」 3단 = viewer/index.html YDIM_SET 그대로(값 SSOT는 그쪽)
+  { k:'soft', n:'밝게',   s:['.14','.17'], br:'.86' },
+  { k:'base', n:'기본',   s:['.28','.34'], br:'.72' },
+  { k:'dark', n:'어둡게', s:['.55','.68'], br:'.45' },
+];   // 전 = 260727 정본 / 후 = 그 절반(운영자 260729)
+const $ = s => document.querySelector(s);
+const dim = (a, b) => `linear-gradient(rgba(18,18,18,${a}),rgba(18,18,18,${b}))`;
+let cur = 7;
+
+function paint() {
+  const im = IMGS[cur];
+  $('#bgB').style.backgroundImage = `${dim(BEF[0], BEF[1])}, url("${im.f}")`;
+  $('#bgA').style.backgroundImage = `${dim(AFT[0], AFT[1])}, url("${im.f}")`;
+  $('#swB').style.backgroundImage = `${dim(BEF[0], BEF[1])}, url("${im.f}")`;
+  $('#swA').style.backgroundImage = `${dim(AFT[0], AFT[1])}, url("${im.f}")`;
+  ['#hAvaB','#hAvaA','#hAvaS','#bAvaB','#bAvaA','#bAvaS'].forEach(s => $(s).style.backgroundImage = `url("${im.f}")`);
+  ['#hNameB','#hNameA','#hNameS','#bNameB','#bNameA','#bNameS'].forEach(s => $(s).textContent = im.n);
+  document.querySelectorAll('#thumbs .th').forEach((b, i) => b.classList.toggle('cur', i === cur));
+  trio();
+}
+$('#thumbs').innerHTML = IMGS.map((im, i) =>
+  `<button class="th" data-i="${i}" style="background-image:${dim(AFT[0], AFT[1])}, url('${im.f}')"><em>${im.n}<br>${im.l}</em></button>`).join('');
+$('#thumbs').addEventListener('click', e => { const b = e.target.closest('.th'); if (!b) return; cur = +b.dataset.i; paint(); });
+$('#wall').innerHTML = IMGS.map(im =>
+  `<div class="wcell" style="background-image:${dim(BEF[0], BEF[1])}, url('${im.f}')">
+     <div class="half" style="background-image:${dim(AFT[0], AFT[1])}, url('${im.f}')"></div>
+     <em>${im.n} · 좌 전 / 우 후</em>
+   </div>`).join('');
+function trio() {   // 3단 프레임 = 위 프레임 마크업 계승(표면 동일 · 딤만 칸별)
+  const im = IMGS[cur];
+  $('#trio').innerHTML = RUNGS.map(r =>
+    `<div>
+       <p class="cap"><span class="bdg ${r.k === 'base' ? 'after' : 'rung'}">${r.n}</span><span class="val">${r.s[0]} / ${r.s[1]}</span></p>
+       <div class="frame">
+         <div class="ybg" style="background-image:${dim(r.s[0], r.s[1])}, url('${im.f}')"></div>
+         <div class="ysurf">
+           <div class="yeta-h"><span style="color:var(--fg-2)">‹</span><span class="yh-ava" style="background-image:url('${im.f}')"></span><b>${im.n}</b></div>
+           <div class="ylog">
+             <div class="ymsg"><span class="yava" style="background-image:url('${im.f}')"></span><div class="ycol"><span class="yname">${im.n}</span><div class="yb ai">갑자기 왜 소리질러, 놀랐잖아.</div></div></div>
+             <div class="yb me">뭘또저질렀냐느니</div>
+           </div>
+           <div class="yeta-in"><span>메시지</span><span class="snd">➤</span></div>
+         </div>
+       </div>
+     </div>`).join('');
+}
+$('#sw').addEventListener('input', e => { $('#swA').style.setProperty('--ab', e.target.value + '%'); $('#swo').textContent = e.target.value + '%'; });
+paint();
+</script>
+</body>
+</html>

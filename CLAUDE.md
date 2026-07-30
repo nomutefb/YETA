@@ -9,3 +9,29 @@
 9. 결과는 최대한 명료하게 표현한다. 초등학생도 이해할 수 있게 핵심만 3문장으로 표현해라.
 10. 작업량이 대규모라고 판단 되거나, 기존 리포지토리 기틀을 변경해야 하는 경우, opus 5.0 -effort max 8명을 소집, 각기다른 관점으로 적대적 검증을 완료해라.
 <!-- SYNC-COMMON-END -->
+
+## 🔒 절대명령 #1 — 디자인 값은 「계승」 또는 「갱신」, 둘 뿐
+
+## 🎨 디자인 값 규칙 (B1의 이 레포 구체화 · 디자인 규칙 위상 권위)
+
+값(색·크기·간격·반지름·blur·모션·눌림·그림자)은 둘 중 하나뿐이다.
+- **① 계승 = 디폴트, 안 물음** — `var(--token)`. 정확한 토큰이 없어도 **가장 가까운 걸 자동 계승**(이 판단도 안 물음).
+- **② 갱신 = 근접 토큰조차 없을 때만** — 「신설할지 / 어떤 근접 토큰을 계승할지」 두 선택지로 묻고 승인 후. 토큰 신설 = `:root` 구조 변경 = 평의회(D3).
+- 승인분은 **즉시 편입**: `:root` → `build_design_mirror.py build` → CII 행 → **`design-tokens.lock` 갱신**. 락 없이 코드에만 박으면 `check_refs.py` rc=1.
+- **raw 허용**(안 물음) = 기하 계산·키프레임 %·광학 1px·safe-area·로컬 z-index·토큰 없는 축(box-shadow). ⚠ 초록 게이트 ≠ 전면 준수.
+- 컴포넌트는 값이 아니다 → `docs/CII_컴포넌트계승인덱스.md` 셀렉터 계승(별개 축).
+
+## 【바인딩】 YETA
+
+- **서빙**(A5) = `viewer/index.html` · ⚠ 진입 시 잠금화면(unlock 경로 확인)
+- **QA**(C2) = `viewer/index.html?qa=1#char|list|map|settings` · 대표데이터 = `api/yeta`(로컬은 빈/시그니처 폴백)
+- **디자인**(B1) = `viewer/index.html` `:root`(값 SSOT) → `docs/절대명령2_정본인덱스.md`(위치 · **충돌 시 그쪽이 이김**) + `docs/CII_컴포넌트계승인덱스.md` + `docs/디자인방식론_YETA.md` · 완전판 `docs/절대명령1_포터블.md` §1 · 시각 정본 `구성도/`
+- **거울 복제 금지** = `AGENTS.md` §🎨와 `.claude/hooks/design_digest.py` 주입문은 파생 거울 — 본문을 복제·역전하지 않는다
+- **팔레트 예외** = 없음 · **계정 축**(D3-1) = 미배선
+- **플레이그라운드**(B3) = `viewer/pg/`(라이브 URL 제공)
+- **원장**(C1) = `docs/요구사항_큐.md` · 이력 `docs/작업이력.md` · 백업 `_versions/{yymmdd_HHmm}_{라벨}/`
+- **게이트**(C4) = `python3 shared/check_refs.py` + `.githooks` pre-commit · ⚠ **clone·기기마다 1회 `git config core.hooksPath .githooks`**(미설정이면 조용히 미실행)
+- **평의회 대상**(D3) = `CLAUDE.md` · `viewer/index.html` `:root` · `docs/절대명령2_정본인덱스.md` · `docs/CII_컴포넌트계승인덱스.md` · 웹앱 전반 코드
+- **손대지 마라**(D2-1) = `viewer/tokens.css` · `구성도/base.css`(빌드 거울)
+- **모델 ID** = `shared/models.json` · 승격 = `shared/apply_models.py`
+- **딥링크**(C3) = 앱 `/?yeta=1&t=<캐릭터id>`(미언락이면 언락 완료에 큐잉) · 시안·문서 `/pg/<파일>.html` · **앱 루트만 덜렁 주기 금지**
