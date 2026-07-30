@@ -178,15 +178,6 @@
       ],
       "private": true
     },
-    "home_gaeul": {
-      "name": "노을집(회장댁)",
-      "x": 37,
-      "y": 66,
-      "neighbors": [
-        "market"
-      ],
-      "private": true
-    },
     "home_von": {
       "name": "강철 위층",
       "x": 35,
@@ -270,14 +261,6 @@
       "day": "tea",
       "evening": "tea",
       "night": "tea"
-    },
-    "gaeul": {
-      "late": "home_gaeul",
-      "dawn": "market",
-      "morning": "market",
-      "day": "market",
-      "evening": "alley",
-      "night": "home_gaeul"
     },
     "von": {
       "late": "home_von",
