@@ -207,6 +207,42 @@
       ],
       "private": true
     },
+    "home_seyeun": {
+      "name": "동장댁 막내방",
+      "x": 47,
+      "y": 61,
+      "neighbors": [
+        "alley"
+      ],
+      "private": true
+    },
+    "home_aeri": {
+      "name": "애리의 방 위층 살림",
+      "x": 49,
+      "y": 47,
+      "neighbors": [
+        "alley"
+      ],
+      "private": true
+    },
+    "home_lucy": {
+      "name": "기운이 고이는 자리",
+      "x": 54,
+      "y": 52,
+      "neighbors": [
+        "alley"
+      ],
+      "private": true
+    },
+    "home_reze": {
+      "name": "펜스 안쪽 물 고인 터",
+      "x": 66,
+      "y": 36,
+      "neighbors": [
+        "alley"
+      ],
+      "private": true
+    },
     "offlimits": {
       "name": "출입금지 구역",
       "x": 66,
@@ -218,6 +254,46 @@
     }
   },
   "routine": {
+    "seyeun": {
+      "late": "store",
+      "dawn": "park",
+      "morning": "home_seyeun",
+      "day": "market",
+      "evening": "alley",
+      "night": "store"
+    },
+    "aeri": {
+      "late": "home_aeri",
+      "dawn": "home_aeri",
+      "morning": "alley",
+      "day": "alley",
+      "evening": "alley",
+      "night": "tea"
+    },
+    "lucy": {
+      "late": "alley",
+      "dawn": "home_lucy",
+      "morning": "home_lucy",
+      "day": "tea",
+      "evening": "tea",
+      "night": "alley"
+    },
+    "gojo": {
+      "late": "alley",
+      "dawn": "alley",
+      "morning": "tea",
+      "day": "tea",
+      "evening": "alley",
+      "night": "alley"
+    },
+    "reze": {
+      "late": "home_reze",
+      "dawn": "home_reze",
+      "morning": "tea",
+      "day": "tea",
+      "evening": "tea",
+      "night": "alley"
+    },
     "mudi": {
       "late": "tea",
       "dawn": "tea",
