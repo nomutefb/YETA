@@ -45,8 +45,8 @@
   @media (max-width:700px) { .pair { flex-direction:column; } }
 
   /* ── 실물 말풍선 = viewer/index.html 선언 그대로 옮겨온 것(값 재설계 0) — 시안이 아니라 **같은 CSS로 도는 실렌더**여야 전/후가 증거가 된다 ── */
-  @font-face{font-family:'MiraendaekyoVBatang';font-weight:400;src:url('../fonts/MiraendaekyoVBatang.otf') format('opentype');font-display:swap;ascent-override:116%;descent-override:29%;line-gap-override:0%}
-  @font-face{font-family:'MiraendaekyoVBatangFix';font-weight:400;src:url('../fonts/MiraendaekyoVBatang.otf') format('opentype');font-display:swap;ascent-override:116%;descent-override:29%;line-gap-override:0%;unicode-range:U+0-33FF,U+4DC0-4DFF,U+A000-F8FF,U+FB00-10FFFF}
+  @font-face{font-family:'MiraendaekyoVBatang';font-weight:400;src:url('../../_소재/폰트/MiraendaekyoVBatang.otf') format('opentype');font-display:swap;ascent-override:116%;descent-override:29%;line-gap-override:0%}   /* 종전 폰트 = 대조용으로만 로드(정본에선 퇴역 · `_소재/폰트/`로 보관) */
+  @font-face{font-family:'MiraendaekyoVBatangFix';font-weight:700;src:url('../fonts/NotoSerifKR-Bold.subset.woff2') format('woff2');font-display:swap;ascent-override:116%;descent-override:29%;line-gap-override:0%}   /* = 현 정본(본명조 Noto Serif KR 700 서브셋) */
   .demo { background:#0f100f; border-radius:var(--r-m); border:1px solid var(--glass-line); padding:14px 12px; }
   .demo .who { font-size:var(--fs-xs); color:var(--fg); font-weight:var(--fw-b); margin:0 0 4px 3px; }
   .yb { padding:10px 13px; border-radius:var(--r-l); font-size:var(--fs-body); line-height:var(--lh-base); white-space:pre-wrap; word-break:break-word; margin-bottom:14px; }
@@ -73,6 +73,10 @@
   .af .yb.ai.barge:has(.yq) i.yn, .af .yb.ai.barge:has(.yq) i.yjr { font-family:Pretendard, sans-serif; font-weight:400; letter-spacing:normal; }
   .af .yb.ai.barge:has(.yq) { background:color-mix(in srgb, color-mix(in srgb, var(--season) 16%, var(--danger)) 26%, transparent); border-color:rgba(var(--danger-rgb),.4); }
 
+  .strip { display:flex; gap:var(--sp-2); flex-wrap:wrap; }
+  figure { margin:0; width:100%; }
+  figure img { display:block; width:100%; border-radius:var(--r-m); border:1px solid var(--glass-line); }
+  figcaption { font-size:var(--fs-xs); color:var(--mut); margin-top:6px; }
   .bad { color:var(--danger); font-weight:var(--fw-b); }
   .good { color:var(--accent); font-weight:var(--fw-b); }
 </style>
@@ -174,13 +178,45 @@
     </table></div>
   </div>
 
+
+  <div class="sect">
+    <h2>⑦ 260730 후속 — 명조 교체(본명조) · 난입 퇴장 까마귀</h2>
+    <div class="pair">
+      <div class="col now"><h3>전 — 미래엔대교 V바탕(빈 껍데기 글리프)</h3>
+        <div class="demo">
+          <p class="who">프리실라</p>
+          <div class="yb ai" style="font-family:'MiraendaekyoVBatang',Pretendard,sans-serif;font-weight:700;letter-spacing:-.025em;background:color-mix(in srgb, color-mix(in srgb, var(--season) 16%, var(--danger)) 26%, transparent);border-color:rgba(var(--danger-rgb),.4)">거기까지. 오늘 한 말 중에 제일 큰 거짓말 하나만. 지금.
+
+똠 뷁 샾 웤 햬 꺡 · 갂갃갅갆갋</div>
+        </div>
+        <p class="cap"><span class="bad">실측</span> 이 폰트는 <b>CJK 한자 4620 + 호환한자 268 + 한글 음절 8822자</b>를 cmap엔 올려두고 외곽선을 비워놨다(<code>bounds=None</code>·advance 1000). 실제로 그려지는 한글은 <b>완성형 2350자</b>뿐이라, 위 둘째 줄이 통째로 사라진다. 한자 증발(운영자 스샷)과 같은 원인.</p>
+      </div>
+      <div class="col next"><h3>후 — 본명조 Noto Serif KR 700(SIL OFL)</h3>
+        <div class="demo">
+          <p class="who">프리실라</p>
+          <div class="yb ai" style="font-family:'MiraendaekyoVBatangFix',Pretendard,sans-serif;font-weight:700;letter-spacing:-.025em;background:color-mix(in srgb, color-mix(in srgb, var(--season) 16%, var(--danger)) 26%, transparent);border-color:rgba(var(--danger-rgb),.4)">거기까지. 오늘 한 말 중에 제일 큰 거짓말 하나만. 지금.
+
+똠 뷁 샾 웤 햬 꺡 · 갂갃갅갆갋</div>
+        </div>
+        <p class="cap"><span class="good">교체</span> <code>google/fonts</code> 가변 원본(23.8MB) → <b>wght 700 인스턴스</b> → 한글 전량 + 자모 + 라틴 + 문장부호 서브셋 → woff2 <b>1.27MB</b>(종전 otf 1.23MB와 동급). 실측 <b>한글 11172/11172</b> 실외곽선 · 빈 글리프 = 정의상 비어 있는 채움문자 3개뿐. 종전의 faux 볼드가 <b>진짜 볼드</b>로 바뀐다.</p>
+      </div>
+    </div>
+    <div class="sect" style="margin-top:var(--sp-2)">
+      <h2>난입 퇴장 = 까마귀가 한 박자 늦게 따라 나간다</h2>
+      <p class="cap" style="margin:0 0 8px">카드 §겉모습 「까마귀는 프리실라보다 먼저 자리에 앉고, 나갈 땐 늘 한 박자 늦게 따라 나간다」의 화면 대응. 발동 = <b><code>&lt;&lt;LEAVE&gt;&gt;</code>가 달린 턴 전부</b> — 카드상 두 결말(합격 퇴장 / 불합격 = 사망)이 <b>모두</b> LEAVE로 나가므로 「사망일 때만」이 아니다. 사망 결말에선 이 연출이 먼저 끝나고 그 뒤에 암전(<code>.ydlg-dead</code>)이 온다.</p>
+      <div class="strip">
+        <figure><img src="20260730_까마귀퇴장_시퀀스.png" alt="난입 퇴장 까마귀 시퀀스 — +620ms부터 +1480ms까지 5프레임"><figcaption>실렌더 시퀀스(음수 delay로 시각 탐색) — 지연 <code>.62s</code>(= <code>.ydlg-yank</code> 계승 = 「한 박자」) 뒤 퇴장 지문 위에서 떠올라 오른쪽 위로 빠진다. 지속 <code>.9s</code>(= <code>.ydlg-dead</code> 계승) · 커브 <code>--ease</code> · 색 <code>--fg-2</code> · z <code>--z-float</code> = <b>신규 시간·색 0</b>.</figcaption></figure>
+      </div>
+      <p class="cap">까마귀 실루엣 = <code>YCROW_SVG</code> 인라인 상수(<code>YSKULL_SVG</code> 선례 계승 = nm-svg.js 공유 아이콘 아님 → 아이콘 SSOT 게이트 무저촉). 크기 40×27px = 헤드리스 6단(28/34/40/48/72/140) 대조로 고른 하한 — 34px에선 실루엣이 뭉개진다. <code>prefers-reduced-motion</code> = 연출 생략.</p>
+    </div>
+  </div>
   <div class="sect">
     <h2>⑥ 손댄 곳 · 안 댄 곳</h2>
     <ul>
-      <li><b>손댐</b> — <code>viewer/index.html</code>(CSS 선택자 4줄 + <code>@font-face</code> unicode-range 1속성) · <code>.github/scripts/yeta_chat.sh</code>(난입 축 3필드 신설·CO 게이트·결말 계약 블록) · <code>apps/yeta/characters/drusilla.md</code>.</li>
+      <li><b>손댐</b> — <code>viewer/index.html</code>(CSS 선택자 4줄 + <code>@font-face</code> 교체 + 까마귀 규칙 4줄 + <code>YCROW_SVG</code>·<code>yCrowFly</code>) · <code>.github/scripts/yeta_chat.sh</code>(난입 축 3필드 신설·CO 게이트·결말 계약 블록·퇴장 sys에 <code>kind/who</code>) · <code>apps/yeta/characters/drusilla.md</code> · <code>viewer/fonts/NotoSerifKR-Bold.subset.woff2</code>+<code>NotoSerifKR-OFL.txt</code>(신규) · 종전 폰트 <code>_소재/폰트/</code>로 퇴역.</li>
       <li><b>신규 <code>:root</code> 토큰 0 · 신규 색 0 · 신규 컴포넌트 0</b> — CSS 변경은 전부 <b>선택자 좁히기</b>와 <b>기존 값 재배치</b>다. <code>unicode-range</code>는 값이 아니라 글리프 커버리지 선언(디자인 축 무저촉).</li>
       <li><b>안 댐</b> — <code>viewer/tokens.css</code> · <code>구성도/base.css</code>(빌드 거울) · 폰트 바이너리 · <code>roster.json</code>의 <code>barge.boost:["gojo"]</code>(= 프리실라가 고죠 방을 노리는 설계는 그대로 둔다 — 충돌의 계기지 원인이 아니다).</li>
-      <li><b>남은 문제 1</b> — 같은 명조가 <b>한글 음절 11172자 중 8822자도 외곽선이 비어 있다</b>(KS X 1001 완성형 2350자만 실제로 그려진다). 전 캐릭터 카드 전문을 훑어 실사용 음절 중 빈 글자는 <b>0건</b>이라 지금은 안 터지지만, 희귀 음절이 한 번 나오면 같은 방식으로 증발한다. 근본 처방 = 폰트 재추출(또는 서브셋 빌드 단계 신설) = 기틀 축이라 별건.</li>
+      <li><b>남은 문제 1 → 260730 후속에서 해소</b> — 종전 명조의 한글 8822자 빈 껍데기 문제는 위 ⑦ 본명조 교체로 없어졌다(11172/11172 실외곽선).</li>
     </ul>
   </div>
 </div>
