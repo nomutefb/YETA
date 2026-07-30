@@ -803,7 +803,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ymp-walker { cursor:pointer; }   /* 페이드는 점프 순간에만 인라인 transition(평의회3·9 — base 상시 transition은 첫 오픈 전원 동시 페이드 = "다같이 등장" 재유발 + 점프 페이드가 얕은 펄스로 씹힘) */
   .ymp-walker .wimg { animation:ymbob 1.05s ease-in-out infinite; }
   .ymp-walker.unmet { cursor:default; }
-  .ymp-walker.unmet .wimg, .ymp-walker.unmet circle.fb { filter:grayscale(1) brightness(.5); opacity:.92; }   /* 미대면 = 실루엣 완화 .25→.5(운영자 260709 "다 그림자로만" — ??? 은폐는 유지·형체 판독) */
+  /* 미대면 은폐 = **이름만**(운영자 260730 "캐릭터도 다 밝아야되는데 원본 파일처럼 막 어둑어둑해 · 안만난사람 이름만 안보이면됨") — 종전 `filter:grayscale(1) brightness(.5)`는 스프라이트를 통째로 어둡게 눌러 "다 활동 중인 마을"이 그림자 밭으로 보였다. 은폐 축은 아래 `.ymp-tag.unmet`(??? 이름표) 하나로 충분하다. */
   /* 확인 팝업 골격(.yexit* — 원래 종료 확인용으로 세운 정본 · 종료 팝업 자체는 260726 폐지) — #yconfirm·#ymedead·#ymdquiz가 이 골격을 계승 · 글래스 카드·토큰 전면 계승 */
   .yexit { position:fixed; inset:0; z-index:var(--z-float); display:grid; place-items:center; background:rgba(18,18,18,.55); }   /* 스크림 = 스포티파이 블랙 계보(lk-pad) */
   .yexit[hidden] { display:none; }
@@ -2300,6 +2300,8 @@ async function ymPlaceAll() {   // 현재 시각 실위치 재판정 → 워커 
   _ymapAt = byPlace;   // 실내 뷰(260725 찻집 시범) — 장소별 재실자 캐시 공유(재계산 0 · 1분 갱신 주기 그대로 계승)
   if (_yinOpen) yInRender(_yinOpen);   // 실내 뷰 열려 있으면 같은 틱에 갱신(주민이 나가고 들어오는 게 그대로 보임)
   for (const w of _ymapWalkers) {
+    const um = yUnmet(yPersona(w.id) || { id: w.id });   // 미대면 재판정(운영자 260730 "다 어둑어둑해") — 종전엔 ymBuild 1회 스냅샷뿐이라, 세션이 늦게 도착하는 경로(지도 직행·qa·느린 망)에서 "전원 ??? 안전측"이 **영영 굳었다**. 1분 재판정에 같이 얹으면 세션 도착 즉시 자연 해소.
+    if (um !== w.um) { w.um = um; if (w.el) w.el.classList.toggle('unmet', um); if (w.tagEl) { w.tagEl.classList.toggle('unmet', um); const c0 = yPersona(w.id) || {}, nm0 = c0.name || '?'; w.short = um ? YUNMET_NM : (c0.short || (nm0.length >= 3 ? nm0.slice(0, 2) : nm0)); const tx = w.tagEl.querySelector('text'); if (tx) tx.textContent = w.short; } }
     const pl = at[w.id], grp = byPlace[pl] || [w.id], i = grp.indexOf(w.id), zn = YMAP_ZONE[pl];
     if (yDead({ id: w.id })) { w.mode = 'hide'; w.zone = ''; }   // 사망 = 지도 은신(운영자 260714 "자리에서 안보이고") — 집(hide) 모드 계승 · 만료 = 다음 1분 재판정에 자연 복귀
     else if (zn && !YMAP_INDOOR.has(pl)) {   // 야외 = 구획 안 자연 배회(운영자 260709 "건물 안 타고 그 구역 안에서") — 목표 = 존 내 랜덤 · 태그 = 구역 원 위 고정

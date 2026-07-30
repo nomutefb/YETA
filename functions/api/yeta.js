@@ -598,6 +598,8 @@ export async function onRequestPost({ request, env }) {
       nm = String(v.nm || pid).slice(0, 40);
       const by = String((s.me || {}).call || '').trim().slice(0, 24) || '너를 아는 사람';   // 빌어준 사람 = 유저 호칭(op me) — 러너 [부활] 블록 `by`(≤40) · 뷰어 yPrayBy 표기 공용
       delete v.pray; v.t = Date.now(); v.by = by;   // 즉시 만료 = 부활 대기(뷰어 yRevPend = 성당 앞뜰 · 그 방의 다음 답이 엔트리를 소비하며 첫 마디)
+      const bd = (s.pray_bond = s.pray_bond || {});   // 기도 인연(운영자 260730 "내가 빌었던 사람이 나를 위해 부활 빌어줄 확률이 높아지게 · 디비에 남아야 · 페르소나랑 섞여야 · 확률지표로") — 유저→주민 방향의 은혜 누적. 소비처 = yeta_nudge.sh pray 모드 화자 추첨 가중치.
+      bd[pid] = { n: Math.min(9, ((bd[pid] || {}).n || 0) + 1), at: Date.now() };   // n 캡 9 = 한 사람만 반복해 살려서 추첨을 독점하는 것 차단(가중은 로그 결로 소비처가 눌러 쓴다)
       const ev = `[사건] 신당 — ${by}의 간절한 기도로 ${nm} 돌아옴(죽음을 겪고 이어 붙은 사람)`;   // 마을 공용 기억 = 러너 문안·캡 600 동일(부활 후 재회에서 '아무 일 없던 척' 차단)
       const np = String(s.note_pub || s.note || '').replace(/\s+$/, '');
       if (!np.includes(ev)) s.note_pub = ((np ? np + '\n' : '') + ev).slice(-600);

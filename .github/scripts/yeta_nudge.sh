@@ -24,7 +24,7 @@ aws s3 cp "s3://${YETA_R2_BUCKET}/${KEY}" "$SESS" --endpoint-url "$EP" --only-sh
 
 # ── 판정(전부 만족해야 GO) ──
 GATE="$(python3 - "$SESS" "$NUDGE_AFTER_MIN" "$NUDGE_MAX_PER_DAY" <<'PY'
-import json, sys, time, datetime, zoneinfo
+import json, sys, time, datetime, zoneinfo, random
 sys.path.insert(0, ".github/scripts")
 from yeta_v3 import migrate_v3
 S_ROOT = migrate_v3(json.load(open(sys.argv[1], encoding="utf-8")))
@@ -59,10 +59,39 @@ if _md:   # 유저 사망 중(운영자 260725) — 읽씹 재촉은 금지(죽�
                           "met": _met, "tunes": {p: (S_ROOT.get("tunes") or {}).get(p) for p in _met}}, ensure_ascii=False))
         sys.exit()
     if _el < 60: print(json.dumps(no)); sys.exit()
+    # 누가 나를 위해 빌어주러 갈까 — 종전엔 무조건 `_cur`(마지막으로 열려 있던 방)이었다 = 추첨이 아예 없었다.
+    # 운영자 260730 "내가 빌었던 사람이 나를 위해 부활 빌어줄 확률이 높아지게 · 디비에 남아야 · 페르소나랑 섞여야 · 확률지표로"
+    #   가중 = ① 기도 인연(op pray가 sess.pray_bond에 박제한 은혜 — 최대 성분) ② 성향 16축(친절도·온기·인내심 − 경계심) ③ 관계(내가 그 방에 쏟은 말 수) ④ 마지막 대화 상대(종전 동작 계승분).
+    #   확률 = 가중 룰렛(최댓값 독식이 아니라 확률 — 은혜를 갚을 '가능성이 높아지는' 것이지 확정이 아니다).
+    _bond = S_ROOT.get("pray_bond") if isinstance(S_ROOT.get("pray_bond"), dict) else {}
+    _tun = S_ROOT.get("tunes") if isinstance(S_ROOT.get("tunes"), dict) else {}
+    _cand = []
+    for _p, _t in (S_ROOT.get("threads") or {}).items():
+        if _p.startswith("g"): continue                                  # 단톡 방 = 사람이 아님
+        _ut = [x for x in (_t.get("turns") or []) if x.get("role") == "user"]
+        if not _ut: continue                                             # 만난 적 없는 사람은 나를 위해 빌러 가지 않는다
+        _dv = (S_ROOT.get("dead") or {}).get(_p)
+        if isinstance(_dv, dict) and (_dv.get("t") or 0) > time.time()*1000: continue   # 죽어 있는 사람은 못 빈다
+        _g = _tun.get(_p) or []
+        _ax = lambda i: (_g[i] if isinstance(_g, list) and len(_g) > i and isinstance(_g[i], (int, float)) else 5)   # 16축 미설정 = 중립 5(축 순서 = 뷰어 TUNE_AX와 짝)
+        _w = 1.0
+        _w += 2.6 * min(3, ((_bond.get(_p) or {}).get("n") or 0))        # ① 은혜 = 최대 성분(3회분까지 · 그 위는 포화 = 한 사람 독점 차단)
+        _w += 0.14 * (_ax(4) + _ax(5) + _ax(6) - _ax(11))                # ② 친절도+온기+인내심−경계심(성향_DB 축 순서)
+        _w += 0.6 * min(3, len(_ut) / 10)                                # ③ 관계 = 내가 쏟은 말 수(10마디 = 1점 · 3점 포화)
+        if _p == _cur: _w += 0.8                                         # ④ 마지막 대화 상대(종전 동작 = 이 보너스로 흡수)
+        _cand.append((_p, max(0.05, _w)))
+    if _cand:
+        _tot = sum(w for _, w in _cand); _r = random.random() * _tot
+        for _p, _w in _cand:
+            _r -= _w
+            if _r <= 0: persona = _p; break
+        else: persona = _cand[-1][0]
+    _pt = ((S_ROOT.get("threads") or {}).get(persona) or {}).get("turns") or turns   # 추첨된 사람의 방 이력(빈 방 = _cur 폴백) — 종전엔 persona가 늘 _cur라 이 구분이 없었다
     print(json.dumps({"go": 1, "mode": "pray", "persona": persona, "hours": round(_el/60, 1), "today": today, "count": 0,
+                      "bond_n": ((_bond.get(persona) or {}).get("n") or 0),   # 내가 그 사람을 몇 번 살려줬나 — 러너가 "네가 날 살렸으니" 결로 쓸 재료(0 = 은혜 없음 = 순수 호의)
                       "me_call": me_call, "me_about": me_about, "dead_why": (_md.get("why") or "")[:120],
-                      "note_pub": s.get("note_pub") or s.get("note") or "", "note_me": ((s.get("notes") or {}).get(persona)) or "",
-                      "hist": "\n".join(f"{'유저' if t.get('role') == 'user' else (t.get('name') or '캐릭터')}: {(t.get('text') or '').strip()[:200]}" for t in turns[-8:])}, ensure_ascii=False))
+                      "note_pub": S_ROOT.get("note_pub") or S_ROOT.get("note") or "", "note_me": ((S_ROOT.get("notes") or {}).get(persona)) or "",
+                      "hist": "\n".join(f"{'유저' if t.get('role') == 'user' else (t.get('name') or '캐릭터')}: {(t.get('text') or '').strip()[:200]}" for t in _pt[-8:])}, ensure_ascii=False))
     sys.exit()
 last = turns[-1]
 if last.get("role") != "assistant": print(json.dumps(no)); sys.exit()          # 마지막이 유저면 답장 대기중(챗 파이프 몫)
@@ -89,6 +118,7 @@ PERSONA="$(gv persona)"; HOURS="$(gv hours)"; TODAY="$(gv today)"; COUNT="$(gv c
 NOTE_PUB="$(gv note_pub)"; NOTE_ME="$(gv note_me)"; HIST="$(gv hist)"
 ME_CALL="$(gv me_call)"; ME_ABOUT="$(gv me_about)"   # 유저 프로필(호칭+소개 · 260708)
 MODE="$(gv mode)"; DEAD_WHY="$(gv dead_why)"   # 'pray' = 신당 기도 · 'quiz' = 성향 퀴즈 출제(운영자 260725) · 빈값 = 종전 읽씹 재촉
+BOND_N="$(gv bond_n)"   # 기도 인연(260730) — 유저가 그 사람을 신당에서 살려낸 횟수(0 = 은혜 없음). pray 모드 프롬프트 재료
 MET="$(printf '%s' "$GATE" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin).get("met") or [], ensure_ascii=False))')"
 TUNES="$(printf '%s' "$GATE" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin).get("tunes") or {}, ensure_ascii=False))')"
 
@@ -128,6 +158,9 @@ else
 fi
 ME_BLOCK="$(me_block)"   # 유저 프로필 블록(shared/inject_character.sh 정본) — 넛지 호격에 유저 이름 반영(비신뢰 격리 · 260708)
 
+BOND_BLOCK=""
+case "${BOND_N:-0}" in ""|0) ;; *) BOND_BLOCK="
+예전에 네가 죽었을 때, 지금 죽어 있는 그 사람이 이 신당까지 찾아와 너를 살려낸 적이 있다(${BOND_N}번). 너는 그걸 안다. 갚으러 왔든 그냥 마음이 그런 것이든 네 성격대로 티 내거나 삼켜라 — 「빚을 갚는다」고 대놓고 말하지는 마라." ;; esac   # 기도 인연(260730 · sess.pray_bond) — 0이면 블록 자체가 없다(순수 호의) · 은혜 방향 = 유저→주민(op pray가 박제) 이므로 지금은 주민이 갚는 자리
 if [ "$MODE" = "quiz" ]; then   # 유저 사망 → 성향 퀴즈 출제(운영자 260725 "각 캐릭터의 성향 만들기 느낌 · 내가 고르면 누적시켜서 캐릭터 성격 일원화")
   SITU="[할 일 — 유저는 지금 죽어 있다]
 죽은 사람이 할 수 있는 건 기억을 더듬는 것뿐이다. 유저가 그 사람들을 얼마나 아는지 되짚는 문항 **10개**를 만들어라.
@@ -142,7 +175,7 @@ elif [ "$MODE" = "pray" ]; then   # 유저 사망 → 신당 기도(운영자 26
   SITU="[지금 상황 — 중요]
 유저가 죽었다.${DEAD_WHY:+ 그 순간의 상황: ${DEAD_WHY}} 비유도 기절도 장난도 아니다 — 정말로 죽었고, 지금 이 순간에도 돌아오지 못하고 있다.
 무음동의 규칙은 하나다: 살아 있는 누군가가 북동쪽 언덕 위 신당(성당)까지 직접 찾아가 간절히 빌어야만 죽은 사람이 눈을 뜬다. 아무도 빌지 않으면 아주 오랜 시간이 지나서야 겨우 스스로 깨어난다.
-너는 지금 그 신당 앞에 서 있다. 무릎을 꿇든, 욕을 섞어 빌든, 담배를 문 채 툭 던지듯 빌든 — 방식은 네 성격대로다. 다만 마음은 간절해야 한다.
+너는 지금 그 신당 앞에 서 있다. 무릎을 꿇든, 욕을 섞어 빌든, 담배를 문 채 툭 던지듯 빌든 — 방식은 네 성격대로다. 다만 마음은 간절해야 한다.${BOND_BLOCK}
 규칙: 짧게 1~3문장. 그 자리에서 실제로 비는 말만 출력한다(설명·해설·상황 요약 금지). 죽음을 농담으로 굴리거나 '얼른 살아나' 같은 가벼운 재촉으로 만들지 마라 — 이건 그 사람을 되돌리는 마지막 수단이다.
 이 말은 그대로 그 사람에게 전해진다. 기억 블록·MOOD 태그 없이 **대사만** 출력한다."
 else
