@@ -35,10 +35,8 @@
   @font-face{font-family:'Paperlogy';font-weight:900;src:url('fonts/Paperlogy-9Black.ttf') format('truetype');font-display:swap;ascent-override:116%;descent-override:29%;line-gap-override:0%}
   /* ── 미래엔대교 V바탕(운영자 260728 업로드 2종 중 채택) — 프리실라 전용 명조. 난입은 "다른 결이 들어온 것"이라 본문 고딕(Paperlogy)과 서체 자체가 갈려야 티가 난다.
      채택 근거 = 헤드리스 실렌더 대조: 같은 문장이 Batang은 2줄로 넘치고(자간 과대) VBatang은 한 줄에 들어간다 = 말풍선·토스트처럼 폭이 갇힌 자리에 맞는 쪽. 미채택 Batang은 `_소재/폰트/`로 보관.
-     단일 웨이트라 400으로 등재하고 볼드는 브라우저 합성(faux) — 실렌더에서 확실히 두꺼워지는 것 확인. override 3종 = 위 Paperlogy 선언 100% 계승(행간 기준선 통일 = 다른 서체와 섞여도 줄이 안 튄다).
-     ⚠ 260730 unicode-range 추가 — 이 폰트는 CJK 한자(U+4E00-9FFF 4620자·U+F900-FAFF 268자)를 **cmap엔 올려두고 외곽선은 비워놨다**(실측: 追·出·僕·方 전부 bounds=None, advance만 1000).
-     cmap에 있으니 브라우저가 폴백을 안 하고 그 폰트로 그리려다 **글자가 통째로 사라지고 전각 공백만 남는다**(운영자 260730 "이렇게 무너지는거" = 고죠 일본어에서 재현). 범위에서 빼면 글리프 없는 폰트 취급 → 본문 고딕으로 자동 폴백. */
-  @font-face{font-family:'MiraendaekyoVBatang';font-weight:400;src:url('fonts/MiraendaekyoVBatang.otf') format('opentype');font-display:swap;ascent-override:116%;descent-override:29%;line-gap-override:0%;unicode-range:U+0-33FF,U+4DC0-4DFF,U+A000-F8FF,U+FB00-10FFFF}
+     단일 웨이트라 400으로 등재하고 볼드는 브라우저 합성(faux) — 실렌더에서 확실히 두꺼워지는 것 확인. override 3종 = 위 Paperlogy 선언 100% 계승(행간 기준선 통일 = 다른 서체와 섞여도 줄이 안 튄다). */
+  @font-face{font-family:'MiraendaekyoVBatang';font-weight:400;src:url('fonts/MiraendaekyoVBatang.otf') format('opentype');font-display:swap;ascent-override:116%;descent-override:29%;line-gap-override:0%}
 /* ── :root 토큰(색+구조) — 원본 viewer :root 계승(L19-80) ── */
   :root {
     /* 중립 표면·텍스트 — 흰색 + 스포티파이 블랙(운영자 260704 브랜드 통일) */
@@ -289,20 +287,12 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yb i.yjp { font-style:normal; color:var(--accent); opacity:.5; }   /* 일본어 원문 줄(운영자 260726 "일본어는 50% 불투명한 레몬강조색") — 바로 위 .yn 톤다운 패턴 계승(색만 강조색 · 원문은 강조가 아니라 병기라 이탤릭 해제) · 판정 = 가나 포함 줄(yFmt) */
   /* 핵심 질문(운영자 260728) = 로더 shimmer 글자 스타일 투영 — 위 .nm-shim 선언 100% 계승(그라데이션 정지점·220% 배경·background-clip:text·nmshim 1.9s linear infinite 전부 동값 · 신규 값 0).
      빼는 건 로더 전용 기하 3개뿐(font-size 13.5px·line-height 1·inline-flex = 로더 알약 정렬용 → 버블 본문 흐름에선 크기·행간을 본문에서 상속해야 줄이 안 튄다). 굵기는 로더와 같은 --fw-b. */
-     ⚠ 260730 난입 전용화(운영자 "이 특수말투 프리실라만 써야되는데 고죠가씀") — 종전 선택자는 `.yb .yq` / `.yb.ai:has(.yq)`로 **화자를 안 봤다.**
-     《》는 프리실라 카드에만 있는 마커지만, 단톡 대본에서 다른 인물 대사에 한 번만 새어도 그 사람 버블이 통째로 프리실라 결(빛 스윕 + 명조 + 붉은 채색)로 갈아탄다 = 실렌더에서 고죠 버블이 프리실라가 됐다.
-     이제 세 줄 모두 `.barge` 게이트 안으로 넣는다(값 무변경 · 선택자만 좁힘 = 신규 값 0). 난입자 아닌 사람의 《》는 아래 베이스 굵기만 먹고 평문으로 착지 = fail-soft. */
-  .yb .yq { font-weight:var(--fw-b); }   /* 마커 누수 착지점 — 난입자가 아니면 강조 굵기까지만(빛 스윕·명조·채색 = 전부 .barge 전용) */
-  .yb.ai.barge .yq { background:linear-gradient(100deg,var(--mut) 0%,var(--mut) 38%,var(--fg) 50%,var(--mut) 62%,var(--mut) 100%); background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:nmshim 1.9s linear infinite; }
-  @media (prefers-reduced-motion:reduce) { .yb.ai.barge .yq { animation:none; color:var(--fg); -webkit-text-fill-color:var(--fg); } }   /* 모션 줄이기 = 위 .nm-shim 가드 계승(정지 시 베이스색으로 착지 · 버블 본문은 --fg가 기본이라 그쪽으로) */
-  /* ⚠ 260730 감정 스태거 충돌 봉합(운영자 "이렇게 무너지는거까지 해결해야함") — <<MOOD>>가 실린 신규 버블은 yEmoWrap이 **글자마다** .ye 스팬을 깐다(display:inline-block + transform/filter 애니).
-     inline-block·transform·filter는 전부 새 페인트 컨텍스트라, 조상 .yq의 background-clip:text 배경이 그 안까지 안 칠해진다 → color:transparent만 남아 **질문 글자가 통째로 증발**하고 앞뒤 평문만 띄엄띄엄 떠 있다(헤드리스 실렌더로 운영자 스샷 그대로 재현).
-     질문 안에서만 스태거를 해제한다 — 《핵심 질문》은 원래 한 박자로 떨어져야 하는 한 덩어리고(빛 스윕이 이미 자기 모션을 갖는다), 버블의 나머지 글자는 종전대로 촤르륵 = 연출 손실 0. */
-  .yb.ai.yemo .yq .ye { display:inline; animation:none; }
-  .yb.ai.barge:has(.yq) { font-family:'MiraendaekyoVBatang', var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); font-weight:var(--fw-b); letter-spacing:-.025em; }   /* 핵심 질문이 든 말풍선 = 명조 볼드(운영자 260728 "해당 말풍선에도 이 폰트") — 버블 **전체**에 걸어 질문 앞뒤 대사까지 한 덩어리로 결이 갈린다(질문만 갈면 한 버블 안에서 서체가 두 번 바뀌어 지저분) · 폴백 = 상속(로드 실패해도 레이아웃 불변 · font-display:swap과 짝) */
+  .yb .yq { font-weight:var(--fw-b); background:linear-gradient(100deg,var(--mut) 0%,var(--mut) 38%,var(--fg) 50%,var(--mut) 62%,var(--mut) 100%); background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:nmshim 1.9s linear infinite; }
+  @media (prefers-reduced-motion:reduce) { .yb .yq { animation:none; color:var(--fg); -webkit-text-fill-color:var(--fg); } }   /* 모션 줄이기 = 위 .nm-shim 가드 계승(정지 시 베이스색으로 착지 · 버블 본문은 --fg가 기본이라 그쪽으로) */
+  .yb.ai:has(.yq) { font-family:'MiraendaekyoVBatang', var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); font-weight:var(--fw-b); letter-spacing:-.025em; }   /* 핵심 질문이 든 말풍선 = 명조 볼드(운영자 260728 "해당 말풍선에도 이 폰트") — 버블 **전체**에 걸어 질문 앞뒤 대사까지 한 덩어리로 결이 갈린다(질문만 갈면 한 버블 안에서 서체가 두 번 바뀌어 지저분) · 폴백 = 상속(로드 실패해도 레이아웃 불변 · font-display:swap과 짝) */
   /* 지문·발음줄만 예외 = 본문 고딕 복귀(운영자 260728 "그 대화에서 상황 설명하는 부분은 원래 글자체 사용해야") — 명조는 **그 사람이 하는 말**의 결이지 장면 설명의 결이 아니다.
      지문은 화자가 누구든 같은 목소리(서술)라 난입 버블 안에서도 다른 버블의 지문과 서체가 같아야 한다(위 .yn 톤다운 축과 같은 위계). 값 = body 전역 스택 100% 계승(신규 0) · 자간도 명조 상속(-.025em)을 normal로 원복. */
-  .yb.ai.barge:has(.yq) i.yn, .yb.ai.barge:has(.yq) i.yjr { font-family:var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); font-weight:400; letter-spacing:normal; }
+  .yb.ai:has(.yq) i.yn, .yb.ai:has(.yq) i.yjr { font-family:var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); font-weight:400; letter-spacing:normal; }
   @supports not selector(:has(*)) { .yb.ai.barge { font-family:'MiraendaekyoVBatang', var(--app-font, Pretendard, -apple-system, system-ui, sans-serif); letter-spacing:-.025em; } }   /* :has 미지원(구 사파리) = 난입 버블 전체로 폴백 — 질문 버블을 못 집느니 난입 전체가 명조인 게 의도에 가깝다 */
   .yb i.yjr { font-style:italic; font-size:.5em; color:var(--fg-2); opacity:.5; }   /* 일본어 읽는 발음 줄(운영자 260726 "아주 작게 거의 안보일듯한 컬러로 · 상황설명컬러 · 글자는 50% 작은 · 기울기 포함") — 색·이탤릭 = 바로 위 지문(.yn) 100% 계승(운영자가 지목한 "상황설명컬러" = .yn의 --fg-2) · 투명도는 .yn(.75)보다 낮은 .5 = 바로 위 .yjp 사다리 재사용("거의 안 보일") · 크기 .5em = 지시값(상대 기하라 토큰축 없음) · 판정 = 가나 줄 바로 다음 [대괄호] 줄(yFmt) */
   .yeta-noruby .yb i.yjr { display:none; }   /* 발음 끄기(설정 · 운영자 260726 "설정에 스위치를 달자 · 몰입도때문이니까 친밀도에 관계없이") — html 클래스 = 위 .yeta-reduce/.yeta-ptt 패턴 100% 계승 · 원문·번역은 그대로 남고 발음 줄만 사라진다(친밀도·해금과 무관 = 사람은 앱 밖에 있다) */
@@ -1403,10 +1393,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
 <div class="yboot" id="yboot" aria-hidden="true"><span class="yscramble yboot-w" id="ybootW">YETABUS</span></div>   <!-- 첫 열기 부팅 스플래시(운영자 260708) — YETABUS 스크램블 resolve 후 페이드(앱은 뒤에서 준비) · CSS 애니가 페이드 보장(JS 실패해도 걷힘) -->
 <!-- ═══ YETA 메인 화면 (라이트·PIN 게이트 · 260704 재디자인 V1) ═══ -->
 <div class="ymain video-lock" id="ymain">
-  <div class="ym-stage" aria-hidden="true"><video class="ym-video" id="ymVideo" loop muted playsinline preload="auto" poster="assets/brand/lock-hero-poster.jpg"><source src="assets/brand/lock-hero.mp4" type="video/mp4"><source src="assets/brand/lock-hero.webm" type="video/webm"></video><div class="ywm ym-wm" id="ywmLock"></div><div class="ym-flash"></div></div>   <!-- 잠금 스테이지 = 영상 히어로 베이스(운영자 260706) + 대형 로고 글래스모피즘 + 번개 플래시 (소년 원/보이/라벨 폐지)
-       ⚠ 소스 2벌 = 아래 언락 배경(#ybgvidEl)의 이중 소스 관용 계승. mp4 단벌이던 시절 H.264 못 쓰는 브라우저에서 이 화면만 포스터로 얼어붙었다(운영자 260730 제보 · 재현 확인).
-       ⚠ 순서가 mp4→webm인 건 의도(언락 배경과 반대) — 브라우저는 **첫 지원 소스**만 받는다. 두 벌 용량은 사실상 같고(2.58 / 2.57MB), H.264 쪽이 하드웨어 디코딩이 훨씬 넓어 60fps 클립에서 배터리·발열이 유리하다 → 다수는 mp4, webm은 H.264 못 쓰는 소수만.
-       ⚠ autoplay 속성 없음 = 의도. 재생은 yVidPlay 단일 관문이 판정한다(reduce·배경영상 OFF 계약이 여기서만 새던 구멍을 막는 짝) -->
+  <div class="ym-stage" aria-hidden="true"><video class="ym-video" id="ymVideo" autoplay loop muted playsinline preload="auto" poster="assets/brand/lock-hero-poster.jpg"><source src="assets/brand/lock-hero.mp4" type="video/mp4"></video><div class="ywm ym-wm" id="ywmLock"></div><div class="ym-flash"></div></div>   <!-- 잠금 스테이지 = 영상 히어로 베이스(운영자 260706) + 대형 로고 글래스모피즘 + 번개 플래시 (소년 원/보이/라벨 폐지) -->
   <canvas class="ym-matrix" id="ymMatrix" aria-hidden="true"></canvas>   <!-- 승인 다이브 = 캐릭터 실루엣에 초록 매트릭스 코드 레인(운영자 260706) -->
   <div class="ym-ovl" aria-hidden="true"></div>   <!-- 잠금 스포티파이 블랙 67% 오버레이 -->
   <div class="ym-zap" aria-hidden="true"><i></i><i></i></div>   <!-- PIN 승인 = 전뇌 글리치 1회 -->
@@ -1632,56 +1619,12 @@ function yVidApply() {   // 배경 영상 on/off(운영자 260728 "설정에서 
   const hold = (document.getElementById('ybgvid') || {}).classList;   // 챗 열림 중(ys-hold) = yStair가 이미 정지시킨 상태 — 여기서 되살리면 그 계약이 깨진다
   ['ymVideo', 'ybgvidEl'].forEach(id => {
     const v = document.getElementById(id); if (!v) return;
-    if (!on) { try { v.pause(); } catch {} return; }
+    if (!on) { try { v.pause(); } catch {} v.removeAttribute('autoplay'); return; }   // autoplay 제거 = 다음 로드에서도 안 튄다
+    if (id === 'ymVideo') v.setAttribute('autoplay', '');
     if (id === 'ybgvidEl' && hold && hold.contains('ys-hold')) return;
-    yVidPlay(v);
+    if (v.paused && !document.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches) { try { const p = v.play(); p && p.catch(() => {}); } catch {} }
   });
 }
-// ── 배경 영상 재생 단일 관문(260730) — 재생 조건 판정을 여기 한 곳에만 둔다.
-// 잠금 히어로에서 HTML `autoplay` 속성을 뺀 짝: 속성이 붙어 있으면 브라우저가 이 판정을 앞질러 재생해버려
-// 위 주석이 선언한 「reduce = 포스터 정지」 계약이 잠금 화면에서만 깨져 있었다(언락 배경은 속성이 없어 지켜지던 비대칭).
-// 이제 세 경로(설정 적용·탭 복귀·첫 조작)가 전부 이 함수를 지나므로 계약이 한 벌로 성립한다.
-const yVidPlay = v => {
-  if (!v || !v.paused || document.hidden || !yPrefOn('bgvid', true) || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  try { const p = v.play(); p && p.catch(() => {}); } catch {}
-};
-// ── 영상 회복(260730) — 영상은 실패해도 조용하다: 소스를 못 물면 포스터가 영구 고정되고 아무 신호도 없다(운영자 260730 실측 제보).
-// ⓐ 소스 실패 = load() 1회 재시도. play()만으론 절대 못 살아난다(networkState=NO_SOURCE는 소스 재평가가 있어야 풀린다).
-// ⓑ 자동재생 차단 = 첫 사용자 조작에 1회 재시도(브라우저 정책은 제스처 뒤에만 풀린다) — 잠금 히어로는 제스처 0에서 떠야 하는 유일한 영상이라 여기만 노출돼 있었다.
-// ⓒ 소개 영상(.ycd-video) = 파일이 없으면 요소 제거. 테두리·그림자만 남은 빈 상자가 카드에 박히는 것보다 안 보이는 쪽이 낫다.
-// 미디어 error는 버블하지 않는다 → 캡처 단계 위임 1핸들러(§🎨 3 위임 관용 계승).
-// ⚠ 실측 함정(260730): `<source>` 자식을 쓰면 전부 실패해도 `<video>`에는 error가 **안 온다**(스펙 — error는 각 <source>에만 오고 v.error는 null로 남는다).
-//   그래서 소스 쪽 이벤트를 부모로 접어 받는다. 단 첫 소스 실패는 정상 폴백(mp4 실패→webm 성공)에서도 뜨므로,
-//   재시도 판정은 이벤트 시점이 아니라 **1.5초 뒤 실제 상태**로 한다 — networkState 3(NO_SOURCE) = 모든 소스가 죽은 그때만 손댄다.
-document.addEventListener('error', e => {
-  const t = e.target; if (!t) return;
-  const v = t.tagName === 'SOURCE' ? t.parentElement : t;
-  if (!v || v.tagName !== 'VIDEO') return;
-  if (v.classList.contains('ycd-video')) { v.remove(); return; }   // ⓒ
-  if (v.id !== 'ymVideo' && v.id !== 'ybgvidEl') return;
-  if (v._yrt) return; v._yrt = 1;   // 1회만 — 무한 재시도 = 죽은 URL에 네트워크 폭주(실패해도 포스터는 남는다)
-  setTimeout(() => {   // ⓐ
-    if (v.networkState !== 3 && !v.error) { v._yrt = 0; return; }   // 다른 소스가 물었거나 아직 받는 중 = 건드리면 되레 끊긴다(재시도 티켓은 돌려준다)
-    try { v.load(); } catch {} yVidPlay(v);
-  }, 1500);
-}, true);
-// ⓐ-2 리스너보다 먼저 죽는 경우(요청 즉시 실패 = 확장·실드 차단·캐시된 404) — 위 리스너는 그 error를 아예 못 받는다(실측 260730).
-// 이벤트가 아니라 **상태**로 한 번 더 본다: 문서 로드 끝난 시점에 networkState 3이면 소스가 전멸한 것.
-addEventListener('load', () => ['ymVideo', 'ybgvidEl'].forEach(id => {
-  const v = document.getElementById(id);
-  if (!v || v.networkState !== 3 || v._yrt) return; v._yrt = 1;
-  try { v.load(); } catch {}                         // 언락 배경은 소스 재평가까지만 — 재생 시점은 yStair 계약(언락 후)이 쥔다
-  if (id === 'ymVideo') yVidPlay(v);
-}));
-const yVidKick = () => {   // ⓑ
-  document.removeEventListener('pointerdown', yVidKick, true); document.removeEventListener('keydown', yVidKick, true);
-  yVidPlay(document.getElementById('ymVideo'));
-};
-document.addEventListener('pointerdown', yVidKick, true); document.addEventListener('keydown', yVidKick, true);
-document.addEventListener('visibilitychange', () => {   // 잠금 히어로 탭 숨김 = 정지(언락 배경은 yStair가 이미 담당 — 대상에서 빠져 있던 짝을 맞춘다)
-  const v = document.getElementById('ymVideo'); if (!v) return;
-  if (document.hidden) { try { v.pause(); } catch {} } else yVidPlay(v);
-});
 function yAvatarPick() {   // 프로필 사진 = 파일 선택 → 256 정사각 리샘플 → data URL 로컬 저장(서버 미전송 · 파일 input은 런타임 생성 = HTML 자동완성 게이트 무관)
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
   inp.onchange = () => {
@@ -1859,11 +1802,6 @@ const YQA = (() => { try { return new URLSearchParams(location.search).get('qa')
 const yAmbOn = () => {   // 주변 사건(kind=amb) 표시 여부 = **L1 설정값 단일 정본**(운영자 260727 「껐다 킬 수 있는 설정은 모두 UI에」) — 종전 하드 상수(YAMB_HIDE)를 폐지하고 관리자 토글에 물렸다. 러너도 같은 키(policy.ambient)를 읽으므로 스위치 하나가 생성·심기·화면을 동시에 지배한다(한쪽만 켜져 어긋나던 구멍 소멸)
   const sw = ((YPOLDEF && YPOLDEF.L1 || {}).switches || []).find(x => x.key === 'ambient');   // 정의 = 정책 문서(뷰어 하드코딩 0 · axes와 동일 조회 문법)
   const v = Number.isInteger((_ypolCur || {}).ambient) ? _ypolCur.ambient : (sw ? sw.default : 0);   // 정의 미로드(부팅 직후 프리페치 전) = 기본 0 = 숨김 = 안전측(껐다고 믿은 게 반짝 보이는 사고 차단)
-  return v !== 0;
-};
-const yNtOn = () => {   // 확성기(전광판) on/off = **L1 설정값 단일 정본**(운영자 260730 Q.133 "확성기 on/off 가능하게") — 위 yAmbOn 선언 100% 계승(조회 문법·미로드 폴백 규약 동일 · 새 저장 축 0). 러너도 같은 키(policy.notice → NT_ON)를 읽어 스위치 하나가 생성·프롬프트·화면을 동시에 지배한다
-  const sw = ((YPOLDEF && YPOLDEF.L1 || {}).switches || []).find(x => x.key === 'notice');   // 정의 = 정책 문서(뷰어 하드코딩 0)
-  const v = Number.isInteger((_ypolCur || {}).notice) ? _ypolCur.notice : (sw ? sw.default : 1);   // 정의 미로드(부팅 직후 프리페치 전) = 정의 기본 1 = 켬. ⚠ yAmbOn과 폴백 방향이 반대인 이유 = 주변 사건은 「꺼둔 게 반짝 보이는」 사고가 치명적이라 안전측이 숨김이지만, 확성기는 기본 켬 축이라 프리페치 전 1회를 숨기면 그날 유일한 발화를 놓친다(하루 1건 = 재시도 없음)
   return v !== 0;
 };
 const yApi = (op, extra) => fetch('api/yeta', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op, ...(extra || {}) }) }).then(r => r.json());
@@ -4025,7 +3963,6 @@ const yntMark = k => { try { localStorage.setItem('yeta_ynt_seen', k); } catch {
 let _yntT = 0;
 function yNotice() {   // 무음동 전광판(운영자 260728 → 260730 이벤트화) — 세션 top-level notice{d,text,kind}. 러너가 하루 1건 생성·저장하고 뷰어는 읽기만(생성 0 = 렌더 비용 0).
   const el = $('#yetanotice'); if (!el) return;
-  if (!yNtOn()) { yNoticeEnd(); return; }                       // L1 확성기 축 OFF(Q.133) = 화면에서 즉시 회수 · 러너도 같은 키로 생성·프롬프트를 끊는다(한쪽만 꺼져 어긋나던 구멍 없음)
   const n = (YSESS || {}).notice;
   const txt = n && typeof n === 'object' ? String(n.text || '').trim() : '';
   if (!txt) return;                                             // 공지 없음 = 아무것도 안 한다(흐르던 띠가 있으면 자기 타이머로 마무리)
