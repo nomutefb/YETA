@@ -2158,58 +2158,16 @@ const ymRed = now => Math.floor(now / 1000) % 12 < 5;   // 신호 주기 = red 5
 const ymSlot = h => h < 3 ? 'late' : h < 7 ? 'dawn' : h < 11 ? 'morning' : h < 17 ? 'day' : h < 21 ? 'evening' : 'night';
 const ymIsDay = h => h >= 7 && h < 21;   // 낮 지도(map_day) 구간 = 07~21시 KST(아침·낮·저녁) · 그 밖(밤·새벽·깊은밤) = 밤 지도(map_night) · 배치 "지도 v2(밤/낮)" 산출 살림
 async function ymSha(s) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return BigInt('0x' + [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('')); }
-// ── 동선 엔진(운영자 260730 Q.144) — 러너 `yeta_place.py`와 **한 글자도 다르면 안 되는** 등가 구현.
-//   ⚠ 두 벌인 이유 = 뷰어는 오프라인·즉시 렌더가 필요하고 러너는 프롬프트를 짜야 한다. 대조는 `check_refs` 동선 로직 게이트가 기계로 한다.
-//   설계 축: **저장 0 · 크론 0 · 모델 0**. 위치는 「갱신되는 상태」가 아니라 「세계 시각의 순수함수」다 —
-//   그래서 접속 안 해도 흐르고, 새로고침해도 안 튀고, 러너와 뷰어가 동기화 없이 같은 답을 낸다.
-const YM_SLOTS = ['late', 'dawn', 'morning', 'day', 'evening', 'night'];   // yeta_place.SLOTS 동형
-const ymTune = () => { const t = (YMAPD && YMAPD.tuning) || {}; return {   // 동선 튜닝 = places.json `tuning`(데이터 축 · 코드 수정 없이 조정) · 미로드/구데이터 = 종전 동작과 같은 기본값
-  wander: typeof t.wander === 'number' ? t.wander : .5, wanderBy: t.wander_by || {},
-  transitMin: Math.max(1, +(t.transit_min || 12) || 12), bucketH: Math.max(1, +(t.bucket_h || 2) || 2),
-  noPlace: new Set(t.no_place || []) }; };
-async function ymRv(...parts) { const s = await ymSha(parts.join(':')); return Number(s % 1000n) / 1000; }   // rv = 결정적 난수 **0.000~0.999**(운영자 260730 "랜덤 변수 하나 0부터 1까지 · 소숫점 0.000") — yeta_place.rv 동형(':' 조인 · sha256 · mod 1000 / 1000). ⚠ Math.random() 금지: 뷰어와 러너가 다른 답을 내고 새로고침마다 사람이 순간이동한다. "매번 안 똑같음"은 시드에 든 세계 날짜·시간 버킷이 만든다
-const _ymRt = {};   // 폴백 동선 메모 — 시드에 날짜가 없어 세션 내내 불변(사람에겐 습관이 있어야 한다)
-async function ymRoutineOf(cid) {   // yeta_place.routine_of 동형 — 등재분이 항상 이기고, 없으면 rv로 결정적 생성(17명 중 9명만 등재라 8명이 지도에서 통째로 빠져 있었다)
-  const got = (YMAPD.routine || {})[cid];
-  if (got && Object.keys(got).length) return got;
-  if (ymTune().noPlace.has(cid)) return {};   // 위치 축 OFF(난입 전용) = 종전대로 무위치
-  if (_ymRt[cid]) return _ymRt[cid];
-  const P = YMAPD.places || {};
-  const pub = Object.keys(P).filter(k => !P[k].private && !P[k].offlimits).sort();   // ⚠ 정렬 = 파이썬 sorted()와 같은 순서여야 한다(장소 id 전량 ASCII라 일치)
-  if (!pub.length) return {};
-  const anchor = pub[Math.floor((await ymRv(cid, 'anchor')) * pub.length) % pub.length];
-  const second = pub[Math.floor((await ymRv(cid, 'anchor2')) * pub.length) % pub.length];
-  const out = {};
-  for (const s of YM_SLOTS) out[s] = (await ymRv(cid, 'slot', s)) < .62 ? anchor : second;   // .62 = 단골 비중(하루의 약 2/3을 한 자리에서)
-  return (_ymRt[cid] = out);
-}
-async function ymPlaceOf(cid, dateStr, hour) {   // yeta_place.place_of 등가 — 동선표(등재 or 폴백) 기본 · rv < wander면 인접 외출 · 집(private) 변주 없음
-  const T = ymTune(), slot = ymSlot(hour);
-  const base = ((await ymRoutineOf(cid)) || {})[slot] || '';
+async function ymPlaceOf(cid, dateStr, hour) {   // yeta_place.place_of 등가(동선표 + 시드 1/4 인접 외출 · private 변주 없음)
+  const R = (YMAPD.routine || {})[cid] || {}, base = R[ymSlot(hour)] || '';
   if (!base) return '';
-  const info = (YMAPD.places || {})[base] || {};
+  const info = YMAPD.places[base] || {};
   if (info.private) return base;
-  const nb = (info.neighbors || []).filter(n => !((YMAPD.places || {})[n] || {}).private);
-  if (nb.length) {
-    const bk = Math.floor(hour / T.bucketH);                                     // 재판정 버킷(2세계시 = 현실 20분 · 260709 "장소 이동 많이")
-    const w = (cid in T.wanderBy) ? T.wanderBy[cid] : T.wander;                  // 인물별 이동 성향(붙박이 0.1 ~ 역마 0.7)
-    if ((await ymRv(cid, dateStr, slot, bk, 'go')) < w) {                        // ⓐ 나갈까
-      const i = Math.floor((await ymRv(cid, dateStr, slot, bk, 'pick')) * nb.length);   // ⓑ 어디로 — **별도 rv**(한 시드로 둘 다 정하면 "나간다=항상 첫 이웃" 상관이 생긴다)
-      return nb[i % nb.length];
-    }
-  }
+  const nb = (info.neighbors || []).filter(n => !(YMAPD.places[n] || {}).private);
+  if (nb.length) { const seed = await ymSha(`${cid}:${dateStr}:${ymSlot(hour)}:${Math.floor(hour / 2)}:go`); if (seed % 2n === 0n) return nb[Number(seed % BigInt(nb.length))]; }   // 이동 1/2·2h 입도(운영자 260709 "많이 이동") — yeta_place.py와 시드 완전 동일(드리프트 금지)
   return base;
 }
-function ymPrevBucket(dateStr, hour, bucketH) { const h = hour - bucketH; if (h >= 0) return [dateStr, h]; const n = parseInt(String(dateStr).slice(1), 10); return Number.isFinite(n) ? ['w' + (n - 1), (24 + h) % 24] : [dateStr, 0]; }
-async function ymTransitOf(cid, dateStr, hour, minute) {   // 지금 '가는 중'인가 — {from,to,p}(p = 0.000~1.000 · 1 = 도착) · yeta_place.transit_of 동형
-  const T = ymTune(), cur = await ymPlaceOf(cid, dateStr, hour);
-  if (!cur) return { from: '', to: '', p: 1 };
-  const pb = ymPrevBucket(dateStr, hour, T.bucketH), prev = await ymPlaceOf(cid, pb[0], pb[1]);
-  const into = (hour % T.bucketH) * 60 + Math.max(0, Math.min(59, minute | 0));
-  if (prev && prev !== cur && into < T.transitMin) return { from: prev, to: cur, p: Math.round(into / T.transitMin * 1000) / 1000 };
-  return { from: cur, to: cur, p: 1 };
-}
-function yMapLeave() { if (_ymapRaf) cancelAnimationFrame(_ymapRaf); _ymapRaf = 0; if (_ymapIv) clearTimeout(_ymapIv); _ymapIv = 0;   /* 타이머 = 자기 재예약 setTimeout(Q.144 · 종전 setInterval) */ if (_yinOpen) yInClose(); }   // 실내 뷰도 동반 회수(탭 이탈에 시트 잔류 금지 · 260725)
+function yMapLeave() { if (_ymapRaf) cancelAnimationFrame(_ymapRaf); _ymapRaf = 0; if (_ymapIv) clearInterval(_ymapIv); _ymapIv = 0; if (_yinOpen) yInClose(); }   // 실내 뷰도 동반 회수(탭 이탈에 시트 잔류 금지 · 260725)
 // ── 실내 뷰(운영자 260725 "무음 시범 하나") — 지도에서 장소를 탭하면 그 안으로 '들어간다'. 3D 모델 0개: 기존 배경 씬 1장 + 그 시각 재실자(ymPlaceAll 캐시) 재활용.
 //   부품 계승 = 표면 `.yeta-pick` · 행 `.ypick-row`+`.yp-col/.yp-name/.yp-tag`(리스트 정본) · 아바타 `yAva` · 진입 `openYeta`(워커 탭과 동일) — 신규 부품 창작 0. 확장 = YIN_PLACES 표에 한 줄.
 function yInRender(pl) {
@@ -2339,15 +2297,6 @@ document.addEventListener('click', e => {   // 위임 1핸들러(개별 배선 �
   if (_yinOpen && !e.target.closest('#yin')) yInClose();
 });
 
-function ymNextEdgeMs() {   // 다음 재판정 시각까지 현실 ms — 버킷 경계(2세계시) · 이동 구간 진행(3세계분) 중 이른 쪽. 배속을 바꿔도 자동으로 따라간다
-  const T = ymTune(), rate = (window.yWRate ? yWRate() : 6) || 6;
-  const wm = (window.yWorldMin ? yWorldMin() : 0);                       // 오늘의 세계 분(0~1439)
-  const bkM = T.bucketH * 60, toEdge = bkM - (wm % bkM);                 // 버킷 경계까지 세계 분
-  const inTr = (wm % bkM) < T.transitMin;                                // 이동 구간 안 = 3분마다 진행도 갱신
-  const wmin = inTr ? Math.min(3 - ((wm % bkM) % 3) || 3, toEdge) : toEdge;
-  return Math.max(1500, Math.min(120000, wmin / rate * 60000));          // 하한 1.5s(폭주 방지) · 상한 2분(배속 1배에서도 시계·낮밤이 안 굳게)
-}
-function ymPlaceLoop() { clearTimeout(_ymapIv); _ymapIv = setTimeout(() => { ymPlaceAll().finally(ymPlaceLoop); }, ymNextEdgeMs()); }   // 자기 재예약 타이머 1개(setInterval 폐지) — yMapLeave가 clearTimeout으로 함께 회수(핸들 축 공유)
 async function yMapEnter() {
   const svg = $('#ymapSvg'); if (!svg) return;
   if (!YMAPD) {
@@ -2359,7 +2308,7 @@ async function yMapEnter() {
   ymBuild(svg);
   await ymPlaceAll();
   yMapLeave();
-  ymPlaceLoop();   // 실시간 위치 = **값이 바뀌는 순간에만** 재판정(운영자 260730 Q.144) — 종전 1분 폴링은 20분에 한 번 바뀌는 값을 20번 계산했다(19번이 헛일)
+  _ymapIv = setInterval(ymPlaceAll, 60000);   // 실시간 위치 = 1분 재판정(시드·동선 = 결정적이라 잦을 필요 없음)
   if (!YMAP_RM()) { _ymapLast = performance.now(); _ymapRaf = requestAnimationFrame(ymTick); }
 }
 function ymBuild(svg) {   // 정적 레이어 — 배경(낮/밤 = KST 시각 · ymPlaceAll이 1분마다 재스왑) · 장소 노드/라벨(맵 실측 좌표 YMAP_POS) · 신호등 · 워커/차 그룹 (도로선 = 이미지 내장이라 미표시)
@@ -2741,19 +2690,16 @@ document.addEventListener('click', e => {
   if (!pop.contains(e.target)) yMePop(false);   // 바깥 탭 = 닫힘(픽커 정본 패턴)
 });
 // ── 캐릭터 최근 장소(운영자 260707 항목18·21) — ymPlaceOf 결정적(러너 프롬프트 장소 등가) · 친밀도(턴수)·경과 시간으로 '알 수 없음' 판정 ──
-let _yLocs = { key: '', map: {}, tr: {}, sig: '' };
+let _yLocs = { key: '', map: {} };
 async function yLocsSync(ids) {   // 시간 슬롯 단위 일괄 해석 — 완료 시 리스트 1회 재렌더(sig 리셋)
   const wk = yWorldDH();   // 세계 시각(운영자 260716 지도 싱크 — 목록 장소 라벨도 지도·대화와 동기)
-  const _wm = (window.yWorldMin ? yWorldMin() : 0) % 60;   // 세계 분 — 이동 구간 진행도용(운영자 260730 Q.144 "움직여야 돼")
-  const key = `${wk.d}|${wk.h}|${Math.floor(_wm / 3)}`;    // 분 버킷 3분 = 이동 구간(12분) 안에서 라벨이 4단계로 바뀐다(그 밖엔 값이 같아 재렌더 0)
+  const key = `${wk.d}|${wk.h}`;
   if (_yLocs.key === key) return;
   if (!YMAPD) { const d = await yMeMap(); if (!d) return; }
-  const map = {}, tr = {};
-  for (const id of ids) { try { map[id] = await ymPlaceOf(id, wk.d, wk.h); tr[id] = await ymTransitOf(id, wk.d, wk.h, _wm); } catch { map[id] = ''; tr[id] = null; } }
-  const sig = ids.map(id => `${id}:${map[id]}:${(tr[id] && tr[id].p < 1) ? tr[id].from : ''}`).join('|');   // 표시값 지문 — 분 버킷이 잘게 돌아도 **라벨이 실제로 달라질 때만** 재렌더(이동 중인 사람이 0명이면 3분 버킷은 전부 같은 지문 = 재렌더 0)
-  const changed = _yLocs.sig !== sig;
-  _yLocs = { key, map, tr, sig };
-  if (changed) { _ylSig = ''; if ($('#ymain').classList.contains('tab-list')) yListRender(); }
+  const map = {};
+  for (const id of ids) { try { map[id] = await ymPlaceOf(id, wk.d, wk.h); } catch { map[id] = ''; } }
+  _yLocs = { key, map };
+  _ylSig = ''; if ($('#ymain').classList.contains('tab-list')) yListRender();
 }
 const yDormant = r => !r.pin && (Date.now() - (r.updated || 0) > 72 * 3600e3);   // 방치 소멸(항목17 1차 · 클라 판정) — 3일(nudge 중단선 결) 방치 + 미고정 = 캐릭터가 자리를 떠 리스트에서 사라짐 · 데이터 보존 = 캐릭터 탭 재방문 시 재회 · 고정 = 안 떠남
 function yLocOf(r) {   // 행별 장소 표기(운영자 260709 개정) — 노출 = "함께"일 때만: ①대화 이어지는 중(2h 내 = 같은 공간·전화로 이어도 갱신) ②상대 현 장소 = 내 장소. 그 외 = 알 수 없음(친밀도 무관 — 떨어져 있으면 어딘지 모름 · 구 턴수≥6 기준 폐지)
@@ -2766,11 +2712,6 @@ function yLocOf(r) {   // 행별 장소 표기(운영자 260709 개정) — 노�
   if (!pl || !(together || pl === mine)) return { nm: '장소 모름', on: false };
   const info = (YMAPD && YMAPD.places[pl]) || {};
   if (info.private || info.offlimits) return { nm: '장소 모름', on: false };
-  const tr = (_yLocs.tr || {})[r.id];   // 이동 중(운영자 260730 Q.144 "움직여야 돼") — 자리를 막 옮긴 12세계분 동안은 「A → B 가는 길」로 읽힌다(그 밖엔 종전과 완전히 같은 문구)
-  if (tr && tr.p < 1 && tr.from && tr.from !== tr.to) {
-    const fi = (YMAPD.places || {})[tr.from] || {};
-    if (!fi.private && !fi.offlimits) return { nm: `${fi.name || tr.from} → ${info.name || pl} 가는 길`, on: true };
-  }
   return { nm: info.name || pl, on: true };
 }
 async function yListRender() {
