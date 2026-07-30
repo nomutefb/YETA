@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>잠금 히어로 영상 — 폴백·회복 전/후 v1</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260730_최산_배경이관_전후_v1.html 계승(재설계 0 · 내용만 영상 재생 축으로 교체) ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --think:#3EE0C8; --think-rgb:62,224,200;
+    --danger:#FF6B6B; --danger-rgb:255,107,107;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --glass-0:rgba(255,255,255,.002); --glass-line-0:rgba(255,255,255,.066);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+    --yeta-bg:var(--bg);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .pair { display:flex; gap:var(--sp-2); flex-wrap:wrap; }
+  .col { flex:1 1 320px; min-width:0; background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-l); padding:var(--sp-2); box-shadow:var(--shadow-card); }
+  .col > h3 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 6px; }
+  .col.now > h3 { color:var(--mut); }
+  .col.next > h3 { color:var(--accent); }
+  .cap { font-size:var(--fs-xs); color:var(--mut); margin:6px 0 0; }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  .tw { overflow-x:auto; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); white-space:nowrap; }
+  td b { color:var(--accent); font-weight:var(--fw-b); }
+  ul { margin:0; padding-left:18px; font-size:var(--fs-sm); color:var(--fg-2); }
+  li { margin:3px 0; }
+  code { font-size:var(--fs-xs); color:var(--think); }
+  @media (max-width:700px) { .pair { flex-direction:column; } }
+
+  /* ── 추가 표면 = 이 페이지 고유(잠금 무대 미리보기) · 값 계승: 무대비 = 잠금 히어로 원본 640×1138 종횡비 · 오버레이 = .ym-ovl 스포티파이 블랙 67% ── */
+  .stg { position:relative; aspect-ratio:640/1138; border-radius:var(--r-m); border:1px solid var(--glass-line); overflow:hidden; background:#000; }
+  .stg video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .stg .ovl { position:absolute; inset:0; background:rgba(18,18,18,.67); pointer-events:none; }   /* .ym-ovl 67%(운영자 260706 플그 확정값) 계승 */
+  .badge { display:inline-block; font-size:var(--fs-xs); font-weight:var(--fw-b); padding:2px 8px; border-radius:var(--r-pill); border:1px solid var(--glass-line); }
+  .badge.stop { color:var(--danger); border-color:rgba(var(--danger-rgb),.4); }
+  .badge.play { color:var(--accent); border-color:rgba(var(--accent-rgb),.4); }
+  .ok { color:var(--accent); font-weight:var(--fw-b); }
+  .no { color:var(--danger); font-weight:var(--fw-b); }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>잠금 히어로 영상 — 폴백·회복 전/후 <span style="color:var(--mut);font-weight:var(--fw-b)">v1</span></h1>
+  <p class="lead">운영자 260730 제보 「이 화면에 영상 안움직이는 버그있음」. 재현 결과 <b style="color:var(--accent)">앱 재생 로직은 정상</b>이었고,
+  실제 결함은 <code>#ymVideo</code>가 <b style="color:var(--accent)">mp4 단벌 소스 + 실패 시 폴백·재시도·신호가 0</b>이라는 쪽이었다 —
+  소스를 한 번 못 물면 포스터가 <b style="color:var(--accent)">영구 고정</b>되고 새로고침 말고는 복구 경로가 없었다.
+  아래 왼쪽이 그 상태(정지), 오른쪽이 고친 뒤(재생). 실제 잠금 영상 파일을 그대로 띄운 라이브 비교다.</p>
+
+  <div class="sect">
+    <h2>① 움직임 — 실물 비교 (왼쪽은 실제로 멈춰 있다)</h2>
+    <div class="pair">
+      <div class="col now">
+        <h3>전 — 포스터 고정 <span class="badge stop">정지</span></h3>
+        <div class="stg"><video poster="../assets/brand/lock-hero-poster.jpg" preload="none" muted playsinline></video><div class="ovl"></div></div>
+        <p class="cap">소스를 못 문 <code>&lt;video&gt;</code>가 남기는 그림 = <code>poster</code> 한 장. 운영자 스크린샷과 같은 프레임이고, 로고 <code>YETA</code>의 E·T·A가 밝은 피부톤 위 반투명 흰색이라 <b>Y만 보이던 것</b>도 여기서 나온 파생 증상이다.</p>
+      </div>
+      <div class="col next">
+        <h3>후 — 폴백으로 재생 <span class="badge play">재생</span></h3>
+        <div class="stg"><video autoplay loop muted playsinline preload="auto" poster="../assets/brand/lock-hero-poster.jpg"><source src="../assets/brand/lock-hero.mp4" type="video/mp4"><source src="../assets/brand/lock-hero.webm" type="video/webm"></video><div class="ovl"></div></div>
+        <p class="cap">소스 2벌(<code>mp4 → webm</code>). H.264 되는 브라우저는 mp4, 못 쓰는 브라우저는 VP9로 착지한다. 이 칸이 움직이면 그 브라우저에서는 고쳐진 것.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <h2>② 계약 — 상황별 동작 전/후 (전부 헤드리스 실측)</h2>
+    <div class="tw"><table>
+      <tr><th>상황</th><th>전</th><th>후</th><th>기대</th></tr>
+      <tr><td>H.264 못 쓰는 브라우저</td><td class="no">⏸ 포스터 영구 고정</td><td class="ok">▶ webm으로 재생</td><td>재생</td></tr>
+      <tr><td>일시 로드 실패(네트워크·차단)</td><td class="no">⏸ 영구 고정(새로고침만이 복구)</td><td class="ok">▶ 1.5초 뒤 <code>load()</code> 1회 재시도로 자동 복구</td><td>재생</td></tr>
+      <tr><td>자동재생 차단</td><td class="no">⏸ 영구 고정</td><td class="ok">▶ 첫 사용자 조작에 되살아남</td><td>재생</td></tr>
+      <tr><td>OS 모션최소화(<code>reduce</code>)</td><td class="no">▶ <b>그냥 재생</b>(계약 위반 — 언락 배경만 지켜지던 비대칭)</td><td class="ok">⏸ 포스터 정지</td><td>정지</td></tr>
+      <tr><td>설정 「배경 영상」 OFF</td><td class="ok">⏸ 정지</td><td class="ok">⏸ 정지</td><td>정지</td></tr>
+      <tr><td>탭 백그라운드 전환</td><td class="no">▶ 계속 디코드(60fps 2.5MB · 언락 배경만 정지 대상이었다)</td><td class="ok">⏸ 정지 → 복귀 시 재개</td><td>정지</td></tr>
+      <tr><td>소개 영상(<code>.ycd-video</code>) 파일 없음</td><td class="no">테두리·그림자만 남은 빈 상자</td><td class="ok">요소 제거(안 보임)</td><td>제거</td></tr>
+    </table></div>
+  </div>
+
+  <div class="sect">
+    <h2>③ 무엇을 바꿨나</h2>
+    <ul>
+      <li><b>소스 2벌</b> — <code>#ymVideo</code>에 <code>lock-hero.webm</code>(VP9 2.57MB) 추가. 바로 아래 언락 배경 <code>#ybgvidEl</code>이 원래 쓰던 이중 소스 관용을 그대로 계승했다.
+        순서가 <code>mp4 → webm</code>인 건 의도 — 브라우저는 <b>첫 지원 소스만</b> 받고, 두 벌 용량이 사실상 같은데(2.58 / 2.57MB) H.264 쪽이 하드웨어 디코딩이 훨씬 넓어 60fps 클립에서 배터리·발열이 유리하다.</li>
+      <li><b>재생 판정 단일 관문 <code>yVidPlay</code></b> — 잠금 히어로에서 HTML <code>autoplay</code> 속성을 뺐다. 속성이 붙어 있으면 브라우저가 판정을 앞질러 재생해버려서
+        코드 주석이 선언한 「<code>reduce</code> = 포스터 정지」 계약이 <b>잠금 화면에서만</b> 새고 있었다. 이제 설정 적용·탭 복귀·첫 조작 세 경로가 전부 이 함수를 지난다.</li>
+      <li><b>회복 훅</b> — 캡처 단계 위임 1핸들러. 실측 함정 하나를 여기서 잡았다: <code>&lt;source&gt;</code> 자식을 쓰면 전부 실패해도 <code>&lt;video&gt;</code>에는 <code>error</code>가 <b>안 온다</b>(스펙 — <code>error</code>는 각 <code>&lt;source&gt;</code>에만 오고 <code>v.error</code>는 null로 남는다).
+        그래서 소스 쪽 이벤트를 부모로 접어 받되, 첫 소스 실패는 정상 폴백에서도 뜨므로 <b>1.5초 뒤 실제 상태</b>(<code>networkState 3</code> = 소스 전멸)로만 재시도한다. 리스너보다 먼저 죽는 경우(즉시 실패)는 <code>load</code> 시점 상태 점검이 한 겹 더 받는다.</li>
+      <li><b>탭 숨김 정지</b> — <code>visibilitychange</code> 정지 대상이 언락 배경뿐이라 잠금 히어로만 빠져 있던 짝을 맞췄다.</li>
+    </ul>
+    <p class="cap">새 <code>:root</code> 토큰·색·간격·모션 = <b>0</b>. 추가분은 영상 파일 1개와 스크립트 로직뿐이고, 이 시안의 표면 CSS도 <code>20260730_최산_배경이관_전후_v1.html</code>을 그대로 계승했다.</p>
+  </div>
+
+  <div class="sect">
+    <h2>④ 검증</h2>
+    <ul>
+      <li><b>재현</b> — H.264 미탑재 헤드리스 chromium 1194에서 운영자 스크린샷과 <b>동일 프레임</b>의 포스터 고정 재현. 같은 브라우저에 재생 가능한 소스만 물리면 정상 재생 = <b>앱 로직 무결</b> 확인.</li>
+      <li><b>파일·서버 무결</b> — <code>lock-hero.mp4</code> = h264 High, 640×1138, 60fps, 9.97s, <code>moov</code> 선두. 라이브 <code>yeta.soong.kr</code>도 200 · <code>video/mp4</code> · Range 206 정상. 즉 결함은 서버·파일이 아니라 <b>클라이언트에서 실패했을 때의 처리</b>였다.</li>
+      <li><b>후 검증</b> — 위 ② 표 7행을 헤드리스로 전수 실측, 기대치 <b>전부 일치</b>. <code>check_refs</code> <b>rc=0</b>.</li>
+      <li><b>미검증(명시)</b> — 운영자 브라우저에서 mp4가 실패한 <b>정확한 이유</b>(코덱 미탑재 / 자동재생 차단 / 확장·실드 차단)는 원격에서 특정할 수 없었다. 이번 수정은 <b>세 원인 모두를 같은 착지점(재생)으로 보내는</b> 처방이라 원인 특정 없이도 해소되지만, 그래도 안 움직이면 그 화면에서 <code>document.getElementById('ymVideo').networkState</code> 값을 알려주면 바로 좁혀진다.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
