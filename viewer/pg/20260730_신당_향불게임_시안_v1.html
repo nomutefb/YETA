@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>신당 향불 게임 — 시안 v1(가로 링 vs 세로 향)</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽) · 구조 토큰 = ../tokens.css
+     ⚠️ 신규 색·신규 토큰 0. 레퍼런스 포스터의 틸 = 앱 --think(#3EE0C8)와 거의 같아서 그대로 계승했다.
+     SVG 기하(반지름·좌표·각도·stroke-dasharray)와 키프레임 % = raw 허용 축(§🎨 기하·안무 예외) ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716;
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --think:#3EE0C8; --think-rgb:62,224,200;
+    --danger:#FF5A5A; --danger-rgb:255,90,90;
+    --arm:#FFB45A;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .sect > h2::before { content:'• '; color:var(--accent); font-weight:var(--fw-b); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; line-height:var(--lh-base); }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  @media (max-width:820px) { .pair { grid-template-columns:1fr; } }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 10px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .cap .val { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--fg-2); }
+
+  /* ── 시트 = viewer .yeta-pick/.yin 크롬 계승(실측폭 330) ── */
+  .sheet { width:330px; max-width:100%; margin-inline:auto; border-radius:var(--r-l); border:1px solid var(--glass-line);
+    background:rgba(18,18,18,.86); backdrop-filter:blur(var(--blur-l)); -webkit-backdrop-filter:blur(var(--blur-l));
+    box-shadow:var(--shadow-card); overflow:hidden; }
+  .ysng { padding:var(--sp-2) 8px 12px; text-align:center; }
+  .ysng-t { font-size:var(--fs-sm); color:var(--fg-2); line-height:var(--lh-base); }
+  .ysng-s { font-size:var(--fs-xs); color:var(--mut); line-height:var(--lh-base); margin-top:4px; }
+  .ysng-pip { display:flex; justify-content:center; gap:7px; margin:8px 0 6px; }
+  .ysng-pip i { width:7px; height:7px; border-radius:50%; background:var(--glass-line); }
+  .ysng-pip i.on { background:var(--accent); }
+  .ysng-pip i.no { background:var(--danger); }
+  .btn { margin-top:10px; padding:5px 14px; border-radius:var(--r-pill); background:rgba(var(--accent-rgb),.12);
+    border:1px solid rgba(var(--accent-rgb),.4); color:var(--accent); font-size:var(--fs-xs); font-weight:var(--fw-b);
+    cursor:pointer; font-family:inherit; }
+  .btn:active { transform:scale(var(--press-m,.9)); }
+
+  /* ══ A안 = 현행(가로 링) ══ */
+  .ring { display:block; width:min(200px,64%); margin:2px auto 4px; cursor:pointer; touch-action:manipulation; }
+  .ring .trk { fill:none; stroke:var(--glass-line); stroke-width:6; }
+  .ring .tgt { fill:none; stroke:var(--accent); stroke-width:6; stroke-linecap:round; filter:drop-shadow(0 0 6px rgba(var(--accent-rgb),.55)); }
+  .ring .mk { fill:var(--fg); }
+  .ring.hit .tgt { stroke:var(--think); }
+  .ring.miss .tgt { stroke:var(--danger); }
+
+  /* ══ B안 = 세로 타들어가는 향(레퍼런스 포스터 구도 이식) ══
+     포스터에서 가져온 것 = ① 검정→틸 수평 그라데이션(수평선) ② 향꽂이 실루엣 + 거울 반사 ③ 얇은 수직 향 1대 ④ 가느다란 연기.
+     버린 것 = 대형 여백(330px 시트엔 안 들어감) · 제품 카피 · 사진 질감(자산 0 제약). */
+  .insc { position:relative; width:100%; height:236px; border-radius:var(--r-m); overflow:hidden; cursor:pointer;
+    touch-action:manipulation; user-select:none; -webkit-user-select:none;
+    background:linear-gradient(180deg, #000 0%, #000 30%, rgba(var(--think-rgb),.10) 55%, rgba(var(--think-rgb),.30) 70%,
+      rgba(var(--think-rgb),.20) 71%, rgba(var(--think-rgb),.05) 84%, #000 100%); }
+  /* ↑ 70~71% 지점의 급전환 = 포스터의 '수평선'(반사면 경계) · 그 아래는 순검정이 아니라 옅은 청록 = 검은 반사 실루엣이 읽히는 유일한 조건 · % = 안무·기하 축 raw 허용 */
+  .insc svg { position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .insc .stickbody { stroke:var(--mut); stroke-width:1.4; }                 /* 아직 안 탄 향대 */
+  .insc .stickash { stroke:rgba(var(--fg-rgb),.14); stroke-width:1.4; }     /* 타고 남은 재 */
+  .insc .band { stroke:var(--accent); stroke-linecap:round; opacity:.5; }   /* 향불 자리 — 두께 = 판정창 실값(SVG stroke-width 인라인) */
+  .insc .band.live { opacity:1; filter:drop-shadow(0 0 5px rgba(var(--accent-rgb),.75)); }
+  .insc .ember { fill:var(--arm); filter:drop-shadow(0 0 6px var(--arm)); }  /* 불씨 = 주의색 토큰 계승(신규 색 0) */
+  .insc .holder { fill:#000; }
+  .insc .refl { opacity:.55; }                                              /* 거울 반사 = 같은 그룹 scaleY(-1) */
+  .insc .smoke { fill:none; stroke:rgba(var(--fg-rgb),.8); stroke-width:1.6; stroke-linecap:round;
+    filter:url(#swob); animation:smk 1.7s linear infinite; }
+  @keyframes smk { to { stroke-dashoffset:-33; } }   /* 정확히 dash 한 주기(26+7) = 이음매 없는 반복 */
+  .insc.hit .band.live { stroke:var(--think); filter:drop-shadow(0 0 9px rgba(var(--think-rgb),.85)); }
+  .insc.miss .ember { fill:var(--danger); filter:drop-shadow(0 0 9px var(--danger)); }
+  .insc.out .smoke { opacity:0; transition:opacity .6s var(--ease); }
+  .insc.out .ember { opacity:0; transition:opacity .4s var(--ease); }
+  @media (prefers-reduced-motion:reduce) { .insc .smoke { animation:none; } }
+
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-xs); margin-top:10px; }
+  th, td { text-align:left; padding:7px 9px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-meta); letter-spacing:.06em; }
+  td b { color:var(--fg); }
+  .ok { color:var(--accent); font-weight:var(--fw-b); }
+  .bad { color:var(--danger); font-weight:var(--fw-b); }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>신당 향불 게임 — 시안 v1</h1>
+  <p class="lead">운영자 260730 「실제 향불처럼 뭔가 만들어야 하지 않을까 · 향불 맞춰서 켜는 컨셉?」 + 향 포스터 레퍼런스.<br>
+  <b>두 안을 실제로 눌러보고 고르는 페이지.</b> 색·굵기·라운드 = 전부 앱 토큰(신규 색 0) · 외부 이미지·라이브러리 0.</p>
+
+  <div class="pair">
+    <div class="grp">
+      <div class="cap"><span class="bdg before">A · 현행</span><span class="val">가로 타이밍 링</span></div>
+      <div class="sheet"><div class="ysng">
+        <svg class="ring" id="ringSvg" viewBox="0 0 100 100" role="button" tabindex="0" aria-label="향불 자리를 지날 때 탭">
+          <circle class="trk" cx="50" cy="50" r="40"/><path class="tgt" id="ringTgt"/><circle class="mk" id="ringMk" cx="50" cy="10" r="4.6"/>
+        </svg>
+        <div class="ysng-pip" id="ringPip"><i></i><i></i><i></i></div>
+        <div class="ysng-t" id="ringT">향불 자리를 지날 때 탭 — <b>세 번 연속</b></div>
+        <div class="ysng-s">세라을(를) 위해 비는 중 · 한 번이라도 빗나가면 거기서 끝</div>
+        <button class="btn" onclick="ringStart()">다시</button>
+      </div></div>
+      <p class="note"><b>문제</b> — 읽기는 쉬운데 <b>향불이라는 근거가 하나도 없다</b>. 원과 표식은 어떤 게임에나 붙는 추상 UI라, 「신당에서 향을 올린다」는 장면이 안 선다.</p>
+    </div>
+
+    <div class="grp">
+      <div class="cap"><span class="bdg after">B · 제안</span><span class="val">세로로 타들어가는 향</span></div>
+      <div class="sheet"><div class="ysng">
+        <div class="insc" id="inscBox" role="button" tabindex="0" aria-label="불씨가 향불 자리에 닿을 때 탭">
+          <svg viewBox="0 0 200 236" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <filter id="swob" x="-60%" y="-10%" width="220%" height="120%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.012 0.03" numOctaves="2" seed="7" result="n">
+                  <animate attributeName="seed" values="7;19;7" dur="9s" repeatCount="indefinite"/>
+                </feTurbulence>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+              </filter>
+              <linearGradient id="smkfade" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset=".22" stop-color="#fff" stop-opacity=".92"/>
+                <stop offset=".6" stop-color="#fff" stop-opacity=".45"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+              </linearGradient>
+              <mask id="smkm" maskUnits="userSpaceOnUse"><rect x="0" y="-158" width="200" height="162" fill="url(#smkfade)"/></mask>
+            </defs>
+            <!-- 연기 = 향 끝에서 위로(마스크로 위쪽 페이드 · feTurbulence 변위로 흔들림) -->
+            <g id="smokeG"><g mask="url(#smkm)">
+              <path class="smoke" d="M100 0 C 96 -20, 107 -30, 100 -50 C 93 -70, 106 -82, 98 -104 C 93 -120, 102 -132, 100 -150"
+                    stroke-dasharray="26 7"/>
+            </g></g>
+            <!-- 향대: 재(위) + 안 탄 몸통(아래) · 불씨가 그 경계 -->
+            <line class="stickash" id="ashLine" x1="100" y1="20" x2="100" y2="158"/>
+            <line class="stickbody" id="bodyLine" x1="100" y1="158" x2="100" y2="158"/>
+            <!-- 향불 자리 = 판정 띠 3개(아래→위 순서로 불씨가 지난다) -->
+            <line class="band" id="b0" x1="93" y1="120" x2="107" y2="120" stroke-width="3.0"/>
+            <line class="band" id="b1" x1="93" y1="82"  x2="107" y2="82"  stroke-width="2.3"/>
+            <line class="band" id="b2" x1="93" y1="44"  x2="107" y2="44"  stroke-width="1.8"/>
+            <circle class="ember" id="emb" cx="100" cy="158" r="2.4"/>
+            <!-- 향꽂이 + 거울 반사(포스터 구도) · y=170 = 수평선 -->
+            <g id="holder">
+              <rect class="holder" x="95" y="152" width="10" height="10" rx="2"/>
+              <ellipse class="holder" cx="100" cy="162" rx="42" ry="6"/>
+              <path class="holder" d="M62 163 Q92 168 96 176 L104 176 Q108 168 138 163 Z"/>
+            </g>
+            <g class="refl" transform="translate(0,352) scale(1,-1)">
+              <ellipse class="holder" cx="100" cy="162" rx="42" ry="6"/>
+              <path class="holder" d="M62 163 Q92 168 96 176 L104 176 Q108 168 138 163 Z"/>
+            </g>
+          </svg>
+        </div>
+        <div class="ysng-pip" id="inscPip"><i></i><i></i><i></i></div>
+        <div class="ysng-t" id="inscT">불씨가 <b>향불 자리</b>에 닿을 때 탭 — 세 번</div>
+        <div class="ysng-s">세라을(를) 위해 비는 중 · 한 번이라도 빗나가면 향이 꺼진다</div>
+        <button class="btn" onclick="inscStart()">다시</button>
+      </div></div>
+      <p class="note"><b>가져온 것</b> — 검정→청록 수평 그라데이션(포스터의 수평선) · 향꽂이 실루엣 + 거울 반사 · 얇은 수직 향 1대 · <code>feTurbulence</code>로 흔들리는 연기 한 줄기.<br>
+      <b>게임이 된 것</b> — <b>불씨가 향을 타고 내려온다</b>(= 시간). 향불 자리(라임 띠) 3개를 지날 때 탭. 맞히면 그 띠가 청록으로 타고, 빗나가면 <b>불씨가 붉어지며 연기가 끊긴다</b>. 향이 실제로 짧아지니 진행도가 눈에 보인다.</p>
+    </div>
+  </div>
+
+  <div class="sect" style="margin-top:var(--sp-3)">
+    <h2>왜 B인가</h2>
+    <div class="grp">
+      <table>
+        <tr><th></th><th>A · 가로 링</th><th>B · 세로 향</th></tr>
+        <tr><td><b>장면</b></td><td class="bad">없음 — 어떤 게임에나 붙는 추상 UI</td><td class="ok">신당에 향을 올리는 그 장면 그대로</td></tr>
+        <tr><td><b>시간의 정체</b></td><td>도는 표식(임의)</td><td class="ok">향이 타들어감(자연)</td></tr>
+        <tr><td><b>실패 연출</b></td><td>호가 붉어짐</td><td class="ok">불씨가 꺼지고 연기가 끊김 — 카피(「향이 꺼졌다」)와 일치</td></tr>
+        <tr><td><b>진행도</b></td><td>pip 3개</td><td class="ok">pip + <b>향 길이 자체가 줄어든다</b></td></tr>
+        <tr><td><b>자산</b></td><td>0</td><td class="ok">0 (전부 인라인 SVG/CSS)</td></tr>
+        <tr><td><b>신규 색·토큰</b></td><td>0</td><td class="ok">0 — 포스터의 틸 ≈ 앱 <code>--think</code>, 불씨 = <code>--arm</code></td></tr>
+      </table>
+      <p class="note"><b>난이도는 그대로.</b> 불씨 낙하 속도 ↑ · 띠 두께 ↓ 로 A와 같은 사다리(±50 → ±27 → ±16ms)를 만든다. 3연속 실패 = 현실 24h 잠금도 그대로.<br>
+      <b>미확인</b> — <code>feTurbulence</code> 애니메이션은 저사양 기기에서 비용이 있다. 실기 프레임 측정 전엔 「가볍다」고 단정 못 함. 무거우면 <code>seed</code> 애니를 빼고 정적 변위 + <code>stroke-dashoffset</code> 이동만 남기면 된다(연기는 계속 올라간다).</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* 두 안 다 실제로 돌아간다 — 판정식·난이도 사다리는 viewer/index.html 본체(YSNG_R)와 같은 값. */
+const R = [{v:.95,w:34},{v:1.25,w:24},{v:1.55,w:18}];   // 링: 회전/초, 향불 폭(도)
+const B = [{v:30,h:3.0},{v:42,h:2.3},{v:56,h:1.8}];     // 향: 불씨 px/초, 판정 높이(px) = 2·v·허용오차 역산 → ±50/±27/±16ms(링과 **동일 난이도**) · 띠 stroke-width와 1:1 = 보이는 게 곧 판정창
+
+/* ── A · 가로 링 ── */
+let rg=null;
+function ringArc(mid,w){const r=40,a0=(mid-w/2-90)*Math.PI/180,a1=(mid+w/2-90)*Math.PI/180;
+  return `M ${50+r*Math.cos(a0)} ${50+r*Math.sin(a0)} A ${r} ${r} 0 0 1 ${50+r*Math.cos(a1)} ${50+r*Math.sin(a1)}`;}
+function ringStart(){
+  rg={i:0,hits:0,ang:0,tgt:Math.random()*360,done:0,last:performance.now()};
+  document.getElementById('ringSvg').classList.remove('hit','miss');
+  document.querySelectorAll('#ringPip i').forEach(p=>p.className='');
+  document.getElementById('ringT').innerHTML='향불 자리를 지날 때 탭 — <b>세 번 연속</b>';
+  document.getElementById('ringTgt').setAttribute('d',ringArc(rg.tgt,R[0].w));
+  requestAnimationFrame(ringTick);
+}
+function ringTick(now){
+  if(!rg||rg.done)return;
+  const dt=Math.min(.05,(now-rg.last)/1000); rg.last=now;
+  rg.ang=(rg.ang+R[rg.i].v*360*dt)%360;
+  const a=(rg.ang-90)*Math.PI/180,mk=document.getElementById('ringMk');
+  mk.setAttribute('cx',(50+40*Math.cos(a)).toFixed(2)); mk.setAttribute('cy',(50+40*Math.sin(a)).toFixed(2));
+  requestAnimationFrame(ringTick);
+}
+function ringTap(){
+  if(!rg||rg.done)return;
+  const Rr=R[rg.i],d=Math.abs(((rg.ang-rg.tgt+540)%360)-180),sv=document.getElementById('ringSvg');
+  if(d>Rr.w/2){rg.done=1;sv.classList.add('miss');document.getElementById('ringT').innerHTML='향이 꺼졌다 — <b>빗나갔어</b>';return;}
+  rg.hits++; sv.classList.add('hit'); setTimeout(()=>sv.classList.remove('hit'),220);
+  const p=document.querySelectorAll('#ringPip i')[rg.hits-1]; if(p)p.className='on';
+  if(rg.hits>=R.length){rg.done=1;document.getElementById('ringT').innerHTML='향이 끝까지 탔어 — <b>기도가 닿는다</b>';return;}
+  rg.i++; rg.tgt=Math.random()*360; rg.ang=(rg.tgt+180)%360;
+  document.getElementById('ringTgt').setAttribute('d',ringArc(rg.tgt,R[rg.i].w));
+  document.getElementById('ringT').innerHTML=`<b>${rg.hits}</b>번 닿았어 — 남은 <b>${R.length-rg.hits}</b>번, 더 빨라진다`;
+}
+
+/* ── B · 세로 향 ── 불씨 y가 160(향 끝)에서 위로 올라간다(=타들어감). 띠 = y 150/130/110. */
+const BANDY=[120,82,44], TOP=20, BOT=158;   // 활주로 = (158-120)/30=1.27s · (120-82)/42=0.90s · (82-44)/56=0.68s — 종전 0.38s는 불씨를 보기도 전에 지나갔다
+let ig=null;
+function inscStart(){
+  ig={i:0,hits:0,y:BOT,done:0,last:performance.now()};
+  const box=document.getElementById('inscBox');
+  box.classList.remove('hit','miss','out');
+  document.querySelectorAll('#inscPip i').forEach(p=>p.className='');
+  document.getElementById('inscT').innerHTML='불씨가 <b>향불 자리</b>에 닿을 때 탭 — 세 번';
+  BANDY.forEach((_,k)=>document.getElementById('b'+k).classList.toggle('live',k===0));
+  inscPaint(); requestAnimationFrame(inscTick);
+}
+function inscPaint(){
+  document.getElementById('emb').setAttribute('cy',ig.y.toFixed(2));
+  document.getElementById('smokeG').setAttribute('transform','translate(0,'+ig.y.toFixed(2)+')');   // 연기 = 불씨 끝에서 피어오른다(종전 고정 y = 불씨가 내려가도 연기는 제자리)
+  document.getElementById('ashLine').setAttribute('y2',ig.y.toFixed(2));   // 재 = 불씨 위쪽
+  document.getElementById('bodyLine').setAttribute('y1',ig.y.toFixed(2));  // 몸통 = 불씨 아래쪽
+}
+function inscTick(now){
+  if(!ig||ig.done)return;
+  const dt=Math.min(.05,(now-ig.last)/1000); ig.last=now;
+  ig.y-=B[ig.i].v*dt;
+  if(ig.y<TOP){ig.done=1;document.getElementById('inscBox').classList.add('out');
+    document.getElementById('inscT').innerHTML='향이 다 탔는데 못 맞혔어 — <b>빗나갔어</b>';return;}
+  inscPaint(); requestAnimationFrame(inscTick);
+}
+function inscTap(){
+  if(!ig||ig.done)return;
+  const box=document.getElementById('inscBox'),d=Math.abs(ig.y-BANDY[ig.i]);
+  if(d>B[ig.i].h/2){ig.done=1;box.classList.add('miss','out');
+    document.getElementById('inscT').innerHTML='향이 꺼졌다 — <b>빗나갔어</b>';return;}
+  ig.hits++; box.classList.add('hit'); setTimeout(()=>box.classList.remove('hit'),240);
+  const p=document.querySelectorAll('#inscPip i')[ig.hits-1]; if(p)p.className='on';
+  if(ig.hits>=B.length){ig.done=1;document.getElementById('inscT').innerHTML='향이 끝까지 탔어 — <b>기도가 닿는다</b>';return;}
+  document.getElementById('b'+ig.i).classList.remove('live');
+  ig.i++; document.getElementById('b'+ig.i).classList.add('live');
+  document.getElementById('inscT').innerHTML=`<b>${ig.hits}</b>번 닿았어 — 남은 <b>${B.length-ig.hits}</b>번, 더 빨라진다`;
+}
+
+/* 위임 1핸들러(레포 관례 계승 — 개별 배선 금지) */
+document.addEventListener('pointerdown',e=>{
+  if(e.target.closest('#ringSvg')){e.preventDefault();ringTap();return;}
+  if(e.target.closest('#inscBox')){e.preventDefault();inscTap();}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key!==' '&&e.key!=='Enter')return;
+  if(document.activeElement&&document.activeElement.id==='ringSvg'){e.preventDefault();ringTap();}
+  if(document.activeElement&&document.activeElement.id==='inscBox'){e.preventDefault();inscTap();}
+});
+ringStart(); inscStart();
+</script>
+</body>
+</html>
