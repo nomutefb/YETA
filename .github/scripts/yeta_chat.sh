@@ -918,7 +918,7 @@ L.append(f"- 오늘의 너: {daily} — 사건 없는 그날 기분, 미묘하�
 if moon: L.append("- 오늘 밤 달이 차오른다 — 본능이 증폭되는 며칠(해당 없는 캐릭터는 무시).")
 if mood_ko: L.append(f"- 직전 장면의 공기: {mood_ko}. 감정은 스위치가 아니라 곡선이다 — 급변하지 말고 이 공기에서 자연스럽게 이어가라(유지·심화·서서히 이완). 단 진짜 계기(진심 어린 사과·충격·제대로 꽂힌 농담)가 오면 곡선을 꺾어도 된다.")
 if last_open: L.append(f"- 직전에 네가 삼킨 것: {last_open} — 아직 안 끝났다. 이번 턴 어딘가에서 티가 나게 하라(설명·재론 금지 · 말끝·행동·딴소리로 새어나오는 정도). 유저가 화제를 옮겼으면 억지로 끌고 오지 말고 그냥 흘려보내라.")   # 감정선 캐리어(평의회 260725) — MOOD가 겉 공기라면 이건 속. 질문으로 넘기지 않고 대화가 이어지는 재료(대화분석 SC3 회피 · 운영자 "묻자는 건 아니고")
-if notice_txt: L.append(f"- 오늘 무음동 전광판에 걸린 소식(그날 일 몇 건을 훑는 브리핑 · Q.132): 「{notice_txt}」 — 이 동네 사람이면 지나면서 봤을 것이다. **먼저 꺼내 낭독하지 마라**(공지를 읽어주는 인물이 되면 사람이 아니라 게시판이 된다). 대화가 그 언저리로 오면 아는 티만 내라 — 한 마디 얹거나, 남 얘기 하듯 흘리거나, 관계된 인물이면 반응이 달라지거나. 관심 없는 성격이면 무시해도 된다.")
+if notice_txt: L.append(f"- 오늘 무음동 전광판에 걸린 소식(그날 일 몇 건을 훑는 브리핑 · Q.133): 「{notice_txt}」 — 이 동네 사람이면 지나면서 봤을 것이다. **먼저 꺼내 낭독하지 마라**(공지를 읽어주는 인물이 되면 사람이 아니라 게시판이 된다). 대화가 그 언저리로 오면 아는 티만 내라 — 한 마디 얹거나, 남 얘기 하듯 흘리거나, 관계된 인물이면 반응이 달라지거나. 관심 없는 성격이면 무시해도 된다.")
 if cast: L.append(f"- 이 동네 사람들: {cast}. 이 밖의 주민을 창작하지 마라 — 최근 대화에 이름표로 등장한 다른 주민의 말은 그 사람 얘기로 자연스럽게 인용해도 된다.")
 if place_nm: L.append(f"- 네 평소 동선상 지금 너는 {place_nm} 언저리다 — **장소 낭독은 금지**(\"난 지금 ○○에 있어\" 식 보고 금지)지만, 종결부 지문의 **소품은 여기서 가져와라**: 그곳에 있을 법한 물건·풍경·이름 없는 사람(옆자리 아이·점원·지나가던 사람)이 지문의 재료다(운영자 260725 3차). 단 대화 흐름이 이미 다른 곳을 가리키면 그쪽이 우선이다.")
 if co_name: L.append(f"- 지금 이 자리엔 {co_name}도 같이 있다(합석). 대화는 셋이서다 — 그리고 {co_name}는 네가 유저와 주고받는 말을 **처음부터 다 듣고 있다**(운영자 260725 \"모니터링 하는 느낌\"). 없는 사람처럼 굴지 마라: 걔가 걸릴 만한 대목에선 말을 고르거나 시선을 의식하는 티가 나야 한다. 유저 말이 {co_name}를 향한 것 같으면 짧게 반응만 얹거나 물러나도 된다 — 그 자리는 걔가 자기 차례에 직접 받는다(네가 걔 속을 대신 말하지 마라).")
@@ -1615,7 +1615,7 @@ PY
 # 하루 **1건**만. 발행 주체 = 편집국 데스크(조지 로이스 — 이미 있는 인물이라 세계관 신설 0).
 # 사망·부활은 **창작이 아니라 사실 주입** — dead{}에 있는 것만 쓴다(없는 죽음을 지어내면 대화와 세계가 갈라진다).
 #
-# 260730 Q.132 개편(운영자 "확성기 쓸데없는소리 나오게 하지말고, 그날 무음동에 있었던 사건 전반에 대해 서술하게 해줘.
+# 260730 Q.133 개편(운영자 "확성기 쓸데없는소리 나오게 하지말고, 그날 무음동에 있었던 사건 전반에 대해 서술하게 해줘.
 #                      내 대화에서 추론시키지마셈. 현재 현실 뉴스를 무음동에 대비시켜서 뽑아. 소넷5로 에포트 맥스로"):
 #   ⓐ **대화 추론 폐지** — 초판은 최근 답장 6턴을 [요즘 골목에서 오간 말]로 넣어 그걸 소재로 삼게 했다. 그게 "쓸데없는소리"의 뿌리였다
 #      (내가 방금 한 대화를 동네 소식으로 되돌려주는 자기참조 = 새 정보 0). 그 블록을 통째로 뺐다.
@@ -1690,7 +1690,7 @@ raw = [l.strip() for l in (os.environ.get("NOTICE_RAW") or "").splitlines() if l
 if len(raw) < 2: sys.exit(1)
 kind = re.sub(r"[^a-z]", "", raw[0].lower())[:8]
 if kind not in ("dead", "ad", "issue"): kind = "issue"
-text = re.sub(r"\s+", " ", raw[1]).strip().strip("\"'")[:220]   # 캡 120 → 220(Q.132 — 한 줄 헤드라인에서 그날 2~4건 브리핑으로 바뀌어 200자 문구 + 여유)
+text = re.sub(r"\s+", " ", raw[1]).strip().strip("\"'")[:220]   # 캡 120 → 220(Q.133 — 한 줄 헤드라인에서 그날 2~4건 브리핑으로 바뀌어 200자 문구 + 여유)
 if not text: sys.exit(1)
 today = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime("%Y-%m-%d")
 S["notice"] = {"d": today, "text": text, "kind": kind, "by_name": "데스크", "ts": int(time.time() * 1000)}
@@ -1800,7 +1800,7 @@ process_turn() {
                  *) AMB_ON="${AMB_FILE:-1}"; GB_ON="$_GBON"; CH_ON="$_CHON"; BARGE_ON=1; NT_ON=1 ;; esac   # 형식 불일치(파이썬 실패·빈 출력) = 종전 기본 전량 복귀(설정 사고로 축이 통째 죽는 것 차단)
   GB_BEATS="$GB_ENV_BEATS"; [ "$GB_ON" = "1" ] || GB_BEATS=0     # 자율 비트 끔 = 상한 0 = 예약 자체가 안 걸린다(기존 '0 = 축 OFF' 계약 재사용 · 새 분기 0)
   GB_LINES="$GB_ENV_LINES"; [ "$CH_ON" = "1" ] || GB_LINES=1     # 단톡 교대 끔 = 1토막 = 종전 결(GROUP_RULE 폴백이 그대로 받는다)
-  CO_ID="$(matv co)"; CO_NAME="$(matv co_name)"; BARGE_DEBUT="$(matv barge_debut)"; BARGE_HOST="$(matv barge_host)"; WFRZ_MS="$(matv wfrz)"; WRATE="$(matv wrate)"; WANCH="$(matv wrb)"; NOTICE_TXT="$(matv notice)"; [ "${NT_ON:-1}" = "1" ] || NOTICE_TXT=""   # 단톡 동행·난입 데뷔(합석 260707) · 난입당한 쪽(260728) · 확성기 축 OFF = 프롬프트에서도 소거(Q.132 — 화면만 끄면 캐릭터가 안 보이는 공지를 계속 알던 구멍)
+  CO_ID="$(matv co)"; CO_NAME="$(matv co_name)"; BARGE_DEBUT="$(matv barge_debut)"; BARGE_HOST="$(matv barge_host)"; WFRZ_MS="$(matv wfrz)"; WRATE="$(matv wrate)"; WANCH="$(matv wrb)"; NOTICE_TXT="$(matv notice)"; [ "${NT_ON:-1}" = "1" ] || NOTICE_TXT=""   # 단톡 동행·난입 데뷔(합석 260707) · 난입당한 쪽(260728) · 확성기 축 OFF = 프롬프트에서도 소거(Q.133 — 화면만 끄면 캐릭터가 안 보이는 공지를 계속 알던 구멍)
   PLACE_NM="$(matv place_nm)"; BARGE_VIA="$(matv barge_via)"   # 동선 장소 + 마주침 데뷔 결(위치 SSOT places.json · 260707)
   OPEN="$(matv open)"; OPENING_TS="$(matv opening_ts)"   # 오프닝 잡(동적 첫인사 · 운영자 260707) — OPEN=1이면 유저발화 없이 캐릭터가 먼저 · OPENING_TS = nonce(finish 레이스 방어)
   RETRY_N="$(matv retry_n)"   # 자동 재시도 회차(사다리 260714) — 오프닝 JSON엔 키 없음 = 빈값(아래 -ge 가드가 흡수)
