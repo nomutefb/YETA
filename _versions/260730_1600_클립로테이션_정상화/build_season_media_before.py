@@ -290,9 +290,6 @@ SEASONS = {
         #   현 클립 seduce_vest_clip_01 은 파일명에 seduce 가 있어 love로 확정 = clip_to는 다음 클립용 폴백.
         "clip_to": ["love", "shy"],
         "clip_w": 3,
-        "clip_cap": True,   # 260730 — 풀이 작아 3배를 그대로 먹이면 클립이 과반(love 6칸 중 3칸 = 두 턴에 한 번 영상)이 된다.
-                            #   사진이 늘면 캡이 저절로 풀려 clip_w 3배로 복귀(운영자 「나중에 이미지를 더 넣을 것」).
-                            #   윈터·루시는 운영자 명시 지정 축이라 캡을 안 건다(apply_clip_weight 독스트링 ⚠⚠).
         "rules": SAN_FLAT_RULES,   # 최산 전용 표(윈터와 별개 객체 · 운영자 260730 「절대 겹치면안됨」)
         "comment": ("감정 미디어 manifest(최산) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
                     "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립). "
@@ -350,20 +347,12 @@ def rel(p: Path) -> str:
 #   · clip_w  = 클립 1개가 한 바퀴에 실리는 횟수 = **다른 사진 대비 배수**(3 = 3배).
 # ⚠ 반복분을 뒤에 몰아 붙이면 같은 영상이 연속 턴에 연타된다 → weave가 **등간격 슬롯**에 꽂는다.
 def weave(items: list, extra: list) -> list:
-    """extra(클립 반복분)를 items 사이 등간격에 끼운다 — 연타 방지 · 총 길이 = len(items)+len(extra).
-
-    ⚠ 260730 슬롯 반칸 밀기 — 종전 `int(i*step)`은 i=0에서 **항상 슬롯 0**이라 클립이 풀 맨 앞에 섰다.
-      뷰어 yStage는 답장수 n의 `pool[n%len]`을 집는데, **방을 처음 열면 n≡0** = 늘 클립이 걸린다.
-      그런데 시즌 첫 페인트는 암전 방지를 위해 **클립을 건너뛰고 시그니처 스틸로 착지**하는 계약이라
-      (yStage `_yStageCold`), 결과가 「설렘 국면인데 base 시그니처가 뜬다」였다(운영자 260730 실측 지적).
-      `(i+0.5)*step`으로 반칸 밀면 extra는 **구간 한가운데**에 꽂힌다 → 슬롯 0은 항상 사진 =
-      첫 진입이 그 감정의 진짜 사진으로 착지한다. 등간격·연타 방지 성질은 그대로.
-    """
+    """extra(클립 반복분)를 items 사이 등간격에 끼운다 — 연타 방지 · 총 길이 = len(items)+len(extra)."""
     if not extra:
         return list(items)
     total = len(items) + len(extra)
     step = total / len(extra)                       # total ≥ len(extra) → step ≥ 1 → 슬롯 충돌 없음
-    slots = {int((i + 0.5) * step) for i in range(len(extra))}   # 반칸 밀기(위 ⚠) · 최대 (len-0.5)*step < total = 범위 안전
+    slots = {int(i * step) for i in range(len(extra))}
     out, ii, ei = [], 0, 0
     for i in range(total):
         if i in slots and ei < len(extra):
@@ -379,30 +368,16 @@ def clip_buckets(cfg: dict) -> list:
 
 
 def apply_clip_weight(buckets: dict, cfg: dict) -> None:
-    """버킷 안의 클립을 clip_w배로 늘려 등간격 재배치(제자리 수정). 감정 폴더 축·평면 축 공용.
-
-    ⚠ 260730 사진 수 비례 상한 — clip_w는 윈터(버킷당 사진 11~62장) 기준으로 정한 3배다.
-      사진이 적은 버킷에 그대로 3배를 먹이면 **클립이 과반**이 된다(실측: 최산 love = 사진 2 + 클립 3
-      = 6칸 중 3칸이 영상 = 두 턴 중 한 번이 영상). 「일단 자연스럽게」가 우선이므로
-      **클립 반복분이 사진 수의 절반을 넘지 않게** 캡을 건다 — 사진이 늘면 캡이 풀려 자동으로
-      원래 clip_w로 복귀한다(운영자 260730 「최산거는 나중에 이미지를 더 넣을 것」 = 스스로 자라는 규칙).
-      캡 계산은 **클립 종류 수**가 아니라 반복 배수에만 건다(클립이 여러 개인 버킷도 각자 1배는 보장).
-      ⚠⚠ 기본은 **끔**(`clip_cap` 미지정 = 종전 동작 그대로). 켜면 칸 수가 줄어드는데, 윈터·루시는
-        운영자가 260727에 「영상이 너무 안 나온다 · 애정/설렘 때 나오게 · 다른 것에 3배」로 **명시 지정**한
-        축이라 그 결정을 자동으로 뒤집으면 안 된다. 새로 붓는 인물처럼 풀이 작아 클립이 과반이 되는
-        경우에만 켠다(현재 = 최산).
-    """
+    """버킷 안의 클립을 clip_w배로 늘려 등간격 재배치(제자리 수정). 감정 폴더 축·평면 축 공용."""
     w = int(cfg.get("clip_w") or 1)
     if w <= 1:
         return
-    cap = bool(cfg.get("clip_cap"))
     for e, lst in buckets.items():
         clips = [p for p in lst if p.suffix.lower() in CLIP_EXT]
         if not clips:
             continue
         imgs = [p for p in lst if p.suffix.lower() not in CLIP_EXT]
-        w_eff = min(w, max(1, len(imgs) // (2 * len(clips)))) if cap else w   # 캡 ON = 클립 총 칸수 ≤ 사진 수의 절반
-        buckets[e] = weave(imgs, clips * w_eff)
+        buckets[e] = weave(imgs, clips * w)
 
 
 def build_flat(cid: str, cfg: dict) -> dict:
