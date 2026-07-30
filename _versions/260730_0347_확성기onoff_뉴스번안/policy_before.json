@@ -128,7 +128,7 @@
       }
     ],
     "switches_label": "연출 — 자동 개입",
-    "_switches_doc": "운영자 260727 지시(「껐다 킬 수 있는 옵션 설정은 모두 UI 설정란에 있어야 된다 — 내가 모르는 설정이 켜져 있는지도 모르니까」). 위 axes가 **말의 수위**를 정한다면 여기 switches는 **유저가 말 안 했는데 러너가 스스로 하는 일** 5가지를 켜고 끈다. axes와 계약이 같다({key,label,default,opts}) → 뷰어는 같은 행 렌더러(axRow·yPolChips)를 그대로 쓰고, 게이트웨이는 같은 enum 정수 경로로 저장한다(SET = 관리자 PIN). ⚠️ axes와 딱 하나 다른 점 = **prompt 필드가 없다**: 이건 프롬프트에 문장을 얹는 축이 아니라 러너 코드가 읽고 동작을 끊는 축이라, POLICY_BLOCK 조립 루프(axes+L0 토글만 순회)에 들어가지 않는다. 여기에 prompt를 달지 마라 — 다는 순간 두 축이 섞인다. 소비처: ambient = yeta_chat.sh AMB_ON(생성·심기·HIST) + viewer yAmbOn(화면) · beats = GB_BEATS(0=끔) · chorus = GB_LINES(1=끔) · barge = BARGE_ON(barge_check 조기 종료) · notice = yeta_chat.sh NT_ON(전광판 생성 notice_refill + 캐릭터 프롬프트 NOTICE_TXT) + viewer yNtOn(띠 화면 · Q.133). 세션에 키가 없으면 종전 기본(env·ambient.json)이 그대로 이긴다 = 이 파일만 늘려도 회귀 0.",
+    "_switches_doc": "운영자 260727 지시(「껐다 킬 수 있는 옵션 설정은 모두 UI 설정란에 있어야 된다 — 내가 모르는 설정이 켜져 있는지도 모르니까」). 위 axes가 **말의 수위**를 정한다면 여기 switches는 **유저가 말 안 했는데 러너가 스스로 하는 일** 4가지를 켜고 끈다. axes와 계약이 같다({key,label,default,opts}) → 뷰어는 같은 행 렌더러(axRow·yPolChips)를 그대로 쓰고, 게이트웨이는 같은 enum 정수 경로로 저장한다(SET = 관리자 PIN). ⚠️ axes와 딱 하나 다른 점 = **prompt 필드가 없다**: 이건 프롬프트에 문장을 얹는 축이 아니라 러너 코드가 읽고 동작을 끊는 축이라, POLICY_BLOCK 조립 루프(axes+L0 토글만 순회)에 들어가지 않는다. 여기에 prompt를 달지 마라 — 다는 순간 두 축이 섞인다. 소비처: ambient = yeta_chat.sh AMB_ON(생성·심기·HIST) + viewer yAmbOn(화면) · beats = GB_BEATS(0=끔) · chorus = GB_LINES(1=끔) · barge = BARGE_ON(barge_check 조기 종료). 세션에 키가 없으면 종전 기본(env·ambient.json)이 그대로 이긴다 = 이 파일만 늘려도 회귀 0.",
     "switches": [
       {
         "key": "ambient",
@@ -170,16 +170,6 @@
           "강제"
         ],
         "hint": "낯선 주민이 스스로 대화에 끼어들기(하루 1회) — 끄면 안 나타난다 · **강제** = 시간대·확률·하루1회를 전부 무시하고 다음 답장 직후 즉시 난입(테스트용 · 확인했으면 「켬」으로 되돌려라)"
-      },
-      {
-        "key": "notice",
-        "label": "확성기(전광판)",
-        "default": 1,
-        "opts": [
-          "끔",
-          "켬"
-        ],
-        "hint": "그날 무음동 사건을 훑는 띠가 채팅 상단을 두 번 지나간다(하루 1건 · 도는 동안 모델명·토큰은 띠 아래로) — 끄면 생성·화면·프롬프트 전부 멈춘다"
       }
     ],
     "world_label": "세계 — 시간 흐름",
