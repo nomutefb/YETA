@@ -94,12 +94,15 @@ def img_size(p: Path):
         return None
     return None
 
-# ── 평면(flat) 축 공용 파일명 규칙 — 아이돌 등급 `characters/idol/<id>/` 계보(윈터 260726 · 최산 260730) ──────
-# 왜 상수로 뽑았나: 최산이 윈터와 같은 축으로 들어오면서(운영자 260730 「최산도 윈터랑 같은급 · 트리 구조 계승」)
-#   같은 어휘 표를 두 곳에 복제하면 한쪽만 고쳐지는 드리프트가 난다 → **한 곳(SSOT)에서 두 캐릭터가 참조**.
+# ── 평면(flat) 축 파일명 규칙 — 아이돌 등급 `characters/idol/<id>/` 계보(윈터 260726 · 최산 260730) ──────────
+# ⚠⚠ 캐릭터마다 **자기 표**를 갖는다(운영자 260730 「여튼 윈터랑 최산은 절대 겹치면안됨」 → 「규칙표도 분리」).
+#   종전 잠깐 IDOL_FLAT_RULES 하나를 둘이 참조했는데(같은 날 오전), 운영자 지시로 되돌렸다 —
+#   두 실존 아이돌이 어떤 축에서도 공유물을 갖지 않게 한다. 대가 = 표 2벌 = 한쪽만 고쳐지는 드리프트 여지
+#   (그래서 아래 두 표는 **같은 순서·같은 뜻**을 유지하고, 한쪽을 고치면 다른 쪽도 볼 것 —
+#    합치는 건 금지 = 운영자 지시).
 # ⚠ 위에서부터 첫 일치 승 — 좁은 토큰을 먼저.
 #   (예: glaring_cut → sulky 가 glaring → mad 보다 위 · faux_furious → sulky 가 furious → mad 보다 위 · playful_cute → shy 가 playful → joy 보다 위)
-IDOL_FLAT_RULES = [
+WINTER_FLAT_RULES = [
     ("shy",   ["tsundere", "hesitant_to_speak", "flustered", "giggle_bashfully", "act_cute", "play_cute", "playful_cute"]),
     ("love",  ["seduce", "flirty", "love_u", "how_do_i_look", "miss_someone", "fond_look"]),
     # bored/listless(260729 운영자 「soso · 따분 · 심심 이런느낌으로 기존에 있는거에」) = 각성 낮은 무기력 결로 blue 편입.
@@ -114,6 +117,20 @@ IDOL_FLAT_RULES = [
     ("joy",   ["happy", "excited", "eureka", "goofy", "proud", "full_of_oneself", "playful", "hopeful"]),
     ("warm",  ["smile", "chuckle", "cheerup", "hi_", "its_you", "love"]),
     # 나머지(무대·연습·일상·배경·모델컷 등) = base 폴백
+]
+
+# 최산 전용 표(260730) — 윈터 표와 **별개 객체**. 같은 뜻·같은 순서를 쓰되 공유하지 않는다(운영자 「절대 겹치면안됨」).
+#   최산 파일은 전부 `san_` 접두라 토큰은 접두 뒤 단어로 잡힌다(부분일치 = 접두 무해 · 실측).
+SAN_FLAT_RULES = [
+    ("shy",   ["tsundere", "hesitant_to_speak", "flustered", "giggle_bashfully", "act_cute", "play_cute", "playful_cute"]),
+    ("love",  ["seduce", "flirty", "love_u", "how_do_i_look", "miss_someone", "fond_look"]),
+    ("blue",  ["sob", "crying", "heartbroken", "worried", "brooding", "sleepy", "asleep", "dozing", "heavy_eyes", "gotosleep", "go_sleep", "helpless", "at_a_loss", "let_down", "overwhelmed", "sad", "bored", "listless"]),
+    ("sulky", ["sulky", "pouty", "offend", "grumpy", "upset", "low_key_mad", "feigning_mad", "faux_furious", "cold_shoulder", "curt", "glaring_cut", "glaring_cuty"]),
+    ("mad",   ["angry", "furious", "annoy", "irritat", "disgusting", "glaring"]),
+    ("tense", ["suspicious", "taken_aback", "confused", "clueless", "dumbfounded", "panick", "freaking", "is_this_happening", "no_way", "for_real", "oh_really", "are_u_kidding", "what_now", "speechless", "so_cold", "poker_face", "fake_smile", "i_told_you_so", "smirk", "distracted"]),
+    ("joy",   ["happy", "excited", "eureka", "goofy", "proud", "full_of_oneself", "playful", "hopeful"]),
+    ("warm",  ["smile", "chuckle", "cheerup", "hi_", "its_you", "love"]),
+    # 나머지(무대·행사·거리·해변 등 상황어) = base 폴백
 ]
 
 # 캐릭터별 구성 — modes: {모드폴더: 루트(미분류) 파일이 흡수될 버킷들} · mode_dir: 변신 모드 폴더(viewer 게이트 축)
@@ -273,12 +290,12 @@ SEASONS = {
         #   현 클립 seduce_vest_clip_01 은 파일명에 seduce 가 있어 love로 확정 = clip_to는 다음 클립용 폴백.
         "clip_to": ["love", "shy"],
         "clip_w": 3,
-        "rules": IDOL_FLAT_RULES,   # 윈터와 같은 표(SSOT) — 어휘가 갈라지면 같은 단어가 캐릭터마다 다른 버킷에 가는 사고가 난다
+        "rules": SAN_FLAT_RULES,   # 최산 전용 표(윈터와 별개 객체 · 운영자 260730 「절대 겹치면안됨」)
         "comment": ("감정 미디어 manifest(최산) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
                     "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립). "
                     "⚠ 축 = **평면(flat) 폴더**(윈터와 동일 · 운영자 260730 「윈터랑 같은급 · 트리 구조 계승」) — 사진이 감정 하위폴더가 아니라 "
-                    "`characters/idol/san/`에 감정이 적힌 파일명(happy_thumbs_up_01 · so_cold_02 · pouty_headphones_01 …)으로 모여 있고, "
-                    "IDOL_FLAT_RULES 토큰 규칙이 그걸 읽어 버킷에 넣는다. 새 사진 = 같은 폴더에 감정 단어가 들어간 이름으로 넣기만 · "
+                    "`characters/idol/san/`에 **`san_` 접두 + 감정 단어** 파일명(san_happy_thumbs_up_01 · san_so_cold_02 · san_pouty_headphones_01 …)으로 모여 있고, "
+                    "SAN_FLAT_RULES 토큰 규칙이 그걸 읽어 버킷에 넣는다(부분일치라 접두는 무해). ⚠ `san_` 접두 = **윈터와 파일명이 절대 안 겹치게** 하는 구조 장치(운영자 260730) — 새 사진도 접두를 붙일 것 · "
                     "어디에도 안 걸리면 base 폴백. 클립 = 파일명 토큰 우선(seduce_vest_clip_01 → love) · 미매치 시 clip_to(love·shy) · clip_w=3(등간격 3배). "
                     "얼빡 프사 `san_face.webp`는 같은 폴더에 두지만 `<id>_face*` 규약으로 배경 풀에서 자동 제외된다. "
                     "정본=viewer/characters/idol/san/."),
@@ -290,8 +307,8 @@ SEASONS = {
         #   → clip_to로 버킷을 지정한다. 종전 = base 66장 선두 = 66턴에 1번(사실상 안 보임).
         "clip_to": ["love", "shy"],
         "clip_w": 3,
-        # ⚠ 위에서부터 첫 일치 승 — 표는 IDOL_FLAT_RULES(모듈 상단 SSOT · 최산과 공유 · 260730 뽑아냄).
-        "rules": IDOL_FLAT_RULES,
+        # ⚠ 위에서부터 첫 일치 승 — 표는 WINTER_FLAT_RULES(모듈 상단 · 윈터 전용 · 최산 표와 공유 금지).
+        "rules": WINTER_FLAT_RULES,
         "comment": ("시즌 감정 미디어 manifest(윈터) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
                     "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립). "
                     "클립 = 파일명에 감정 토큰이 있으면 그 버킷(bored_photoshoot_01 → blue · 260729), 없으면 clip_to 폴백(love·shy) · "
