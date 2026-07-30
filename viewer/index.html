@@ -1804,6 +1804,11 @@ const yAmbOn = () => {   // 주변 사건(kind=amb) 표시 여부 = **L1 설정�
   const v = Number.isInteger((_ypolCur || {}).ambient) ? _ypolCur.ambient : (sw ? sw.default : 0);   // 정의 미로드(부팅 직후 프리페치 전) = 기본 0 = 숨김 = 안전측(껐다고 믿은 게 반짝 보이는 사고 차단)
   return v !== 0;
 };
+const yNtOn = () => {   // 확성기(전광판) on/off = **L1 설정값 단일 정본**(운영자 260730 Q.132 "확성기 on/off 가능하게") — 위 yAmbOn 선언 100% 계승(조회 문법·미로드 폴백 규약 동일 · 새 저장 축 0). 러너도 같은 키(policy.notice → NT_ON)를 읽어 스위치 하나가 생성·프롬프트·화면을 동시에 지배한다
+  const sw = ((YPOLDEF && YPOLDEF.L1 || {}).switches || []).find(x => x.key === 'notice');   // 정의 = 정책 문서(뷰어 하드코딩 0)
+  const v = Number.isInteger((_ypolCur || {}).notice) ? _ypolCur.notice : (sw ? sw.default : 1);   // 정의 미로드(부팅 직후 프리페치 전) = 정의 기본 1 = 켬. ⚠ yAmbOn과 폴백 방향이 반대인 이유 = 주변 사건은 「꺼둔 게 반짝 보이는」 사고가 치명적이라 안전측이 숨김이지만, 확성기는 기본 켬 축이라 프리페치 전 1회를 숨기면 그날 유일한 발화를 놓친다(하루 1건 = 재시도 없음)
+  return v !== 0;
+};
 const yApi = (op, extra) => fetch('api/yeta', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ op, ...(extra || {}) }) }).then(r => r.json());
 const yFmt = t => esc(t)   // *지문* → 이탤릭 + 줄바꿈 정규화(운영자 260712 — 지문 = 항상 제 줄 시작 · 지문 뒤 대사 = 빈 줄 하나 · .yb pre-wrap가 \n 렌더 · 과거 히스토리도 표시 시점 일괄 정규화)
   .replace(/《([^》\n]{1,200})》/g, '<b class="yq">$1</b>')   // 《핵심 질문》 → 빛 스윕 글자(운영자 260728 "로딩·제작·페이지 전환 문구에 적용된 빛 지나가는 모션 · 그 포인트 글자 스타일을 핵심 질문에 투영") — 카드가 질문을 《》로 감싼다. 겹화살괄호 = 한국어 대사에 안 쓰이는 기호(오탐 0) · 표시에선 벗겨진다(마커일 뿐 대사가 아니다 = 일본어 [대괄호] 선례 계승) · 마커를 안 붙인 답은 이 치환이 안 걸리고 평문 그대로 = fail-soft. ⚠ 다른 치환보다 **먼저** = *지문*·가나 치환이 삽입한 태그 내부를 다시 훑지 않게
@@ -3963,6 +3968,7 @@ const yntMark = k => { try { localStorage.setItem('yeta_ynt_seen', k); } catch {
 let _yntT = 0;
 function yNotice() {   // 무음동 전광판(운영자 260728 → 260730 이벤트화) — 세션 top-level notice{d,text,kind}. 러너가 하루 1건 생성·저장하고 뷰어는 읽기만(생성 0 = 렌더 비용 0).
   const el = $('#yetanotice'); if (!el) return;
+  if (!yNtOn()) { yNoticeEnd(); return; }                       // L1 확성기 축 OFF(Q.132) = 화면에서 즉시 회수 · 러너도 같은 키로 생성·프롬프트를 끊는다(한쪽만 꺼져 어긋나던 구멍 없음)
   const n = (YSESS || {}).notice;
   const txt = n && typeof n === 'object' ? String(n.text || '').trim() : '';
   if (!txt) return;                                             // 공지 없음 = 아무것도 안 한다(흐르던 띠가 있으면 자기 타이머로 마무리)
