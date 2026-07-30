@@ -511,8 +511,9 @@ _FACE_RATIO_OK = {
     'characters/season/gojo/main/joy/gojo_n09.jpg',        # 736×736 헬스장 전신 풍경(인물 작음·배경 넓음) — 260726 육안
     'characters/season/lucy/dokkaebi/base/dokkaebi_21.jpg', # 735×825 비 오는 지붕 착석 전신 — 260726 육안
     'characters/season/lucy/dokkaebi/joy/dokkaebi_11.jpg',  # 1600×1600 소품 든 상반신 일러스트(여백 큼) — 260726 육안
-    'characters/season/san/main/base/san_06.jpg',      # 750×750 런던 거리 전신(인물 중앙·좌우 여백 = cover 생존) — 260730 육안
-    'characters/season/san/main/base/san_07.jpg',      # 750×750 런던 거리 보행 전신(동일 세트) — 260730 육안
+    # ⚠ 최산 750×750 2장(런던 거리 전신)은 260730 오후 평면 축 이관으로 characters/idol/san/street_london_0{1,2}.jpg 이 됐다.
+    #    이 표는 season/ manifest만 훑으므로(check_face_bg glob) idol/ 평면 축은 애초에 여기 오지 않는다 = 등재 불요.
+    #    ⛳ 남은 구멍 = 평면 축(idol/) 전체가 얼빡·비율 게이트 사각지대(윈터도 동일) — 별건 과제.
 }
 
 def check_face_bg():
