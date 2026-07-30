@@ -160,8 +160,8 @@
           </svg>
         </div>
         <div class="ysng-pip" id="inscPip"><i></i><i></i><i></i></div>
-        <div class="ysng-t" id="inscT">불씨가 <b>향불 자리</b>에 닿을 때 탭 — 세 번</div>
-        <div class="ysng-s">세라을(를) 위해 비는 중 · 한 번이라도 빗나가면 향이 꺼진다</div>
+        <div class="ysng-t" id="inscT"><b>청신 — 신을 부른다</b></div>
+        <div class="ysng-s">불씨가 향불 자리에 닿을 때 탭 · 한 번이라도 빗나가면 향이 꺼진다</div>
         <button class="btn" onclick="inscStart()">다시</button>
       </div></div>
       <p class="note"><b>가져온 것</b> — 검정→청록 수평 그라데이션(포스터의 수평선) · 향꽂이 실루엣 + 거울 반사 · 얇은 수직 향 1대 · <code>feTurbulence</code>로 흔들리는 연기 한 줄기.<br>
@@ -190,6 +190,7 @@
 <script>
 /* 두 안 다 실제로 돌아간다 — 판정식·난이도 사다리는 viewer/index.html 본체(YSNG_R)와 같은 값. */
 const R = [{v:.95,w:34},{v:1.25,w:24},{v:1.55,w:18}];   // 링: 회전/초, 향불 폭(도)
+const BNM = ['청신 — 신을 부른다','기원 — 이름을 고한다','송신 — 보내드린다'];   // 무속제의 3단(청신→대접·기원→송신) · 향 3개비 = 삼보(불·법·승)/천지인 — 「3연속」에 붙는 문화 근거(오퍼스 조사 260730)
 const B = [{v:30,h:3.0},{v:42,h:2.3},{v:56,h:1.8}];     // 향: 불씨 px/초, 판정 높이(px) = 2·v·허용오차 역산 → ±50/±27/±16ms(링과 **동일 난이도**) · 띠 stroke-width와 1:1 = 보이는 게 곧 판정창
 
 /* ── A · 가로 링 ── */
@@ -232,7 +233,7 @@ function inscStart(){
   const box=document.getElementById('inscBox');
   box.classList.remove('hit','miss','out');
   document.querySelectorAll('#inscPip i').forEach(p=>p.className='');
-  document.getElementById('inscT').innerHTML='불씨가 <b>향불 자리</b>에 닿을 때 탭 — 세 번';
+  document.getElementById('inscT').innerHTML='<b>'+BNM[0]+'</b>';
   BANDY.forEach((_,k)=>document.getElementById('b'+k).classList.toggle('live',k===0));
   inscPaint(); requestAnimationFrame(inscTick);
 }
@@ -260,7 +261,7 @@ function inscTap(){
   if(ig.hits>=B.length){ig.done=1;document.getElementById('inscT').innerHTML='향이 끝까지 탔어 — <b>기도가 닿는다</b>';return;}
   document.getElementById('b'+ig.i).classList.remove('live');
   ig.i++; document.getElementById('b'+ig.i).classList.add('live');
-  document.getElementById('inscT').innerHTML=`<b>${ig.hits}</b>번 닿았어 — 남은 <b>${B.length-ig.hits}</b>번, 더 빨라진다`;
+  document.getElementById('inscT').innerHTML=`<b>${BNM[ig.i]}</b>`;
 }
 
 /* 위임 1핸들러(레포 관례 계승 — 개별 배선 금지) */
