@@ -194,7 +194,7 @@ def line(t, me):
         tp = t.get("persona") or ""
         if tp and tp != me and names.get(tp): return names[tp] + ": " + x   # 타 주민 대사 = 이름 귀속(자기 말로 오독 차단 · 260707 분신 버그픽)
         return "너: " + x
-    if t.get("kind") in ("amb", "omen"): return "— 옆에서: " + x + " —"   # omen(260730 난입 전조) = amb와 같은 문법 — 인물이 「반응할 일」로 알아보되 스치기만 한다(OUTPUT_RULES 「옆에서 벌어진 일」 조항이 그대로 걸린다)   # 주변 사건(260726) = 합류·난입 같은 시스템 알림과 **문법 분화** — 종전엔 「— … —」가 같아 캐릭터가 이걸 '반응할 일'로 못 알아봤다(무시 = 화면에 지문만 고아로 남음 · 받기 의무 = OUTPUT_RULES)
+    if t.get("kind") == "amb": return "— 옆에서: " + x + " —"   # 주변 사건(260726) = 합류·난입 같은 시스템 알림과 **문법 분화** — 종전엔 「— … —」가 같아 캐릭터가 이걸 '반응할 일'로 못 알아봤다(무시 = 화면에 지문만 고아로 남음 · 받기 의무 = OUTPUT_RULES)
     return "— " + x + " —"                        # sys(합류·초대·난입) = 상황 신호로 문맥 포함
 
 def find_name(txt, nm):   # 호명 감지(경계 휴리스틱) — 앞 = 문두/비한글 · 뒤 = 끝/비한글/직결 조사만("백만"·"종류" 오인 차단)
@@ -1306,33 +1306,19 @@ _seated = {r for t in _ths for r in (t.get("room") or []) if r}
 if _wf.get("since") and _wf.get("by") in _seated:
     if _FORCE: print(f"::warning::난입 강제 — 난입자({_wf.get('by')})가 아직 다른 방에 앉아 있다(이중 난입 차단). 내보내거나 인사하고 나가면 다시 열린다.")
     sys.exit(1)
-# ── 전조 회수(운영자 260730 "#못 보던 까마귀가 창틀에 어느새 앉아있다# 뭐 이런식으로 하고 2턴 뒤에 갑자기 자연스럽게 등장하면 더 게임같겠지") ──
-# 심어둔 전조가 익었으면 **선정 절차를 통째로 건너뛰고** 그 인물로 바로 간다. 하루 1회 상한(barge_day)은 전조를 심을 때 이미 찍었으므로
-# 여기서 다시 보면 자기 전조에 자기가 막힌다 → 이 분기가 상한보다 **먼저** 온다(강제 모드와 같은 위계).
-_om = S_ROOT.get("barge_omen") if isinstance(S_ROOT.get("barge_omen"), dict) else {}
-_om_ready = ""
-if _om.get("id") and _om.get("th") == _os.environ.get("THREAD", ""):
-    _elapsed = len([t for t in turns if (t or {}).get("role") == "assistant" and (t.get("ts") or 0) > (_om.get("ts") or 0)])
-    if time.time() * 1000 - (_om.get("ts") or 0) > 21600000 or _om["id"] not in names:   # 6시간 방치·인물 소멸(사망 등) = 전조 폐기(유령 난입 차단)
-        S_ROOT.pop("barge_omen", None)
-        json.dump(S_ROOT, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False); sys.exit(1)
-    if _elapsed < int(_om.get("need") or 2): sys.exit(1)   # 아직 안 익었다 — 조용히 대기(다음 답장 뒤 재판정)
-    _om_ready = _om["id"]
-if not _om_ready and not _FORCE and S_ROOT.get("barge_day") == today: sys.exit(1)   # 하루 1회 상한 = 전역(top-level — 스레드 곱셈·다방 동시 난입 차단 · 러너감사③A)
+if not _FORCE and S_ROOT.get("barge_day") == today: sys.exit(1)   # 하루 1회 상한 = 전역(top-level — 스레드 곱셈·다방 동시 난입 차단 · 러너감사③A)
 if s.get("state") == "awaiting":
     if _FORCE: print("::warning::난입 강제 — 답장 생성 중이라 보류(다음 답장 뒤 재시도된다).")
     sys.exit(1)                                    # 답장 생성 중 = 안 끼어듦(반영 레이스 축소)
 set_freeze(frz_ms(S_ROOT)); set_rate(rate_of(S_ROOT), anchor_of(S_ROOT))   # 난입 정지 + 세계 배속(L1 · 260728) — 세션 wfz만큼 세계 시계를 뒤로 민다(배속 불변)
 _wd, _wh = world_dh()                              # 무음동 세계 시각(운영자 260716 지도 싱크) — 장소·새벽 판정 축 · today(상한·시드)는 현실 일자 유지(하루 1회 = 현실 하루)
-if not _FORCE and not _om_ready and 3 <= _wh < 8: sys.exit(1)        # 깊은 새벽(세계 시각) = 난입 없음(주민 수면 — 대화 속 시간과 정합) · 전조 회수는 통과(까마귀가 이미 앉았는데 안 오면 약속을 깬 화면이 된다 · 방치분은 6h 만료가 회수)
-if not _FORCE and not _om_ready and len(turns) < 8: sys.exit(1)      # 초반 대화 보호(관계 전 난입 = 소음)
+if not _FORCE and 3 <= _wh < 8: sys.exit(1)        # 깊은 새벽(세계 시각) = 난입 없음(주민 수면 — 대화 속 시간과 정합)
+if not _FORCE and len(turns) < 8: sys.exit(1)      # 초반 대화 보호(관계 전 난입 = 소음)
 cand = ""
 via, meet_pl = "", ""
-_omen_plant = ""
-if _om_ready: cand, via = _om_ready, "only"   # 전조 회수 = 선정 절차 전체를 건너뛴다(누가 올지는 전조를 심을 때 이미 정해졌다)
 # ── 난입 전용 인물 축(운영자 260726 프리실라) — 목록에서 못 여는 대신 '오직 난입'으로만 등장. 관계·언급·장소 축보다 먼저 = 특수 이벤트가 일반 난입에 굶지 않게.
 #    barge{slot:[세계시각 슬롯], gate:N(1/N 확률), boost:[동석 시 가중될 id], boost_gate:M} — 전부 roster 데이터, 러너는 인물명을 모른다(하드코딩 0).
-for _cid in (sorted(BARGE) if not cand else []):
+for _cid in sorted(BARGE):
     if _cid in room or _cid in _seated: continue   # 다른 방에 이미 앉아 있는 인물 = 후보 제외(같은 사람이 두 방에 동시에 앉는 모순 차단 · 위 이중 난입 가드의 인물 축)
     _cfg = BARGE[_cid] or {}
     _sl = _cfg.get("slot") or []
@@ -1340,27 +1326,8 @@ for _cid in (sorted(BARGE) if not cand else []):
     _g = int(_cfg.get("gate") or 6)
     if set(_cfg.get("boost") or []) & set(room): _g = int(_cfg.get("boost_gate") or 2)   # 동석 가중(고죠와 있는 자리 = 흉내 모드 난입이 잦아진다)
     if not _FORCE and int(hashlib.sha256(f"{today}:{_cid}:only".encode()).hexdigest(), 16) % _g: continue   # 결정적 시드(재현 가능 · 하루 1회 전역 상한과 곱해짐) · 강제 = 무조건 통과
-    # ── 전조 축(운영자 260730 "2턴 뒤에 갑자기 자연스럽게 등장하면 더 게임같겠지") ──
-    # 이 인물이 `omen` 풀을 가지고 있으면, 지금 들어오는 대신 **까마귀 한 줄만 남기고 물러난다.** 실제 합류는 N턴 뒤 위 전조 회수 분기가 한다.
-    # 하루 1회 상한(barge_day)은 이 자리에서 찍는다 = 전조가 곧 그날의 난입권 소모(전조만 심고 안 오는 날은 없다 — 6h 만료 전까지 회수된다).
-    # ⚠ _FORCE(테스트 스위치)는 전조를 건너뛴다 — "지금 한번 진행시켜줘"가 2턴 뒤 등장이면 스위치가 아니게 된다.
-    if (_cfg.get("omen") or []) and not _FORCE:
-        _omen_plant = _cid
-        break
     cand, via = _cid, "only"
     break
-if _omen_plant:
-    _pool = (BARGE[_omen_plant] or {}).get("omen") or []
-    _line = _pool[int(hashlib.sha256(f"{today}:{_omen_plant}:omen".encode()).hexdigest(), 16) % len(_pool)]   # 결정적 픽(같은 날 = 같은 전조 · 날마다 다른 줄)
-    _tn = int(time.time() * 1000)
-    (s.setdefault("turns", [])).append({"role": "sys", "kind": "omen", "text": _line, "ts": _tn})   # kind=omen = 뷰어에서 장면 지문(.ysit)으로 · 주변 사건(amb) 축과 분리(설정에서 amb를 꺼도 전조는 뜬다)
-    s["updated"] = _tn
-    S_ROOT["barge_omen"] = {"id": _omen_plant, "th": _os.environ.get("THREAD", ""), "ts": _tn, "need": int((BARGE[_omen_plant] or {}).get("omen_turns") or 2)}
-    S_ROOT["barge_day"] = today
-    S_ROOT["updated"] = _tn
-    json.dump(S_ROOT, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False)
-    print(f"  🐦 난입 전조 심음({_omen_plant} · {S_ROOT['barge_omen']['need']}턴 뒤 등장)")
-    sys.exit(0)
 # 강제(260728) = **난입 전용 인물만** 부르는 테스트 스위치다. 위 barge 축에서 못 잡았으면 여기서 끝낸다 —
 # 아래 fallback 축(거절 회수·자주 대면·최근 언급·위치 마주침)을 그대로 타면 **엉뚱한 주민이 대신 난입**해서
 # 테스트가 아니라 딴 이벤트가 된다(운영자 260728 "on한다고 무조건 100% 난입은 아니거든 · 나 말고 다른 ???이").
@@ -1428,7 +1395,7 @@ for _i in range(len(turns) - 1, -1, -1):
 seed = [{"role": x["role"], "text": x.get("text", ""), "ts": x.get("ts"),
          **({"persona": x["persona"]} if x.get("persona") else {}),
          **({"mood": x["mood"]} if x.get("mood") else {})}
-        for x in turns[_cut:] if (x or {}).get("role") in ("user", "assistant") or (x or {}).get("kind") == "omen"]   # sys·마커 제외 = 대사만 시드(비밀 누수 0 · 초대 동형) · 예외 = 전조 한 줄(260730 — 까마귀와 등장이 다른 방에 흩어지면 「2턴 뒤 등장」이 한 장면으로 안 읽힌다)
+        for x in turns[_cut:] if (x or {}).get("role") in ("user", "assistant")]   # sys·마커 제외 = 대사만 시드(비밀 누수 0 · 초대 동형)
 def _wa(w): c = ord((w or " ")[-1]); return "과" if 0xAC00 <= c <= 0xD7A3 and (c - 0xAC00) % 28 else "와"
 if via == "place":
     seed.append({"role": "sys", "text": f"{place_name(PL, meet_pl)} — 지나가던 {names[cand]}{_wa(names[cand])} 마주쳤다", "ts": tnow, "kind": "barge"})
@@ -1451,7 +1418,6 @@ if via: gth["barged"]["via"] = via; gth["barged"]["place"] = meet_pl
 S_ROOT.setdefault("threads", {})[gid] = gth
 if S_ROOT.get("cur") == _os.environ.get("THREAD", ""): S_ROOT["cur"] = gid   # 유저가 이 방을 보는 중일 때만 새 단톡으로 전환(백그라운드 난입 = cur 불변 · 유령 전환 방지) — 원본 1:1은 목록에 그대로 보존
 S_ROOT["barge_day"] = today                        # 전역 상한 스탬프(top-level)
-S_ROOT.pop("barge_omen", None)                     # 전조 회수 완료 — 약속이 지켜졌으니 마커를 지운다(안 지우면 다음 답장마다 재발화)
 # ── 세계 시계 정지 개시(운영자 260728 "일단 들어오면 그 순간 시간이 멈추는 개념으로 가자 · 그게 끝나야 시간이 다시 흐르게") ──
 # 난입이 열린 순간부터 무음동 시간이 멈춘다 → 동선·낮밤·지도·프롬프트 slot이 전부 그 시각에 고정. 유저가 다른 방으로 못 벗어나는 것(뷰어 끌어당김)과 같은 축의 앞뒤다.
 # by = 난입자 id — 해제 판정이 로스터를 안 읽어도 되게(게이트웨이는 barge 등급을 모른다). acc = 이전까지 누적된 정지분(재난입 시 이어붙임).
@@ -1461,7 +1427,7 @@ if d.get("id") == cand and s.get("declined"): s.pop("declined", None)   # 원본
 S_ROOT["updated"] = tnow
 json.dump(S_ROOT, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False)
 PY
-  then r2put >/dev/null 2>&1 && echo "  🚪 난입 축 반영(전조 심기 또는 합류 — 바로 위 줄이 어느 쪽인지 말한다)" || true; fi
+  then r2put >/dev/null 2>&1 && echo "  🚪 난입 반영(새 단톡 분기 · 원본 1:1 보존 · 첫 마디 = 다음 턴)" || true; fi
   return 0
 }
 
