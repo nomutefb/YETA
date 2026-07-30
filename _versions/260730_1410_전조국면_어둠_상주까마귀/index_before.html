@@ -334,13 +334,6 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ycrowfly svg { display:block; width:40px; height:27px; fill:currentColor; }   /* 40×27 = viewBox 48×32(3:2) 비율 유지 · 34px에선 실루엣이 뭉개지고 40px부터 새로 읽힌다(헤드리스 6단 대조 실측) */
   @keyframes ycrowFly { 0% { opacity:0; transform:translate(-50%,-40%) scale(.72); } 18% { opacity:.92; transform:translate(-50%,-95%) scale(1); } 72% { opacity:.7; transform:translate(-5%,-300%) scale(.78); } 100% { opacity:0; transform:translate(45%,-460%) scale(.58); } }   /* 안무 = 앉아 있던 자리에서 한 번 떠올랐다가 오른쪽 위로 빠진다 · 72% 정지점 = 비행 대부분을 보이게 잡아두는 자리(없으면 뜨자마자 흐려져 뭐가 지나갔는지 안 보인다 · 실렌더 대조) */
   @media (prefers-reduced-motion:reduce) { .ycrowfly { display:none; } }   /* 모션 줄이기 = 연출 생략(.yemo·.ydlg-dead 가드 계승 — 정보가 아니라 결이라 대체 표기 불필요) */
-  /* 전조 국면 상주 까마귀(운영자 260730 "2턴 동안 계속 앉아 있게") — 위 .ycrowfly 선언 계승(색·z·pointer-events·크기 동값), 다른 건 셋뿐:
-     ⓐ 무대 기준 절대배치(전조는 「저기 앉아 있다」라 화면에 붙어 있어야 한다 · fixed = 1.5초 연출용) ⓑ 실루엣이 **앉은 포즈 별개 상수**(YCROWSIT_SVG) ⓒ 끝 상태를 opacity .8로 붙잡아 둔다.
-     .8 = `.ycrow.locked.barge` 선언 계승(난입 등급 행 투명도 · 260726) = 신규 알파 0 · scaleX(-1) = 방 안쪽을 보고 앉는다(기하축). */
-  .ycrowsit { position:absolute; top:var(--sp-3); right:var(--sp-3); z-index:var(--z-float); pointer-events:none; color:var(--fg-2); animation:ycrowSit .9s var(--ease) .62s both; }
-  .ycrowsit svg { display:block; width:40px; height:38px; fill:currentColor; transform:scaleX(-1); }   /* 40×38 = viewBox 36×34 비율 · scaleX(-1) = 방 안쪽을 보고 앉는다(기하축) */
-  @keyframes ycrowSit { from { opacity:0; transform:translateY(-34%) scale(.92); } to { opacity:.8; transform:none; } }   /* 운영자 문구가 "어느새 앉아있다"다 — 날아오는 과정을 보여주지 않는다. 살짝 위에서 내려앉으며 배어나오는 정도 = 언제부터 있었는지 모르는 결 */
-  @media (prefers-reduced-motion:reduce) { .ycrowsit { animation:none; opacity:.8; } }   /* reduce = 내려앉는 동작만 생략하고 **앉아 있는 상태는 남긴다**(전조는 정보다 — .ycrowfly와 갈리는 지점) */   /* 모션 줄이기 = 연출 생략(.yemo·.ydlg-dead 가드 계승 — 정보가 아니라 결이라 대체 표기 불필요) */
   .yb.me { align-self:flex-end; max-width:78%; background:var(--bubble-me); color:var(--bg); border-top-right-radius:var(--r-s); }
   .yb.me i.yn { color:rgba(0,0,0,.6); }
   .yb.me i.yjp, .yb.me i.yjr { color:rgba(0,0,0,.6); }   /* 내 버블 = 라임 바탕이라 강조색이 안 보인다(바로 위 .yn me 가드 100% 계승 — 유저가 일본어를 칠 때) */
@@ -1611,15 +1604,7 @@ const YDIM_OPTS = [['soft', '밝게'], ['base', '기본'], ['dark', '어둡게']
 const YDIM_SET = { soft: { s: ['.14', '.17'], e: ['.09', '.13'], br: '.86' }, base: { s: ['.28', '.34'], e: ['.18', '.26'], br: '.72' }, dark: { s: ['.55', '.68'], e: ['.35', '.52'], br: '.45' } };   // s=캐릭터 아트 · e=환경 씬 · br=시즌 클립 밝기(1−s[0])
 const yDimGet = () => { try { const v = localStorage.getItem('yeta_dim') || 'base'; return YDIM_SET[v] ? v : 'base'; } catch { return 'base'; } };
 const yDimSet = v => { try { localStorage.setItem('yeta_dim', v); } catch {} };
-function yOmenOn() {   // 난입 전조 국면(운영자 260730 "2턴 동안 계속 앉아 있게 · 화면이 어두워지게") — 러너 barge_omen 마커와 **같은 판정**(id·스레드 일치 + 6h 만료)
-  try {
-    const om = (YSESS || {}).barge_omen;
-    if (!om || !om.id || om.th !== ((YSESS || {}).cur || '')) return null;
-    if (Date.now() - (om.ts || 0) > 21600000) return null;   // 6h = yeta_chat.sh barge_check 만료값과 짝(뷰어가 먼저 걷어도 러너가 곧 폐기)
-    return om;
-  } catch (e) { return null; }   // try = YSESS(let)보다 앞선 초기 페인트 시점 TDZ 흡수(yMeAva 선례 계승)
-}
-const yDimCur = () => YDIM_SET[yOmenOn() ? 'dark' : yDimGet()];   // 전조 국면 = **어둡기 3단 중 「어둡게」 강제**(운영자 260730 "화면이 어두워지게") — 신규 알파 0(있는 칸을 쓴다) · 단일 지점이라 배경 스크림·윈터 블라인드 재합성·시즌 클립 밝기가 전부 같이 어두워진다 · 전조가 걷히면 유저 설정으로 자동 복귀
+const yDimCur = () => YDIM_SET[yDimGet()];
 function yDimApply() {   // 클립 밝기만 CSS로 밀어넣는다(이미지 딤 = yPaintBg가 페인트 때 계산) · 변수 = #yetadlg 로컬(--yeta-ac 런타임 주입 선례 계승 · :root 신규 토큰 0)
   const d = document.getElementById('yetadlg');
   if (d) d.style.setProperty('--ydim-br', yDimCur().br);
@@ -3749,17 +3734,6 @@ setInterval(() => { try {   // 분침 타이머(분신술 260709 3건 일괄): �
 const YGEM_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14l3 5.5L12 21 2 8.5z"/><path d="M5 3 8.2 8.5 12 21 15.8 8.5 19 3M2 8.5h20" fill="none" stroke="#000" stroke-opacity=".22" stroke-width="1"/><path d="M9 3h6l-3 5.5z" fill="#fff" fill-opacity=".33"/><path d="M5 3 8.2 8.5H2z" fill="#fff" fill-opacity=".16"/></svg>';   // 보석 젬(브릴리언트 파셋 컷 = 음각 결 + 테이블 set 광 · 운영자 260707 "더 보석같이 박게")
 const YSKULL_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6c-4.3 0-7.8 3.4-7.8 7.5 0 2.3 1.1 4.4 2.8 5.8.26.2.4.52.4.85v1.2c0 .6.5 1.05 1.1 1.05h7c.6 0 1.1-.45 1.1-1.05v-1.2c0-.33.14-.65.4-.85 1.7-1.4 2.8-3.5 2.8-5.8 0-4.1-3.5-7.5-7.8-7.5Z"/><ellipse cx="9.1" cy="10.2" rx="2.1" ry="2.45" fill="#000" fill-opacity=".55"/><ellipse cx="14.9" cy="10.2" rx="2.1" ry="2.45" fill="#000" fill-opacity=".55"/><path d="M12 12.7c.42 0 .8.42.8.94s-.38.94-.8.94-.8-.42-.8-.94.38-.94.8-.94Z" fill="#000" fill-opacity=".55"/></svg>';   // 해골(난입 등급 전용 · 운영자 260726 "해골 모양") — YGEM_SVG와 같은 인라인 상수 결(nm-svg.js 공유 아이콘 아님 = SSOT 게이트 무저촉) · 눈·코 구멍 = currentColor 위 검정 저투명(배지 색 자동 추종)
 const YCROW_SVG = '<svg viewBox="0 0 48 32" aria-hidden="true"><path d="M23.5 16.6c-3.6-4.9-5.9-9.2-6.9-12.9 3 2.2 6.6 6.2 10.8 12z"/><path d="M20.6 21.4c-5.1 1.3-9.2 3.4-12.4 6.3 4.2-.4 8.8-1.8 13.9-4.2z"/><ellipse cx="23.5" cy="20" rx="12.4" ry="4.1" transform="rotate(-13 23.5 20)"/><circle cx="35.4" cy="13.9" r="3.5"/><path d="M38.2 12.1 46.6 9.9 38.6 15.4z"/><path d="M13.2 22.6 2.4 26.9l11.4.6z"/></svg>';   // 까마귀(난입 퇴장 전용 · 운영자 260730 "까마귀 그거 ㄱㄱ") — 위 YSKULL_SVG와 같은 인라인 상수 결(nm-svg.js 공유 아이콘 아님 = SSOT 게이트 무저촉) · 눈 = currentColor 위 검정 저투명(해골 눈구멍 패턴 계승)
-const YCROWSIT_SVG = '<svg viewBox="0 0 36 34" aria-hidden="true"><path d="M9 21.6 1 27.4 10.6 25z"/><ellipse cx="16.6" cy="19.4" rx="8.8" ry="6.2" transform="rotate(-22 16.6 19.4)"/><path d="M12 15c3.4 2.9 7.6 5.1 11 5.6-3.8 2.2-8.6 1-11.9-1.8z"/><circle cx="25.4" cy="9.8" r="4.1"/><path d="M28.6 8.2 35.6 9.6 28.8 12z"/><path d="M15.2 24h1.7v6.6h-1.7zM18.8 24h1.7v6.6h-1.7z"/></svg>';   // 앉은 까마귀(난입 전조 전용 · 운영자 260730) — 꽁지·몸통·접은 날개·머리·부리·다리 6조각 조립(위 YCROW_SVG와 같은 결의 인라인 상수 · 아이콘 SSOT 무저촉). 고개를 든 자세 = "이쪽을 보고 있다"(카드 §겉모습) · 나는 실루엣을 정지시켜 두면 「앉아 있다」로 안 읽힌다(헤드리스 3자세 대조로 고름)
-function yCrowSit(om) {   // 전조 국면 동안 까마귀가 화면에 앉아 있다(운영자 260730 한 수 채택 "2턴 동안 화면 어딘가에 계속 앉아 있게 · 저게 아직 있다는 압박")
-  const st = document.querySelector('.yeta-stage'); if (!st) return;
-  const el = st.querySelector('.ycrowsit');
-  if (!om) { if (el) el.remove(); return; }              // 전조 종료(합류·만료) = 회수 — 난입 데뷔 턴엔 이미 본인이 앉아 있으니 까마귀만 남기면 중복 신호가 된다
-  if (el) return;                                        // 이미 앉아 있다 = 재생성 금지(내려앉는 애니가 렌더마다 되감기던 자리)
-  const n = document.createElement('div');
-  n.className = 'ycrowsit'; n.setAttribute('aria-hidden', 'true');
-  n.innerHTML = YCROWSIT_SVG;
-  st.appendChild(n);
-}
 function yCrowFly(pill) {   // 난입 인물 퇴장 = 그 퇴장 지문 위에서 까마귀가 한 박자 늦게 떠오른다(카드 「나갈 땐 늘 한 박자 늦게 따라 나간다」)
   try {
     const r = pill.getBoundingClientRect();
@@ -3994,17 +3968,6 @@ function yStage(mood) {   // 무대 우선순위(운영자 260707): 난입 플�
     if (bkey === _yStageKey) return;
     _yStageKey = bkey; _yStageCold = false;
     yTryPaint([yBargeBg(_bp, _bgm), yCBg(_bp), YCUR.bg || ''], YCUR.color || '#7c5cfc', bkey, true);   // season=true = 캐릭터 아트 스크림(난입 배경도 인물 아트 · 시즌 로테이션과 같은 딤이라야 말풍선이 읽힌다)
-    return;
-  }
-  // ── 난입 전조 = 난입 플래시 바로 다음(운영자 260730 "주변 배경이 나오게 하면 좋겠는데 배경 사진이 장소별로 있나 모르겠네" — 있다: assets/yeta_bg var_* 45장 × Y_PLACE_POOL 장소 매핑) ──
-  // 전조 2턴 동안 무대가 **인물 아트에서 주변 씬으로 갈린다** = 방의 시선이 밖으로 옮겨간 그림. 딤은 위 yDimCur가 이미 「어둡게」로 강제한 상태(env 쌍 .18/.26 → .35/.52).
-  // 씬 선택 = 종전 장소 체인(ySceneForPlace = 날씨·시간대·계절 필터) 100% 재사용 = 신규 자산·신규 픽 로직 0. 시즌 인물(윈터 등)도 이 국면엔 감정 로테이션을 건너뛴다 — 그게 "갈린다"의 전부다.
-  if (yOmenOn()) {
-    const _opl = yPlaceSync();
-    const okey = `omen|${YCUR.id}|${_opl}|${mood || ''}`;
-    if (okey === _yStageKey) return;
-    _yStageKey = okey; _yStageCold = false;
-    yTryPaint([_opl ? ySceneForPlace(_opl, mood) : '', ySceneForPlace('alley', mood), mood ? ySceneFor(mood) : '', YCUR.bg || ''], YCUR.color || '#7c5cfc', okey);   // 폴백 = 골목(동네의 심장 · places.json alley)까지 = 전조 국면에 인물 아트로 되돌아가지 않는다
     return;
   }
   const em = ySeasonMedia(YCUR);   // 시즌 = 감정 미디어 로테이션(기틀감사③ — 키·시드 턴 포함은 시즌 게이트 한정 · 비시즌 경로 불변)
@@ -4931,7 +4894,6 @@ function yRender() {
   else {
     yReconcile(log, h);   // 통짜 innerHTML 폐지 → 증분(안 바뀐 말풍선 파괴 0 · 스트리밍은 마지막 버블만 교체) = 자연스러운 채팅의 뿌리
     yAttHydrate(log);   // 첨부 사진 지연 로드(260717 '+') — data-att → op att blob(캐시) · reconcile 후 새/재사용 노드 처리(멱등)
-    yCrowSit(yOmenOn());   // 전조 상주 까마귀 동기화(멱등 — 있으면 두고, 없으면 회수) · 퇴장 까마귀와 같은 자리에서 부른다
     if (_yCrowPend) { _yCrowPend = 0; const _lv = log.querySelector('.yb.sys.yleave:last-of-type'); if (_lv) requestAnimationFrame(() => yCrowFly(_lv)); }   // 난입 퇴장 까마귀(260730) — reconcile 뒤에 부른다(노드가 붙어야 getBoundingClientRect가 0이 아니다) · rAF = 레이아웃 확정 후 · 조합 유예 경로(_yComposing)에선 예약이 남아 다음 렌더에 뜬다
     _yNoAnim = false; _yDrSwap = null;   // 스왑 무애니·스왑 델타(Q.81) = 1회성(다음 렌더부터 정상 촤르륵 · 조합 유예 중엔 유지 = _yNoAnim 동수명)
     if (atBottom) log.scrollTop = log.scrollHeight;

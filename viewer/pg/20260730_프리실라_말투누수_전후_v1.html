@@ -213,7 +213,7 @@
       <h2>난입 퇴장 = 까마귀가 한 박자 늦게 따라 나간다</h2>
       <p class="cap" style="margin:0 0 8px">카드 §겉모습 「까마귀는 프리실라보다 먼저 자리에 앉고, 나갈 땐 늘 한 박자 늦게 따라 나간다」의 화면 대응. 발동 = <b><code>&lt;&lt;LEAVE&gt;&gt;</code>가 달린 턴 전부</b> — 카드상 두 결말(합격 퇴장 / 불합격 = 사망)이 <b>모두</b> LEAVE로 나가므로 「사망일 때만」이 아니다. 사망 결말에선 이 연출이 먼저 끝나고 그 뒤에 암전(<code>.ydlg-dead</code>)이 온다.</p>
       <div class="strip">
-        <figure><img src="20260730_까마귀퇴장_시퀀스.png" alt="난입 퇴장 까마귀 시퀀스 — +620ms부터 +1480ms까지 5프레임"><figcaption>실렌더 시퀀스(음수 delay로 시각 탐색) — 지연 <code>.62s</code>(= <code>.ydlg-yank</code> 계승 = 「한 박자」) 뒤 퇴장 지문 위에서 떠올라 오른쪽 위로 빠진다. 지속 <code>.9s</code>(= <code>.ydlg-dead</code> 계승) · 커브 <code>--ease</code> · 색 <code>--fg-2</code> · z <code>--z-float</code> = <b>신규 시간·색 0</b>.</figcaption></figure>
+        <figure><img src="20260730_까마귀퇴장_시퀀스.webp" alt="난입 퇴장 까마귀 시퀀스 — +620ms부터 +1480ms까지 5프레임"><figcaption>실렌더 시퀀스(음수 delay로 시각 탐색) — 지연 <code>.62s</code>(= <code>.ydlg-yank</code> 계승 = 「한 박자」) 뒤 퇴장 지문 위에서 떠올라 오른쪽 위로 빠진다. 지속 <code>.9s</code>(= <code>.ydlg-dead</code> 계승) · 커브 <code>--ease</code> · 색 <code>--fg-2</code> · z <code>--z-float</code> = <b>신규 시간·색 0</b>.</figcaption></figure>
       </div>
       <p class="cap">까마귀 실루엣 = <code>YCROW_SVG</code> 인라인 상수(<code>YSKULL_SVG</code> 선례 계승 = nm-svg.js 공유 아이콘 아님 → 아이콘 SSOT 게이트 무저촉). 크기 40×27px = 헤드리스 6단(28/34/40/48/72/140) 대조로 고른 하한 — 34px에선 실루엣이 뭉개진다. <code>prefers-reduced-motion</code> = 연출 생략.</p>
     </div>
@@ -255,6 +255,26 @@
       </div>
     </div>
     <p class="cap">전조 풀 = <code>roster.json</code> <code>barge.omen</code> 5줄 + <code>barge.omen_turns</code>(= 하드코딩 0 · 러너는 인물명을 모른다) · 픽 = 날짜 시드(같은 날 같은 전조, 날마다 다른 줄) · 방치 6h 또는 인물 사망 = 전조 폐기(유령 난입 차단) · <code>_FORCE</code>(L1 난입=강제 테스트 스위치)는 전조를 건너뛴다(“지금 한번”이 2턴 뒤면 스위치가 아니게 된다).</p>
+  </div>
+
+  <div class="sect">
+    <h2>⑨ 260730 4차 — 전조 국면: 주변 배경 + 화면 어두워짐 + 앉은 까마귀 상주</h2>
+    <p class="cap" style="margin:0 0 8px">운영자 260730: “한수 적용하고, 화면이 어두워지게 해줘” · “주변 배경이 나오게 하면 좋겠는데 배경 사진이 장소별로 있나 모르겠네”.
+    <b>있다</b> — <code>assets/yeta_bg/var_*.webp</code> 45장을 <code>Y_PLACE_POOL</code>이 장소 12곳에 매핑하고 날씨·시간대·계절로 걸러 쓴다(<code>ySceneForPlace</code>). 전조 국면은 이 체인을 <b>그대로 재사용</b>한다 = 신규 자산·신규 픽 로직 0.</p>
+    <div class="strip">
+      <figure><img src="20260730_난입전조_국면_전후.webp" alt="전조 국면 전/후 — 평시 인물 아트 / 전조 국면 주변 씬+어둡게+까마귀 / 대조 기본 딤"><figcaption>실렌더 3열. <b>전</b> = 평시(인물 아트 · 기본 딤 <code>.28/.34</code>) · <b>후</b> = 전조 국면(주변 씬 · <b>어둡게 강제</b> <code>.35/.52</code> · 오른쪽 위 까마귀 상주) · <b>대조</b> = 같은 주변 씬을 기본 딤으로 = 어두워진 게 눈속임이 아님을 증명.</figcaption></figure>
+    </div>
+    <div class="tw" style="margin-top:var(--sp-2)"><table>
+      <tr><th>축</th><th>구현</th><th>계승 근거(신규 값 0)</th></tr>
+      <tr><td><b>화면 어두워짐</b></td><td><code>yDimCur()</code>가 전조 국면엔 <b>어둡기 3단 중 「어둡게」를 강제</b>한다. 단일 지점이라 배경 스크림·윈터 블라인드 재합성·시즌 클립 밝기가 <b>전부 같이</b> 어두워지고, 전조가 걷히면 유저 설정으로 자동 복귀.</td><td><code>YDIM_SET.dark</code> = 이미 있는 칸(설정 「화면 어둡기」 3단). 환경 씬 쌍이 <code>.18/.26</code> → <code>.35/.52</code> = 거의 2배. <b>신규 알파 0.</b></td></tr>
+      <tr><td><b>주변 배경</b></td><td><code>yStage</code> 우선순위에 전조를 <b>난입 플래시 바로 다음</b>으로 끼웠다. 이 국면엔 시즌 인물(윈터 등)도 감정 로테이션을 건너뛰고 주변 씬으로 갈린다 — 그게 “방의 시선이 밖으로 옮겨갔다”의 전부다. 폴백은 <b>골목</b>(<code>alley</code>)까지 = 전조 중엔 인물 아트로 되돌아가지 않는다.</td><td><code>ySceneForPlace</code>(날씨→시간대→계절 필터) 100% 재사용 · 키 규칙도 종전 형식(<code>omen|id|place|mood</code>).</td></tr>
+      <tr><td><b>앉은 까마귀</b></td><td>전조 동안 무대 오른쪽 위에 <b>계속 앉아 있다</b>(<code>yCrowSit</code> = 멱등 · 있으면 두고 없으면 회수 → 렌더마다 애니가 되감기지 않는다). 합류·만료로 전조가 끝나면 회수 — 본인이 앉았는데 까마귀만 남으면 중복 신호가 된다.</td><td>색 <code>--fg-2</code> · 커브 <code>--ease</code> · z <code>--z-float</code> · 지속 <code>.9s</code>·지연 <code>.62s</code>(퇴장 까마귀 계승) · 끝 투명도 <code>.8</code> = <code>.ycrow.locked.barge</code>(난입 등급 행) 계승.</td></tr>
+      <tr><td><b>포즈는 별개 상수</b></td><td><code>YCROWSIT_SVG</code> — 나는 실루엣(<code>YCROW_SVG</code>)을 정지시켜 두면 「앉아 있다」로 안 읽힌다. 꽁지·몸통·접은 날개·머리·부리·다리 6조각 조립, <b>고개 든 자세</b>(카드 §겉모습 「이쪽을 보고 있다」).</td><td>3자세 헤드리스 대조로 고름(아래) · 인라인 상수 = <code>YSKULL_SVG</code> 선례 → 아이콘 SSOT 게이트 무저촉(rc=0 확인).</td></tr>
+      <tr><td><b>안무</b></td><td>운영자 문구가 “<b>어느새</b> 앉아있다”라 <b>날아오는 과정을 안 보여준다</b> — 살짝 위에서 내려앉으며 배어나오는 정도. <code>prefers-reduced-motion</code>에선 동작만 생략하고 <b>앉아 있는 상태는 남긴다</b>(전조는 결이 아니라 정보다 = 퇴장 까마귀와 갈리는 지점).</td><td>키프레임 %·translate·scale = 기하 raw 예외축.</td></tr>
+    </table></div>
+    <div class="strip" style="margin-top:var(--sp-2)">
+      <figure><img src="20260730_앉은까마귀_3자세.webp" alt="앉은 까마귀 3자세 × 4크기 대조"><figcaption>3자세 × 4크기(30/40/54/110px) 대조 — <b>B 고개 든 자세</b> 채택(가장 「보고 있다」로 읽힌다). 실렌더 40px에서 다리·부리·꽁지가 다 살아 있는 것 확인.</figcaption></figure>
+    </div>
   </div>
   <div class="sect">
     <h2>⑥ 손댄 곳 · 안 댄 곳</h2>
