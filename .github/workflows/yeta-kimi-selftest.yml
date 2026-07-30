@@ -34,6 +34,21 @@ jobs:
         run: |
           [ -n "$KIMI_API_KEY" ] || { echo "::error::FAIL① 레포 Actions 시크릿 KIMI_CODE_MUTE 미등재 — Settings → Secrets and variables → Actions 에 정확히 이 이름으로"; exit 1; }
           echo "① 시크릿 KIMI_CODE_MUTE OK(존재) · 대상 모델 = $MODEL"
+          # ①-B raw HTTP 프로브(260730 신설) — CLI는 5xx/429를 조용히 재시도하다 timeout(rc=124)으로만 죽어 stderr가 빈다(실측).
+          #   원인(401 키 · 404 엔드포인트·모델 · 429 쿼터 · 200 정상)을 CLI 이전에 HTTP 코드로 갈라낸다. 후보 URL 2종 = 슬래시 유무 결정 근거.
+          probe() {
+            local u="$1" code
+            code="$(curl -sS -o /tmp/probe.json -w '%{http_code}' --max-time 45 "$u" \
+              -H "authorization: Bearer $KIMI_API_KEY" -H "x-api-key: $KIMI_API_KEY" \
+              -H 'anthropic-version: 2023-06-01' -H 'content-type: application/json' \
+              -d "{\"model\":\"$MODEL\",\"max_tokens\":16,\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}" 2>/tmp/curlerr || echo 000)"
+            echo "   [$code] $u"
+            [ "$code" = "000" ] && { echo "        curl: $(head -c 200 /tmp/curlerr)"; return; }
+            echo "        body: $(head -c 300 /tmp/probe.json)"
+          }
+          _B="${KIMI_BASE_URL:-https://api.kimi.com/coding/}"; _B="${_B%/}"
+          echo "①-B raw 프로브 — 엔드포인트·키·모델 중 무엇이 막는지 HTTP 코드로 판별"
+          probe "$_B/v1/messages"
           export ANTHROPIC_BASE_URL="${KIMI_BASE_URL:-https://api.kimi.com/coding/}" ANTHROPIC_AUTH_TOKEN="$KIMI_API_KEY" ANTHROPIC_API_KEY="$KIMI_API_KEY"
           unset CLAUDE_CODE_OAUTH_TOKEN
           NOTOOLS="Write,Edit,NotebookEdit,Bash,Task,WebFetch,WebSearch,Read,Glob,Grep"
