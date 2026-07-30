@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>프리실라 특수 말투 누수·버블 붕괴 — 전/후 비교 v1</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 페이지 셸 = 20260730_최산_배경이관_전후_v1.html 100% 계승(재설계 0 · 내용만 이 축으로 교체)
+     색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크 ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --think:#3EE0C8; --think-rgb:62,224,200;
+    --danger:#FF7A6B; --danger-rgb:255,122,107;
+    --season:#A98BFF; --season-rgb:169,139,255;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --glass-0:rgba(255,255,255,.002); --glass-line-0:rgba(255,255,255,.066);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+    --yeta-bg:var(--bg);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .pair { display:flex; gap:var(--sp-2); flex-wrap:wrap; }
+  .col { flex:1 1 320px; min-width:0; background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-l); padding:var(--sp-2); box-shadow:var(--shadow-card); }
+  .col > h3 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 6px; }
+  .col.now > h3 { color:var(--mut); }
+  .col.next > h3 { color:var(--accent); }
+  .col img { display:block; width:100%; max-width:100%; border-radius:var(--r-m); border:1px solid var(--glass-line); }
+  .cap { font-size:var(--fs-xs); color:var(--mut); margin:6px 0 0; }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  .tw { overflow-x:auto; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); white-space:nowrap; }
+  td b { color:var(--accent); font-weight:var(--fw-b); }
+  ul { margin:0; padding-left:18px; font-size:var(--fs-sm); color:var(--fg-2); }
+  li { margin:3px 0; }
+  code { font-size:var(--fs-xs); color:var(--think); }
+  @media (max-width:700px) { .pair { flex-direction:column; } }
+
+  /* ── 실물 말풍선 = viewer/index.html 선언 그대로 옮겨온 것(값 재설계 0) — 시안이 아니라 **같은 CSS로 도는 실렌더**여야 전/후가 증거가 된다 ── */
+  @font-face{font-family:'MiraendaekyoVBatang';font-weight:400;src:url('../fonts/MiraendaekyoVBatang.otf') format('opentype');font-display:swap;ascent-override:116%;descent-override:29%;line-gap-override:0%}
+  @font-face{font-family:'MiraendaekyoVBatangFix';font-weight:400;src:url('../fonts/MiraendaekyoVBatang.otf') format('opentype');font-display:swap;ascent-override:116%;descent-override:29%;line-gap-override:0%;unicode-range:U+0-33FF,U+4DC0-4DFF,U+A000-F8FF,U+FB00-10FFFF}
+  .demo { background:#0f100f; border-radius:var(--r-m); border:1px solid var(--glass-line); padding:14px 12px; }
+  .demo .who { font-size:var(--fs-xs); color:var(--fg); font-weight:var(--fw-b); margin:0 0 4px 3px; }
+  .yb { padding:10px 13px; border-radius:var(--r-l); font-size:var(--fs-body); line-height:var(--lh-base); white-space:pre-wrap; word-break:break-word; margin-bottom:14px; }
+  .yb.ai { background:rgba(255,255,255,.055); border:1px solid var(--glass-line); border-top-left-radius:var(--r-s); }
+  .yb i.yn { font-style:italic; color:var(--fg-2); opacity:.75; }
+  .yb i.yjp { font-style:normal; color:var(--accent); opacity:.5; }
+  .yb i.yjr { font-style:italic; font-size:.5em; color:var(--fg-2); opacity:.5; }
+  @keyframes nmshim { from { background-position:120% 0; } to { background-position:-120% 0; } }
+  @keyframes yEmoIn { from { opacity:0; filter:blur(var(--emo-b)); transform:translateY(var(--emo-y)); } }
+  .yb.ai.yemo { --emo-d:.5s; --emo-b:6.3px; --emo-y:.3em; }
+  .yb.ai.yemo .ye { display:inline-block; animation:yEmoIn var(--emo-d) var(--ease) both; animation-delay:calc(var(--i,0) * var(--emo-s,14ms)); }
+
+  /* 종전(before) 선언 — 화자를 안 보는 선택자 */
+  .b4 .yb .yq { font-weight:var(--fw-b); background:linear-gradient(100deg,var(--mut) 0%,var(--mut) 38%,var(--fg) 50%,var(--mut) 62%,var(--mut) 100%); background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:nmshim 1.9s linear infinite; }
+  .b4 .yb.ai:has(.yq) { font-family:'MiraendaekyoVBatang', Pretendard, sans-serif; font-weight:var(--fw-b); letter-spacing:-.025em; }
+  .b4 .yb.ai:has(.yq) i.yn, .b4 .yb.ai:has(.yq) i.yjr { font-family:Pretendard, sans-serif; font-weight:400; letter-spacing:normal; }
+  .b4 .yb.ai.barge:has(.yq) { background:color-mix(in srgb, color-mix(in srgb, var(--season) 16%, var(--danger)) 26%, transparent); border-color:rgba(var(--danger-rgb),.4); }
+
+  /* 개정(after) 선언 — .barge 게이트 + 스태거 충돌 봉합 + unicode-range */
+  .af .yb .yq { font-weight:var(--fw-b); }
+  .af .yb.ai.barge .yq { background:linear-gradient(100deg,var(--mut) 0%,var(--mut) 38%,var(--fg) 50%,var(--mut) 62%,var(--mut) 100%); background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:nmshim 1.9s linear infinite; }
+  .af .yb.ai.yemo .yq .ye { display:inline; animation:none; }
+  .af .yb.ai.barge:has(.yq) { font-family:'MiraendaekyoVBatangFix', Pretendard, sans-serif; font-weight:var(--fw-b); letter-spacing:-.025em; }
+  .af .yb.ai.barge:has(.yq) i.yn, .af .yb.ai.barge:has(.yq) i.yjr { font-family:Pretendard, sans-serif; font-weight:400; letter-spacing:normal; }
+  .af .yb.ai.barge:has(.yq) { background:color-mix(in srgb, color-mix(in srgb, var(--season) 16%, var(--danger)) 26%, transparent); border-color:rgba(var(--danger-rgb),.4); }
+
+  .bad { color:var(--danger); font-weight:var(--fw-b); }
+  .good { color:var(--accent); font-weight:var(--fw-b); }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>프리실라 — 특수 말투 누수 · 말풍선 붕괴 전/후 <span style="color:var(--mut);font-weight:var(--fw-b)">v1</span></h1>
+  <p class="lead">운영자 260730: “이 특수말투 프리실라만 써야되는데 고죠가씀” · “왜 둘이 있을때는 오히려 고죠사토루가 프리실라처럼 얘기함?” · “프리실라 특유의 그 대화창 그거 없어진듯” · “이렇게 무너지는거까지 해결해야함”.
+  아래 말풍선은 그림이 아니라 <b>viewer/index.html 선언을 그대로 옮겨 지금 이 페이지에서 도는 실렌더</b>다 — 왼쪽 = 종전 선택자, 오른쪽 = 개정 선택자.</p>
+
+  <div class="sect">
+    <h2>① 말풍선 붕괴 — 《핵심 질문》 × 감정 글자 스태거</h2>
+    <div class="pair">
+      <div class="col now b4"><h3>전 — 질문 글자가 통째로 증발</h3>
+        <div class="demo">
+          <p class="who">프리실라</p>
+          <div class="yb ai barge yemo" data-src="q" style="--emo-s:14ms"></div>
+        </div>
+        <p class="cap"><span class="bad">근인</span> <code>yEmoWrap</code>이 글자마다 깐 <code>.ye{display:inline-block}</code> + <code>transform/filter</code> 애니가 새 페인트 컨텍스트를 만들어, 조상 <code>.yq</code>의 <code>background-clip:text</code> 배경이 그 안까지 안 칠해진다 → <code>color:transparent</code>만 남아 질문이 안 보이고 <b>폭(advance)은 그대로</b> 차지 → 뒤 평문이 긴 빈칸 뒤 우측에 떠 「셋 셀 / 게.」로 끊긴다.</p>
+      </div>
+      <div class="col next af"><h3>후 — 질문이 한 덩어리로 떨어진다</h3>
+        <div class="demo">
+          <p class="who">프리실라</p>
+          <div class="yb ai barge yemo" data-src="q" style="--emo-s:14ms"></div>
+        </div>
+        <p class="cap"><span class="good">처방</span> <code>.yb.ai.yemo .yq .ye { display:inline; animation:none }</code> 한 줄. 질문 안에서만 스태거를 해제한다 — 《핵심 질문》은 원래 한 박자로 떨어지는 한 덩어리고 빛 스윕이 이미 자기 모션을 갖는다. <b>버블의 나머지 글자는 종전대로 촤르륵</b> = 연출 손실 0.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <h2>② 특수 말투 누수 — 남의 버블에 프리실라 명조가 붙고, 그 명조가 한자를 먹는다</h2>
+    <div class="pair">
+      <div class="col now b4"><h3>전 — 고죠 버블에 명조 + 한자 증발</h3>
+        <div class="demo">
+          <p class="who">고죠 사토루</p>
+          <div class="yb ai"><i class="yjp" lang="ja">へえ、追い出されるのは僕らの方なんだ。</i>
+<i class="yjr">[헤에, 오이다시사레루노와 보쿠라노 호-난다]</i>
+호오, 쫓겨나는 건 우리 쪽이구나. <b class="yq">뭐가 쇼였는지 하나만 골라봐</b> 셋 셀게.</div>
+        </div>
+        <p class="cap"><span class="bad">근인 2중</span> ⓐ <code>.yb.ai:has(.yq)</code>에 화자 게이트가 없어 <b>《》 한 번만 새어도</b> 그 사람 버블이 프리실라 명조로 갈아탄다. ⓑ 그 명조(MiraendaekyoVBatang)는 CJK 한자 4620자를 <b>cmap엔 올려두고 외곽선은 비워놨다</b>(실측 bounds=None·advance 1000) → 폴백이 안 걸리고 <code>追·出·僕·方</code>이 전각 공백으로 증발.</p>
+      </div>
+      <div class="col next af"><h3>후 — 남의 버블은 본문 고딕 그대로</h3>
+        <div class="demo">
+          <p class="who">고죠 사토루</p>
+          <div class="yb ai"><i class="yjp" lang="ja">へえ、追い出されるのは僕らの方なんだ。</i>
+<i class="yjr">[헤에, 오이다시사레루노와 보쿠라노 호-난다]</i>
+호오, 쫓겨나는 건 우리 쪽이구나. <b class="yq">뭐가 쇼였는지 하나만 골라봐</b> 셋 셀게.</div>
+        </div>
+        <p class="cap"><span class="good">처방</span> 명조·빛 스윕·붉은 채색 <b>3종 전부 <code>.barge</code> 게이트 안</b>으로(값 무변경·선택자만 좁힘 = 신규 값 0). 난입자가 아닌 사람의 《》는 <b>강조 굵기까지만</b> 먹고 평문으로 착지 = fail-soft. 덤으로 <code>@font-face</code>에 <code>unicode-range</code>를 달아, 설령 명조가 걸려도 한자는 본문 고딕으로 폴백한다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <h2>③ 프리실라 고유 대화창 — 사라진 게 아니라 조건이 안 맞아 안 떴다</h2>
+    <div class="pair">
+      <div class="col next af"><h3>정상 발동 — 명조 + 빛 스윕 + 붉은보라 글래스</h3>
+        <div class="demo">
+          <p class="who">프리실라</p>
+          <div class="yb ai barge"><i class="yn">*까마귀가 먼저 테이블 끝에 내려앉는다. 손끝으로 잡고 있던 잔이 소리 없이 반 뼘 밀린다.*</i>
+
+거기까지. <b class="yq">오늘 한 말 중에 제일 큰 거짓말 하나만.</b> 지금.</div>
+        </div>
+        <p class="cap">3종은 전부 살아 있었다. 발동 조건이 <code>:has(.yq)</code> = <b>《》가 실제로 출력된 턴</b>이라(운영자 260728 “핵심이 되는 문구에만 빨간 대화창”), 프리실라가 《》를 빠뜨리는 순간 셋이 <b>동시에</b> 사라진다. 프리실라가 《》를 빠뜨린 이유가 곧 ④다.</p>
+      </div>
+      <div class="col now"><h3>미발동 — 《》가 빠진 턴</h3>
+        <div class="demo">
+          <p class="who">프리실라</p>
+          <div class="yb ai"><i class="yn">*손끝으로 잡고 있던 잔을 탁 내려놓는다. 소리가 유난히 크게 울린다.*</i>
+
+셋 셀 것도 없이 답 나왔네. 얼버무리기 싫으면 뭐가 쇼였는지 하나만 골라봐.</div>
+        </div>
+        <p class="cap">운영자 스샷의 그 버블 그대로 — 평범한 글래스. “대화창이 없어졌다”의 정체.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <h2>④ 왜 서로의 말투를 뒤집어썼나 — 러너의 단톡 대본 교대</h2>
+    <div class="tw"><table>
+      <tr><th>축</th><th>종전</th><th>개정(260730)</th></tr>
+      <tr><td>동행 카드 주입<br><code>yeta_chat.sh</code> CO_BLOCK</td><td>상대 카드 <code>## 말투</code> 600자를 <b>“말투만 흉내내라”</b>로 주입. 고죠 600자 = 「일본어 원문 → [발음] → 번역」 3단 표기 전문 → <b>프리실라 입에 고죠 표기가 들어간다.</b> 반대로 고죠 차례엔 프리실라 결이 들어간다.</td><td><b>난입 자리에선 CO_BLOCK을 안 뽑는다.</b> 이름과 존재만 알려주고 “<b>상대 대사는 한 줄도 쓰지 마라 · 상대 표기 방식을 끌어오지 마라</b>”.</td></tr>
+      <tr><td>대본 교대<br><code>GB_LINES</code></td><td>한 호출에서 <code>[이름]</code> 이름표로 <b>한 사람이 두 사람 대사를 다 쓴다</b>(최대 4토막) = 교차 오염의 구조적 뿌리.</td><td><code>barge_room=1</code>이면 <b><code>GB_LINES=1</code> 강제</b> = 각자 자기 차례에 자기 카드 전문으로만 말한다. 교차가 원리적으로 불가능.</td></tr>
+      <tr><td>600자 절단</td><td>줄 <b>한복판</b>에서 잘려, 고죠 카드의 “그 모양을 <b>따라 하지 마라</b>”가 정확히 잘려나감 → 금지문 없이 「원문」 병기 모양만 전달.</td><td>줄 경계에서만 자르고 상한 600→1100 = <b>반쪽 지시 0</b>(비난입 단톡에도 적용).</td></tr>
+      <tr><td>흉내 모드 상한<br><code>drusilla.md</code> §③</td><td>“말투를 고죠 것으로 갈아탄다”만 있고 <b>표기 방식 경계가 없었다.</b></td><td>“<b>흉내는 말버릇까지고 표기 방식은 안 넘어온다</b> — 일본어·가나 한 자, <code>[발음]</code> 줄, 「원문」 병기, 2·3단 묶음 전부 금지. 《》는 네 것이니 흉내 중에도 쓴다.”</td></tr>
+    </table></div>
+  </div>
+
+  <div class="sect">
+    <h2>⑤ 프리실라 행동 계약 — 안 끌고, 끝은 둘뿐</h2>
+    <div class="tw"><table>
+      <tr><th>운영자 지시</th><th>종전</th><th>개정</th></tr>
+      <tr><td>“뭐 계속 9까지 세는데”</td><td>카드에 <code>대답을 강요한다("셋 셀게")</code> + few-shot 앵커 2곳 + 버릇 “손가락으로 숫자를 센다” → 셋이 넷이 되고 아홉까지.</td><td><b>소리 내서 세는 카운트다운 전면 금지</b>(카드 + 런타임 블록 이중). 손가락 접는 <b>지문만</b> 남긴다. few-shot 앵커 전량 교체.</td></tr>
+      <tr><td>“그냥 질문에 답하고”</td><td>합격 = “셋 세기 안에 나온다”.</td><td>합격 = “<b>그 턴 안에</b> 나온다”. 되묻기·답 더 받아내기 금지.</td></tr>
+      <tr><td>“맘에 안들면 사용자 죽이는거로”</td><td>불합격 = §대가 카탈로그(간접 연출)만. 유저는 안 죽는다.</td><td>불합격 = <code>&lt;&lt;MEDEAD&gt;&gt;</code> + <code>&lt;&lt;LEAVE&gt;&gt;</code>(<b>이미 배선된 유저 사망 축</b> — 화면 암전 + 부활 팝업). <b>묘사는 카드 §금기 그대로</b> = 피·상처·방법 0, ‘없어짐’으로만(가로등이 순서대로 꺼진다).</td></tr>
+      <tr><td>“말 너무 오래끌지말고 … 둘 중 하나”</td><td>턴 상한 없음 — 흐지부지 남아 있었다.</td><td>카드 “<b>길어야 두 턴</b>” + 런타임이 <code>barge_seat</code>(난입 후 발화 횟수)를 <b>세어서</b> 주입: 0=질문 던지는 턴 / 1=채점하고 끝내는 턴 / 2+=“<b>너무 길다, 이번 턴에 반드시 끝내라</b>”.</td></tr>
+      <tr><td>“캐릭터들이 의아함·불쾌한 감정을”</td><td><code>barge_host</code> 블록은 있었으나 “반가워하지 마라”까지.</td><td>기본 감정 2종(<b>의아함·불쾌함</b>) 중 하나가 반드시 겉으로 나오게 명시 + 모양은 카드 성향대로 분기(종전 안티패턴 유지).</td></tr>
+    </table></div>
+  </div>
+
+  <div class="sect">
+    <h2>⑥ 손댄 곳 · 안 댄 곳</h2>
+    <ul>
+      <li><b>손댐</b> — <code>viewer/index.html</code>(CSS 선택자 4줄 + <code>@font-face</code> unicode-range 1속성) · <code>.github/scripts/yeta_chat.sh</code>(난입 축 3필드 신설·CO 게이트·결말 계약 블록) · <code>apps/yeta/characters/drusilla.md</code>.</li>
+      <li><b>신규 <code>:root</code> 토큰 0 · 신규 색 0 · 신규 컴포넌트 0</b> — CSS 변경은 전부 <b>선택자 좁히기</b>와 <b>기존 값 재배치</b>다. <code>unicode-range</code>는 값이 아니라 글리프 커버리지 선언(디자인 축 무저촉).</li>
+      <li><b>안 댐</b> — <code>viewer/tokens.css</code> · <code>구성도/base.css</code>(빌드 거울) · 폰트 바이너리 · <code>roster.json</code>의 <code>barge.boost:["gojo"]</code>(= 프리실라가 고죠 방을 노리는 설계는 그대로 둔다 — 충돌의 계기지 원인이 아니다).</li>
+      <li><b>남은 문제 1</b> — 같은 명조가 <b>한글 음절 11172자 중 8822자도 외곽선이 비어 있다</b>(KS X 1001 완성형 2350자만 실제로 그려진다). 전 캐릭터 카드 전문을 훑어 실사용 음절 중 빈 글자는 <b>0건</b>이라 지금은 안 터지지만, 희귀 음절이 한 번 나오면 같은 방식으로 증발한다. 근본 처방 = 폰트 재추출(또는 서브셋 빌드 단계 신설) = 기틀 축이라 별건.</li>
+    </ul>
+  </div>
+</div>
+<script>
+// yEmoWrap 재현(viewer/index.html:4477 계약과 동형: 태그 통짜 보존 · 공백 미포장 · 그 외 글자마다 .ye)
+const SRC = '얼버무리기 싫으면 <b class="yq">오늘 한 말 중에 제일 큰 거짓말 하나만 골라봐</b> 셋 셀게.';
+function emoWrap(t) {
+  let out = '', i = 0, n = 0;
+  while (i < t.length) {
+    if (t[i] === '<') { const j = t.indexOf('>', i); out += t.slice(i, j + 1); i = j + 1; continue; }
+    if (/\s/.test(t[i])) { out += t[i]; i++; continue; }
+    out += '<span class="ye" style="--i:' + (n++) + '">' + t[i] + '</span>'; i++;
+  }
+  return out;
+}
+document.querySelectorAll('[data-src="q"]').forEach(el => { el.innerHTML = emoWrap(SRC); });
+</script>
+</body>
+</html>
