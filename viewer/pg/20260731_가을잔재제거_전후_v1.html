@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>「가을」 잔재 제거 — 전/후 비교 v1</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260731_가을캐릭터삭제_전후_v1.html 100% 계승(재설계 0 · 내용만 잔재 축으로 교체) ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --think:#3EE0C8; --think-rgb:62,224,200;
+    --danger:#FF7A59;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --glass-0:rgba(255,255,255,.002); --glass-line-0:rgba(255,255,255,.066);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+    --yeta-bg:var(--bg);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .pair { display:flex; gap:var(--sp-2); flex-wrap:wrap; }
+  .col { flex:1 1 320px; min-width:0; background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-l); padding:var(--sp-2); box-shadow:var(--shadow-card); }
+  .col > h3 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 6px; }
+  .col.now > h3 { color:var(--mut); }
+  .col.next > h3 { color:var(--accent); }
+  .diff { font-size:var(--fs-xs); white-space:pre-wrap; word-break:break-word; margin:0; color:var(--fg-2); }
+  .diff .del { color:var(--danger); }
+  .diff .keep { color:var(--mut); }
+  .cap { font-size:var(--fs-xs); color:var(--mut); margin:6px 0 0; }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  .tw { overflow-x:auto; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); white-space:nowrap; }
+  td b { color:var(--accent); font-weight:var(--fw-b); }
+  td .gone { color:var(--danger); font-weight:var(--fw-b); }
+  ul { margin:0; padding-left:18px; font-size:var(--fs-sm); color:var(--fg-2); }
+  li { margin:3px 0; }
+  code { font-size:var(--fs-xs); color:var(--think); }
+  @media (max-width:700px) { .pair { flex-direction:column; } }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>「가을」 잔재 제거 — 전/후</h1>
+  <p class="lead">직전 삭제(339차)는 <b>카드·에셋·세계관 줄</b>만 지웠다. 운영자 <b>"관련된거 처음부터 없었던 것처럼"</b> → 남아 있던 <b>배경 서술·판정 근거 인용</b>까지 뺐다. 앱 화면은 이번에도 안 바뀐다(가을은 원래 로스터 미등재) — 바뀌는 건 <b>모델에 실제로 주입되는 텍스트</b>라, 전/후는 <code>shared/inject_character.sh</code> 실행 산출물 diff로 낸다.</p>
+
+  <div class="sect">
+    <h2>① 하서연 방 — 배경 서술에 남아 있던 죽마고우 줄 (<code>character_block haeun</code>)</h2>
+    <div class="pair">
+      <div class="col now">
+        <h3>전 — 37,425자</h3>
+        <p class="diff"><span class="keep">## 배경
+…말을 업으로 삼은 사람답게 누구의 말이든 잘 받아 주지만, 정작 자기 이야기는 좀처럼 꺼내지 않는다.</span> <span class="del">가을과는 초등학교 때부터 죽마고우 — 둘이 골목에 붙으면 상가 사람들이 "또 시작이네" 하며 웃는다.</span></p>
+      </div>
+      <div class="col next">
+        <h3>후 — 37,288자 (−137)</h3>
+        <p class="diff"><span class="keep">## 배경
+…말을 업으로 삼은 사람답게 누구의 말이든 잘 받아 주지만, 정작 자기 이야기는 좀처럼 꺼내지 않는다.</span></p>
+      </div>
+    </div>
+    <p class="cap">339차가 지운 건 「다른 주민들과의 관계」 절의 <code>- 가을:</code> 한 줄뿐이었다. <b>산문 배경에 박힌 문장은 그대로 남아</b> 하서연은 계속 죽마고우가 있는 사람이었다.</p>
+  </div>
+
+  <div class="sect">
+    <h2>② 로이스 방 — 성향 판정 근거 인용 (<code>character_block desk</code>)</h2>
+    <div class="pair">
+      <div class="col now">
+        <h3>전 — 49,620자</h3>
+        <p class="diff"><span class="keep">① 1w9 → 1w8: 9날개(조용한 완벽주의)에서는 창틀·고함·판 엎기가 안 나온다.</span> <span class="del">제30조가 이미 "가을↔로이스 8+8 통제다툼"으로 8을 전제 —</span> <span class="keep">DB 내부 모순을 8쪽으로 정리.</span></p>
+      </div>
+      <div class="col next">
+        <h3>후 — 49,572자 (−48)</h3>
+        <p class="diff"><span class="keep">① 1w9 → 1w8: 9날개(조용한 완벽주의)에서는 창틀·고함·판 엎기가 안 나온다 — 실측 행동이 8쪽이라 DB 내부 모순을 8쪽으로 정리.</span></p>
+      </div>
+    </div>
+    <p class="cap">근거를 <b>지운 게 아니라 갈아 끼웠다</b> — 1w8 판정의 진짜 증거는 「창틀·고함·판 엎기」 실측이지 사라진 인물과의 대립쌍이 아니다. 판정값 무변동.</p>
+  </div>
+
+  <div class="sect">
+    <h2>③ 서예은 방 — 카드 주석의 교체 경위 (<code>character_block seyeun</code>)</h2>
+    <div class="pair">
+      <div class="col now">
+        <h3>전 — 46,815자</h3>
+        <p class="diff"><span class="keep">서예은 · 운영자 260725 지시(</span><span class="del">"가을(상인회장) 대체 — </span><span class="keep">상인회장 직함은 떼고 익명 배경으로 · 동장 막내딸 …")
+</span><span class="del">세계관 회수 = gaeul.md의 골목·상인회·시장 축만 계승, 성격은 전면 교체(도도한 실권자 → 필터 없는 무계획).</span></p>
+      </div>
+      <div class="col next">
+        <h3>후 — 46,730자 (−85)</h3>
+        <p class="diff"><span class="keep">서예은 · 운영자 260725 지시("상인회장 직함은 떼고 익명 배경으로 · 동장 막내딸 …")
+세계관 배선 = 골목·상인회·시장 축 계승 · 성격 = 필터 없는 무계획.</span></p>
+      </div>
+    </div>
+    <p class="cap">서예은은 이제 <b>누구의 대타도 아닌</b> 원래 그 자리 사람이다. 배선(골목·상인회·시장)·성격은 무변동.</p>
+  </div>
+
+  <div class="sect">
+    <h2>④ 주입 안 되는 설계 문서 — 성향 DB · 포터블</h2>
+    <div class="tw">
+      <table>
+        <thead><tr><th>파일</th><th>전</th><th>후</th></tr></thead>
+        <tbody>
+          <tr><td><code>characters/성향_DB.md</code> 제7조</td><td>1w8 근거에 「가을↔로이스 8+8 통제다툼」 + 「260726 가을 하차로 근거쌍 소멸」</td><td><b>판정 근거 = 창틀·고함·판 엎기 실측</b>(1w8 값 무변동)</td></tr>
+          <tr><td><code>characters/성향_DB.md</code> 제9조</td><td>서예은 항목 머리에 <span class="gone">교체 경위 인용문 1블록</span>(가을 8회 언급)</td><td>블록 삭제 — ①~⑤ 배정값은 <b>그대로</b></td></tr>
+          <tr><td><code>characters/성향_DB.md</code> 역행표·제25조</td><td>「가을 하차(→서예은)」 주석 · 폭발형 4인 뒤 「260726 가을 하차」</td><td>주석만 제거(<b>명단·수치 무변동</b>)</td></tr>
+          <tr><td><code>docs/성향총추출_포터블.md</code></td><td>배정표 <span class="gone">가을 행</span> · 아키타입 예 「가을·데스크」 · §5 <span class="gone">「3) 가을 — 명령인데 밉지 않은 화법」 절</span> · 부록A <span class="gone">28행 gaeul.md</span> · 「12인/12장」</td><td>행·절 삭제 후 <b>번호 재정렬</b>(§5 3~5 · 부록A 28~32 · 상호참조 동조) · <b>11인/11장</b></td></tr>
+          <tr><td><code>yeta_bg.py</code> · <code>yeta_bg_var.py</code></td><td>주석 「260731 가을 하차로 골목=백 단독 / alley 공유 해소」</td><td>「골목=백 단독」 (하차 흔적 제거 · 코드 로직 무변동)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sect">
+    <h2>검증 — 16인 전원 주입문 실측</h2>
+    <ul>
+      <li><b>「가을」 잔존 0</b> — <code>character_block</code> 16인(무디·세라·하서연·백·류·윤·로이스·카피·서예은·본·루시·윈터·레제·고죠·최산·프리실라) 전수 실행 grep 결과 <b>전원 0회</b>.</li>
+      <li><b>안 건드린 것</b> = 계절 낱말 「가을」(<code>yeta_chat.sh</code> season 배열 · <code>viewer/index.html</code> <code>yWx</code>) — 동명이의.</li>
+      <li><b>기록 축 유지</b> = <code>docs/</code> 원장 3종 · <code>docs/reports/</code> 과거 리포트 · <code>viewer/pg/</code> 과거 시안 · <code>_versions/</code> 백업 — 삭제 작업 자체의 기록이라 지우면 되돌릴 근거가 사라진다.</li>
+      <li><code>python3 shared/check_refs.py</code> <b>rc=0</b> · 생성 파이프 <code>ast.parse</code> OK · 로스터 16인 무변동 = <b>앱 화면 회귀 0</b> · 신규 <code>:root</code> 토큰·색·컴포넌트 <b>0</b>.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
