@@ -543,13 +543,8 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     border-radius:var(--r-pill); font:inherit; font-size:var(--fs-xs); padding:3px 11px; cursor:pointer; }
   .ypick-row .yinv-x:active { transform:scale(var(--press-m,.9)); }
   #yetaAva2 { margin-left:-12px; box-shadow:0 0 0 2px var(--yeta-bg); }   /* 스택 겹침(기하) + 분리 링(box-shadow = 토큰 없는 축) — iMessage·카톡 단톡 헤더 결 */
-  button.yb.sys.ykick { cursor:pointer; font:inherit; touch-action:manipulation; transform-origin:center; }   /* 난입 직후 원탭 내보내기 — sys pill 정본 계승 · 다음 내 메시지 후 자동 소멸 */
-  button.yb.sys.ykick:active { transform:scale(var(--press-m,.9)); }   /* ⚠ 클릭감 픽스(운영자 260731 "클릭감이 이상") — 등장용 .in의 transform-origin:bottom left가 눌림 스케일에도 그대로 먹어 좌하단으로 찌그러지며 눌리던 것 → 위 정칙에 origin:center 명시(.yeta-log .in 0-2-0보다 특이도 우위 0-3-1 = 눌림·등장 모두 중앙 기준) */
-  /* 공간 초대 3선택지(운영자 260731 "누르기/말기 말고 선택지 3개") — 표면 = .ypickbar button 정본 선언 계승(글래스+라인+알약 · CII 미연시 선택지 축) · 자리만 로그 인라인(sys pill 아래) */
-  .ynear-ask { align-self:center; display:flex; flex-direction:column; gap:6px; width:min(78%, 340px); }
-  .ynear-ask button { text-align:left; padding:9px 13px; border-radius:var(--r-pill); background:var(--glass-2); border:1px solid var(--glass-line); color:var(--fg); font:inherit; font-size:var(--fs-sm); line-height:1.45; cursor:pointer; backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); touch-action:manipulation; transform-origin:center; }
-  .ynear-ask button:active { transform:scale(var(--press-m,.9)); }
-  .ynear-ask button[disabled] { opacity:.4; pointer-events:none; }   /* 발사 중 잠금 = .ypick-row[disabled] 선언 계승 */
+  button.yb.sys.ykick { cursor:pointer; font:inherit; touch-action:manipulation; }   /* 난입 직후 원탭 내보내기 — sys pill 정본 계승 · 다음 내 메시지 후 자동 소멸 */
+  button.yb.sys.ykick:active { transform:scale(var(--press-m,.9)); }
   /* SNS 메뉴식 캐릭터 선택 리스트(첫 진입) — .ypick-row 계승, stage 전체 오버레이 */
   .yeta-list { position:absolute; inset:0; z-index:6; overflow-y:auto; padding:var(--sp-3) var(--sp-2) 20px; display:flex; flex-direction:column; gap:8px; }
   .yeta-list[hidden] { display:none; }
@@ -3864,7 +3859,7 @@ function yDeadInfo(id) {   // 죽음 프로세스 표시(운영자 260725 "몇�
     + `<span class="ypp-meta ydead-l"><span>부활 · <b>곧 돌아온다</b></span></span>`
     + `<span class="ypp-desc">${by ? `${esc(by)}${yJosa(by, '이', '가')} 신당에서 빌어줬어 — 성당 앞뜰에서 눈을 뜨는 중.` : '무음동의 밤이 다 흘렀어 — 성당 앞뜰에서 눈을 뜨는 중.'}</span>`;
 }
-let _yNearC = null, _yNear = [], _yNearGen = 0, _yNearAsk = false;   // 공간 초대 후보(pill) + 근처 목록(스택·팝업) · gen = 세대 토큰(평의회A — await 중 방 전환 시 교차 방 오염 차단) · _yNearAsk = pill 탭 후 3선택지 펼침(운영자 260731)
+let _yNearC = null, _yNear = [], _yNearGen = 0;   // 공간 초대 후보(pill) + 근처 목록(스택·팝업) · gen = 세대 토큰(평의회A — await 중 방 전환 시 교차 방 오염 차단)
 async function yNearCalc() {   // 현재 방 상대와 같은 장소(동선 판정)의 다른 캐릭터들 — 잠금·미대면·소원·방 멤버 제외 · 로컬 누적 → 원자 커밋(낡은 세대·타 방 결과 = 폐기)
   const gen = ++_yNearGen, _prev = _yNearC && _yNearC.id, th0 = YTH();
   const near = []; let nearC = null;
@@ -3890,7 +3885,6 @@ async function yNearCalc() {   // 현재 방 상대와 같은 장소(동선 판�
     }
   } catch {}
   if (gen !== _yNearGen || YTH() !== th0) return;   // 원자 커밋 가드 — 방·세대 변동 = 결과 버림(평의회A 교차 방 오염 차단)
-  if (((nearC && nearC.id) || null) !== (_prev || null)) _yNearAsk = false;   // 후보 교체·소멸 = 펼친 3선택지 접기(스테일 대상 오발사 차단 · 260731)
   _yNear = near; _yNearC = nearC;
   try { yStackSync(); } catch (x) {}
   const ip = $('#yetaInv'); if (ip && !ip.hidden) yInvToggle(true);   // 열린 초대 팝업 = 최신 후보·상태로 재렌더(진입 직후 '없어' 오표기·만석 전환 스테일 해소 — 평의회A·I)
@@ -4731,26 +4725,12 @@ $('#yetaInv').addEventListener('click', async e => {
 yetadlg.addEventListener('click', e => { const pk = $('#yetaInv'); if (!pk.hidden && !pk.contains(e.target)) yInvToggle(false); });   // 바깥 탭 = 닫힘(잔존 패널 안전망 — 진입점은 폐지)
 $('#yetaLog').addEventListener('click', async e => {   // 난입 원탭 내보내기 pill(소멸형) — 퇴장도 세계관 연출(op kick의 sys)
   const nr = e.target.closest('[data-near]');
-  if (nr) {   // 공간 초대 pill 탭 = 3선택지 토글(운영자 260731 — 종전 즉발 invite 폐지 · 실제 발사는 아래 ①②③)
-    _yNearAsk = !_yNearAsk; yRender(); return;
-  }
-  const ng = e.target.closest('[data-near-go]');
-  if (ng) {   // ①② 부르기 — 판정 기준(basis: self=나와의 관계·페르소나 / moment=동석 상대와의 관계·대화 흐름)을 invite op에 동봉(수락/거절 = 러너 판정 그대로)
-    const c = yPersona(ng.dataset.nearGo); if (!c) return;
-    const basis = ng.dataset.basis === 'moment' ? 'moment' : 'self';
-    const wrap = ng.closest('.ynear-ask'); if (wrap) wrap.querySelectorAll('button').forEach(b => b.disabled = true);   // 이중 탭 잠금(발사 중)
-    _yNearC = null; _yNearAsk = false;
-    const r = await yApi('invite', { t: (YSESS || {}).cur || '', persona: c.id, name: c.name, basis }).catch(() => null);
+  if (nr) {   // 공간 초대(운영자 260709) — 같은 장소 pill 탭 = 부르기(기존 invite op 그대로 · 수락/거절 = 캐릭터)
+    const c = yPersona(nr.dataset.near); if (!c) return;
+    _yNearC = null; nr.disabled = true;
+    const r = await yApi('invite', { t: (YSESS || {}).cur || '', persona: c.id, name: c.name }).catch(() => null);
     if (r && r.ok) { YSESS = r.sess; yRender(); }
     else { miniToast((r && r.error) || '부르기 실패 — 잠시 후 다시'); yRender(); }
-    return;
-  }
-  const nh = e.target.closest('[data-near-hostask]');
-  if (nh) {   // ③ 지금 상대에게 묻는다 — 그 문장이 내 말로 전송(ypickbar 탭과 같은 ySend 단일 깔때기 · 답 듣고 pill로 다시 부르면 된다)
-    const c = yPersona(nh.dataset.nearHostask); if (!c) return;
-    _yNearAsk = false;
-    const ta = $('#yetaText'); if (!ta) return;
-    ta.value = `${c.name}${yJosa(c.name, '이', '가')} 근처에 있다는데… 불러도 될까?`; ySend();
     return;
   }
   const kp = e.target.closest('[data-kick-pill]'); if (!kp) return;
@@ -5115,17 +5095,7 @@ function yRender() {
     h += `<button type="button" class="yb sys ykick${_yKickOn || first ? '' : ' in'}" data-kick-pill="${esc(bg.id)}">${esc(bc.name || '')} 내보내기</button>`;
   }
   _yKickOn = kickOn;
-  if (_yNearC && !kickOn && ((s.room || []).length < 2)) {   // 공간 초대(운영자 260709 메타버스 결) — 같은 장소 감지 시에만 · 탭 = 3선택지 펼침(운영자 260731 "누르기/말기 말고 선택지 3개" — 즉발 부르기 폐지)
-    h += `<button type="button" class="yb sys ykick ynear in" data-near="${esc(_yNearC.id)}" aria-expanded="${_yNearAsk ? 'true' : 'false'}">${esc(_yNearC.pl)} — ${esc(_yNearC.name)}도 여기 있다 · 불러볼까</button>`;
-    if (_yNearAsk) {   // ①② = 판정 기준(basis)을 실어 부르기(수락은 걔 마음 · 러너 판정) · ③ = 지금 상대에게 먼저 묻는다(내 말로 전송 — ypickbar 깔때기 동형)
-      const hostNm = (yPersona((s.room || [])[0]) || YCUR || {}).name || '지금 상대';
-      h += `<div class="ynear-ask in">
-        <button type="button" data-near-go="${esc(_yNearC.id)}" data-basis="self">${esc(_yNearC.name)} 마음에 맡긴다 — 나와의 관계 · 그 애 페르소나로</button>
-        <button type="button" data-near-go="${esc(_yNearC.id)}" data-basis="moment">${esc(hostNm)}${yJosa(hostNm, '과', '와')}의 관계 · 지금 대화의 흐름(모먼트)으로</button>
-        <button type="button" data-near-hostask="${esc(_yNearC.id)}">${esc(hostNm)}에게 먼저 물어본다</button>
-      </div>`;
-    }
-  }
+  if (_yNearC && !kickOn && ((s.room || []).length < 2)) h += `<button type="button" class="yb sys ykick ynear in" data-near="${esc(_yNearC.id)}">${esc(_yNearC.pl)} — ${esc(_yNearC.name)}도 여기 있다 · 불러볼까</button>`;   // 공간 초대(운영자 260709 메타버스 결) — 같은 장소 감지 시에만 · 탭 = 부르기(수락은 걔 마음)
   const invP = s.invite && Date.now() - (s.invite.ts || 0) < 600000 ? yPersona(s.invite.to) : null;   // 초대 판정 대기(단톡 260707)
   const gbP = s.gb && s.gb.p && (s.room || []).length >= 2 && Date.now() - (s.gb.ts || 0) < 120000 ? yPersona(s.gb.p) : null;   // 단톡 자율 비트 예약(운영자 260725 "자기들끼리 얘기를 이어나가야") — 러너가 답장과 같은 write에 심는다 · state 비점유 = 초대 판정(invP) 결 계승(좀비 리퍼·자동재시도 축과 무관 = 러너 사망 시 TTL 120s로 조용히 소멸 · 짝 = yeta_chat.sh GB_TTL_MS·yeta_v3 GB_TTL_MS)
   const typing = yPrefOn('typing', true) && !deadNow && !gaveUp && !openingStuck && (awaiting || staged || failNow) && !!YCUR && Date.now() >= _yTypHold;   // 타이핑 표시(설정) 끄면 "입력 중" 숨김 · staged = 답장 페이스 홀드 · failNow = 자동 재시도 중에도 점 유지(실패 무노출) · _yTypHold = 읽는 시간 경과 후에만(운영자 260707)
