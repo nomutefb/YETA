@@ -216,7 +216,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yeta-h .yh-tag { font-size:var(--fs-xs); color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }   /* 상대 설명 = 흰색 불투명(운영자 260709 첨부2 "투명하지 않게" — mut 폐지) */
   .yeta-h .yh-r { margin-left:auto; display:flex; align-items:center; gap:6px; }   /* 우측 묶음 = 래퍼에 margin-left:auto(CII) */
   /* .yh-remote(원거리 배지) 제거 — 원거리 개념 폐지·[문자][초대][대화가능][전화] 픽토로 대체(운영자 260717) */
-  /* .yh-reset("새 대화") 제거(운영자 260705) — 2탭 armed 색 패턴은 call.js #yetaCallBtn.armed가 승계 */
+  /* .yh-reset("새 대화") 제거(운영자 260705) — 2탭 armed 색 패턴 정본 = .yset-reset.armed(수화기 armed 는 발신 확인 화면으로 대체 · 260731) */
   .yeta-stage { position:relative; flex:1; display:flex; flex-direction:row; overflow:hidden; }   /* 무대 = 2겹 배경 크로스페이드 + 좌 슬림 목록|우 로그 2열(운영자 260705 레퍼런스 "왔다갔다") */
   /* 좌 슬림 캐릭터 레일 — 이름 + 최근대화 ~5음절…(운영자 260705 "모바일 기준이니 짧게") · 현 상대 = 라임 표시 · 탭 = 화자 전환(draw·맥락 유지) */
   .yside { flex:none; width:104px; overflow-y:auto; padding:calc(64px + env(safe-area-inset-top)) 6px calc(76px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:6px; position:relative; z-index:2; scrollbar-width:none; }
@@ -4505,9 +4505,9 @@ $('#yetaPdc').addEventListener('click', e => {   // 액션 4 = 통화(유료 2�
   e.stopPropagation();
   const act = b.dataset.pda, c = YCUR; if (!c) return;
   yPdClose();
-  if (act === 'call') {   // 무장만 대행 — 유료 고지 토스트 = call.js 원문 보존(덮어쓰기 금지) · 이미 무장 = 재클릭 대행 금지(1탭 실발신 차단 — 평의회E)
+  if (act === 'call') {   // 수화기 대행 — 발신 확인 화면(call.js dialOut)이 뜨고 유료 확정은 그 안 [통화] 한 곳(구 2탭 무장 폐지 260731 · 1탭 실발신 없음)
     const cb = document.getElementById('yetaCallBtn');
-    if (cb) { if (cb.classList.contains('armed')) miniToast('위 수화기가 이미 준비됐어 — 한 번 더 누르면 연결돼'); else cb.click(); }
+    if (cb) cb.click();
     return;
   }
   if (act === 'inv') { yInvToggle(true); return; }

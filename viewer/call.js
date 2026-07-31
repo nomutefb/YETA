@@ -14,7 +14,7 @@
 //   무전 전송 = {op:'send', text, model:'claude-sonnet-5', effort:'low', ptt:1} — 낮은 모델 = 응답속도(운영자 요구)
 //   전화 요청 = {op:'ring'} · 실전화(PSTN) = {op:'phone'} · 보이스톡 공개키 = {op:'vapikey'}
 //   보이스톡 = 헤더 수화기(모듈 주입) → 벨 연출 → 받기 → Vapi Web SDK(esm.sh 동적 import) 실시간 통화 —
-//     assistant = roster "phone" 재사용(PSTN과 동일 배선) · ⚠️분당 과금 = 2탭 재확인 · 키는 Pages env(Origins 제한 권장)
+//     assistant = roster "phone" 재사용(PSTN과 동일 배선) · ⚠️분당 과금 = 발신 확인 화면 [통화] 재확인(260731 · 구 2탭 무장) · 키는 Pages env(Origins 제한 권장)
 //
 // [소비 규약 — 기틀 CLAUDE.md §🗺]
 //   seen = localStorage 'yeta_call_seen'(ts) — call.ts ≤ seen = 무시(기기별 각자 울림 = 자연스러움)
@@ -128,7 +128,6 @@ const css = `
   font:inherit; font-size:var(--fs-label); font-weight:var(--fw-b); cursor:pointer; touch-action:manipulation;
   backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }   /* 보조 = 무채 글래스 플레이트(.ycall-mic 결) */
 .yvcf-later:active { transform:scale(var(--press-l,.95)); }
-#yetaCallBtn.armed { color:var(--arm); }   /* 2탭 재확인(통화 = 유료 발동) — armed = 경고색 픽토 */
 #calldlg.talk .ycall-status { font-variant-numeric:tabular-nums; }   /* 보이스톡 타이머 = tabular(.yb-cap 결) */`;
 
 // ── 상태 ──
@@ -155,11 +154,12 @@ function ensureDom() {
     <span class="ycall-ava" id="ycallAva"></span>
     <span class="yintro-name" id="ycallName"></span>
     <span class="yintro-tag" id="ycallTag"></span>
+    <span class="yvcf-num" id="ycallNum" hidden></span>
   </div>
   <div class="ycall-line" id="ycallLine" hidden></div>
   <div class="ycall-btns">
     <span class="ycall-act"><button type="button" class="ycall-btn drop" id="ycallDrop" aria-label="거절">${PHONE_SVG}</button><span id="ycallDropLbl">거절</span></span>
-    <span class="ycall-act" id="ycallTakeWrap"><button type="button" class="ycall-btn take" id="ycallTake" aria-label="받기">${PHONE_SVG}</button><span>받기</span></span>
+    <span class="ycall-act" id="ycallTakeWrap"><button type="button" class="ycall-btn take" id="ycallTake" aria-label="받기">${PHONE_SVG}</button><span id="ycallTakeLbl">받기</span></span>
   </div>
 </div>`;
   document.body.appendChild(dlg);
@@ -211,8 +211,11 @@ async function open(call) {
   dlg.querySelector('#ycallTag').textContent = p.tagline || '';
   dlg.querySelector('#ycallStatus').innerHTML = '전화가 오고 있어<span class="gdots"><i>.</i><i>.</i><i>.</i></span>';   // gdots = 본체 점 애니 계승
   dlg.querySelector('#ycallLine').hidden = true;
+  dlg.querySelector('#ycallNum').hidden = true;   // 발신 화면 잔재(번호) 회수 — 수신은 번호 없이 얼굴·이름만
   dlg.querySelector('#ycallTakeWrap').hidden = false;
+  dlg.querySelector('#ycallTake').setAttribute('aria-label', '받기'); dlg.querySelector('#ycallTakeLbl').textContent = '받기';
   dlg.querySelector('#ycallDropLbl').textContent = '거절';
+  outStage = 0;   // 발신 흐름 종료 — 같은 dlg 위에 수신이 덮으면 발신 상태 소거
   dlg.classList.remove('talk');
   if (!dlg.open) dlg.showModal();
   if (typeof navOpen === 'function') navOpen('ycall', decline);   // 백스택 등재 — 뒤로 = 거절(등재 콜백 = decline 본체 · 챗 위 벨이면 [ydlg, ycall] 적층 = 뒤로 1회에 벨만)
@@ -258,7 +261,7 @@ function closeDlg() {
   stopFx(); stopVoice();
   clearInterval(webTick); webTick = 0;
   if (vapiInst) { try { vapiInst.stop(); } catch {} vapiInst = null; }   // 보이스톡 세션 종료(과금 차단)
-  cur = null; if (dlg && dlg.open) dlg.close();
+  cur = null; outStage = 0; if (dlg && dlg.open) dlg.close();
 }
 function decline() { if (cur && cur.ts && !cur.web) markSeen(cur.ts); closeDlg(); }
 
@@ -304,7 +307,7 @@ async function webAccept(call) {
 }
 
 async function accept() {
-  if (!cur) return ycallNavClose();
+  if (!cur) { if (outStage === 1) return outPlace(); return ycallNavClose(); }   // 발신 확인 화면의 [통화] = 실제 발신(수신 cur 없음 축)
   const call = cur;
   stopFx();
   dlg.classList.add('talk');
@@ -408,12 +411,47 @@ function checkReplyVoice(sess) {   // 무전 답장 음성 자동재생 — 텍�
 window.yPremBadge = c => (c && c.voice) ? `<span class="yprem" title="전용 음색(프리미엄)">${WAVE_SVG}보이스</span>` : '';
 
 // ── 헤더 수화기 버튼(모듈 주입 · 본체 무수정) ──
-// 정책(260705 실측 결정): phone 배선 캐릭터 = **실전화(op phone)** 발신 = 네 폰이 울림.
+// 정책(260705 실측 결정 · 260731 UX 개편 = 2탭 무장 → 발신 확인 화면): phone 배선 캐릭터 = **실전화(op phone)** 발신 = 네 폰이 울림.
 //   근거 = Vapi 통화 로그 실측: outboundPhoneCall = 정상 대화(transcript 있음·클론 음색) /
 //          webCall(보이스톡) = 'assistant-did-not-receive-customer-audio'(모바일 WebRTC 오디오 미전달) 반복 실패.
 //   → 흔들리는 브라우저 통화 대신 증명된 PSTN 로. 보이스톡(open web:1)은 코드 잔존하나 버튼 기본 경로에서 제외.
 //   phone 미배선 캐릭터 = op ring 폴백(인앱 걸려오는 전화·첫마디 TTS).
-let callArm = 0, callArmT = 0;
+// ── 발신 화면(운영자 260731 "2탭 무장 폐지 — 전화를 겁니다 확인 → [통화] → 기다리는 중") ──
+//   확인·대기 화면 = 수신 #calldlg 재사용(같은 의미 = 같은 화면 · 번호 = .yvcf-num 결 · 대기 점 = 본체 .gdots 계승)
+let outStage = 0, outReal = false;   // 0=없음 · 1=확인(통화 대기) · 2=발신 후 기다리는 중
+async function dialOut() {
+  if (!alive()) return;
+  ensureDom();
+  const pid = (typeof YSESS !== 'undefined' && YSESS && (YSESS.cur || YSESS.persona)) || '';
+  const p = (typeof yPersona === 'function' && yPersona(pid)) || { name: pid || '?', initial: '?' };
+  outReal = !!p.phone; outStage = 1; cur = null;
+  stopFx(); dlg.classList.remove('talk');
+  dlg.querySelector('#ycallBg').style.backgroundImage = p.bg ? `url('${p.bg}')` : '';
+  dlg.querySelector('#ycallAva').innerHTML = typeof yAva === 'function' ? yAva(p, 'yintro-ava') : '';
+  dlg.querySelector('#ycallName').textContent = p.name || '';
+  dlg.querySelector('#ycallTag').textContent = p.tagline || '';
+  const num = dlg.querySelector('#ycallNum'), tel = (VCF[pid] && VCF[pid].tel) || '';
+  num.textContent = tel; num.hidden = !tel;   // 번호 배선 캐릭터 = 명함(.yvcf-num) 번호 그대로
+  dlg.querySelector('#ycallStatus').textContent = '전화를 겁니다';
+  dlg.querySelector('#ycallLine').hidden = true;
+  dlg.querySelector('#ycallTakeWrap').hidden = false;
+  dlg.querySelector('#ycallTake').setAttribute('aria-label', '통화'); dlg.querySelector('#ycallTakeLbl').textContent = '통화';
+  dlg.querySelector('#ycallDropLbl').textContent = '취소';
+  if (!dlg.open) dlg.showModal();
+  if (typeof navOpen === 'function') navOpen('ycall', closeDlg);   // 뒤로 = 취소(수신 스택과 같은 칸)
+}
+async function outPlace() {   // [통화] 확정 — 유료 발동은 여기 한 곳뿐(구 2탭 가드의 실발신 차단 역할 승계)
+  outStage = 2;
+  const st = dlg.querySelector('#ycallStatus');
+  st.innerHTML = '전화를 기다리는 중<span class="gdots"><i>.</i><i>.</i><i>.</i></span>';   // gdots = 본체 점 애니 계승
+  dlg.querySelector('#ycallTakeWrap').hidden = true;
+  dlg.querySelector('#ycallDropLbl').textContent = '닫기';
+  const r = await yApi(outReal ? 'phone' : 'ring').catch(() => null);   // 실전화(PSTN) / 미배선 = 인앱 걸려오는 전화 폴백(기존 경로 그대로)
+  if (outStage !== 2 || !dlg.open) return;   // 기다리다 닫았거나 수신이 덮음 = 결과 무시
+  if (!(r && r.ok)) { st.textContent = (r && r.error) || '전화 발신 실패'; setTimeout(() => { if (dlg.open && outStage === 2) ycallNavClose(); }, 3000); return; }
+  clearTimeout(ringT);
+  ringT = setTimeout(() => { if (dlg.open && outStage === 2) ycallNavClose(); }, RING_TIMEOUT);   // 벨 대기 상한 뒤 조용히 회수(실전화 = 내 폰이 울리는 중 · 인앱 = 수신 화면이 이 dlg 를 덮음)
+}
 function initCallBtn() {
   const hr = document.querySelector('#yetadlg .yh-r');
   if (!hr || document.querySelector('#yetaCallBtn')) return;
@@ -422,27 +460,7 @@ function initCallBtn() {
   b.setAttribute('aria-label', '통화'); b.title = '통화';
   b.innerHTML = `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${PHONE}"/></svg>`;   // 자물쇠 오버레이 폐지(운영자 260709 "픽토 유지·자물쇠만") — 미배선(바피 미연결) = .slash 빗금(운영자 260717)
   hr.insertBefore(b, hr.firstChild);   // 전화 = 우측 끝(헤더 [문자][초대][대화가능][전화] 순 · 원거리 전파 픽토 폐지 260717)
-  b.addEventListener('click', async () => {
-    const pid = (typeof YSESS !== 'undefined' && YSESS && (YSESS.cur || YSESS.persona)) || '';
-    const p = (typeof yPersona === 'function' && yPersona(pid)) || {};
-    const real = !!p.phone;
-    if (!callArm) {   // 1탭 = 무장(유료 발동 실수 방지 — yh-reset 2탭 패턴)
-      callArm = 1; b.classList.add('armed');
-      toast(real ? '한 번 더 누르면 내 폰으로 전화가 와(유료)' : '한 번 더 누르면 전화 요청(유료)');
-      clearTimeout(callArmT); callArmT = setTimeout(() => { callArm = 0; b.classList.remove('armed'); }, 2600);
-      return;
-    }
-    callArm = 0; b.classList.remove('armed'); clearTimeout(callArmT);
-    if (real) {   // 실전화 — 등록된 내 번호로 발신(Vapi 아웃바운드 · 로그 실측 정상)
-      toast('📞 곧 전화가 울려 — 받으면 통화돼');
-      const r = await yApi('phone').catch(() => null);
-      if (!(r && r.ok)) toast((r && r.error) || '전화 발신 실패');
-      return;
-    }
-    toast('📞 전화 요청 — 준비되면 앱에서 울려(30초쯤)');   // 배선 없는 캐릭터 = 인앱 걸려오는 전화(첫마디 TTS)
-    const r = await yApi('ring').catch(() => null);
-    if (!(r && r.ok)) toast((r && r.error) || '전화 요청 실패');
-  });
+  b.addEventListener('click', dialOut);   // 1탭 = 발신 확인 화면(운영자 260731 — 구 2탭 무장 폐지 · 유료 확정은 화면 안 [통화] 한 곳)
   callBtnSync();   // 생성 직후 초기 상태(실전화 미배선 = mut+락 · 항목8)
 }
 
