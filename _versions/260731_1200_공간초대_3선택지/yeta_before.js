@@ -745,7 +745,6 @@ export async function onRequestPost({ request, env }) {
     const persona = String(body.persona || '');
     if (!ID_RE.test(persona)) return json({ error: '잘못된 페르소나 id' }, 400);
     const name = stripMarkers(body.name).slice(0, 24) || persona;
-    const basis = body.basis === 'moment' ? 'moment' : 'self';   // 판정 기준(운영자 260731 3선택지) — self = 나와의 관계·그 애 페르소나(종전 기본) / moment = 동석 상대와의 관계·대화 흐름. 열거 화이트리스트 = 임의 문자열 마커 유입 차단
     const t = String(body.t || (await readSess()).cur || '');   // 대상 스레드(초대 = 열린 방으로)
     if (!ID_RE.test(t)) return json({ error: '먼저 대화 상대를 뽑아줘' }, 409);
     try {   // LOCKED 스페셜 = 합석 초대도 차단(분신술 260709 — draw와 동일 서버 강제 · 캐시 5분 = 왕복 저비용)
@@ -774,7 +773,7 @@ export async function onRequestPost({ request, env }) {
       const host = room[0];
       do { gid = 'g' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36); } while (s.threads[gid]);   // 단톡 스레드 id = 'g' 접두(페르소나 id와 비충돌 · ID_RE 통과)
       const gth = { turns: seed, state: 'idle', opening: 0, awaiting_since: 0, err: '', room: [host],
-        invite: { to: persona, ts: Date.now(), basis }, barged: 0, declined: {}, pin: 0, updated: Date.now(),
+        invite: { to: persona, ts: Date.now() }, barged: 0, declined: {}, pin: 0, updated: Date.now(),
         last_sp: (th.last_sp && room.includes(th.last_sp)) ? th.last_sp : host, char_ver: '', nudge: null };
       gth.turns.push({ role: 'sys', text: `${name}${josa(name, '을', '를')} 불렀어…`, ts: Date.now(), kind: 'invite' });
       if (gth.turns.length > 200) gth.turns = gth.turns.slice(-200);   // 스레드 캡(보안 감사⑤)

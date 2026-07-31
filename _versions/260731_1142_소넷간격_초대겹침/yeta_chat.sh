@@ -240,7 +240,6 @@ if inv.get("to") and now_ms - (inv.get("ts") or 0) < 600000 and inv["to"] not in
     _m = _re.match(r"\s*\[LV\s*(\d)\]", (s.get("notes") or {}).get(persona) or "")
     pref = s.get("pref") or {}
     print(json.dumps({"mode": "invite", "thread": T, "persona": persona,
-                      "basis": (inv.get("basis") or ""),   # 판정 기준(260731 3선택지) — self/moment · 결측(구 세션) = 종전 기본
                       "host_names": " · ".join(names.get(r) or r for r in room),
                       "me_call": me_call, "me_about": me_about,
                       "note_pub": s.get("note_pub") or s.get("note") or "",
@@ -1180,8 +1179,8 @@ turns = s.setdefault("turns", [])
 now = int(time.time() * 1000)
 def josa(w, a, b):
     c = ord((w or " ")[-1]); return a if 0xAC00 <= c <= 0xD7A3 and (c - 0xAC00) % 28 else b
-# 삽입 자리 = 항상 맨 끝(운영자 260731 "윈터 부른다면서 겹치는 경우" — 구 '초대 sys 직후 삽입'은 기다리는 동안 보낸 유저 메시지 위로 등장·인사가 끼어들어 시간 역행·대화 겹침을 만들었다. 도착은 도착한 시점에 = ts 단조 증가 유지 · 유저 메시지가 없으면 초대 sys가 마지막이라 종전과 동일 위치)
-pos = len(turns)
+# 삽입 자리 = 초대 sys 턴 직후(그 사이 유저 메시지가 와도 초대 문맥 옆) — 못 찾으면 끝
+pos = next((i + 1 for i in range(len(turns) - 1, -1, -1) if turns[i].get("role") == "sys" and turns[i].get("kind") == "invite"), len(turns))
 room = [r for r in (s.get("room") or []) if r][:2] or ([s.get("last_sp")] if s.get("last_sp") else [])
 if accept and len(room) < 2 and to not in room:
     room.append(to); s["room"] = room
@@ -1213,7 +1212,7 @@ invite_turn() {   # extract_mat mode=invite — 판정 1회(같은 폴오버 체
   [ -f "$CARD" ] || { clear_invite "부른 사람이 닿지 않는 곳에 있다"; return 0; }
   CBLOCK="$(character_block "$PERSONA")" || { clear_invite; return 0; }
   CNAME="$(sed -n 's/^name:[[:space:]]*"\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' "$CARD" | head -1)"; CNAME="${CNAME:-$PERSONA}"
-  NOTE_PUB="$(matv note_pub)"; NOTE_ME="$(matv note_me)"; HIST="$(matv hist)"; BASIS="$(matv basis)"
+  NOTE_PUB="$(matv note_pub)"; NOTE_ME="$(matv note_me)"; HIST="$(matv hist)"
   RAW_MODEL="$(matv model)"; TUNE="$(matv tune)"; CAST="$(matv cast)"; LAST_MOOD="$(matv last_mood)"; REL_LV="$(matv rel_lv)"
   PLACE_NM="$(matv place_nm)"; BARGE_VIA=""   # 초대받은 애의 지금 장소(거절 사유 구체화 · 마주침 260707)
   ME_CALL="$(matv me_call)"; ME_ABOUT="$(matv me_about)"   # 유저 프로필(호칭+소개 · 260708) — 초대 첫마디도 유저 이름 호명 가능
@@ -1249,8 +1248,6 @@ PYP
 )"; fi
   STATE_BLOCK="$(state_block)"
   ME_BLOCK="$(me_block)"   # 유저 프로필(호칭+소개 · 260708)
-  local crit="기준은 너의 성격·지금 시각과 상태·유저와의 관계"   # 판정 기준(260731 3선택지) — self·결측(구 세션) = 종전 기본
-  [ "$BASIS" = "moment" ] && crit="기준은 지금 그 자리에 있는 ${host:-상대}와(과) 너의 관계, 그리고 위 [최근 대화]의 흐름·분위기(모먼트)다. 유저와의 관계보다 그 자리의 공기와 ${host:-상대}와(과)의 사이를 우선해 판정해라"
   local prompt="${CBLOCK}
 ${POLICY_BLOCK}
 ${STATE_BLOCK}
@@ -1266,7 +1263,7 @@ ${NOTE_ME:-"(아직 없음 — 첫 만남)"}
 ${HIST:-"(없음)"}
 
 [상황 — 합석 초대]
-유저가 지금 ${host:-누군가}와(과) 있는 자리에 너를 불렀다. 올지 말지는 네가 정한다 — ${crit}. 웬만하면 반갑게 가는 동네지만, 네 카드·상태가 명백히 막으면 거절해도 된다(거절도 너답게).
+유저가 지금 ${host:-누군가}와(과) 있는 자리에 너를 불렀다. 올지 말지는 네가 정한다 — 기준은 너의 성격·지금 시각과 상태·유저와의 관계. 웬만하면 반갑게 가는 동네지만, 네 카드·상태가 명백히 막으면 거절해도 된다(거절도 너답게).
 
 [출력 계약 — 반드시 지켜라]
 - 첫 줄: ACCEPT 또는 DECLINE — 이 한 단어만.
@@ -2048,20 +2045,16 @@ PY
 )"
     # 대본 교대(운영자 260725 "단톡이면 자기들끼리 얘기를 이어나가야") — 종전 "동행 한 마디 · 대체로 생략"이 유저에게만 답하고 끝나는 결의 뿌리였다.
     #   이제 이름표로 화자를 번갈아 최대 GB_LINES 세그먼트(주화자 포함) = 한 호출에 오가는 대화. GB_LINES=1 = 교대 금지(종전 결로 즉시 회귀).
-    # ⚠ 260731 화자 뒤바뀜 보정(운영자 "지금 보면 대사가 겹쳐져버림") — 파서(finish 대본 분할)는 이름표를 **다음 이름표까지** 유효로 본다.
-    #   종전 규칙은 「이름표 없는 줄이 누구 것인지」를 안 밝혀, 모델이 [동행] 한 줄 뒤 제 대사로 돌아올 때 [자기 이름표]를 생략(첫 대사 무표 규칙의 자연 오독 = "무표 = 내 말") →
-    #   제 지문·대사가 동행 세그먼트에 통째로 붙었다(실측: 루시의 *팔짱 끼고 백 쪽으로 홱 돌아본다*가 백 버블에). 아래 「이름표 유효 범위」 줄이 그 빈틈을 명시한다.
     GROUP_RULE="
 - 여긴 단톡이다 — 이 방엔 ${CO_NAME}도 같이 있다. 유저에게만 대답하고 끝내지 마라. 방금 나온 말에 ${CO_NAME}가 반응할 만하면 **둘이 주고받아라**(맞장구·반박·놀리기·끼어들기·편들기).
 - 화자 전환 = 줄머리 이름표. 네 첫 대사엔 이름표를 붙이지 않고(그게 네 것이다), 그 뒤부터 새 줄에 정확히 \`[${CO_NAME}] 대사\` / \`[${CNAME}] 대사\` 형식으로 번갈아 쓴다 — 이름표 세그먼트는 **최대 $((GB_LINES - 1))개**(전부 합쳐 대본 ${GB_LINES}토막).
-- 이름표는 **다음 이름표가 나올 때까지** 그 아래 전부에 걸린다 — 이름표 없는 줄·지문(\`*…*\`)은 몽땅 직전 이름표 사람의 것으로 붙는다. \`[${CO_NAME}]\` 토막 뒤에 네가 다시 말하거나 움직이려면 **반드시** 새 줄에 \`[${CNAME}]\`부터 써라 — 빼먹으면 네 대사·행동이 ${CO_NAME}의 입으로 나간다(화자 뒤바뀜 사고).
 - 각 토막은 그 사람 말투로 짧게(1~2문장). 길이 계약은 토막마다 적용된다 — 대본이 길어지는 게 아니라 말이 오가는 것이다.
 - 매 턴 최대치를 채우지 마라: 부딪히거나 편들 대목이면 주고받고, 아닐 땐 네 한 마디로 끝내라(억지 대본 = 실패).
 - 마지막 토막을 유저에게 질문으로 떠넘기지 마라 — 둘이 얘기하다 유저가 끼어들 틈이 남는 결로 맺어라.
 - 이름표 토막은 전부 기억 블록 앞에 온다(NOTE·MOOD는 대본 전체가 끝난 뒤 한 번만)."
   elif [ -n "$CO_ID" ]; then CO_ID=""; CO_NAME=""; fi   # 카드 없는 동행 = 대본 축 비활성(파서 오탐 차단)
   [ "${GB_LINES:-1}" -le 1 ] 2>/dev/null && [ -n "$CO_ID" ] && [ "$BARGE_ROOM" != "1" ] && GROUP_RULE="
-- 지금 방엔 ${CO_NAME}도 있다. 걔 반응이 꼭 필요한 순간에만(대체로 생략 · 남발 금지) 네 대사가 끝난 뒤 새 줄에 정확히 [${CO_NAME}] 대사  형식으로 ${CO_NAME}의 짧은 한 마디를 덧붙여도 된다 — 걔 말투로, 최대 한 번. 네 자신의 대사엔 이름표를 붙이지 않는다. 이름표 뒤에 오는 줄은 전부 걔 것으로 붙으니 그 한 마디 뒤에 네 말을 다시 잇지 마라(대본은 거기서 끝). 그 줄 뒤에 기억 블록이 온다."   # GB_LINES=1 = 종전 계약(회귀 노브) · 260731 이름표 유효 범위 한 줄 동조(교대판과 같은 빈틈)
+- 지금 방엔 ${CO_NAME}도 있다. 걔 반응이 꼭 필요한 순간에만(대체로 생략 · 남발 금지) 네 대사가 끝난 뒤 새 줄에 정확히 [${CO_NAME}] 대사  형식으로 ${CO_NAME}의 짧은 한 마디를 덧붙여도 된다 — 걔 말투로, 최대 한 번. 네 자신의 대사엔 이름표를 붙이지 않는다. 그 줄 뒤에 기억 블록이 온다."   # GB_LINES=1 = 종전 계약(회귀 노브)
 
   # 부활 첫 마디(운영자 260714 "'오래 기다렸지' 어색 — 그 전 상황을 가정하게. 다투다 죽었으면 그 감정을 기억") — 죽을 때 박제한 {why,mood}를 귀환 답 프롬프트에 주입 · 장소 = 성당(places.json cathedral)
   REVIVE_BLOCK=""
