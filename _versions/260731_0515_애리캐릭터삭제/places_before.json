@@ -216,6 +216,15 @@
       ],
       "private": true
     },
+    "home_aeri": {
+      "name": "애리의 방 위층 살림",
+      "x": 49,
+      "y": 47,
+      "neighbors": [
+        "alley"
+      ],
+      "private": true
+    },
     "home_lucy": {
       "name": "기운이 고이는 자리",
       "x": 54,
@@ -252,6 +261,14 @@
       "day": "market",
       "evening": "alley",
       "night": "store"
+    },
+    "aeri": {
+      "late": "home_aeri",
+      "dawn": "home_aeri",
+      "morning": "alley",
+      "day": "alley",
+      "evening": "alley",
+      "night": "tea"
     },
     "lucy": {
       "late": "alley",
