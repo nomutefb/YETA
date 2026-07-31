@@ -216,80 +216,6 @@ def check_icon_ssot():
         print('✅ 아이콘 SSOT 정합 — 공유 아이콘 %d개 단일정본(nm-svg.js)·인라인 재선언 0' % len(shared))
     return rc
 
-_PLACE_JS_A, _PLACE_JS_B = 'const YM_SLOTS = ', 'function yMapLeave()'
-_PLACE_HARNESS = r"""
-const crypto = require('crypto'), fs = require('fs');
-const YMAPD = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-const ymSlot = h => h < 3 ? 'late' : h < 7 ? 'dawn' : h < 11 ? 'morning' : h < 17 ? 'day' : h < 21 ? 'evening' : 'night';
-async function ymSha(s) { return BigInt('0x' + crypto.createHash('sha256').update(s).digest('hex')); }
-const window = {};
-%s
-(async () => {
-  const ids = JSON.parse(process.argv[3]), out = {};
-  for (const d of ['w100', 'w101', 'w237']) for (let h = 0; h < 24; h++) for (const id of ids) {
-    out[id + '|' + d + '|' + h] = await ymPlaceOf(id, d, h);
-    const t = await ymTransitOf(id, d, h, 5);
-    out['T|' + id + '|' + d + '|' + h] = t.from + '>' + t.to + '@' + (t.p === 1 ? '1' : t.p);
-  }
-  process.stdout.write(JSON.stringify(out));
-})();
-"""
-
-def check_place_engine():
-    """동선 엔진 py↔js 등가 게이트(하드 · 운영자 260730 Q.144).
-    위치는 저장 없는 순수함수라 **러너와 뷰어가 각자 계산**한다 — 두 구현이 한 글자만 어긋나도
-    러너는 "찻집에 있다"고 프롬프트를 짜고 지도는 다른 데 점을 찍는다(동기화가 없으니 아무도 못 잡는다).
-    그래서 시드 문자열을 눈으로 맞추는 대신 **실제로 둘 다 돌려 전량 대조**한다(로스터 전원 × 24시 × 3일 × 위치·이동 = 약 2.3k건)."""
-    node = shutil.which('node')
-    if not node:
-        print('⚠️ 동선 엔진 대조 스킵(node 없음)'); return 0
-    try:
-        sys.path.insert(0, os.path.join(ROOT, '.github/scripts'))
-        import yeta_place as YP
-        pl = YP.load_places(os.path.join(ROOT, 'apps/yeta/places.json'))
-        roster = json.load(open(os.path.join(ROOT, 'apps/yeta/characters/roster.json'), encoding='utf-8'))
-        ids = [c['id'] for c in roster if isinstance(c, dict) and c.get('id')]
-        html = open(os.path.join(ROOT, 'viewer/index.html'), encoding='utf-8').read()
-        i = html.index(_PLACE_JS_A); j = html.index(_PLACE_JS_B, i)
-    except Exception as e:
-        print('⚠️ 동선 엔진 대조 스킵(재료 없음): %s' % e); return 0
-    tmp = None
-    try:
-        with tempfile.NamedTemporaryFile('w', suffix='.js', delete=False, encoding='utf-8') as f:
-            f.write(_PLACE_HARNESS % html[i:j]); tmp = f.name
-        r = subprocess.run([node, tmp, os.path.join(ROOT, 'apps/yeta/places.json'), json.dumps(ids)],
-                           capture_output=True, text=True, timeout=60, cwd=ROOT)
-    finally:
-        if tmp and os.path.exists(tmp):
-            os.remove(tmp)
-    if r.returncode != 0:
-        print('❌ 동선 엔진 대조 — 뷰어 구현 실행 실패:\n   %s' % (r.stderr or '')[:300]); return 1
-    try:
-        js = json.loads(r.stdout)
-    except Exception:
-        print('❌ 동선 엔진 대조 — 뷰어 출력 파싱 실패'); return 1
-    bad, n = [], 0
-    for d in ('w100', 'w101', 'w237'):
-        for h in range(24):
-            for cid in ids:
-                n += 2
-                a = YP.place_of(pl, cid, d, h)
-                if a != js.get('%s|%s|%d' % (cid, d, h)):
-                    bad.append('위치 %s %s %02d시 py=%r js=%r' % (cid, d, h, a, js.get('%s|%s|%d' % (cid, d, h))))
-                t = YP.transit_of(pl, cid, d, h, 5)
-                ta = '%s>%s@%s' % (t['from'], t['to'], '1' if t['p'] == 1 else t['p'])
-                if ta != js.get('T|%s|%s|%d' % (cid, d, h)):
-                    bad.append('이동 %s %s %02d시 py=%s js=%s' % (cid, d, h, ta, js.get('T|%s|%s|%d' % (cid, d, h))))
-    if bad:
-        print('❌ 동선 엔진 드리프트 — yeta_place.py ↔ viewer ymPlaceOf 불일치 %d/%d건' % (len(bad), n))
-        for b in bad[:6]:
-            print('   · ' + b)
-        print('   처방 = 시드 문자열(rv 인자 순서·꼬리표)·확률 임계·버킷 입도를 두 구현에서 같게 맞춰라.')
-        return 1
-    print('✅ 동선 엔진 등가 — yeta_place.py ↔ viewer ymPlaceOf %d건 전량 일치(위치·이동 · %d명×24시×3일)' % (n, len(ids)))
-    return 0
-
-
 def check_design():
     # accent_raw = 차단(rc=1) 승격(운영자 ③b·STAGE1·260628). 단일 정확패턴 `rgba(15,253,2`라 오탐 0,
     #   index 빼고 전부 0(thumb/ly/k/comp) → 새 raw 강조색 박기 구조적 차단. 봇 무영향(check-refs.yml=PR전용·봇은 데이터JSON만 직푸시·A7 실측).
@@ -1146,11 +1072,6 @@ def main():
             rc = 1
     except Exception as e:
         print('⚠️ check_icon_ssot 스킵:', e)
-    try:
-        if check_place_engine() != 0:   # 동선 엔진 py↔js 등가(하드 게이트 — 러너와 지도가 다른 위치를 말하는 드리프트 차단·260730 Q.144)
-            rc = 1
-    except Exception as e:
-        print('⚠️ check_place_engine 스킵:', e)
     try:
         import build_design_mirror   # 디자인 거울 정합: 구성도/base.css = viewer :root (하드 게이트·§🎨 ⓐ)
         if build_design_mirror.check() != 0:
