@@ -240,7 +240,6 @@ if inv.get("to") and now_ms - (inv.get("ts") or 0) < 600000 and inv["to"] not in
     _m = _re.match(r"\s*\[LV\s*(\d)\]", (s.get("notes") or {}).get(persona) or "")
     pref = s.get("pref") or {}
     print(json.dumps({"mode": "invite", "thread": T, "persona": persona,
-                      "basis": (inv.get("basis") or ""),   # 판정 기준(260731 3선택지) — self/moment · 결측(구 세션) = 종전 기본
                       "host_names": " · ".join(names.get(r) or r for r in room),
                       "me_call": me_call, "me_about": me_about,
                       "note_pub": s.get("note_pub") or s.get("note") or "",
@@ -1180,8 +1179,8 @@ turns = s.setdefault("turns", [])
 now = int(time.time() * 1000)
 def josa(w, a, b):
     c = ord((w or " ")[-1]); return a if 0xAC00 <= c <= 0xD7A3 and (c - 0xAC00) % 28 else b
-# 삽입 자리 = 항상 맨 끝(운영자 260731 "윈터 부른다면서 겹치는 경우" — 구 '초대 sys 직후 삽입'은 기다리는 동안 보낸 유저 메시지 위로 등장·인사가 끼어들어 시간 역행·대화 겹침을 만들었다. 도착은 도착한 시점에 = ts 단조 증가 유지 · 유저 메시지가 없으면 초대 sys가 마지막이라 종전과 동일 위치)
-pos = len(turns)
+# 삽입 자리 = 초대 sys 턴 직후(그 사이 유저 메시지가 와도 초대 문맥 옆) — 못 찾으면 끝
+pos = next((i + 1 for i in range(len(turns) - 1, -1, -1) if turns[i].get("role") == "sys" and turns[i].get("kind") == "invite"), len(turns))
 room = [r for r in (s.get("room") or []) if r][:2] or ([s.get("last_sp")] if s.get("last_sp") else [])
 if accept and len(room) < 2 and to not in room:
     room.append(to); s["room"] = room
@@ -1213,7 +1212,7 @@ invite_turn() {   # extract_mat mode=invite — 판정 1회(같은 폴오버 체
   [ -f "$CARD" ] || { clear_invite "부른 사람이 닿지 않는 곳에 있다"; return 0; }
   CBLOCK="$(character_block "$PERSONA")" || { clear_invite; return 0; }
   CNAME="$(sed -n 's/^name:[[:space:]]*"\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' "$CARD" | head -1)"; CNAME="${CNAME:-$PERSONA}"
-  NOTE_PUB="$(matv note_pub)"; NOTE_ME="$(matv note_me)"; HIST="$(matv hist)"; BASIS="$(matv basis)"
+  NOTE_PUB="$(matv note_pub)"; NOTE_ME="$(matv note_me)"; HIST="$(matv hist)"
   RAW_MODEL="$(matv model)"; TUNE="$(matv tune)"; CAST="$(matv cast)"; LAST_MOOD="$(matv last_mood)"; REL_LV="$(matv rel_lv)"
   PLACE_NM="$(matv place_nm)"; BARGE_VIA=""   # 초대받은 애의 지금 장소(거절 사유 구체화 · 마주침 260707)
   ME_CALL="$(matv me_call)"; ME_ABOUT="$(matv me_about)"   # 유저 프로필(호칭+소개 · 260708) — 초대 첫마디도 유저 이름 호명 가능
@@ -1249,8 +1248,6 @@ PYP
 )"; fi
   STATE_BLOCK="$(state_block)"
   ME_BLOCK="$(me_block)"   # 유저 프로필(호칭+소개 · 260708)
-  local crit="기준은 너의 성격·지금 시각과 상태·유저와의 관계"   # 판정 기준(260731 3선택지) — self·결측(구 세션) = 종전 기본
-  [ "$BASIS" = "moment" ] && crit="기준은 지금 그 자리에 있는 ${host:-상대}와(과) 너의 관계, 그리고 위 [최근 대화]의 흐름·분위기(모먼트)다. 유저와의 관계보다 그 자리의 공기와 ${host:-상대}와(과)의 사이를 우선해 판정해라"
   local prompt="${CBLOCK}
 ${POLICY_BLOCK}
 ${STATE_BLOCK}
@@ -1266,7 +1263,7 @@ ${NOTE_ME:-"(아직 없음 — 첫 만남)"}
 ${HIST:-"(없음)"}
 
 [상황 — 합석 초대]
-유저가 지금 ${host:-누군가}와(과) 있는 자리에 너를 불렀다. 올지 말지는 네가 정한다 — ${crit}. 웬만하면 반갑게 가는 동네지만, 네 카드·상태가 명백히 막으면 거절해도 된다(거절도 너답게).
+유저가 지금 ${host:-누군가}와(과) 있는 자리에 너를 불렀다. 올지 말지는 네가 정한다 — 기준은 너의 성격·지금 시각과 상태·유저와의 관계. 웬만하면 반갑게 가는 동네지만, 네 카드·상태가 명백히 막으면 거절해도 된다(거절도 너답게).
 
 [출력 계약 — 반드시 지켜라]
 - 첫 줄: ACCEPT 또는 DECLINE — 이 한 단어만.
