@@ -47,7 +47,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: ffmpeg (webp·av 변환 — 러너 기본 이미지에 없음 · 260721 aeri-cand 실측 계승)
+      - name: ffmpeg (webp·av 변환 — 러너 기본 이미지에 없음 · 260721 실측 계승)
         run: sudo apt-get install -y -qq ffmpeg >/dev/null 2>&1 || echo "ffmpeg 미설치 — png 원본 폴백(av 배선 생략)"
 
       - name: 판타지 캐릭터 초상 생성

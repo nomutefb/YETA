@@ -28,7 +28,7 @@
     "openai_image": {
       "id": "gpt-image-2",
       "family": "gpt-image-[0-9][0-9a-z.-]*",
-      "축": "얼굴·캐릭터아트·배경변주·아에리 후보 렌더 = **6파일 동기 필요**(yeta_face·yeta_char_art·yeta_bg_var·yeta_aeri_cand + yeta-face.yml·yeta-meface.yml 주석) · vars `OPENAI_IMAGE_MODEL`로 덮어씀"
+      "축": "얼굴·캐릭터아트·배경변주 렌더 = **5파일 동기 필요**(yeta_face·yeta_char_art·yeta_bg_var + yeta-face.yml·yeta-meface.yml 주석) · vars `OPENAI_IMAGE_MODEL`로 덮어씀"
     },
     "gemini_image": {
       "id": "gemini-3.1-flash-image-preview",
