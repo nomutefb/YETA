@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>단톡 화자 뒤바뀜(대사 겹침) 보정 — 전/후 비교 v1</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260731_애리캐릭터삭제_전후_v1.html 계승(재설계 0 · 내용만 화자 뒤바뀜 축으로 교체) ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --think:#3EE0C8; --think-rgb:62,224,200;
+    --danger:#FF7A59;
+    --bubble-ai:rgba(255,255,255,.07);
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --glass-0:rgba(255,255,255,.002); --glass-line-0:rgba(255,255,255,.066);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+    --yeta-bg:var(--bg);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .pair { display:flex; gap:var(--sp-2); flex-wrap:wrap; }
+  .col { flex:1 1 320px; min-width:0; background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-l); padding:var(--sp-2); box-shadow:var(--shadow-card); }
+  .col > h3 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 6px; }
+  .col.now > h3 { color:var(--mut); }
+  .col.next > h3 { color:var(--accent); }
+  .cap { font-size:var(--fs-xs); color:var(--mut); margin:6px 0 0; }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  .tw { overflow-x:auto; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); white-space:nowrap; }
+  td b { color:var(--accent); font-weight:var(--fw-b); }
+  td .gone { color:var(--danger); font-weight:var(--fw-b); }
+  ul { margin:0; padding-left:18px; font-size:var(--fs-sm); color:var(--fg-2); }
+  li { margin:3px 0; }
+  code { font-size:var(--fs-xs); color:var(--think); }
+  /* 미니 말풍선 목업 — 앱 .ymsg/.yb 결 축약 계승(아바타·이름·버블 · 새 값 = 앱 :root 사본과 토큰뿐) */
+  .chat { display:flex; flex-direction:column; gap:10px; }
+  .msg { display:flex; gap:8px; }
+  .av { flex:0 0 28px; width:28px; height:28px; border-radius:50%; background:var(--glass-2); border:1px solid var(--glass-line); font-size:var(--fs-xs); display:flex; align-items:center; justify-content:center; color:var(--fg-2); }
+  .mb { min-width:0; }
+  .nm { font-size:var(--fs-xs); font-weight:var(--fw-b); margin:0 0 4px; padding-left:2px; }
+  .yb { background:var(--bubble-ai); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:8px 12px; font-size:var(--fs-sm); white-space:pre-wrap; margin-bottom:6px; max-width:34em; }
+  .yb i { color:var(--mut); }
+  .yb .mis { color:var(--danger); font-style:normal; }
+  .yb .ok { color:var(--accent); font-style:normal; }
+  @media (max-width:700px) { .pair { flex-direction:column; } }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>단톡 화자 뒤바뀜(대사 겹침) 보정 — 전/후</h1>
+  <p class="lead">운영자 실기 스샷(루시·백 단톡): 백 말풍선 안에 루시의 지문·대사가 통째로 들어갔다. 원인 = 대본 교대 계약(<code>yeta_chat.sh</code> GROUP_RULE)이 「이름표 없는 줄이 누구 것인지」를 안 밝혀, 모델이 <code>[백]</code> 한 줄 뒤 제 대사로 돌아올 때 <code>[루시]</code> 복귀 이름표를 생략 → 파서(이름표 = 다음 이름표까지 유효)가 나머지를 전부 백 세그먼트에 붙였다. 보정 = 프롬프트에 이름표 유효 범위 명문화(파서 무변경).</p>
+
+  <div class="sect">
+    <h2>대화창 귀속 — 전(사고 스샷 재현) / 후(계약 준수 시)</h2>
+    <div class="pair">
+      <div class="col now">
+        <h3>전 — 루시의 지문·대사가 백 버블에</h3>
+        <div class="chat">
+          <div class="msg"><div class="av">루</div><div class="mb"><p class="nm">루시</p><div class="yb">뭐래, 노잼은 무슨.
+<i>*봉지 슬쩍 잡아당기며 눈 흘긴다*</i>
+재밌는 거 보여줬더니 반응이 그거야?</div></div></div>
+          <div class="msg"><div class="av">백</div><div class="mb"><p class="nm">백</p><div class="yb">...노잼은 맞다.
+<span class="mis"><i>*팔짱 끼고 백 쪽으로 홱 돌아본다*</i>
+야, 너까지 낄 자리 아니거든? 이런 건 조용히 술이나 마셔.</span></div></div></div>
+        </div>
+        <p class="cap">붉은 부분 = 루시 몫인데 백 이름 아래로 나간 대사·지문(백이 「백 쪽으로」 돌아볼 수는 없다).</p>
+      </div>
+      <div class="col next">
+        <h3>후 — 세 턴으로 바로 갈림</h3>
+        <div class="chat">
+          <div class="msg"><div class="av">루</div><div class="mb"><p class="nm">루시</p><div class="yb">뭐래, 노잼은 무슨.
+<i>*봉지 슬쩍 잡아당기며 눈 흘긴다*</i>
+재밌는 거 보여줬더니 반응이 그거야?</div></div></div>
+          <div class="msg"><div class="av">백</div><div class="mb"><p class="nm">백</p><div class="yb">...노잼은 맞다.</div></div></div>
+          <div class="msg"><div class="av">루</div><div class="mb"><p class="nm">루시</p><div class="yb"><span class="ok"><i>*팔짱 끼고 백 쪽으로 홱 돌아본다*</i>
+야, 너까지 낄 자리 아니거든? 이런 건 조용히 술이나 마셔.</span></div></div></div>
+        </div>
+        <p class="cap">모델이 <code>[루시]</code> 복귀 이름표를 붙이면 기존 파서가 그대로 세 턴으로 발행한다(파서 시뮬 실측 — 아래 표).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <h2>파서 분할 시뮬 실측(finish 대본 분할 로직 그대로)</h2>
+    <div class="tw"><table>
+      <tr><th>입력 대본</th><th>분할 결과</th></tr>
+      <tr><td><code>[백] ...노잼은 맞다.</code> 뒤 이름표 <span class="gone">없이</span> 루시 지문·대사 계속</td><td><span class="gone">2세그</span> — 루시 몫이 전부 백 세그먼트로(= 사고 스샷과 동일)</td></tr>
+      <tr><td><code>[백] ...노잼은 맞다.</code> 뒤 새 줄 <b>[루시]</b>부터 계속</td><td><b>3세그</b> — 루시 / 백 / 루시로 정상 귀속</td></tr>
+    </table></div>
+  </div>
+
+  <div class="sect">
+    <h2>바뀐 것 — 프롬프트 한 줄(GROUP_RULE 신설 조항)</h2>
+    <ul>
+      <li>「이름표는 <b>다음 이름표가 나올 때까지</b> 그 아래 전부에 걸린다 — 이름표 없는 줄·지문(<code>*…*</code>)은 몽땅 직전 이름표 사람의 것으로 붙는다. <code>[동행]</code> 토막 뒤에 네가 다시 말하거나 움직이려면 <b>반드시</b> 새 줄에 <code>[네 이름]</code>부터 써라」</li>
+      <li>GB_LINES=1 폴백(교대 금지 모드)에도 같은 유효 범위 한 줄 동조.</li>
+      <li>파서·뷰어 무변경(뷰어 그룹핑은 <code>persona</code> 엄격 비교로 이미 정상) · 새 토큰·컴포넌트 0.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
