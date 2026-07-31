@@ -27,6 +27,7 @@ CHARS = {
     "yun":   "sleepy late-night radio DJ with headphones around the neck, long dark coat, half-lidded eyes, purple color accents, quiet drifting walk",
     "desk":  "sharp editor in a shirt with loosened tie, stack of papers under one arm and a coffee cup, tired but focused, cobalt-blue color accents, brisk walk",
     "kopi":  "scruffy freelance copywriter in a worn hoodie, laptop bag across the shoulder and a tumbler, orange color accents, hurried shuffle walk",
+    "gaeul": "dignified middle-aged market association president in a neat modern-hanbok jacket, holding a ledger book, composed expression, lavender color accents, confident walk",
     "von":   "muscular gym master in a tracksuit with a towel around the neck, energetic, red-orange color accents, powerful stride",
     "lucy":  "aloof doll-like girl with long pale hair, holding a small paper coffee cup at her fingertips, expressionless half-lidded eyes, deep crimson color accents, slow detached walk",   # 에픽 1호 루시(카드 260707) — 스프라이트 부재로 지도 폴백 노출(운영자 260716 "특정 인물 검정") · 소품 = 담배→커피(카드 '커피도 사랑' 결 유지 — 담배 묘사는 Gemini가 이미지 미반환)
     "winter": "graceful young woman idol in casual off-stage wear, short neat hair, calm cool expression with a faint warm smile, ice-blue color accents, poised light walk",   # 아이돌 윈터(카드) — 동상

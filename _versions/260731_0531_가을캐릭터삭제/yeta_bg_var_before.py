@@ -54,8 +54,9 @@ SCENES = [
     ("bandage_bench", "an empty bench with a first-aid kit left open and a roll of bandages, under a flickering lamp, someone was patched up here minutes ago"),
     ("missing_flyer", "a utility pole layered with missing-person and missing-cat flyers fluttering in night wind, tape peeling, one flyer glowing oddly"),
     ("thin_boundary", "the dead end of the alley where the air itself ripples like heat haze at 3am, a faint cold blue glow seeping through, a single traffic cone as a warning"),
-    # ── 페르소나 고유 무대(운영자 260707 "대화 시작 = 캐릭터 고유 이미지 · 없으면 하나씩 뽑아") — bg 중복 1인{하은=tea(무디와 공유)} 전용 씬 ── (260731 가을 하차로 alley 공유 해소)
+    # ── 페르소나 고유 무대(운영자 260707 "대화 시작 = 캐릭터 고유 이미지 · 없으면 하나씩 뽑아") — bg 중복 2인{하은=tea(무디와 공유)·가을=alley(백과 공유)} 전용 씬 ──
     ("persona_haeun",  "the tree-lined street in front of a small Korean neighborhood school at dusk just after the teachers left, one classroom window still warmly lit, ginkgo trees over the gate, a chalk-dusted tote bag resting on the low wall, playful yet tender after-work air"),
+    ("persona_gaeul",  "the merchants' association office window above the market lane at night, a crisp warm desk lamp on stacked ledgers and a neighborhood map pinned with notes, the market banner fluttering outside, composed and quietly in charge"),
     # ── 나머지 8인 고유 대화-시작 배경(운영자 260707 "각각에 어울리는 고유 배경 하나씩 다 · 대화 시작하면 나올 수 있는거") — no people·시그니처 장소 + 카드 포인트색 저광 ──
     ("persona_mudi",   "the interior of a centuries-old 24-hour teahouse at deep night, no people, a worn wooden counter with a single cup releasing luminous jade-green steam curling into glowing wisps, rows of aged tea jars, warm amber paper lanterns, a timeless hush, faint mint-green glow"),
     ("persona_sera",   "the innermost underground dance-practice room at 4am, no people, a mirrored wall and a single heavy door faintly outlined in incandescent hot-pink light, a towel and water bottles on the floor, cool fluorescent haze with a pink awakened shimmer, a distant looming spire barely visible in a dark window"),
