@@ -1179,8 +1179,8 @@ turns = s.setdefault("turns", [])
 now = int(time.time() * 1000)
 def josa(w, a, b):
     c = ord((w or " ")[-1]); return a if 0xAC00 <= c <= 0xD7A3 and (c - 0xAC00) % 28 else b
-# 삽입 자리 = 항상 맨 끝(운영자 260731 "윈터 부른다면서 겹치는 경우" — 구 '초대 sys 직후 삽입'은 기다리는 동안 보낸 유저 메시지 위로 등장·인사가 끼어들어 시간 역행·대화 겹침을 만들었다. 도착은 도착한 시점에 = ts 단조 증가 유지 · 유저 메시지가 없으면 초대 sys가 마지막이라 종전과 동일 위치)
-pos = len(turns)
+# 삽입 자리 = 초대 sys 턴 직후(그 사이 유저 메시지가 와도 초대 문맥 옆) — 못 찾으면 끝
+pos = next((i + 1 for i in range(len(turns) - 1, -1, -1) if turns[i].get("role") == "sys" and turns[i].get("kind") == "invite"), len(turns))
 room = [r for r in (s.get("room") or []) if r][:2] or ([s.get("last_sp")] if s.get("last_sp") else [])
 if accept and len(room) < 2 and to not in room:
     room.append(to); s["room"] = room

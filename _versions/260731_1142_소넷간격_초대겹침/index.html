@@ -253,11 +253,11 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
      ⚠ 표면은 글래스가 아니라 **스포티파이 블랙 솔리드 판**(운영자 260728 "스포티파이 블랙으로 도형 하나 감싸서 배경으로 놔") — 뒤 배경이 비치면 흐르는 글자가 그림에 묻혀 전광판으로 안 읽힌다.
      테두리·인셋·그림자는 글래스 결 그대로 계승(--glass-line·--shadow-card)이라 다른 표면과 따로 놀지 않는다. backdrop-filter는 불투명이 됐으니 제거(연산 낭비).
      ⚠ 260730 Q.130 재재배치(운영자 "확성기 괜찮은데 모델명하고 그걸 안가렸으면 · 확성기 아래에 모델명이 뜨게 · 확성기 사라지면 자연스럽게 그 자리로 모델명이랑 토큰이 위쪽으로 올라가게"):
-       ⓐ 자리 = **상단 원위치**(top 66 = .ymeter 자리 · 헤더 바닥+6 — 구 62는 헤더 실높이 50(34+14+2)+top 10=바닥 60이라 실간격 +2뿐이던 오산 · 260731 운영자 "위에 랑 너무 딱 붙어있어" 실측 교정) — Q.128의 하단 이설을 대체한다. 가림은 이설로 피하는 게 아니라 **미터를 띠 아래로 내려** 둘 다 보이게 푼다.
+       ⓐ 자리 = **상단 원위치**(top 62 = .ymeter 옛 자리 · 헤더 바닥+6) — Q.128의 하단 이설을 대체한다. 가림은 이설로 피하는 게 아니라 **미터를 띠 아래로 내려** 둘 다 보이게 푼다.
        ⓑ 미터 = 띠가 떠 있는 동안만 32px(=띠 26 + 간격 6) 아래로 내려가고(.yeta-stage.ynt-on .ymeter), 띠가 퇴장하면 그 자리로 되올라간다 — 이동은 transform 슬라이드(.2s var(--ease) = .yh-inv 전환 계승 · 신규 커브·시간 0 · 32/26/6 = 기하축 raw 예외).
          로그 상단 패딩은 띠가 뜬 동안만 88→120(=88+32)으로 밀어 내려온 미터가 첫 줄을 덮지 않게 한다(JS · atBottom 가드 = 위를 읽는 중엔 스크롤 안 끌어내림). 상주 띠 시절의 '진입 시 레이아웃 점프'는 이벤트 띠라 발생하지 않는다(뜰 때만 1회).
        ⓒ 수명 = 2주기 후 소멸(JS yNotice 타이머) · 등퇴장 = .yeta-log .in/.out 정본 애니 그대로 계승(ybIn/ybOut 선언 공유 = 신규 값 0). */
-  #yetanotice { position:absolute; left:10px; right:10px; top:calc(66px + env(safe-area-inset-top)); z-index:2; overflow:hidden; display:flex; align-items:center; height:26px; padding:0 10px;
+  #yetanotice { position:absolute; left:10px; right:10px; top:calc(62px + env(safe-area-inset-top)); z-index:2; overflow:hidden; display:flex; align-items:center; height:26px; padding:0 10px;
     background:var(--bg); border:1px solid var(--glass-line); border-radius:var(--r-pill);
     box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card);
     color:var(--fg-2); font-size:var(--fs-xs); pointer-events:none; }   /* pointer-events:none = 스크롤·탭을 안 먹는다(읽기 전용 띠) */
@@ -468,7 +468,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ypick-row .yp-name { font-weight:var(--fw-x); font-size:var(--fs-h3); }
   .ypick-row .yp-tag { font-size:var(--fs-xs); color:var(--mut); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   /* 챗 미터 — 상단 중앙 기록용 [모델 --effort | 대화 누적 토큰](운영자 260709 첨부3 · 중앙정렬+역상 그림자 = 운영자 재검수) · 상시·비간섭(pointer-events 0) · 고유 스트립 = .yeta-log 밴드 마스크가 침범 대화를 숨김 · 타이포 토큰 계승 */
-  .ymeter { position:absolute; top:calc(66px + env(safe-area-inset-top)); left:0; right:0; z-index:2; text-align:center; font-size:10px; color:var(--mut);
+  .ymeter { position:absolute; top:calc(62px + env(safe-area-inset-top)); left:0; right:0; z-index:2; text-align:center; font-size:10px; color:var(--mut);
     font-variant-numeric:tabular-nums; letter-spacing:.02em; pointer-events:none; white-space:nowrap;
     text-shadow:0 1px 3px rgba(0,0,0,.9), 0 0 9px rgba(0,0,0,.65);
     transition:transform .2s var(--ease); }   /* 화면(배경)과 반대되는 어두운 헤일로 상시 = 밝은 무대 위에서도 판독(text-shadow = 토큰 없는 축) · 전환 = .yh-inv 계승(전광판 띠 등퇴장에 따라 아래로/위로 슬라이드) */
