@@ -1,0 +1,17 @@
+name: check-refs
+
+# check_refs 하드게이트 서버측 강제(346차) — 로컬 pre-commit(.githooks)은 hooksPath 미설정 클론·GitHub 웹 편집을 못 막는다
+# (실사고: 260731 웹 편집 커밋이 §앵커 게이트 적색인 채 main 진입). PR·main 푸시마다 여기서 한 번 더 돈다.
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: check_refs 전체 게이트
+        run: python3 shared/check_refs.py
