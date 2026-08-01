@@ -9,3 +9,9 @@
 - 디자인 계약 = `AGENTS.md` §🎨 + `docs/절대명령1_포터블.md` — 값 SSOT = `viewer/index.html` `:root` · 승인 원장 = `design-tokens.lock` · 게이트 = `shared/check_refs.py`(기계 강제).
 - 컴포넌트 계승 = `docs/CII_컴포넌트계승인덱스.md` 정본 셀렉터. 새 색·px·blur·radius 창작 금지 — 기틀에 없는 값이 필요하면 멈추고 운영자에게 묻는다.
 - 커밋 전 `python3 shared/check_refs.py` 필수(pre-commit 훅이 강제).
+
+## 🔒 절대명령 #1 — 디자인 = 「계승」 또는 「갱신」
+- 전문 = `docs/절대명령1_포터블.md` §1 · 규칙 2(위치 인덱스) = `docs/절대명령2_정본인덱스.md` 절대 준수 · 기계 강제 = `design-tokens.lock` + `shared/check_refs.py`.
+
+## 🎨 디자인 계약 (규칙 전문 앵커)
+- 전문 = `AGENTS.md` §🎨 — 세션엔 `.claude/hooks/design_digest.py`가 자동 주입. 값 SSOT = `viewer/index.html` `:root` · 컴포넌트 = `docs/CII_컴포넌트계승인덱스.md` · 버튼 패턴 = `구성도/00_가이드북_버튼인터랙션.html`.
