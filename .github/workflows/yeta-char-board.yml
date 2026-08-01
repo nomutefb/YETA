@@ -66,9 +66,24 @@ jobs:
           git add viewer/assets/yeta_char/board/ 2>/dev/null || true
           git diff --cached --quiet && { echo "신규 없음 — 커밋 생략"; exit 0; }
           git commit -m "캐릭터 보드 시트 생성 — yeta-char-board dispatch"
-          # 장시간 런 중 main 전진 대비 — pull --rebase 후 push 재시도(신규 파일뿐이라 충돌 없음 · yeta-char-art 계승)
+          # 장시간 런 중 원격 전진 대비 — pull --rebase 후 push 재시도(신규 파일뿐이라 충돌 없음 · yeta-char-art 계승).
+          # ⚠ rebase 대상 = **dispatch한 그 ref**(260801 실측). main 하드코딩이면 브랜치에서 돌릴 때
+          #   그 브랜치 커밋을 main 위로 재적용하려다 add/add 충돌 → push 5회 전패 → **생성된 이미지가 통째로 소실**된다
+          #   (생성은 이미 끝나 과금된 뒤라 손해가 그대로 남는다).
+          BR="${GITHUB_REF_NAME}"
           for i in 1 2 3 4 5; do
-            git pull --rebase origin main && git push && exit 0
+            git pull --rebase origin "$BR" && git push origin "HEAD:$BR" && exit 0
+            git rebase --abort 2>/dev/null || true
             echo "push 재시도 ${i}/5 …"; sleep $((i*5))
           done
-          echo "::error::push 5회 실패 — main 전진 과다"; exit 1
+          echo "::error::push 5회 실패 — ${BR} 전진 과다"
+          echo "::error::생성물 소실 방지 = 아래 아티팩트에서 받아 수동 커밋"; exit 1
+
+      - name: 실패 시 산출물 보존 (과금분 소실 방지 — 260801)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: board-sheets
+          path: viewer/assets/yeta_char/board/
+          retention-days: 7
+          if-no-files-found: ignore
