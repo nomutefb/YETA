@@ -19,7 +19,7 @@ MODEL = (os.environ.get("OPENAI_IMAGE_MODEL") or "gpt-image-2").strip()
 API_GEN = "https://api.openai.com/v1/images/generations"
 API_EDIT = "https://api.openai.com/v1/images/edits"
 FORCE = os.environ.get("FORCE", "") == "1"
-SHEET = (os.environ.get("YETA_BOARD_SHEET") or "A").strip().upper()      # A = 감정 9칸(3×3 · 앱 정합) · B = 감정 20칸(5×4) · C = 포즈 12칸(4×3 · 표정 고정) · D = 일진 상황 9칸(3×3 · 감정+행동+장소)
+SHEET = (os.environ.get("YETA_BOARD_SHEET") or "A").strip().upper()      # A = 감정 9칸(3×3 · 앱 정합) · B = 감정 20칸(5×4) · C = 포즈 12칸(4×3 · 표정 고정) · D = 일진 상황 9칸(3×3) · E = 9:16 상황 6칸(3×2 · 칸 목록에서 6칸씩 · n장) · CELL = 개별 칸 1장씩(9:16 크롭)
 SLUG = re.sub(r"[^0-9A-Za-z_-]", "", (os.environ.get("YETA_BOARD_SLUG") or "board")) or "board"
 REF = (os.environ.get("YETA_BOARD_REF") or "").strip()                   # 레퍼런스 이미지 경로(있으면 edits 경로 = 동일성 앵커)
 SPEC = os.environ.get("YETA_BOARD_SPEC") or "docs/캐릭터보드_프롬프트_정본.md"
@@ -28,8 +28,12 @@ try:
 except ValueError:
     TAKES = 1
 OUT = "viewer/assets/yeta_char/board"
-# 시트 비례 = 칸 3:4 기준 — A·D(3열×3행) → 세로 3:4 / B(5열×4행)·C(4열×3행) → 정사각. gpt-image 허용 size 3종 중 근사치.
-SIZES = {"A": "1024x1536", "B": "1024x1024", "C": "1024x1024", "D": "1024x1536"}
+# 시트 비례 = 칸 3:4 기준 — A·D(3열×3행)·E(3열×2행 · 칸 9:16) → 세로 3:4 / B(5열×4행)·C(4열×3행) → 정사각.
+# gpt-image 허용 size 3종뿐이라 **칸이 9:16이어도 페이지는 1024x1536**이다(칸 비례는 프롬프트가, 최종 9:16은 자를 때 성립).
+SIZES = {"A": "1024x1536", "B": "1024x1024", "C": "1024x1024", "D": "1024x1536",
+         "E": "1024x1536", "CELL": "1024x1536"}
+PER_SHEET = 6          # 시트 E 한 장에 들어가는 칸 수(정본 §2-E · 9:16 칸 상한)
+CROP_916 = "crop=trunc(ih*9/16/2)*2:ih"   # 개별 칸 전용 — 1024×1536 → 864×1536 = 정확히 9:16(좌우만 깎는다)
 
 
 def spec_block(anchor):
@@ -43,12 +47,46 @@ def spec_block(anchor):
     return m.group(1).strip("\n")
 
 
+def cells():
+    """§3-1 `CELLS_<SLUG>` 목록 파싱 — 한 줄 = 한 칸 · `라벨 :: 액션 :: 배경 :: 예외(선택)`."""
+    out = []
+    for ln in spec_block("CELLS_%s" % SLUG.upper()).split("\n"):
+        ln = ln.strip()
+        if not ln:
+            continue
+        f = [p.strip() for p in ln.split("::")]
+        if len(f) < 3 or not f[0]:
+            raise SystemExit(f"칸 목록 형식 오류(' :: ' 3~4칸이어야 한다): {ln[:60]}…")
+        out.append({"label": f[0], "act": f[1], "bg": f[2], "over": (f[3] if len(f) > 3 else "")})
+    if not out:
+        raise SystemExit(f"BOARD:CELLS_{SLUG.upper()} 목록이 비어 있다")
+    return out
+
+
 def build_prompt(sheet):
     lock = spec_block("LOCK")
     body = spec_block("SHEET_%s" % sheet)
     if "{LOCK}" not in body:
         raise SystemExit(f"BOARD:SHEET_{sheet} 블록에 {{LOCK}} 자리표시자가 없다")
     return body.replace("{LOCK}", lock)
+
+
+def build_sheet_e(group):
+    """시트 E = 템플릿 1벌 + 칸 목록 6개(§3-1)를 조립. 예외는 칸을 지목해 따로 문단으로 붙인다."""
+    body = build_prompt("E")
+    panels = "\n".join('%d. "%s" — %s. BG: %s.' % (i, c["label"], c["act"], c["bg"])
+                       for i, c in enumerate(group, 1))
+    ov = [f'Panel {i} ("{c["label"]}"): {c["over"]}' for i, c in enumerate(group, 1) if c["over"]]
+    over = ("\nPER-PANEL EXCEPTIONS — each applies ONLY to the panel it names, never to the others\n"
+            + "\n".join(ov) + "\n") if ov else ""
+    return body.replace("{PANELS}", panels).replace("{OVERRIDES}", over)
+
+
+def build_cell(c):
+    """개별 칸 = §3 CELL 정본에 액션·배경·예외를 꽂는다(9:16 크롭은 생성 뒤 ffmpeg)."""
+    body = spec_block("CELL").replace("{LOCK}", spec_block("LOCK"))
+    over = ("\nEXCEPTION FOR THIS IMAGE\n" + c["over"] + "\n") if c["over"] else ""
+    return body.replace("{OVERRIDE}", over).replace("{EXPRESSION}", c["act"]).replace("{BACKGROUND}", c["bg"])
 
 
 def multipart(fields, files):
@@ -117,21 +155,50 @@ def webp(path):
         print(f"  ⚠️ webp 변환 실패(비치명): {e}", flush=True)
 
 
+def crop916(path):
+    """개별 칸 전용 — 좌우만 깎아 정확히 9:16으로. ffmpeg 없으면 원본(2:3) 유지(비치명)."""
+    if not shutil.which("ffmpeg"):
+        print("  ⚠️ ffmpeg 없음 — 9:16 크롭 생략(1024×1536 원본 유지)", flush=True); return
+    tmp = path[:-4] + "_crop.png"
+    try:
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", path, "-vf", CROP_916, tmp],
+                       check=True, timeout=180)
+        os.replace(tmp, path)
+    except Exception as e:
+        print(f"  ⚠️ 9:16 크롭 실패(비치명): {e}", flush=True)
+
+
+def jobs():
+    """(파일경로, 프롬프트, 9:16크롭여부) 목록. 시트 E·CELL은 §3-1 칸 목록에서 자동 전개."""
+    out = []
+    for n in range(1, TAKES + 1):
+        tag = "" if n == 1 else f"_v{n}"
+        if SHEET == "E":
+            cs = cells()
+            pages = [cs[i:i + PER_SHEET] for i in range(0, len(cs), PER_SHEET)]
+            for k, g in enumerate(pages, 1):
+                out.append((os.path.join(OUT, f"{SLUG}_sheetE_p{k}{tag}.png"), build_sheet_e(g), False))
+        elif SHEET == "CELL":
+            for c in cells():
+                out.append((os.path.join(OUT, f"{SLUG}_cell_{c['label'].lower()}{tag}.png"), build_cell(c), True))
+        else:
+            out.append((os.path.join(OUT, f"{SLUG}_sheet{SHEET}{tag}.png"), build_prompt(SHEET), False))
+    return out
+
+
 def main():
     if not KEY:
         print("OPENAI_API_KEY 없음 — 캐릭터 보드 생성 생략(no-op)"); return 0
     if SHEET not in SIZES:
-        print(f"⚠️ 알 수 없는 시트 '{SHEET}' — A · B · C · D 중 하나"); return 1
-    prompt = build_prompt(SHEET)
+        print(f"⚠️ 알 수 없는 시트 '{SHEET}' — A · B · C · D · E · CELL 중 하나"); return 1
     size = SIZES[SHEET]
     if REF and not os.path.exists(REF):
         print(f"⚠️ 레퍼런스 경로 없음: {REF} — 글 락만으로 생성한다(동일성 보장 약함)", flush=True)
-    print(f"시트 {SHEET} · size {size} · slug {SLUG} · 레퍼런스 {'있음 ' + REF if REF and os.path.exists(REF) else '없음(generations)'} · 테이크 {TAKES}", flush=True)
+    todo = jobs()
+    print(f"시트 {SHEET} · size {size} · slug {SLUG} · 레퍼런스 {'있음 ' + REF if REF and os.path.exists(REF) else '없음(generations)'} · 테이크 {TAKES} · 생성 대상 {len(todo)}장", flush=True)
     os.makedirs(OUT, exist_ok=True)
     made = 0
-    for n in range(1, TAKES + 1):
-        tag = "" if n == 1 else f"_v{n}"
-        path = os.path.join(OUT, f"{SLUG}_sheet{SHEET}{tag}.png")
+    for path, prompt, crop in todo:
         if os.path.exists(path) and not FORCE:
             print(f"skip {path}(기존)"); continue
         print(f"생성 {path} …", flush=True)
@@ -139,6 +206,8 @@ def main():
         if not png:
             continue
         open(path, "wb").write(png)
+        if crop:
+            crop916(path)
         webp(path)
         made += 1
         print(f"  ✓ {path} ({len(png)//1024}KB)", flush=True)

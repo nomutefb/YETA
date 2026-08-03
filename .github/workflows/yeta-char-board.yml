@@ -3,12 +3,12 @@ name: yeta-char-board
 # 캐릭터 「감정 + 배경」 한 장 시트(캐릭터 보드) 생성 — 운영자 260801 "감정 + 배경 한 페이지에 최대한 많이 · gpt로 · 캐릭터랑 느낌이 똑같아야 해".
 # ⚠️ OpenAI 유료 종량제 = 수동 dispatch 전용(자동 트리거 금지 · 이미지 파이프 공통 규약 · yeta-char-art.yml 결 계승).
 # 프롬프트 정본 = docs/캐릭터보드_프롬프트_정본.md(BOARD:* 앵커) — 스크립트는 읽어 조립만 한다(문구 2벌 금지).
-# 산출 = viewer/assets/yeta_char/board/<slug>_sheet<A|B|C|D>[_v<n>].png(+webp) 을 dispatch한 그 ref에 직접 커밋(칸 자르기·편집 베이스).
+# 산출 = viewer/assets/yeta_char/board/<slug>_sheet<A|B|C|D>[_v<n>].png · E는 _sheetE_p<n>.png · CELL은 _cell_<라벨>.png(+webp) 을 dispatch한 그 ref에 직접 커밋(칸 자르기·편집 베이스).
 on:
   workflow_dispatch:
     inputs:
       sheet:
-        description: 'A = 감정 9칸(3×3 · 앱 정합) · B = 감정 20칸(5×4 · 최대 밀도) · C = 포즈 12칸(4×3 · 표정 고정) · D = 일진 상황 9칸(3×3 · 감정+행동+장소)'
+        description: 'A = 감정 9칸(3×3) · B = 감정 20칸(5×4) · C = 포즈 12칸(4×3) · D = 상황 9칸(3×3) · E = 9:16 상황 6칸 × n장(칸 목록 자동 전개) · CELL = 개별 칸 1장씩(9:16 크롭)'
         required: false
         default: 'A'
       ref:
