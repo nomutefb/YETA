@@ -138,7 +138,16 @@ def openai_image(prompt, size, ref=""):
             print("  ⚠️ 이미지 파트 없음", flush=True)
             return None
         except Exception as e:
-            print(f"  ⚠️ 생성 실패: {e}", flush=True)
+            # ⚠ 260803: 본문을 안 찍었더니 시트 E p2가 `HTTP Error 400`만 남기고 죽어 원인 판별이 불가능했다
+            #   (400 = 대개 모더레이션 거절 or 파라미터 오류 — 어느 쪽인지는 본문에만 있다). 응답 본문을 반드시 남긴다.
+            detail = ""
+            body = getattr(e, "read", None)
+            if callable(body):
+                try:
+                    detail = " · 본문 " + body().decode("utf-8", "replace")[:600]
+                except Exception:
+                    pass
+            print(f"  ⚠️ 생성 실패: {e}{detail}", flush=True)
             if attempt == 0:
                 time.sleep(5); continue
     return None
