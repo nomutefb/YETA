@@ -10,6 +10,9 @@
  "warm": [
   "characters/season/hanna/main/warm/hanna_casual.webp",
   "characters/season/hanna/main/warm/hanna_ear.webp",
+  "characters/season/hanna/main/warm/hanna_lunch.webp",
+  "characters/season/hanna/main/warm/hanna_share.webp",
+  "characters/season/hanna/main/warm/hanna_shift.webp",
   "characters/season/hanna/main/warm/hanna_soup.webp"
  ],
  "joy": [
@@ -20,26 +23,47 @@
  ],
  "love": [
   "characters/season/hanna/main/love/hanna_arm.webp",
-  "characters/season/hanna/main/love/hanna_kiss.webp"
+  "characters/season/hanna/main/love/hanna_doze.webp",
+  "characters/season/hanna/main/love/hanna_drag.webp",
+  "characters/season/hanna/main/love/hanna_hem2.webp",
+  "characters/season/hanna/main/love/hanna_kiss.webp",
+  "characters/season/hanna/main/love/hanna_tie2.webp"
  ],
  "shy": [
+  "characters/season/hanna/main/shy/hanna_band2.webp",
   "characters/season/hanna/main/shy/hanna_blush.webp",
+  "characters/season/hanna/main/shy/hanna_froze.webp",
+  "characters/season/hanna/main/shy/hanna_hairtie.webp",
   "characters/season/hanna/main/shy/hanna_scratch.webp"
  ],
  "blue": [
+  "characters/season/hanna/main/blue/hanna_empty.webp",
   "characters/season/hanna/main/blue/hanna_gum.webp",
   "characters/season/hanna/main/blue/hanna_lolli.webp",
-  "characters/season/hanna/main/blue/hanna_nap.webp"
+  "characters/season/hanna/main/blue/hanna_nap.webp",
+  "characters/season/hanna/main/blue/hanna_snow.webp"
  ],
  "tense": [
+  "characters/season/hanna/main/tense/hanna_door.webp",
+  "characters/season/hanna/main/tense/hanna_exam.webp",
+  "characters/season/hanna/main/tense/hanna_guard.webp",
+  "characters/season/hanna/main/tense/hanna_hurt.webp",
   "characters/season/hanna/main/tense/hanna_nope.webp"
  ],
  "mad": [
+  "characters/season/hanna/main/mad/hanna_bin.webp",
+  "characters/season/hanna/main/mad/hanna_desk2.webp",
   "characters/season/hanna/main/mad/hanna_dojo.webp",
+  "characters/season/hanna/main/mad/hanna_gate2.webp",
   "characters/season/hanna/main/mad/hanna_kick.webp",
-  "characters/season/hanna/main/mad/hanna_kneel.webp"
+  "characters/season/hanna/main/mad/hanna_kneel.webp",
+  "characters/season/hanna/main/mad/hanna_rollup2.webp"
  ],
  "sulky": [
-  "characters/season/hanna/main/sulky/hanna_roll.webp"
+  "characters/season/hanna/main/sulky/hanna_backturn.webp",
+  "characters/season/hanna/main/sulky/hanna_roll.webp",
+  "characters/season/hanna/main/sulky/hanna_soak.webp",
+  "characters/season/hanna/main/sulky/hanna_stomp.webp",
+  "characters/season/hanna/main/sulky/hanna_unread.webp"
  ]
 }

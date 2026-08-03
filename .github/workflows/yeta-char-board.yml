@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       sheet:
-        description: 'A = 감정 9칸(3×3) · B = 감정 20칸(5×4) · C = 포즈 12칸(4×3) · D = 상황 9칸(3×3) · E = 9:16 상황 6칸 × n장(칸 목록 자동 전개) · CELL = 개별 칸 1장씩(9:16 크롭)'
+        description: 'A = 감정 9칸(3×3) · B = 감정 20칸(5×4) · C = 포즈 12칸(4×3) · D = 상황 9칸(3×3) · E = 9:16 상황 6칸 × n장(칸 목록 자동 전개) · F = E와 같되 옷·헤어 자유(얼굴·비례 고정) · CELL = 개별 칸 1장씩(9:16 크롭)'
         required: false
         default: 'A'
       ref:
