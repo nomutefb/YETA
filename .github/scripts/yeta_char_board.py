@@ -22,7 +22,10 @@ FORCE = os.environ.get("FORCE", "") == "1"
 SHEET = (os.environ.get("YETA_BOARD_SHEET") or "A").strip().upper()      # A = 감정 9칸(3×3 · 앱 정합) · B = 감정 20칸(5×4) · C = 포즈 12칸(4×3 · 표정 고정) · D = 일진 상황 9칸(3×3) · E = 9:16 상황 6칸(3×2 · 칸 목록에서 6칸씩 · n장) · F = E와 같되 옷·헤어 자유(LOCK_CORE) · CELL = 개별 칸 1장씩(9:16 크롭)
 SLUG = re.sub(r"[^0-9A-Za-z_-]", "", (os.environ.get("YETA_BOARD_SLUG") or "board")) or "board"
 REF = (os.environ.get("YETA_BOARD_REF") or "").strip()                   # 레퍼런스 이미지 경로(있으면 edits 경로 = 동일성 앵커)
-SPEC = os.environ.get("YETA_BOARD_SPEC") or "docs/캐릭터보드_프롬프트_정본.md"
+# 프롬프트 정본은 2벌로 나뉜다(운영자 260803 다캐릭터 보강) — 공용 판 + 캐릭터별 락·칸 판.
+#   앵커 탐색은 **앞에서부터**라 같은 이름이 있으면 첫 파일이 이긴다(공용 우선 · 캐릭터별은 `_<SLUG>` 접미로 충돌 0).
+SPECS = [x.strip() for x in (os.environ.get("YETA_BOARD_SPEC") or
+         "docs/캐릭터보드_프롬프트_정본.md,docs/캐릭터보드_캐릭터별_보강.md").split(",") if x.strip()]
 try:
     TAKES = max(1, min(4, int(os.environ.get("YETA_BOARD_TAKES") or "1")))   # 여벌 테이크(고르는 건 운영자 · 2장째부터 _v2…)
 except ValueError:
@@ -36,15 +39,23 @@ PER_SHEET = 6          # 시트 E 한 장에 들어가는 칸 수(정본 §2-E �
 CROP_916 = "crop=trunc(ih*9/16/2)*2:ih"   # 개별 칸 전용 — 1024×1536 → 864×1536 = 정확히 9:16(좌우만 깎는다)
 
 
-def spec_block(anchor):
-    """정본 md에서 `<!-- BOARD:<anchor> ... -->` 다음 첫 코드펜스 본문을 뽑는다(문구 SSOT = md 1벌)."""
-    if not os.path.exists(SPEC):
-        raise SystemExit(f"프롬프트 정본 없음: {SPEC}")
-    txt = open(SPEC, encoding="utf-8").read()
-    m = re.search(r"<!--\s*BOARD:%s\b.*?-->\s*\n```[^\n]*\n(.*?)\n```" % re.escape(anchor), txt, re.S)
-    if not m:
-        raise SystemExit(f"{SPEC}에 BOARD:{anchor} 앵커+코드펜스가 없다(앵커를 지웠나?)")
-    return m.group(1).strip("\n")
+def spec_block(anchor, optional=False):
+    """정본 md들에서 `<!-- BOARD:<anchor> ... -->` 다음 첫 코드펜스 본문을 뽑는다(문구 SSOT = md 1벌)."""
+    for spec in SPECS:
+        if not os.path.exists(spec):
+            continue
+        txt = open(spec, encoding="utf-8").read()
+        m = re.search(r"<!--\s*BOARD:%s\b.*?-->\s*\n```[^\n]*\n(.*?)\n```" % re.escape(anchor), txt, re.S)
+        if m:
+            return m.group(1).strip("\n")
+    if optional:
+        return None
+    raise SystemExit(f"{' · '.join(SPECS)} 어디에도 BOARD:{anchor} 앵커+코드펜스가 없다(앵커를 지웠나?)")
+
+
+def lock_block(anchor):
+    """캐릭터별 락 우선(`<anchor>_<SLUG>`) → 없으면 공용 락. 캐릭터마다 얼굴·체형이 다르니 락도 캐릭터별이 정본이다."""
+    return spec_block(f"{anchor}_{SLUG.upper()}", optional=True) or spec_block(anchor)
 
 
 def cells():
@@ -64,7 +75,7 @@ def cells():
 
 
 def build_prompt(sheet):
-    lock = spec_block("LOCK")
+    lock = lock_block("LOCK")
     body = spec_block("SHEET_%s" % sheet)
     if "{LOCK}" not in body:
         raise SystemExit(f"BOARD:SHEET_{sheet} 블록에 {{LOCK}} 자리표시자가 없다")
@@ -80,7 +91,7 @@ def build_sheet_grid(group, sheet):
     body = spec_block("SHEET_%s" % sheet)
     for key, anchor in (("{LOCK}", "LOCK"), ("{LOCK_CORE}", "LOCK_CORE")):
         if key in body:
-            body = body.replace(key, spec_block(anchor))
+            body = body.replace(key, lock_block(anchor))
     panels = "\n".join('%d. "%s" — %s. BG: %s.' % (i, c["label"], c["act"], c["bg"])
                        for i, c in enumerate(group, 1))
     head = ("PER-PANEL WARDROBE — each line applies ONLY to the panel it names; her face, hair colour and length,\n"
@@ -93,7 +104,7 @@ def build_sheet_grid(group, sheet):
 
 def build_cell(c):
     """개별 칸 = §3 CELL 정본에 액션·배경·예외를 꽂는다(9:16 크롭은 생성 뒤 ffmpeg)."""
-    body = spec_block("CELL").replace("{LOCK}", spec_block("LOCK"))
+    body = spec_block("CELL").replace("{LOCK}", lock_block("LOCK"))
     over = ("\nEXCEPTION FOR THIS IMAGE\n" + c["over"] + "\n") if c["over"] else ""
     return body.replace("{OVERRIDE}", over).replace("{EXPRESSION}", c["act"]).replace("{BACKGROUND}", c["bg"])
 
