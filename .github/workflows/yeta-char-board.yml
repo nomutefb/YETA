@@ -3,16 +3,16 @@ name: yeta-char-board
 # 캐릭터 「감정 + 배경」 한 장 시트(캐릭터 보드) 생성 — 운영자 260801 "감정 + 배경 한 페이지에 최대한 많이 · gpt로 · 캐릭터랑 느낌이 똑같아야 해".
 # ⚠️ OpenAI 유료 종량제 = 수동 dispatch 전용(자동 트리거 금지 · 이미지 파이프 공통 규약 · yeta-char-art.yml 결 계승).
 # 프롬프트 정본 = docs/캐릭터보드_프롬프트_정본.md(BOARD:* 앵커) — 스크립트는 읽어 조립만 한다(문구 2벌 금지).
-# 산출 = viewer/assets/yeta_char/board/<slug>_sheet<A|B>[_v<n>].png(+webp) 을 main에 직접 커밋(칸 자르기·편집 베이스).
+# 산출 = viewer/assets/yeta_char/board/<slug>_sheet<A|B|C|D>[_v<n>].png(+webp) 을 dispatch한 그 ref에 직접 커밋(칸 자르기·편집 베이스).
 on:
   workflow_dispatch:
     inputs:
       sheet:
-        description: 'A = 감정 9칸(3×3 · 앱 정합 · 권장) · B = 20칸(5×4 · 최대 밀도)'
+        description: 'A = 감정 9칸(3×3 · 앱 정합) · B = 감정 20칸(5×4 · 최대 밀도) · C = 포즈 12칸(4×3 · 표정 고정) · D = 일진 상황 9칸(3×3 · 감정+행동+장소)'
         required: false
         default: 'A'
       ref:
-        description: '레퍼런스 이미지 경로(예: _소재/ref_hair.png) — 넣으면 첨부 기반 edits = 동일성 앵커. 비우면 글 락만'
+        description: '레퍼런스 이미지 경로(정본 = _소재/blackhair_ilzin_ref.jpg) — 넣으면 첨부 기반 edits = 동일성 앵커. ⚠ 비우면 글 락만 = 얼굴 표류(260801 실패 사고)'
         required: false
         default: ''
       slug:
@@ -66,9 +66,24 @@ jobs:
           git add viewer/assets/yeta_char/board/ 2>/dev/null || true
           git diff --cached --quiet && { echo "신규 없음 — 커밋 생략"; exit 0; }
           git commit -m "캐릭터 보드 시트 생성 — yeta-char-board dispatch"
-          # 장시간 런 중 main 전진 대비 — pull --rebase 후 push 재시도(신규 파일뿐이라 충돌 없음 · yeta-char-art 계승)
+          # 장시간 런 중 원격 전진 대비 — pull --rebase 후 push 재시도(신규 파일뿐이라 충돌 없음 · yeta-char-art 계승).
+          # ⚠ rebase 대상 = **dispatch한 그 ref**(260801 실측). main 하드코딩이면 브랜치에서 돌릴 때
+          #   그 브랜치 커밋을 main 위로 재적용하려다 add/add 충돌 → push 5회 전패 → **생성된 이미지가 통째로 소실**된다
+          #   (생성은 이미 끝나 과금된 뒤라 손해가 그대로 남는다).
+          BR="${GITHUB_REF_NAME}"
           for i in 1 2 3 4 5; do
-            git pull --rebase origin main && git push && exit 0
+            git pull --rebase origin "$BR" && git push origin "HEAD:$BR" && exit 0
+            git rebase --abort 2>/dev/null || true
             echo "push 재시도 ${i}/5 …"; sleep $((i*5))
           done
-          echo "::error::push 5회 실패 — main 전진 과다"; exit 1
+          echo "::error::push 5회 실패 — ${BR} 전진 과다"
+          echo "::error::생성물 소실 방지 = 아래 아티팩트에서 받아 수동 커밋"; exit 1
+
+      - name: 실패 시 산출물 보존 (과금분 소실 방지 — 260801)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: board-sheets
+          path: viewer/assets/yeta_char/board/
+          retention-days: 7
+          if-no-files-found: ignore

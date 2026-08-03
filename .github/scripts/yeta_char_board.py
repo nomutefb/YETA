@@ -9,7 +9,7 @@
   이 스크립트는 그걸 **읽어 조립**만 한다(문구 2벌 = 드리프트 씨앗 · 문구를 바꾸려면 md를 고친다).
 
 레퍼런스 이미지가 있으면 `/v1/images/edits`(첨부 = 동일성 앵커), 없으면 `/v1/images/generations`(글 락만 — 「비슷」이지 「똑같이」가 아니다).
-산출 = `viewer/assets/yeta_char/board/<slug>_sheet<A|B>[_v<n>].png`(+webp 768w) = git 정본(운영자 편집·칸 자르기 베이스).
+산출 = `viewer/assets/yeta_char/board/<slug>_sheet<A|B|C|D>[_v<n>].png`(+webp 768w) = git 정본(운영자 편집·칸 자르기 베이스).
 멱등: 이미 있으면 skip(FORCE=1 재생성). 게이트 = OPENAI_API_KEY(없으면 no-op).
 """
 import base64, json, mimetypes, os, re, shutil, subprocess, sys, time, urllib.request, uuid
@@ -19,7 +19,7 @@ MODEL = (os.environ.get("OPENAI_IMAGE_MODEL") or "gpt-image-2").strip()
 API_GEN = "https://api.openai.com/v1/images/generations"
 API_EDIT = "https://api.openai.com/v1/images/edits"
 FORCE = os.environ.get("FORCE", "") == "1"
-SHEET = (os.environ.get("YETA_BOARD_SHEET") or "A").strip().upper()      # A = 9칸(3×3 · 앱 정합) · B = 20칸(5×4 · 최대 밀도)
+SHEET = (os.environ.get("YETA_BOARD_SHEET") or "A").strip().upper()      # A = 감정 9칸(3×3 · 앱 정합) · B = 감정 20칸(5×4) · C = 포즈 12칸(4×3 · 표정 고정) · D = 일진 상황 9칸(3×3 · 감정+행동+장소)
 SLUG = re.sub(r"[^0-9A-Za-z_-]", "", (os.environ.get("YETA_BOARD_SLUG") or "board")) or "board"
 REF = (os.environ.get("YETA_BOARD_REF") or "").strip()                   # 레퍼런스 이미지 경로(있으면 edits 경로 = 동일성 앵커)
 SPEC = os.environ.get("YETA_BOARD_SPEC") or "docs/캐릭터보드_프롬프트_정본.md"
@@ -28,8 +28,8 @@ try:
 except ValueError:
     TAKES = 1
 OUT = "viewer/assets/yeta_char/board"
-# 시트 비례 = 칸 3:4 기준 — A(3열×3행) → 세로 3:4 / B(5열×4행) → 정사각. gpt-image 허용 size 3종 중 근사치.
-SIZES = {"A": "1024x1536", "B": "1024x1024"}
+# 시트 비례 = 칸 3:4 기준 — A·D(3열×3행) → 세로 3:4 / B(5열×4행)·C(4열×3행) → 정사각. gpt-image 허용 size 3종 중 근사치.
+SIZES = {"A": "1024x1536", "B": "1024x1024", "C": "1024x1024", "D": "1024x1536"}
 
 
 def spec_block(anchor):
@@ -121,7 +121,7 @@ def main():
     if not KEY:
         print("OPENAI_API_KEY 없음 — 캐릭터 보드 생성 생략(no-op)"); return 0
     if SHEET not in SIZES:
-        print(f"⚠️ 알 수 없는 시트 '{SHEET}' — A 또는 B"); return 1
+        print(f"⚠️ 알 수 없는 시트 '{SHEET}' — A · B · C · D 중 하나"); return 1
     prompt = build_prompt(SHEET)
     size = SIZES[SHEET]
     if REF and not os.path.exists(REF):
