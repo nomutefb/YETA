@@ -310,6 +310,38 @@ SEASONS = {
                     "새 사진 = 같은 폴더에 감정 단어가 들어간 이름으로 넣기만 · 어디에도 안 걸리면 base 폴백. "
                     "정본=viewer/characters/idol/winter/."),
     },
+    "haeun": {
+        # 변신 모드 없음 = 단일 폴더(main) · 260803 신규 편입(종전 0장 = 무대가 빈 채로 대화가 돌던 자리)
+        "modes": {"main": ["base"]},
+        "comment": ("시즌 감정 미디어 manifest(하서연) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종 — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. "
+                    "⚠ 출처 = 시트 F(캐릭터별 락 · docs/캐릭터보드_캐릭터별_보강.md)를 shared/cut_board_sheet.py로 자른 9:16 칸. "
+                    "정본=viewer/characters/season/haeun/main/<감정>/."),
+    },
+    "yun": {
+        # 변신 모드 없음 = 단일 폴더(main) · 260803 신규 편입(종전 0장 = 무대가 빈 채로 대화가 돌던 자리)
+        "modes": {"main": ["base"]},
+        "comment": ("시즌 감정 미디어 manifest(윤) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종 — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. "
+                    "⚠ 출처 = 시트 F(캐릭터별 락 · docs/캐릭터보드_캐릭터별_보강.md)를 shared/cut_board_sheet.py로 자른 9:16 칸. "
+                    "정본=viewer/characters/season/yun/main/<감정>/."),
+    },
+    "baek": {
+        # 변신 모드 없음 = 단일 폴더(main) · 260803 신규 편입(종전 0장 = 무대가 빈 채로 대화가 돌던 자리)
+        "modes": {"main": ["base"]},
+        "comment": ("시즌 감정 미디어 manifest(백) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종 — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. "
+                    "⚠ 출처 = 시트 F(캐릭터별 락 · docs/캐릭터보드_캐릭터별_보강.md)를 shared/cut_board_sheet.py로 자른 9:16 칸. "
+                    "정본=viewer/characters/season/baek/main/<감정>/."),
+    },
+    "kopi": {
+        # 변신 모드 없음 = 단일 폴더(main) · 260803 신규 편입(종전 0장 = 무대가 빈 채로 대화가 돌던 자리)
+        "modes": {"main": ["base"]},
+        "comment": ("시즌 감정 미디어 manifest(카피) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종 — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. "
+                    "⚠ 출처 = 시트 F(캐릭터별 락 · docs/캐릭터보드_캐릭터별_보강.md)를 shared/cut_board_sheet.py로 자른 9:16 칸. "
+                    "정본=viewer/characters/season/kopi/main/<감정>/."),
+    },
     "hanna": {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → 시간대 필터 비활성
         "modes": {"main": ["base"]},
