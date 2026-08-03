@@ -19,7 +19,7 @@ MODEL = (os.environ.get("OPENAI_IMAGE_MODEL") or "gpt-image-2").strip()
 API_GEN = "https://api.openai.com/v1/images/generations"
 API_EDIT = "https://api.openai.com/v1/images/edits"
 FORCE = os.environ.get("FORCE", "") == "1"
-SHEET = (os.environ.get("YETA_BOARD_SHEET") or "A").strip().upper()      # A = 감정 9칸(3×3 · 앱 정합) · B = 감정 20칸(5×4) · C = 포즈 12칸(4×3 · 표정 고정) · D = 일진 상황 9칸(3×3) · E = 9:16 상황 6칸(3×2 · 칸 목록에서 6칸씩 · n장) · CELL = 개별 칸 1장씩(9:16 크롭)
+SHEET = (os.environ.get("YETA_BOARD_SHEET") or "A").strip().upper()      # A = 감정 9칸(3×3 · 앱 정합) · B = 감정 20칸(5×4) · C = 포즈 12칸(4×3 · 표정 고정) · D = 일진 상황 9칸(3×3) · E = 9:16 상황 6칸(3×2 · 칸 목록에서 6칸씩 · n장) · F = E와 같되 옷·헤어 자유(LOCK_CORE) · CELL = 개별 칸 1장씩(9:16 크롭)
 SLUG = re.sub(r"[^0-9A-Za-z_-]", "", (os.environ.get("YETA_BOARD_SLUG") or "board")) or "board"
 REF = (os.environ.get("YETA_BOARD_REF") or "").strip()                   # 레퍼런스 이미지 경로(있으면 edits 경로 = 동일성 앵커)
 SPEC = os.environ.get("YETA_BOARD_SPEC") or "docs/캐릭터보드_프롬프트_정본.md"
@@ -31,7 +31,7 @@ OUT = "viewer/assets/yeta_char/board"
 # 시트 비례 = 칸 3:4 기준 — A·D(3열×3행)·E(3열×2행 · 칸 9:16) → 세로 3:4 / B(5열×4행)·C(4열×3행) → 정사각.
 # gpt-image 허용 size 3종뿐이라 **칸이 9:16이어도 페이지는 1024x1536**이다(칸 비례는 프롬프트가, 최종 9:16은 자를 때 성립).
 SIZES = {"A": "1024x1536", "B": "1024x1024", "C": "1024x1024", "D": "1024x1536",
-         "E": "1024x1536", "CELL": "1024x1536"}
+         "E": "1024x1536", "F": "1024x1536", "CELL": "1024x1536"}
 PER_SHEET = 6          # 시트 E 한 장에 들어가는 칸 수(정본 §2-E · 9:16 칸 상한)
 CROP_916 = "crop=trunc(ih*9/16/2)*2:ih"   # 개별 칸 전용 — 1024×1536 → 864×1536 = 정확히 9:16(좌우만 깎는다)
 
@@ -71,14 +71,23 @@ def build_prompt(sheet):
     return body.replace("{LOCK}", lock)
 
 
-def build_sheet_e(group):
-    """시트 E = 템플릿 1벌 + 칸 목록 6개(§3-1)를 조립. 예외는 칸을 지목해 따로 문단으로 붙인다."""
-    body = build_prompt("E")
+def build_sheet_grid(group, sheet):
+    """6칸 시트(E·F) 조립 — 템플릿 1벌 + 칸 목록 6개(§3-1·§3-2).
+
+    E = `{LOCK}`(교복 고정 판) · F = `{LOCK_CORE}`(의상·헤어 자유 · 얼굴·비례 고정 판 · 운영자 260803).
+    4번째 필드는 시트에 따라 뜻이 갈린다 — E에선 **락 예외**, F에선 **그 칸의 옷·머리**(문구에 WARDROBE: 가 붙어 온다).
+    """
+    body = spec_block("SHEET_%s" % sheet)
+    for key, anchor in (("{LOCK}", "LOCK"), ("{LOCK_CORE}", "LOCK_CORE")):
+        if key in body:
+            body = body.replace(key, spec_block(anchor))
     panels = "\n".join('%d. "%s" — %s. BG: %s.' % (i, c["label"], c["act"], c["bg"])
                        for i, c in enumerate(group, 1))
+    head = ("PER-PANEL WARDROBE — each line applies ONLY to the panel it names; her face, hair colour and length,\n"
+            "and body proportions do NOT change with the clothes\n" if sheet == "F" else
+            "PER-PANEL EXCEPTIONS — each applies ONLY to the panel it names, never to the others\n")
     ov = [f'Panel {i} ("{c["label"]}"): {c["over"]}' for i, c in enumerate(group, 1) if c["over"]]
-    over = ("\nPER-PANEL EXCEPTIONS — each applies ONLY to the panel it names, never to the others\n"
-            + "\n".join(ov) + "\n") if ov else ""
+    over = ("\n" + head + "\n".join(ov) + "\n") if ov else ""
     return body.replace("{PANELS}", panels).replace("{OVERRIDES}", over)
 
 
@@ -182,11 +191,12 @@ def jobs():
     out = []
     for n in range(1, TAKES + 1):
         tag = "" if n == 1 else f"_v{n}"
-        if SHEET == "E":
+        if SHEET in ("E", "F"):
             cs = cells()
             pages = [cs[i:i + PER_SHEET] for i in range(0, len(cs), PER_SHEET)]
             for k, g in enumerate(pages, 1):
-                out.append((os.path.join(OUT, f"{SLUG}_sheetE_p{k}{tag}.png"), build_sheet_e(g), False))
+                out.append((os.path.join(OUT, f"{SLUG}_sheet{SHEET}_p{k}{tag}.png"),
+                            build_sheet_grid(g, SHEET), False))
         elif SHEET == "CELL":
             for c in cells():
                 out.append((os.path.join(OUT, f"{SLUG}_cell_{c['label'].lower()}{tag}.png"), build_cell(c), True))
@@ -199,7 +209,7 @@ def main():
     if not KEY:
         print("OPENAI_API_KEY 없음 — 캐릭터 보드 생성 생략(no-op)"); return 0
     if SHEET not in SIZES:
-        print(f"⚠️ 알 수 없는 시트 '{SHEET}' — A · B · C · D · E · CELL 중 하나"); return 1
+        print(f"⚠️ 알 수 없는 시트 '{SHEET}' — A · B · C · D · E · F · CELL 중 하나"); return 1
     size = SIZES[SHEET]
     if REF and not os.path.exists(REF):
         print(f"⚠️ 레퍼런스 경로 없음: {REF} — 글 락만으로 생성한다(동일성 보장 약함)", flush=True)
