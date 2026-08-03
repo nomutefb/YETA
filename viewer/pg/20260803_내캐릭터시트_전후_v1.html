@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>내 캐릭터 = 한 장 3컷(얼굴·상반신·3D용 전신) — 전/후 비교 v1 (Q.156)</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260803_첫진입안내_전후_v1.html 계승(재설계 0) ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  @media (max-width:820px) { .pair { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .cap .val { font-size:var(--fs-xs); color:var(--fg-2); }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); }
+  td.v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); }
+  img.shot { display:block; width:100%; max-width:420px; margin-inline:auto; border-radius:var(--r-m); border:1px solid var(--glass-line); box-shadow:var(--shadow-card); }
+  /* 시트 규격 도해 — 실제 산출 비율(1024×1536 · 3칸 각 1024×512)을 그대로 축소한 상자(신규 색 0 · 글래스/라인 토큰만) */
+  .sheetmap { width:100%; max-width:230px; aspect-ratio:1024/1536; margin-inline:auto; display:grid; grid-template-rows:1fr 1fr 1fr; gap:3px;
+    border:1px solid var(--glass-line); border-radius:var(--r-m); overflow:hidden; background:var(--glass); }
+  .sheetmap div { position:relative; display:grid; place-items:center; background:rgba(255,255,255,.03); font-size:var(--fs-xs); color:var(--fg-2); text-align:center; padding:4px; }
+  .sheetmap div b { font-weight:var(--fw-x); }
+  .sheetmap .crop::after { content:'크롭 512²'; position:absolute; left:50%; top:0; transform:translateX(-50%); width:50%; height:100%;
+    border:1px solid var(--accent); border-radius:var(--r-s); color:var(--accent); font-size:var(--fs-meta); display:grid; place-items:end center; padding-bottom:3px; }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>내 캐릭터 = 한 장 3컷(얼굴 · 상반신 · 3D용 전신) (전/후 · Q.156)</h1>
+  <p class="lead">운영자 260803: <b>"사용자 캐릭보드는 필요없고 그냥 한장만 얼굴 상반신 전신 3d용 전신 뽑아주면된 — 선택할 경우"</b>. 노브 = <code>.github/scripts/yeta_meface.py</code>(3컷 프레이밍 + 얼굴 칸 크롭) · <code>yeta_face.py</code>(톤/프레이밍 분리 · size 파라미터) · <code>viewer/index.html</code>(선택 진입점 2곳). 앱 캡처는 <b>헤드리스 실렌더</b> · 그림 실물은 유료 dispatch 산출이라 여기 없다(규격은 아래 도해).</p>
+
+  <div class="sect grp">
+    <h2>① 산출물 — 1:1 얼굴 1장 vs 세로 3컷 한 장</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">전</span><span class="val">1024×1024 얼굴 초상 1장 → <code>me.avatar</code></span></p>
+        <div class="sheetmap" style="aspect-ratio:1/1; grid-template-rows:1fr;"><div><b>얼굴</b><br>head &amp; shoulders</div></div>
+        <p class="note">몸이 없다 — 3D·전신 참조로 쓸 수 없고, 캐릭터가 어떤 차림인지도 알 수 없었다.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">후</span><span class="val">1024×1536 한 장 3칸 → <code>me.sheet</code> + 얼굴 칸 크롭 → <code>me.avatar</code></span></p>
+        <div class="sheetmap">
+          <div class="crop"><b>① 얼굴</b><br>close-up</div>
+          <div><b>② 상반신</b><br>waist-up · 정면</div>
+          <div><b>③ 전신(3D용)</b><br>A-포즈 정면 · 머리~발끝 · 평평한 배경</div>
+        </div>
+        <p class="note">호출은 <b>1회 그대로</b>(과금 축 무변). 프사는 ① 칸 중앙 512²를 ffmpeg로 잘라 쓰므로 <code>me.avatar</code> 계약은 그대로 = 우상단 프사·버블 아바타 회귀 0.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect grp">
+    <h2>② 진입점 — 「선택할 경우」만 발사</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg after">첫 진입 마무리</span><span class="val">mut 텍스트 액션(자동 발사 0)</span></p>
+        <img class="shot" src="20260803_내캐릭터시트_07_step3_face_option.webp" alt="첫 진입 안내 마무리 단계의 내 캐릭터 그리기 선택지">
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">프로필</span><span class="val">도착분 있으면 시트 행 — 탭 = 원본</span></p>
+        <img class="shot" src="20260803_내캐릭터시트_08_profile_sheet_row.webp" alt="프로필 PROFILE 절의 내 캐릭터 시트 행">
+      </div>
+    </div>
+    <p class="note">두 자리 모두 <b>기존 정본 그대로</b> — 선택지 = `.yprof-genlink`(도형 없는 mut 텍스트 액션) · 시트 행 = `.yset-item`(설정 행) · 원본 열람 = 새 탭(앱 안 이미지 뷰어 신설 0). 진행 표시·일 상한·도착 폴은 `yMefaceStart` 기존 파이프 그대로다.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>③ 프롬프트 — 톤은 계승, 프레이밍만 교체</h2>
+    <table>
+      <tr><th>조각</th><th>내용</th><th>sheet</th><th>face(구·롤백)</th></tr>
+      <tr><td class="v">STYLE_A</td><td>반실사 애니·글로시 painterly 화풍</td><td>○</td><td>○</td></tr>
+      <tr><td class="v">FRAME_1X1</td><td>정사각 1:1 · 얼굴이 프레임을 채움</td><td>—</td><td>○</td></tr>
+      <tr><td class="v">(신설) 3컷 프레이밍</td><td>세로 한 장 · 3칸 등분 · 동일 인물/헤어/의상 · ①얼굴 ②상반신 ③A-포즈 전신(머리~발끝·평평한 배경·소품 0)</td><td>○</td><td>—</td></tr>
+      <tr><td class="v">STYLE_B</td><td>미형·조명·무음동 밤 분위기·안전가드(no text/logo)</td><td>○</td><td>○</td></tr>
+      <tr><td class="v">persona_line</td><td>소개(about) 기반 인물 유도 — 원문 로그 출력 금지 유지</td><td>○</td><td>○</td></tr>
+    </table>
+    <p class="note"><code>yeta_face.BASE</code>는 이 세 조각의 <b>연결로 재정의</b>했다 — 조립 결과가 종전 문자열과 <b>바이트 동일</b>(983자)임을 실측했고, `tests/test_face_base.py`가 앞으로도 강제한다. 다른 호출처(<code>yeta_face.py</code> 10인 초상)는 손대지 않았다.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>④ 검증</h2>
+    <table>
+      <tr><th>항목</th><th>결과</th></tr>
+      <tr><td>BASE 바이트 동일</td><td class="v">True · 983 = 983</td></tr>
+      <tr><td>시트 프롬프트 조립</td><td class="v">2,054자 · 3컷/A-포즈/머리~발끝 절 생존 · <code>perfectly square 1:1</code> 잔존 0</td></tr>
+      <tr><td>얼굴 칸 크롭(합성 1024×1536)</td><td class="v">512×512 산출 실측</td></tr>
+      <tr><td>앱 실렌더</td><td class="v">마무리 선택지·프로필 시트 행 렌더 · JS 에러 0</td></tr>
+      <tr><td>게이트</td><td class="v">check_refs rc=0 · node --check(뷰어·게이트웨이) OK · python ast OK</td></tr>
+    </table>
+    <p class="note">그림 실물은 <b>유료 dispatch 1회</b>가 있어야 나온다(op meface 일 상한 기본 2 · 자동 트리거 금지 규약 유지). 그때 칸 분할이 어긋나면 조정 지점은 두 곳뿐 — 프레이밍 문장(<code>sheet_prompt</code>)과 크롭 좌표(<code>FACE_CROP</code>).</p>
+  </div>
+</div>
+</body>
+</html>

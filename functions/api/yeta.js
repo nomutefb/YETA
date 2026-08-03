@@ -23,7 +23,7 @@
 //   calllog {}                     : 🩺 통화 진단 — Vapi 메타데이터만(상태·종료사유·비용 — transcript/PII 반환 금지)
 //   tune  {persona, g[16]}         : 캐릭터 성향 게이지(L2 · 숫자 배열만 = 프롬프트 주입 차단)
 //   me    {call, about}            : 유저 프로필(호칭+소개 · "AI가 나를 부르는 법") — 전 방 공유 · stripMarkers(고정점)+캡(러너가 비신뢰 격리 주입) · 서버 관리 필드(avatar) 보존
-//   meface {}                      : 프로필 이미지 만들기(260710) — 소개 기반 생성 dispatch(yeta-meface.yml → me.avatar 주입 · ⚠️ OpenAI 유료 → 일 상한 기본 2 = YETA_MEFACE_MAX_PER_DAY · 클라 텍스트 0)
+//   meface {}                      : 내 캐릭터 그리기(260710 · 3컷 시트 260803) — 소개 기반 **한 장** dispatch(yeta-meface.yml → 얼굴 칸 = me.avatar · 시트 원본 = me.sheet 주입 · ⚠️ OpenAI 유료 → 일 상한 기본 2 = YETA_MEFACE_MAX_PER_DAY · 클라 텍스트 0)
 //   pinset {old, next}             : 게스트 PIN 셀프 변경(260710 · R2 재설계) — 비공개 R2 auth/overrides.json {원래해시:새해시} CAS(main 커밋 무유발) · auth가 effectiveHash 대조 = 원래 PIN 무효화 · 새 PIN 4자리(언락 패드 일치) · 시도 상한 기본 5 = YETA_PINSET_MAX_PER_DAY(실패도 소비)
 //   policy {} | {p, pin}           : 3계층 정책 — GET 정의+현재값(무인증) / SET enum 정수만(⚠️ 관리자 PIN 필수)
 //   auth  {pin}                    : PIN 로그인 — admin = env YETA_PIN_ADMIN(레포 무노출) / guest = apps/yeta/users.json 해시(깃 SSOT)
@@ -532,7 +532,7 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: true, me: saved || { call, about } });
   }
 
-  if (op === 'meface') {   // 프로필 이미지 만들기(운영자 260710) — 소개(sess.me.about) 기반 1장. ⚠️ OpenAI 유료 종량제 + 무인증 공개 → 일 상한 기본 2(YETA_MEFACE_MAX_PER_DAY) · 클라 텍스트 0(소개는 서버가 세션에서 읽음 = 주입 축 없음)
+  if (op === 'meface') {   // 내 캐릭터 그리기(운영자 260710 · 3컷 시트 260803) — 소개(sess.me.about) 기반 한 장(러너가 얼굴 칸을 잘라 avatar · 시트 원본은 me.sheet). ⚠️ OpenAI 유료 종량제 + 무인증 공개 → 일 상한 기본 2(YETA_MEFACE_MAX_PER_DAY) · 클라 텍스트 0(소개는 서버가 세션에서 읽음 = 주입 축 없음)
     if (!env.GH_TOKEN) return json({ error: '서버 미설정 — GH_TOKEN 필요' }, 500);
     const pre = await readSess();
     if (!String((pre.me || {}).about || '').trim()) return json({ error: '내 소개부터 써줘 — 소개를 읽고 그려' }, 400);
