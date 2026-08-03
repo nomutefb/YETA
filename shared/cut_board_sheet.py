@@ -80,6 +80,7 @@ def main():
     ap.add_argument("--labels", default="", help="칸 라벨 쉼표 목록(좌→우·위→아래 순서). 없으면 01,02…")
     ap.add_argument("--prefix", default="", help="파일명 앞머리(기본 = 시트 파일명)")
     ap.add_argument("--ratio", default="", help="예: 9:16 — 잘라낸 칸을 이 비율로 중앙 크롭")
+    ap.add_argument("--ext", default="png", choices=["png", "webp"], help="저장 형식(기본 png · 배포본은 webp)")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 
@@ -101,7 +102,8 @@ def main():
                 cell = centre_crop(cell, a.ratio)
             print(f"  {lab:<8} ({x0},{y0})-({x1},{y1}) → {cell.size[0]}×{cell.size[1]}")
             if not a.dry_run:
-                cell.save(os.path.join(a.out, f"{prefix}_{lab.lower()}.png"))
+                dst = os.path.join(a.out, f"{prefix}_{lab.lower()}.{a.ext}")
+                cell.save(dst, quality=82) if a.ext == "webp" else cell.save(dst)
     if labels and n != len(labels):
         print(f"⚠️ 칸 {n}개인데 라벨 {len(labels)}개 — 격자 검출이 어긋났을 수 있다(--dry-run으로 좌표 확인)")
     return 0
