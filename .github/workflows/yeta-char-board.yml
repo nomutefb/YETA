@@ -45,7 +45,9 @@ jobs:
           fetch-depth: 1
 
       - name: ffmpeg (webp 변환 — 러너 기본 이미지에 없음 · yeta-char-art 실측 계승)
-        run: sudo apt-get install -y -qq ffmpeg >/dev/null 2>&1 || echo "ffmpeg 미설치 — png 원본 폴백(webp 생략)"
+        # ⚠ 260803 실측: 이 apt 스텝이 25분+ 매달려 런이 통째로 멈췄다(에러가 아니라 hang이라 || 폴백도 안 탄다).
+        #   ffmpeg는 webp 사본용 편의 도구 = 없어도 png 원본은 나온다 → 3분 타임아웃으로 끊고 진행한다.
+        run: timeout 180 sudo apt-get install -y -qq ffmpeg >/dev/null 2>&1 || echo "ffmpeg 미설치/시간초과 — png 원본 폴백(webp 생략)"
 
       - name: 캐릭터 보드 시트 생성
         env:
