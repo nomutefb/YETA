@@ -853,7 +853,7 @@
   {
     "id": "hanna",
     "name": "도한나",
-    "met": false,
+    "met": true,
     "locked": false,
     "grade": "",
     "tagline": "골목 뒤 학교의 대장 — 빵은 시켜도 뒤는 봐준다",
