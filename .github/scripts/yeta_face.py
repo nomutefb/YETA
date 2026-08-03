@@ -29,10 +29,12 @@ R2_SECRET = os.environ.get("R2_SECRET_ACCESS_KEY", "").strip()
 R2_ON = all([R2_ACCOUNT, R2_BUCKET, R2_PUBLIC, R2_KEY, R2_SECRET])
 
 # 공통 스타일 — 루시 톤 통일(운영자 260712): 반실사 애니 일러스트(웹툰 flat lineart 아님) · 글로시 painterly · 정사각 1:1 얼굴중심 · 미남미녀 · 착장 유지 안전가드.
-BASE = ("semi-realistic detailed anime-style character profile portrait, "
-        "polished painterly digital illustration with glossy rendering and soft painterly shading (NOT flat webtoon lineart, NOT manhwa cel), "
-        "perfectly square 1:1, face-centered head-and-shoulders close-up (the face fills the frame), "
-        "one single original fictional character, very good-looking and attractive, "
+# 260803 3분할: 톤(STYLE_A/STYLE_B)과 **프레이밍**(FRAME_1X1)을 갈랐다 — 얼굴 1:1이 아닌 산출(내 캐릭터 3컷 시트 = yeta_meface KIND=sheet)이
+# 톤만 계승하고 프레이밍만 갈아끼울 수 있게. BASE = 세 조각 연결 = **종전 문자열과 바이트 동일**(회귀 0 · tests/test_face_base.py가 강제).
+STYLE_A = ("semi-realistic detailed anime-style character profile portrait, "
+        "polished painterly digital illustration with glossy rendering and soft painterly shading (NOT flat webtoon lineart, NOT manhwa cel), ")
+FRAME_1X1 = ("perfectly square 1:1, face-centered head-and-shoulders close-up (the face fills the frame), ")
+STYLE_B = ("one single original fictional character, very good-looking and attractive, "
         "luminous skin with delicate soft blush, refined modern-anime features with large expressive highly-detailed eyes and crisp eyeliner accents, "
         "tall with an elegant glamorous striking presence, refined proportions, "
         "set in the moody night-lit back-alley mood of a quiet Seoul neighborhood, "
@@ -40,6 +42,7 @@ BASE = ("semi-realistic detailed anime-style character profile portrait, "
         "delicate floating light particles, a dreamlike ethereal atmosphere (semi-realistic anime, still grounded, not costume fantasy), "
         "gentle pastel-and-neon color grade, fully clothed and tasteful, "
         "no text, no caption, no watermark, no logo. Character — ")
+BASE = STYLE_A + FRAME_1X1 + STYLE_B   # 조립본 = 종전 BASE 원문(순서·공백 무변)
 
 # 캐릭터 10인 초상(보강 카드 성격·수치·이면·직업 반영 · 미남미녀·매력 각인 · '어울리는 하나씩' · 260703 v2 카드정합)
 FACES = [
@@ -77,9 +80,10 @@ def r2_upload(png_bytes, key, content_type="image/png"):
             os.remove(tmp)
 
 
-def openai_image(prompt):
-    """OpenAI Images API 1장 → PNG bytes(실패 시 None · fail-soft). b64_json 우선, url 반환 모델이면 다운로드."""
-    payload = {"model": MODEL, "prompt": prompt, "size": "1024x1024", "n": 1}   # 1024²=정확한 1:1
+def openai_image(prompt, size="1024x1024"):
+    """OpenAI Images API 1장 → PNG bytes(실패 시 None · fail-soft). b64_json 우선, url 반환 모델이면 다운로드.
+    size = gpt-image 허용 3종(1024x1024 정사각 · 1024x1536 세로 · 1536x1024 가로) — 기본 = 종전 1:1(호출부 무변경 = 회귀 0)."""
+    payload = {"model": MODEL, "prompt": prompt, "size": size, "n": 1}   # 기본 1024²=정확한 1:1
     data = json.dumps(payload).encode()
     req = urllib.request.Request(API, data=data,
                                  headers={"Authorization": "Bearer " + KEY, "Content-Type": "application/json"})

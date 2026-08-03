@@ -3403,9 +3403,10 @@ function yProfileRender() {   // 내 프로필 카드 렌더 v2(운영자 260712
   const PL = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
   const nav = (t, d, val, attr) => `<button type="button" class="yset-item"${attr || ''}><span class="si-lbl"><span class="si-t">${t}</span>${d ? `<span class="si-d">${esc(d)}</span>` : ''}</span><span class="si-v">${val ? `<i class="si-vv">${esc(val)}</i>` : ''}${YICO.chev}</span></button>`;   // 값 = si-vv 랩(긴 소개문 말줄임 · 운영자 260710 오버플로 픽스)
   const av = yMeAva(), nm = yMeName(), bio = yMeGet('bio'), ac = yMeGet('accent') === 'cobalt' ? 'cobalt' : 'lime';
+  const sheet = ((YSESS || {}).me_dead) ? '' : ((((YSESS || {}).me || {}).sheet) || '');   // 내 캐릭터 3컷 시트 = 서버 생성물 전용(기기 사진 축 없음 · 사망 중엔 프사와 함께 감춤)
   const camLbl = av ? '프로필 사진 교체' : '프로필 사진 첨부';   // 배지 시맨틱(운영자 260710 — 없으면 첨부·있으면 교체)
   const nThreads = Object.values((YSESS || {}).threads || {}).filter(t => (t.turns || []).some(x => x.role === 'user')).length;   // 진행 대화 = 내 발화가 있는 방(평의회9 — 열기만 한 방·awaiting 빈 방 제외)
-  const genLink = av ? '' : `<button type="button" class="yprof-genlink" data-act="meface"${_mfT ? ' disabled' : ''}><span>${_mfT ? '페르소나를 읽고 그리는 중…' : '페르소나로 프로필 생성'}</span>${_mfT ? `<span class="ycf-bar slow" id="ymefaceBar"><i></i></span>` : ''}</button>`;   // 도형 없는 mut 텍스트 액션(운영자 260710) — 프사 있으면 숨김(카메라 배지로 교체)
+  const genLink = av ? '' : `<button type="button" class="yprof-genlink" data-act="meface"${_mfT ? ' disabled' : ''}><span>${_mfT ? '페르소나를 읽고 그리는 중…' : '페르소나로 내 캐릭터 그리기 — 얼굴 · 상반신 · 전신'}</span>${_mfT ? `<span class="ycf-bar slow" id="ymefaceBar"><i></i></span>` : ''}</button>`;   // 도형 없는 mut 텍스트 액션(운영자 260710) — 프사 있으면 숨김(카메라 배지로 교체)
   const d = yProfDerive(), hero = yMissionHero(d), hc = hero.id ? yPersona(hero.id) : null, bff = yBffTop(d, 3), got = YBD.filter(b => b.ok(d)).length;
   const hi = YPG_HI[ymSlot(new Date(Date.now() + 9 * 3600e3).getUTCHours())] || '좋은 밤이야,';   // KST 시간대 인사(선택값)
   const hav = hc ? yCAva(hc) : '';   // 모드 프사 경유(도깨비 260717)
@@ -3425,6 +3426,7 @@ function yProfileRender() {   // 내 프로필 카드 렌더 v2(운영자 260712
         return `<button type="button" class="ybd${on ? '' : ' lk'}${b.tier ? ` t-${b.tier}` : ''}" data-bd="${i}" aria-label="${esc(b.nm)} — ${esc(b.cond)}${on ? '' : b.pg ? ` — 진행 ${esc(b.pg(d))}` : ' (잠김)'}"><span class="ybd-core"><span class="ybd-em" aria-hidden="true">${b.e}</span>${on ? '' : `<span class="ybd-lock">${YBD_LOCK}</span>`}</span><span class="ybd-nm${b.hid ? ' yqm' : ''}">${esc(b.nm)}</span><span class="ybd-pg">${esc(pg)}</span></button>`;
       }).join('') + `</div>`
     + `<div class="yset-sec">PROFILE</div>` + nav('이름', '', yMeGet('name') || '비어 있음', ' data-me="name"') + nav('나의 페르소나', '', bio || '비어 있음', ' data-me="bio"') + genLink
+    + (sheet ? nav('내 캐릭터 시트', '얼굴 · 상반신 · 3D용 전신 — 탭하면 원본', '', ` data-sheet="${esc(sheet)}"`) : '')   // 3컷 원본(운영자 260803) — 도착분 있을 때만 · 프사는 이미 ① 얼굴 칸
     + `<div class="yset-sec yset-acc">Account Setting</div>`
     + (YROLE === 'admin'
         ? `<button type="button" class="yset-item ro" aria-disabled="true"><span class="si-lbl"><span class="si-t">PIN 설정</span></span><span class="si-v"><i class="si-vv">관리자 계정은 불가</i></span></button>`
@@ -3463,6 +3465,7 @@ function yMefaceTick() {   // 5s 폴 — me.avatar 도착 = 완료 · 185s(서�
     _mfT = 0;
     if (!yMeAva()) miniToast('생성이 늦어지고 있어 — 잠시 후 프로필을 다시 열어봐');
     if ($('#ycprofile').classList.contains('on')) yProfileRender();
+    yOnbSync();   // 첫 진입 안내가 열린 채로 도착·타임아웃하면 그 카드도 갱신(진행 문구 → 액션 소거)
     return;
   }
   _mfPoll = setTimeout(() => {
@@ -3472,6 +3475,7 @@ function yMefaceTick() {   // 5s 폴 — me.avatar 도착 = 완료 · 185s(서�
         if (YSESS) YSESS.me = r.sess.me; else YSESS = r.sess;
         _mfT = 0; yMeApply(); try { yMeRow(); } catch (x) {}
         if ($('#ycprofile').classList.contains('on')) yProfileRender();
+        yOnbSync();   // 첫 진입 안내가 열린 채로 도착·타임아웃하면 그 카드도 갱신(진행 문구 → 액션 소거)
         miniToast('프로필 이미지 나왔어 — 소개 읽고 그렸어'); return;
       }
       if (mav) { if (YSESS) YSESS.me = r.sess.me; _mfT = 0; return; }   // 서버엔 있는데 로컬 기기사진이 우선 = 폴만 종료(표시 유지)
@@ -3531,6 +3535,7 @@ function yOnbOpen() {
   document.getElementById('ymain').classList.add('cd-open');
   navOpen('yconb', yOnbClose);   // 폰 뒤로가기·탭 점프(navHome)가 같은 닫기 경로로 수렴
 }
+function yOnbSync() { const el = $('#yconb'); if (el && el.classList.contains('on')) yOnbRender(); }   // 외부 축(meface 폴)이 안내 카드를 갱신하는 단일 창구 — 열려 있을 때만
 function yOnbClose() { yMeSet('onb', '1'); yCdHide('#yconb'); }   // 표식은 **닫히는 모든 경로**에서 — 중도 이탈해도 매 언락 재등장 금지(이어서 채우는 자리 = 설정 > 프로필 그대로)
 function yOnbRender() {
   const g = yOnbGuide(), nm = yMeGet('name'), bio = yMeGet('bio'), S = _yonbS;
@@ -3548,14 +3553,15 @@ function yOnbRender() {
     `“${nm || yMeName()}” · ${bio || '소개는 비워뒀어 — 프로필에서 채워도 돼'}`
   ][S];
   const cta = ['좋아, 정할게', nm ? '이 이름으로 할게' : '이름 정하기', bio ? '이걸로 할게' : '나를 한 줄로 쓰기', '사람들 보러 가기'][S];
-  const sub = [['skip', '그냥 둘러볼게'], nm ? ['edit', '다시 정할게'] : ['next', '나중에 할게'], bio ? ['edit', '다시 쓸게'] : ['next', '나중에 할게'], null][S];
+  const sub = [['skip', '그냥 둘러볼게'], nm ? ['edit', '다시 정할게'] : ['next', '나중에 할게'], bio ? ['edit', '다시 쓸게'] : ['next', '나중에 할게'],
+    (bio && !yMeAva()) ? ['face', _mfT ? '페르소나를 읽고 그리는 중…' : '내 캐릭터도 그려줄까 — 얼굴 · 상반신 · 전신'] : null][S];   // 마무리 = 그림 **선택**(운영자 260803 "선택할 경우") · 유료 축이라 자동 발사 절대 금지 · 소개 없으면 미노출(생성 재료가 소개다)
   $('#yconbCard').innerHTML = (g ? yAva(g, 'yintro-ava') : '')
     + `<span class="ycd-nm">${g ? esc(g.name) : 'YETA'}</span>`
     + `<span class="ycd-tag">${esc(tag)}</span>`
     + `<span class="ycd-quote">“${esc(line)}”</span>`
     + `<span class="ycd-desc">${esc(desc)}</span>`
     + `<button type="button" class="ycd-cta" data-onb="go">${esc(cta)}</button>`
-    + (sub ? `<button type="button" class="yprof-genlink" data-onb="${sub[0]}"><span>${esc(sub[1])}</span></button>` : '');
+    + (sub ? `<button type="button" class="yprof-genlink" data-onb="${sub[0]}"${sub[0] === 'face' && _mfT ? ' disabled' : ''}><span>${esc(sub[1])}</span></button>` : '');
 }
 function yOnbEdit(step, keep) {   // 입력 = 프로필 편집과 같은 호출(제목·maxlen·저장 경로 전부 동일 — 두 자리가 어긋나면 그게 드리프트)
   if (step === 1) yEditOpen('이름', yMeGet('name'), v => { yMeSet('name', v); yMeApply(); try { yMeRow(); } catch (x) {} yMePush(); if (!keep && v) _yonbS = 2; yOnbRender(); }, 24);
@@ -3566,6 +3572,7 @@ $('#yconbCard').addEventListener('click', e => {
   const a = b.dataset.onb;
   if (a === 'skip') { navBack('yconb'); return; }         // 건너뛰기 = 뒤 캐릭터 탭 그대로(언락이 이미 yTab('char'))
   if (a === 'edit') { yOnbEdit(_yonbS, true); return; }    // 다시 쓰기 = 같은 단계 유지
+  if (a === 'face') { yMefaceStart(); yOnbRender(); return; }   // 내 캐릭터 그리기 = 프로필 링크와 **같은 함수**(일 상한·진행 폴·도착 반영 전부 그 파이프 그대로 · 여기선 진행 문구만 갱신)
   if (a === 'next') { _yonbS = Math.min(3, _yonbS + 1); yOnbRender(); return; }
   if (_yonbS === 1 && !yMeGet('name')) { yOnbEdit(1); return; }
   if (_yonbS === 2 && !yMeGet('bio')) { yOnbEdit(2); return; }
@@ -3700,6 +3707,8 @@ $('#ycprofileCard').addEventListener('click', e => {
   if (e.target.closest('.yset-item[data-act="pinset"]')) { yPinChangeOpen(); return; }   // 게스트 PIN 셀프 변경(운영자 260710)
   const ch = e.target.closest('.yac-chip[data-ac]');
   if (ch) { yMeSet('accent', ch.dataset.ac === 'cobalt' ? 'cobalt' : ''); yMeApply(); yProfileRender(); return; }   // 내 말풍선 강조색(라임=기본=빈값)
+  const sh = e.target.closest('.yset-item[data-sheet]');
+  if (sh) { window.open(sh.dataset.sheet, '_blank', 'noopener'); return; }   // 시트 원본 = 새 탭(앱 안 이미지 뷰어 신설 대신 — 컴포넌트 창작 0)
   const me = e.target.closest('.yset-item[data-me]');
   if (me) {
     if (me.dataset.me === 'name') yEditOpen('이름', yMeGet('name'), v => { yMeSet('name', v); yMeApply(); try { yMeRow(); } catch (x) {} yProfileRender(); yMePush(); }, 24);   // 호칭 = 서버 동기(러너가 답장에 반영 · 260708)

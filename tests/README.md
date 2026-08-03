@@ -4,6 +4,7 @@
 |---|---|---|---|
 | `test_yeta_v3.py` | 러너 세션 로직(방·스레드·기억) | `python3 tests/test_yeta_v3.py` | 즉시(stdlib) |
 | `test_backstack.js` | 뷰어 인앱 뒤로가기(백스택) | `node tests/test_backstack.js` | ~1.5분(실브라우저) |
+| `test_face_base.py` | 초상 프롬프트 SSOT(BASE 3분할 무손실 · 3컷 시트 프레이밍) | `python3 tests/test_face_base.py` | 즉시(stdlib) |
 
 ---
 
