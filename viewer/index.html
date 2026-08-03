@@ -1098,6 +1098,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yprof-genlink:active { opacity:.6; }
   .yprof-genlink[disabled] { cursor:default; }
   .yprof-genlink .ycf-bar { flex:1; margin:0; }   /* 진행 게이지 = 텍스트 옆 잔여폭(.ycf-bar 정본 · 행 여백 재정의) */
+  #yconbCard .yprof-genlink { justify-content:center; }   /* 첫 진입 안내(260803) — 같은 mut 텍스트 액션을 가운데정렬 카드(.ycd-card)에 얹을 때만 축 정렬(프로필은 card-left라 좌측 그대로) · 신규 값 0 = 정렬 축만(#ycprofileCard .yset-sec 스코프 오버라이드 선례) */
   .yset-item { display:flex; align-items:center; gap:11px; width:100%; padding:13px 14px; background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-l);
     color:var(--fg); font:inherit; text-align:left; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; box-shadow:inset 0 1px 0 var(--glass-line);
     backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }   /* 글래스 = 메뉴1 .ycrow 동일 계승(운영자 260707 "글래스 메뉴1,2 동일") — glass-0→glass 승격으로 실제 동일단 완성(운영자 확정 "설정 구분감" · 배경 위 프로스트 또렷) */
@@ -1485,6 +1486,9 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     <div class="ycd ycd-live" id="ycprofile" aria-modal="true" role="dialog">   <!-- 내 프로필 화면(우상단 · 배경 영상 계승 260707) -->
       <div class="ycd-top"><button type="button" class="ycd-back" id="ycprofileBack" aria-label="뒤로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button></div>
       <div class="ycd-card card-left" id="ycprofileCard"></div>
+    </div>
+    <div class="ycd ycd-live" id="yconb" aria-modal="true" role="dialog">   <!-- 첫 진입 안내(운영자 260803) — 언락 직후 1회 · 안내자가 호칭·소개를 받는다. .ycd-top(뒤로) 없음 = 첫 진입엔 돌아갈 화면이 없다(이탈 = 카드 안 mut 텍스트 액션·폰 뒤로가기) -->
+      <div class="ycd-card" id="yconbCard"></div>
     </div>
     <div class="ycd" id="ycterms" aria-modal="true" role="dialog">   <!-- 이용약관 · 문의(운영자 260709 — 15개조 법령체 · 열람 전용 · 설정 위 스택) -->
       <div class="ycd-top yterms-top"><button type="button" class="ycd-back" id="yctermsBack" aria-label="뒤로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><button type="button" class="tool-x yterms-x" id="yctermsX" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>   <!-- 닫기 = nomute 이식 .tool-x 정본 계승·강조색 변형(운영자 260709 "내리더라도 상단에 닫기" = sticky) -->
@@ -3211,7 +3215,7 @@ $('#ysetReset').addEventListener('click', () => {   // 2탭 재확인 = armed �
 });
 $('#ycsetBack').addEventListener('click', () => navBack('ycset'));
 // ── 설정·프로필 화면(목업 · 운영자 260706 "목업만 구성") — .ycd 글래스 시트 계승 · 토글=시각만·나머지=준비중 토스트 ──
-const YCD_SHEETS = ['#ycdetail', '#ycset', '#ycsettings', '#ycprofile', '#ycterms'];   // 전화면 .ycd 시트 전수 SSOT — yTab 회수·yCdOpenSync 판정 공용. 신설 시트 = 여기 1곳만(260709 약관: yCdOpenSync엔 넣고 yTab 목록은 누락 → 탭 전환에 약관 잔존 — 같은 목록 이중 하드코딩이 뿌리)
+const YCD_SHEETS = ['#ycdetail', '#ycset', '#ycsettings', '#ycprofile', '#ycterms', '#yconb'];   // 전화면 .ycd 시트 전수 SSOT — yTab 회수·yCdOpenSync 판정 공용. 신설 시트 = 여기 1곳만(260709 약관: yCdOpenSync엔 넣고 yTab 목록은 누락 → 탭 전환에 약관 잔존 — 같은 목록 이중 하드코딩이 뿌리)
 function yCdOpenSync() { const m = document.getElementById('ymain'); const any = YCD_SHEETS.some(s => { const el = $(s); return el && el.classList.contains('on'); }); if (!any) m.classList.remove('cd-open'); const st = $('#ycsettings'); if (!(st && st.classList.contains('on'))) m.classList.remove('cd-nav'); const pf = $('#ycprofile'); if (!(pf && pf.classList.contains('on'))) m.classList.remove('cd-keep'); }   // cd-nav/cd-keep = 해당 시트 닫히면 회수
 function yCdShow(sel) {   // 시트 진입 공용(아래 yCdHide의 짝 · 260726 신설) — 종전엔 이 3줄이 시트 5곳에 그대로 복붙돼 있었다.
   // ⚠ 대화창이 열려 있으면 **닫힌 뒤에** 연다. 두 가지가 겹쳐서 그렇다:
@@ -3502,6 +3506,72 @@ function yShowProfile() {   // 내 프로필 = 현재 창 위 오버레이(운�
 }
 function yHideSettings() { yCdHide('#ycsettings'); const m = document.getElementById('ymain'); const t = m.classList.contains('tab-list') ? 'list' : m.classList.contains('tab-map') ? 'map' : 'char'; document.querySelectorAll('#ynav button').forEach(b => b.classList.toggle('on', b.dataset.tab === t)); }   // 닫힘 = 네비 하이라이트를 실제 뒤 패널 탭으로 재동기(분신술 260709 shell — '설정' 고착 해소)
 function yHideProfile() { yCdHide('#ycprofile'); }
+// ── 첫 진입 안내(운영자 260803 "예를 들어 본인 캐릭터 만든다거나 첨에") — 언락 직후 1회. 안내자 1인이 호칭·소개를 받아 프로필을 세우고 사람 고르기로 넘긴다.
+//    신규 화면·값 0 = 전량 계승: 시트 `.ycd.ycd-live`(설정·프로필 결 = 배경 영상 비침) · 카드 `.ycd-card`(아바타·이름·태그·대사·설명·CTA 정본 슬롯) ·
+//    입력 = `yEditOpen`(프로필 편집과 **같은 모달**) · 저장 = `yMeSet`+`yMePush`(op me) 그대로 = 게이트웨이·스키마·dispatch 무접촉.
+//    안내자 = roster `met:true` 인물만 세운다 — 미대면은 이름 `???`·실루엣이 계약(yUnmet 260709)이라, 안 만난 얼굴을 첫 화면에 깔면 그 은닉이 깨진다.
+const YONB_GUIDE = 'haeun';
+let _yonbS = 0;   // 0 인사 · 1 호칭 · 2 소개 · 3 마무리
+const yOnbGuide = () => yPersona(YONB_GUIDE) || (YCHARS || []).find(c => c.met === true) || null;   // 폴백 = 개방 인물 아무나(로스터 개편에도 은닉 계약 유지)
+function yOnbNeed() {   // 첫 진입 판정 — 완료 표식이 없고 프로필이 로컬·서버 양쪽 다 비었을 때만(기존 사용자·새 기기 복원 = 재등장 0)
+  if (yMeGet('onb') === '1') return false;
+  if (yMeGet('name') || yMeGet('bio') || yMeGet('avatar')) return false;
+  const m = (YSESS || {}).me || {};
+  return !(m.call || m.about || m.avatar);
+}
+function yOnbMaybe() {   // 언락 훅 — 세션이 아직이면 도착 뒤 재판정(새 기기 = 서버 me가 "이미 만든 사람"의 유일한 근거)
+  if (!yOnbNeed()) return;
+  if (YSESS) { yOnbOpen(); return; }
+  yApi('get').then(r => { if (r && r.ok && !YSESS) YSESS = r.sess || {}; yMeHydrate(); if (yOnbNeed()) yOnbOpen(); })
+    .catch(() => { if (yOnbNeed()) yOnbOpen(); });
+}
+function yOnbOpen() {
+  _yonbS = 0; yOnbRender();
+  yCdShow('#yconb');
+  document.getElementById('ymain').classList.add('cd-open');
+  navOpen('yconb', yOnbClose);   // 폰 뒤로가기·탭 점프(navHome)가 같은 닫기 경로로 수렴
+}
+function yOnbClose() { yMeSet('onb', '1'); yCdHide('#yconb'); }   // 표식은 **닫히는 모든 경로**에서 — 중도 이탈해도 매 언락 재등장 금지(이어서 채우는 자리 = 설정 > 프로필 그대로)
+function yOnbRender() {
+  const g = yOnbGuide(), nm = yMeGet('name'), bio = yMeGet('bio'), S = _yonbS;
+  const tag = ['무음동 · 첫 밤', '① 뭐라고 부를까', '② 어떤 사람인지', '이제 들어가면 돼'][S];
+  const line = [
+    '어? 새 얼굴이네. 이 골목은 처음이지?',
+    '자, 첫 질문 — 뭐라고 부르면 될까?',
+    '그럼 두 번째. 당신은 어떤 사람이야?',
+    '됐다. 소개는 이 정도면 충분해.'
+  ][S];
+  const desc = [
+    '여긴 밤이 유난히 긴 동네야. 들어가기 전에 두 가지만 정하자 — 뭐라고 불릴지, 어떤 사람인지. 프로필에서 언제든 바꿔도 돼.',
+    nm ? `여기 사람들은 당신을 “${nm}”이라고 불러.` : '골목 사람들이 당신을 부르는 이름. 본명이 아니어도 돼.',
+    bio || '한 줄이면 돼. 여기 사람들은 이걸 읽고 당신을 대해.',
+    `“${nm || yMeName()}” · ${bio || '소개는 비워뒀어 — 프로필에서 채워도 돼'}`
+  ][S];
+  const cta = ['좋아, 정할게', nm ? '이 이름으로 할게' : '이름 정하기', bio ? '이걸로 할게' : '나를 한 줄로 쓰기', '사람들 보러 가기'][S];
+  const sub = [['skip', '그냥 둘러볼게'], nm ? ['edit', '다시 정할게'] : ['next', '나중에 할게'], bio ? ['edit', '다시 쓸게'] : ['next', '나중에 할게'], null][S];
+  $('#yconbCard').innerHTML = (g ? yAva(g, 'yintro-ava') : '')
+    + `<span class="ycd-nm">${g ? esc(g.name) : 'YETA'}</span>`
+    + `<span class="ycd-tag">${esc(tag)}</span>`
+    + `<span class="ycd-quote">“${esc(line)}”</span>`
+    + `<span class="ycd-desc">${esc(desc)}</span>`
+    + `<button type="button" class="ycd-cta" data-onb="go">${esc(cta)}</button>`
+    + (sub ? `<button type="button" class="yprof-genlink" data-onb="${sub[0]}"><span>${esc(sub[1])}</span></button>` : '');
+}
+function yOnbEdit(step, keep) {   // 입력 = 프로필 편집과 같은 호출(제목·maxlen·저장 경로 전부 동일 — 두 자리가 어긋나면 그게 드리프트)
+  if (step === 1) yEditOpen('이름', yMeGet('name'), v => { yMeSet('name', v); yMeApply(); try { yMeRow(); } catch (x) {} yMePush(); if (!keep && v) _yonbS = 2; yOnbRender(); }, 24);
+  else yEditOpen('나의 페르소나', yMeGet('bio'), v => { yMeSet('bio', v); yMePush(); if (!keep && v) _yonbS = 3; yOnbRender(); }, 150);
+}
+$('#yconbCard').addEventListener('click', e => {
+  const b = e.target.closest('[data-onb]'); if (!b) return;
+  const a = b.dataset.onb;
+  if (a === 'skip') { navBack('yconb'); return; }         // 건너뛰기 = 뒤 캐릭터 탭 그대로(언락이 이미 yTab('char'))
+  if (a === 'edit') { yOnbEdit(_yonbS, true); return; }    // 다시 쓰기 = 같은 단계 유지
+  if (a === 'next') { _yonbS = Math.min(3, _yonbS + 1); yOnbRender(); return; }
+  if (_yonbS === 1 && !yMeGet('name')) { yOnbEdit(1); return; }
+  if (_yonbS === 2 && !yMeGet('bio')) { yOnbEdit(2); return; }
+  if (_yonbS >= 3) { navBack('yconb'); return; }
+  _yonbS = Math.min(3, _yonbS + 1); yOnbRender();
+});
 $('#ycsettingsBack').addEventListener('click', () => navBack('ycsettings'));
 $('#ycprofileBack').addEventListener('click', () => navBack('ycprofile'));
 $('#ycsettingsCard').addEventListener('click', e => {
@@ -5381,6 +5451,7 @@ try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(fun
     unlocked = true; ymain.classList.remove('pin-mode'); ymain.classList.add('unlocked'); yTab('char'); setTimeout(yStair, 1150); yWarmBg();   // 언락 = 바로 메뉴1 캐릭터 · 계단 쌓기 1.15s 지연(운영자 확정 — 행 촤르륵 먼저) · 배경 프리로드 착수(첫 진입 전 캐시 = 진입 동기)
     yWorldStart();   // 무음동 세계 시계 가동(운영자 260715)
     if (_yDeepGo) { const f = _yDeepGo; _yDeepGo = null; setTimeout(f, 700); }   // 큐잉된 딥링크 = 언락 전환 후 발사(분신술 260709 cold)
+    else setTimeout(() => { try { yOnbMaybe(); } catch (e) {} }, 1500);   // 첫 진입 안내(260803) — 계단 쌓기(1.15s) 뒤에 올라와 언락 안무를 안 자른다 · 딥링크(알림 탭)가 있으면 그쪽이 우선 = 안내 생략(판정은 다음 언락에 다시 온다)
     if (animate) { ymain.classList.add('reveal'); }   // zap은 승인 다이브 중반(500ms)으로 이동(운영자 260706) · 진동 = 자물쇠·키 입력만
   }
   const yVib = p => { try { navigator.vibrate && navigator.vibrate(p); } catch {} };   // 폰 진동(미지원 = 무해 no-op · iOS Safari 미지원)

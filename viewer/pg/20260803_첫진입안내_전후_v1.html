@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>첫 진입 안내 — 언락 직후 호칭·소개 세우기 — 전/후 비교 v1 (Q.155)</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260731_공간초대_클릭감_3선택지_전후_v1.html 계승(재설계 0) ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  .quad { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--sp-3); align-items:start; }
+  @media (max-width:820px) { .pair, .quad { grid-template-columns:1fr 1fr; } }
+  @media (max-width:520px) { .pair, .quad { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .cap .val { font-size:var(--fs-xs); color:var(--fg-2); }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); }
+  td.v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); }
+  img.shot { display:block; width:100%; max-width:420px; margin-inline:auto; border-radius:var(--r-m); border:1px solid var(--glass-line); box-shadow:var(--shadow-card); }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>첫 진입 안내 — 언락 직후 「본인 캐릭터」 세우기 (전/후 · Q.155)</h1>
+  <p class="lead">운영자 260803 "이걸 예타에 적용시킬 방법이 있나? 예를 들어 본인 캐릭터 만든다거나 첨에"(첨부 = 포켓몬식 3D 오프닝 영상 — 마을 걷기 → 연구소 → 이름표 달린 타자기 대화창 → 스타팅 고르기). 범위 = 텍스트 온보딩(ㄱ) + 안내자 세우기. 노브 = <code>viewer/index.html</code> 단 하나(게이트웨이·러너·스키마 무접촉). <b>아래 그림은 헤드리스 실앱 실렌더 캡처</b>(390×844 · 실 CSS · 로스터 실물).</p>
+
+  <div class="sect grp">
+    <h2>① 언락 직후 — 아무 안내 없이 사람 목록 vs 안내자가 먼저 맞는다</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">전</span><span class="val">PIN 통과 = 곧장 캐릭터 탭 — 내가 누구인지 묻는 자리가 없다</span></p>
+        <img class="shot" src="20260803_첫진입안내_00_before_char.webp" alt="전 — 언락 직후 캐릭터 목록">
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">후</span><span class="val">계단 쌓기(1.15s) 뒤 안내자 카드가 올라온다</span></p>
+        <img class="shot" src="20260803_첫진입안내_01_step0.webp" alt="후 — 첫 진입 안내 0단계(인사)">
+      </div>
+    </div>
+    <p class="note">안내자 = 로스터 <code>met:true</code> 인물만 세운다(하서연). 미대면은 이름 <code>???</code>·실루엣이 계약(<code>yUnmet</code> 260709)이라, 안 만난 얼굴을 첫 화면에 깔면 그 은닉이 깨진다 — 폴백도 <code>met===true</code> 첫 인물.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>② 진행 4단 — 인사 → 호칭 → 소개 → 마무리</h2>
+    <div class="quad">
+      <div>
+        <p class="cap"><span class="bdg after">①</span><span class="val">뭐라고 부를까</span></p>
+        <img class="shot" src="20260803_첫진입안내_02_step1.webp" alt="1단계 호칭">
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">입력</span><span class="val">프로필 편집과 같은 모달</span></p>
+        <img class="shot" src="20260803_첫진입안내_03_edit_name.webp" alt="이름 편집 모달(yEditOpen)">
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">②</span><span class="val">어떤 사람인지</span></p>
+        <img class="shot" src="20260803_첫진입안내_04_step2.webp" alt="2단계 소개">
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">③</span><span class="val">요약 → 사람들 보러 가기</span></p>
+        <img class="shot" src="20260803_첫진입안내_05_step3.webp" alt="3단계 마무리">
+      </div>
+    </div>
+    <p class="note">입력칸을 새로 만들지 않았다 — <code>yEditOpen('이름', …, 24)</code>·<code>yEditOpen('나의 페르소나', …, 150)</code>는 설정 &gt; 프로필이 쓰는 <b>그 호출 그대로</b>다(제목·maxlen·저장 경로 동일 — 두 자리가 어긋나면 그게 드리프트). 저장 = <code>yMeSet</code> + <code>yMePush</code>(op me) 그대로.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>③ 닫힘 — 정한 값이 그대로 골목에 반영</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">전</span><span class="val">내 정보 행 = "무음동 방문자"(기본값) · 프로필은 설정 안에 묻혀 있다</span></p>
+        <img class="shot" src="20260803_첫진입안내_00_before_char.webp" alt="전 — 이름 없는 내 정보 행">
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">후</span><span class="val">캐릭터 탭 맨 위 내 정보 행이 "민서"로 · 러너도 이 호칭으로 부른다</span></p>
+        <img class="shot" src="20260803_첫진입안내_06_after_close.webp" alt="후 — 안내 종료 후 캐릭터 탭">
+      </div>
+    </div>
+  </div>
+
+  <div class="sect grp">
+    <h2>④ 계승표 — 새로 만든 것 vs 가져다 쓴 것</h2>
+    <table>
+      <tr><th>영상의 장치</th><th>예타 정본(계승원)</th><th>신설</th></tr>
+      <tr><td>연구소 안 대화 장면</td><td class="v">.ycd.ycd-live 풀스크린 글래스 시트(설정·프로필 결 = 배경 영상 비침)</td><td>시트 DOM 1개(#yconb)</td></tr>
+      <tr><td>이름표 달린 대화창</td><td class="v">.ycd-card 슬롯 — yAva(.yintro-ava) · .ycd-nm · .ycd-tag · .ycd-quote · .ycd-desc</td><td>0</td></tr>
+      <tr><td>"Look at Squirtle" 액션 칩</td><td class="v">.ycd-cta(무채 글래스 · --press-m) + .yprof-genlink(도형 없는 mut 텍스트 액션)</td><td>정렬 축 1줄(<code>#yconbCard .yprof-genlink{justify-content:center}</code>)</td></tr>
+      <tr><td>이름 입력</td><td class="v">yEditOpen 글래스 편집 모달(프로필과 동일 호출)</td><td>0</td></tr>
+      <tr><td>스타팅 고르기</td><td class="v">캐릭터 탭 목록 그대로(안내 종료 = 그 화면에 착지)</td><td>0</td></tr>
+      <tr><td>진행 저장</td><td class="v">yMeSet/yMePush = op me(호칭·소개) — 게이트웨이·스키마·dispatch 무접촉</td><td>표식 <code>yeta_me_onb</code> 1개</td></tr>
+    </table>
+    <p class="note">신규 색·px·blur·radius·토큰 = <b>0</b>. <code>check_refs</code> rc=0(토큰 락 54개 무변 · 디자인 거울 정합).</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>⑤ 재등장 판정(회귀 0 근거)</h2>
+    <table>
+      <tr><th>상황</th><th>판정</th><th>근거</th></tr>
+      <tr><td>진짜 첫 진입</td><td>표시</td><td>표식·로컬 프로필·서버 me 전부 빔</td></tr>
+      <tr><td>기존 사용자(이 기기)</td><td class="v">표시 안 함</td><td>name·bio·avatar 중 하나라도 있으면 즉시 탈락</td></tr>
+      <tr><td>기존 사용자(새 기기·캐시 비움)</td><td class="v">표시 안 함</td><td>YSESS 없으면 op get을 먼저 기다렸다 서버 me(call/about/avatar)로 재판정</td></tr>
+      <tr><td>중도 이탈(뒤로가기·탭 점프·건너뛰기)</td><td class="v">다음부터 안 뜸</td><td>닫히는 모든 경로가 <code>yOnbClose</code>로 수렴 = 표식 기록(이어서 채우는 자리 = 설정 &gt; 프로필)</td></tr>
+      <tr><td>알림 딥링크로 언락</td><td class="v">이번엔 생략</td><td>딥링크가 우선(대화창 직행) — 판정은 다음 언락에 다시 온다</td></tr>
+    </table>
+  </div>
+</div>
+</body>
+</html>
