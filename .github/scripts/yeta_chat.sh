@@ -28,7 +28,11 @@ export CLAUDE_BARE=0              # 방어 명시 — 공유 기본값이 미래
 export DISABLE_AUTOUPDATER=1 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1   # 자동 로드 컷(운영자 260723 "자동 로드되는 것들 다 제외") — CLI 자동업데이트 확인·텔레메트리 등 비필수 트래픽 OFF(런당 지연·잡음 제거 · 생성 무영향 · 미지원 CLI = 무해 no-op)
 RECENT_TURNS="${YETA_RECENT_TURNS:-10}"   # 12→10(260724 토큰 소폭 절감) — 8은 과소(평의회 260714: 버블 분할 1.4/답장로 실질 창 축소 회귀 보정으로 8→12했던 이력)라 8 대신 10으로 절충(기억 대부분 유지 · 규칙·세계 무손상 · env YETA_RECENT_TURNS로 즉시 원복)
 INLINE_TRIES=4   # 4계정 폴오버 체인 깊이(서브3 MUTENONA까지 실호출) + 일시 과부하 흡수 — 4계정 확장 3→4(챗 안정성: 앞 3계정 쿼터 시 MUTENONA 실도달)
-WARM_WAIT="${YETA_WARM_WAIT:-600}"       # 웜 유휴 유예(s · 260724 5→10분) — 무메시지면 조용히 종료. 대화 간격 대부분을 덮어 후속 턴을 웜(생성시간만=1분 안)으로 · 공개 레포=Actions 무료지만 '상시 서버'화 남용 회피로 25분 대신 10분(근본 절감은 몸통 다이어트)
+WARM_WAIT="${YETA_WARM_WAIT:-180}"   # 260804 600→180: 웜 런이 자리를 잡고 있는 동안 새 dispatch는 concurrency 큐에서 대기한다(그룹 = yeta-chat-main 하나 · cancel-in-progress:false).
+                                     #   실측 런 #813 = 603s 동안 0턴 처리(순수 점유) · #814 = 마지막 답장 뒤 14분 유휴 · 그 사이 #816이 3분+ 큐 대기.
+                                     #   살아 있는 웜 런이 폴로 집으면 즉답이지만, 생성 중·종료 직전이면 큐가 그만큼 밀린다 → 점유 상한을 3분으로 조인다(즉답 창은 대화 간격 대부분을 여전히 덮는다).
+                                     #   (구 결: 260724 5→10분 = 대화 간격을 최대한 덮는다. 그 이득은 유지하되 큐 점유 비용을 몰랐던 게 문제였다.)
+PREWARM_WAIT="${YETA_PREWARM_WAIT:-60}"   # 프리웜 런(첫 턴이 NOPENDING = 처리할 게 없는 채로 뜬 런)의 유예 — 답장을 한 번도 안 한 런이 3분씩 자리를 잡을 이유가 없다(260804)
 WARM_POLL="${YETA_WARM_POLL:-2}"   # 웜 픽업 지연 평균 2.5s→1s(대화 속도 260713) — R2 GET 300s/2s=150회/창 = Class B 무료 티어에 무시량
 SESSION_MAX="${YETA_SESSION_MAX:-3300}"  # 55분(잡 timeout 60분보다 낮게 = mid-turn 킬 차단 · 아이데이션③)
 PER_TURN_BUDGET="${YETA_TURN_BUDGET:-300}"   # 새 턴 시작 전 필요한 잔여 예산(claude 240 + finish 여유 · env = 테스트 노브)
@@ -2315,7 +2319,7 @@ ${CONTRACT1}${GROUP_RULE}${ME_RULE}
   draft_clear   # 확정 반영 뒤 회수(뷰어 = 세션 변경 먼저 픽업 → 버블 스왑 → 잔여 draft 소거)
   # 자율 비트(GB=1) = 유저가 부른 답이 아니다 → 푸시·PTT(유료 TTS)·난입·주변사건 전부 생략(알림 도배·과금·연출 겹침 차단). 유저 턴이 부른 답만 종전 후처리를 태운다.
   [ "$_did_reply" = 1 ] && [ "$GB" = "1" ] && echo "yeta: 자율 비트 반영(${#OUT}자 · ${GEN_S}s · ${GB_N}/${GB_BEATS})"
-  [ "$_did_reply" = 1 ] && [ "$GB" != "1" ] && { echo "yeta: 답장 완료(${#OUT}자 · ${GEN_S}s)"; push_reply "$OUT"; [ "$PTT" = "1" ] && ptt_voice "$OUT"; barge_check; [ "${NT_ON:-1}" = "1" ] && notice_refill; [ "$AMB_ON" = "1" ] && ambient_refill; }   # 주변 사건 보충만(260726 · 축이 꺼져 있으면 생성 자체를 안 탄다 = LLM 쿼터 0) — 심기(ambient_fire)는 답장 **생성 전**으로 이관해 사건이 답장에 받쳐지게 했다. 보충은 종전대로 답장 뒤(이번 턴 대화까지 반영해 뽑고, 사용자 대기 0)
+  [ "$_did_reply" = 1 ] && [ "$GB" != "1" ] && { _wait_s="?"; case "$ANCHOR_TS" in ""|*[!0-9]*) : ;; *) _wait_s=$(( ($(date +%s%3N) - ANCHOR_TS) / 1000 ));; esac; echo "yeta: 답장 완료(${#OUT}자 · 생성 ${GEN_S}s · 유저 메시지 도착→완료 ${_wait_s}s)"; push_reply "$OUT"; [ "$PTT" = "1" ] && ptt_voice "$OUT"; barge_check; [ "${NT_ON:-1}" = "1" ] && notice_refill; [ "$AMB_ON" = "1" ] && ambient_refill; }   # 주변 사건 보충만(260726 · 축이 꺼져 있으면 생성 자체를 안 탄다 = LLM 쿼터 0) — 심기(ambient_fire)는 답장 **생성 전**으로 이관해 사건이 답장에 받쳐지게 했다. 보충은 종전대로 답장 뒤(이번 턴 대화까지 반영해 뽑고, 사용자 대기 0)
   return 0
 }
 
@@ -2324,10 +2328,12 @@ process_turn; r=$?
 case "$r" in 1|3) exit 1 ;; esac   # 하드실패·R2 오류 = 레드(실패 푸시 스텝) · NOPENDING(2) = 프리웜 런 → 웜 대기 진입
 
 warmfail=0
+answered=0; [ "$r" = 0 ] && answered=1   # 이 런이 실제로 답장을 했나(0=답함) — 프리웜(2=NOPENDING)은 짧게 비켜준다(260804)
 while :; do
   el=$((SECONDS - SESSION_START))
   [ "$el" -ge "$SESSION_MAX" ] && { echo "세션 예산 소진 — 정상 종료"; break; }
-  deadline=$((SECONDS + WARM_WAIT)); got=0
+  _wait_budget="$WARM_WAIT"; [ "$answered" = 0 ] && _wait_budget="$PREWARM_WAIT"
+  deadline=$((SECONDS + _wait_budget)); got=0
   while [ $SECONDS -lt $deadline ]; do
     sleep "$WARM_POLL"
     if ! _g="$(r2get 2>&1)"; then
@@ -2339,10 +2345,11 @@ while :; do
     extract_mat
     if [ "$mat" != "NOPENDING" ] && [ -n "$mat" ]; then got=1; break; fi
   done
-  [ "$got" -eq 1 ] || { echo "웜 대기 만료(${WARM_WAIT}s 무메시지) — 조용히 종료"; break; }
+  [ "$got" -eq 1 ] || { echo "웜 대기 만료(${_wait_budget}s 무메시지$([ "$answered" = 0 ] && echo " · 프리웜")) — 조용히 종료(큐 양보)"; break; }
   [ $((SESSION_MAX - (SECONDS - SESSION_START))) -lt "$PER_TURN_BUDGET" ] && { echo "잔여 예산 부족 — 다음 dispatch 에 위임"; break; }
   process_turn; r=$?
   [ "$r" = 1 ] && exit 1
+  [ "$r" = 0 ] && answered=1   # 웜 중 첫 답장 = 이 런은 더 이상 프리웜이 아니다(유예 180s로 승격)
 done
 echo "yeta: 웜 세션 종료(총 $((SECONDS - SESSION_START))s)"
 exit 0
