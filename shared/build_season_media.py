@@ -342,6 +342,22 @@ SEASONS = {
                     "⚠ 출처 = 시트 F(캐릭터별 락 · docs/캐릭터보드_캐릭터별_보강.md)를 shared/cut_board_sheet.py로 자른 9:16 칸. "
                     "정본=viewer/characters/season/kopi/main/<감정>/."),
     },
+    "ryu": {
+        # 변신 모드 없음 = 단일 폴더(main) · 260803 2차 보강(종전 1장)
+        "modes": {"main": ["base"]},
+        "comment": ("시즌 감정 미디어 manifest(류) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종 — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. "
+                    "⚠ 출처 = 시트 F(캐릭터별 락 · docs/캐릭터보드_캐릭터별_보강.md §6)를 shared/cut_board_sheet.py로 자른 9:16 칸(버킷당 2장). "
+                    "정본=viewer/characters/season/ryu/main/<감정>/."),
+    },
+    "von": {
+        # 변신 모드 없음 = 단일 폴더(main) · 260803 2차 보강(종전 2장)
+        "modes": {"main": ["base"]},
+        "comment": ("시즌 감정 미디어 manifest(본) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
+                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종 — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. "
+                    "⚠ 출처 = 시트 F(캐릭터별 락 · docs/캐릭터보드_캐릭터별_보강.md §6)를 shared/cut_board_sheet.py로 자른 9:16 칸(버킷당 2장). "
+                    "정본=viewer/characters/season/von/main/<감정>/."),
+    },
     "hanna": {
         # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → 시간대 필터 비활성
         "modes": {"main": ["base"]},

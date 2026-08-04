@@ -1,6 +1,40 @@
 {
- "_comment": "시즌 감정 미디어 manifest(류) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. ⚠ 260726 현재 = 얼굴 없는 검도 실루엣 1장뿐(운영자 '익명으로 넣고 나중에 보강') — 인물 확정 아님 · tense 국면 전용. 정본=viewer/characters/season/ryu/main/<감정>/.",
+ "_comment": "시즌 감정 미디어 manifest(류) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종 — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. ⚠ 출처 = 시트 F(캐릭터별 락 · docs/캐릭터보드_캐릭터별_보강.md §6)를 shared/cut_board_sheet.py로 자른 9:16 칸(버킷당 2장). 정본=viewer/characters/season/ryu/main/<감정>/.",
+ "base": [
+  "characters/season/ryu/main/base/ryu_base.webp",
+  "characters/season/ryu/main/base/ryu_base2.webp"
+ ],
+ "warm": [
+  "characters/season/ryu/main/warm/ryu_warm.webp",
+  "characters/season/ryu/main/warm/ryu_warm2.webp"
+ ],
+ "joy": [
+  "characters/season/ryu/main/joy/ryu_joy.webp",
+  "characters/season/ryu/main/joy/ryu_joy2.webp"
+ ],
+ "love": [
+  "characters/season/ryu/main/love/ryu_love.webp",
+  "characters/season/ryu/main/love/ryu_love2.webp"
+ ],
+ "shy": [
+  "characters/season/ryu/main/shy/ryu_shy.webp",
+  "characters/season/ryu/main/shy/ryu_shy2.webp"
+ ],
+ "blue": [
+  "characters/season/ryu/main/blue/ryu_blue.webp",
+  "characters/season/ryu/main/blue/ryu_blue2.webp"
+ ],
  "tense": [
-  "characters/season/ryu/main/tense/ryu_01.jpg"
+  "characters/season/ryu/main/tense/ryu_01.jpg",
+  "characters/season/ryu/main/tense/ryu_tense.webp",
+  "characters/season/ryu/main/tense/ryu_tense2.webp"
+ ],
+ "mad": [
+  "characters/season/ryu/main/mad/ryu_mad.webp",
+  "characters/season/ryu/main/mad/ryu_mad2.webp"
+ ],
+ "sulky": [
+  "characters/season/ryu/main/sulky/ryu_sulky.webp",
+  "characters/season/ryu/main/sulky/ryu_sulky2.webp"
  ]
 }

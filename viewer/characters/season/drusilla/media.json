@@ -4,14 +4,36 @@
   "characters/season/drusilla/main/base/drusilla_01.jpg",
   "characters/season/drusilla/gojo/base/drusilla_g01.jpg"
  ],
+ "warm": [
+  "characters/season/drusilla/main/warm/drusilla_warm.webp",
+  "characters/season/drusilla/main/warm/drusilla_warm2.webp"
+ ],
+ "joy": [
+  "characters/season/drusilla/main/joy/drusilla_joy.webp",
+  "characters/season/drusilla/main/joy/drusilla_joy2.webp"
+ ],
+ "love": [
+  "characters/season/drusilla/main/love/drusilla_love.webp",
+  "characters/season/drusilla/main/love/drusilla_love2.webp"
+ ],
+ "shy": [
+  "characters/season/drusilla/main/shy/drusilla_shy.webp",
+  "characters/season/drusilla/main/shy/drusilla_shy2.webp"
+ ],
  "blue": [
-  "characters/season/drusilla/main/blue/drusilla_03.jpg"
+  "characters/season/drusilla/main/blue/drusilla_03.jpg",
+  "characters/season/drusilla/main/blue/drusilla_blue.webp"
  ],
  "tense": [
   "characters/season/drusilla/main/tense/drusilla_02.jpg"
  ],
  "mad": [
-  "characters/season/drusilla/main/mad/drusilla_04.jpg"
+  "characters/season/drusilla/main/mad/drusilla_04.jpg",
+  "characters/season/drusilla/main/mad/drusilla_mad.webp"
+ ],
+ "sulky": [
+  "characters/season/drusilla/main/sulky/drusilla_sulky.webp",
+  "characters/season/drusilla/main/sulky/drusilla_sulky2.webp"
  ],
  "mode_dir": "gojo"
 }
