@@ -1,10 +1,24 @@
 {
  "_comment": "시즌 감정 미디어 manifest(홍석천) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. ⚠ 260726 현재 = 사람 없는 찻집 장소 씬 3장(yeta_bg_var 산출 var_mudi_* 사본 — 원본은 생성기 소관이라 여긴 사본이 정본). 배치 = 주방(불·주전자)→base · 뒷문(넘어진 스툴+발자국 = 도주 직후)→tense · 새벽 지붕(발자국이 넘어감)→blue. 정본=viewer/characters/season/mudi/main/<감정>/.",
  "base": [
-  "characters/season/mudi/main/base/mudi_01.webp"
+  "characters/season/mudi/main/base/mudi_01.webp",
+  "characters/season/mudi/main/base/mudi_base.webp"
  ],
  "warm": [
-  "characters/season/mudi/main/warm/mudi_n01.jpg"
+  "characters/season/mudi/main/warm/mudi_n01.jpg",
+  "characters/season/mudi/main/warm/mudi_warm.webp"
+ ],
+ "joy": [
+  "characters/season/mudi/main/joy/mudi_joy.webp",
+  "characters/season/mudi/main/joy/mudi_joy2.webp"
+ ],
+ "love": [
+  "characters/season/mudi/main/love/mudi_love.webp",
+  "characters/season/mudi/main/love/mudi_love2.webp"
+ ],
+ "shy": [
+  "characters/season/mudi/main/shy/mudi_shy.webp",
+  "characters/season/mudi/main/shy/mudi_shy2.webp"
  ],
  "blue": [
   "characters/season/mudi/main/blue/mudi_03.webp"
@@ -12,5 +26,13 @@
  "tense": [
   "characters/season/mudi/main/tense/mudi_02.webp",
   "characters/season/mudi/main/tense/mudi_n02.jpg"
+ ],
+ "mad": [
+  "characters/season/mudi/main/mad/mudi_mad.webp",
+  "characters/season/mudi/main/mad/mudi_mad2.webp"
+ ],
+ "sulky": [
+  "characters/season/mudi/main/sulky/mudi_sulky.webp",
+  "characters/season/mudi/main/sulky/mudi_sulky2.webp"
  ]
 }
