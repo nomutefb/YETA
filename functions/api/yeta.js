@@ -210,6 +210,10 @@ export async function onRequestPost({ request, env }) {
     for (const [tid, th] of Object.entries(s.threads || {})) {   // ③ 전부 휘발한 방 = 자연 소멸(핀·진행 중 제외) — reset과 달리 notes 보존 = 관계 기억은 남고 대화만 증발
       if ((th.turns || []).length || th.pin || th.state === 'awaiting' || th.opening) continue;
       if (th.invite && now - (th.invite.ts || 0) < INVITE_TTL) continue;
+      // 260804 평의회 #3: 해금(만남)이 **스레드 존재**에만 걸려 있어, 방이 여기서 지워지면 그 인물이 다시 ???로 재잠겼다.
+      //   재해금 수단은 하루 1회 상한의 마주침/난입뿐 = 사용자가 스스로 못 푸는 잠김. 방은 증발해도 「만난 적 있다」는 사실은 남긴다.
+      s.met = s.met || {};
+      for (const mid of [tid, ...((th.room || []).filter(x => typeof x === 'string' && x))]) if (mid && !mid.startsWith('g')) s.met[mid] = 1;   // 1:1 방 id = 캐릭터 id · 단톡(g…)은 room 멤버로 박제
       delete s.threads[tid]; ch = true;
     }
     if (s.cur && !(s.threads || {})[s.cur]) { s.cur = ''; ch = true; }   // cur 고아 = 리스트 폴백(첫 방 순간이동 오폭 차단 · 평의회5④)
@@ -266,7 +270,11 @@ export async function onRequestPost({ request, env }) {
     }
     const cur = sess.cur;   // 비활성 스레드 turns = 꼬리 2턴 절단(목록 미리보기 분량 · 페이로드 ×5 방지 · 보안 감사④)
     const out = { ...sess, threads: Object.fromEntries(Object.entries(sess.threads || {}).map(([id, th]) =>
-      [id, id === cur ? th : { ...th, turns: (th.turns || []).slice(-2), trim: (th.turns || []).length }])) };   // trim = 원 턴수(뷰어 unread ts 판정 보조)
+      [id, id === cur ? th : { ...th, turns: (th.turns || []).slice(-2), trim: (th.turns || []).length,
+        uturns: (th.turns || []).filter(x => x && x.role === 'user').length }])) };   // trim = 원 턴수(뷰어 unread ts 판정 보조) · uturns = 원 **유저 발화 수**
+  // 260804 평의회 #4·#5·#11: 뷰어의 친밀도(yBond·yFarOK·프로필 통계)가 이 **절단본**을 세고 있었다 —
+  //   비활성 방은 무조건 n≤2가 되어 ① 원거리 게이트가 전 캐릭터 상시 미달(방 진입 차단) ② 24h 방치한 핀 방이 「소원」 오판정으로 잠김
+  //   ③ 프로필 「밤샘 수다」류 미션이 0~1로 축소 집계. 절단은 페이로드 방어로 유지하되, **세는 값만 원본에서 실어 보낸다**.
     return json({ ok: true, sess: out });
   }
 
