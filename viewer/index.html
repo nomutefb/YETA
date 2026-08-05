@@ -3774,7 +3774,12 @@ function yView(mode) {   // 'list' ↔ 'chat' 헤더·영역 토글
   if (list) { yRemoteSet(false); $('#yetaTitle').textContent = '무음동 사람들'; $('#yetaTag').textContent = '대화할 상대를 골라'; yStopPoll(); yPickToggle(false); yInvToggle(false); yProfPop(false); try { yPdClose(); } catch (x) {} }
 }
 function yRenderList() {   // 캐릭터 = SNS 리스트(.ypick-row 계승) + 🎲 랜덤 — 미대면 = ??? 표기(진입은 yEnterChat 가드)
-  $('#yetaList').innerHTML = ySortChars(YCHARS).map(c => `<button type="button" class="ypick-row" data-id="${esc(c.id)}">${yAva(c)}<span class="yp-col"><span class="yp-name">${yUnmet(c) ? `<span class="yqm">${YUNMET_NM}</span>` : esc(c.name)}${yGradeBadge(c)}${window.yPremBadge ? yPremBadge(c) : ''}</span><span class="yp-tag">${esc(c.tagline || '')}</span></span></button>`).join('')
+  // 260804 평의회 #8: 이름만 ???로 가리고 **프사·태그라인은 원본을 그대로** 내보내고 있었다 = 첫 화면에서 안 만난 인물의 얼굴·정체·훅이 다 보인다.
+  //   은닉이 이미 걸린 캐릭터 탭(3083·3086)·실내 뷰(2231)와 같은 결로 맞춘다 — 실루엣 래핑 + 태그라인 대체 문구.
+  $('#yetaList').innerHTML = ySortChars(YCHARS).map(c => { const um = yUnmet(c);
+    const ava = um ? `<span class="ylock-avawrap">${yAva(c)}<span class="ylock-ava">${YLOCK_SVG}</span></span>` : yAva(c);
+    const tag = um ? '아직 만나지 못한 상대 — 골목 어딘가에서 마주치면 열려' : (c.tagline || '');
+    return `<button type="button" class="ypick-row${um ? ' locked' : ''}" data-id="${esc(c.id)}">${ava}<span class="yp-col"><span class="yp-name">${um ? `<span class="yqm">${YUNMET_NM}</span>` : esc(c.name)}${yGradeBadge(c)}${window.yPremBadge ? yPremBadge(c) : ''}</span><span class="yp-tag">${esc(tag)}</span></span></button>`; }).join('')
     + `<button type="button" class="yl-dice" id="ylDice">🎲 랜덤으로 만나기</button>`;
 }
 function yShowList() { yRenderList(); yView('list'); }
@@ -4097,7 +4102,10 @@ function ySeasonMedia(c) {
   }
   return null;
 }
-let _ybgCur = 0, _yStageKey = '';   // 무대 2겹 크로스페이드(§🎬 배너 디졸브 축소판) — 다음 레이어에 그리고 opacity 스왑
+let _ybgCur = 0, _yStageKey = '', _ybgSig = '';   // 무대 2겹 크로스페이드(§🎬 배너 디졸브 축소판) — 다음 레이어에 그리고 opacity 스왑
+// _ybgSig = 지금 깔려 있는 그림의 지문(260804 평의회 #6) — 시즌 무대 키(ekey)에 **답장 수 n**이 들어 있어 pool 길이가 1이면
+//   같은 URL을 매 답장 다시 깐다. 두 레이어가 동시에 페이드하는 구간에서 합성 알파가 .92 → .71 로 떨어져 무대가 0.6초 어두워졌다 밝아진다
+//   (감정 6종이 1장씩인 하서연·윤·백·카피는 전 무드가 여기 해당). 같은 그림이면 아예 안 그린다 = 비시즌 경로의 키 가드와 같은 처방.
 let _yStageRoom = '', _yStageCold = true;   // 방 진입 추적(운영자 260709) — 방 전환/재진입 = 이전 방 배경(멈춘 클립 프레임) 즉시 소거 + 시즌 첫 페인트 = 클립 대신 이미지(대화 관련 배경 먼저)
 function yBgKillVid(v) { if (!v) return; yVidFadeStop(v); try { v.pause(); v.removeAttribute('src'); v.load(); } catch {} v.remove(); }   // 클립 결정적 해제(pause+src 해제+load = 디코더 회수 · WebKit GC 위임 탈피 — 평의회7③) · 볼륨 엔벨로프 루프도 같이 회수(260728 — 안 끊으면 제거된 노드를 계속 도는 유령 rAF)
 // ── 배경 클립 소리(운영자 260728 "재생하게 만들어놨으면 소리도 나오게 · 시작 시 페이드인, 종료 시점에 페이드아웃, 다시 나올 때 또 반복") ──
@@ -4129,11 +4137,15 @@ function yBgReset() {   // 두 레이어 전부 소거 — 비디오 정지·제
     yBgKillVid(L.querySelector('video'));
     L.style.backgroundImage = '';
   });
+  _ybgSig = '';   // 소거 = 지문도 리셋(260804) — 안 지우면 같은 방 재진입 때 첫 페인트가 통째로 막힌다
 }
 function yPaintBg(bgUrl, tint, season) {   // 레이어 페인트(페르소나 전환·무드 전환 공용) — 같은 그림 재페인트는 키 가드가 막음 · season = 감정 미디어 모드(캐릭터 아트 스크림·클립 muted)
   const wd = !!(YCUR && YCUR.id === 'winter');   // 윈터 = 블라인드 +50% 합성(운영자 260726 "배경 앞에 블라인드 투명도 50% 더") — d + (1−d)×.5(클립은 .ybg.wdim 필터가 짝 · 노브: 설정 「화면 어둡기」 한 곳)
   const DM = yDimCur(), wcomp = v => { const x = parseFloat(v); return (x + (1 - x) * .5).toFixed(2).replace(/^0/, ''); };   // 어둡기 3단 = YDIM_SET SSOT(밝게/기본/어둡게 · 기본 = 운영자 260729 "반으로" = .28/.34)
   const [d1, d2] = wd ? DM.s.map(wcomp) : DM.s;   // 캐릭터 아트 스크림(윈터는 블라인드 재합성 — 기본단 .64/.67 · 어둡게단 .78/.84 = 종전 정본 그대로)
+  const _sig = `${bgUrl || ''}|${season ? 1 : 0}|${d1}|${d2}|${wd ? 1 : 0}`;   // 그림 + 딤 + 시즌 모드까지 지문에 포함(어둡기 설정을 바꾸면 당연히 다시 그려야 한다)
+  if (_sig === _ybgSig) return;   // 같은 그림 재페인트 차단(260804 평의회 #6) — 크로스페이드 '숨' 제거
+  _ybgSig = _sig;
   const layers = [$('#ybgA'), $('#ybgB')], next = layers[1 - _ybgCur], curL = layers[_ybgCur];
   yBgKillVid(next.querySelector('video'));   // 레이어 재사용 = 이전 클립 결정적 회수
   const curV = curL.querySelector('video'); if (curV) { try { curV.pause(); } catch {} }   // 밀려나는 레이어 클립 = 즉시 정지(불투명 0 뒤 무한 디코드 차단 — 평의회1·7 공통 지적 · 제거는 레이어 재사용/리셋 때)
