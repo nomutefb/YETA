@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>도한나 얼빡 v3 — 재단 → 재생성(진짜 1024) — 전/후 비교</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260805_한나얼빡_전후_v2.html 계승(재설계 0) ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .trio { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-3); align-items:start; }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  @media (max-width:760px) { .trio, .pair { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .bdg.ref { color:var(--fg); border:1px solid rgba(var(--accent-rgb),.5); }
+  .cap .val { font-size:var(--fs-xs); color:var(--fg-2); }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); }
+  td.v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); }
+  img.shot { display:block; width:100%; border-radius:var(--r-m); border:1px solid var(--glass-line); box-shadow:var(--shadow-card); }
+  .sizes { display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap; }
+  .sizes figure { margin:0; text-align:center; }
+  .sizes span.ava { display:block; border-radius:50%; background-size:cover; background-position:center; border:1px solid var(--glass-line); }
+  .sizes figcaption { font-size:var(--fs-meta); color:var(--mut); margin-top:5px; }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>도한나 얼빡 v3 — 재단의 천장을 넘다(진짜 1024 생성)</h1>
+  <p class="lead">운영자 260805 <b>"머지하고 재생성 ㄱㄱ"</b>. v1·v2는 시트 원본을 <b>자른</b> 것이라 진짜 해상도가 150px에 묶여 있었다. v3는 그 재단본을 <b>레퍼런스로 첨부해</b>(edits = 얼굴 앵커) 1024²로 <b>새로 그린</b> 것 — 같은 얼굴, 진짜 디테일. 경로 = 신설 <code>sheet=FACE</code>(365차) · 실행 = <code>yeta-char-board</code> 수동 dispatch 1회(테이크 2장).</p>
+
+  <div class="sect grp">
+    <h2>① v2(재단) → v3(재생성)</h2>
+    <div class="trio">
+      <div>
+        <p class="cap"><span class="bdg before">v2</span><span class="val">재단 · 원본 150px → 512(3.4배 확대)</span></p>
+        <img class="shot" src="20260805_한나얼빡_v2_머리전체.webp" alt="v2 재단본">
+        <p class="note">프레이밍은 맞췄지만 선이 물러 있다 — 확대의 한계.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">v3 채택</span><span class="val">재생성 · 1024 원본 → 512(축소)</span></p>
+        <img class="shot" src="20260805_한나얼빡_v3_재생성.webp" alt="v3 재생성본(채택)">
+        <p class="note">머리카락 한 올·속눈썹·홍채 하이라이트가 <b>실제로</b> 있다. 배경은 프롬프트대로 평평한 어둠.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg ref">v3 대안</span><span class="val">같은 dispatch의 테이크 2</span></p>
+        <img class="shot" src="20260805_한나얼빡_v3_대안take2.webp" alt="v3 테이크 2(대안)">
+        <p class="note">약간 더 넓고 깃·어깨가 보인다. 「머리가 프레임을 채운다」 기준엔 테이크 1이 더 맞아 그쪽을 채택.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect grp">
+    <h2>② 실사용 크기 — 앱이 실제로 그리는 지름</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">v2 재단</span></p>
+        <div class="sizes">
+          <figure><span class="ava" style="width:34px;height:34px;background-image:url('20260805_한나얼빡_v2_머리전체.webp')"></span><figcaption>34</figcaption></figure>
+          <figure><span class="ava" style="width:58px;height:58px;background-image:url('20260805_한나얼빡_v2_머리전체.webp')"></span><figcaption>58</figcaption></figure>
+          <figure><span class="ava" style="width:104px;height:104px;background-image:url('20260805_한나얼빡_v2_머리전체.webp')"></span><figcaption>104</figcaption></figure>
+          <figure><span class="ava" style="width:200px;height:200px;background-image:url('20260805_한나얼빡_v2_머리전체.webp')"></span><figcaption>200</figcaption></figure>
+        </div>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">v3 재생성</span></p>
+        <div class="sizes">
+          <figure><span class="ava" style="width:34px;height:34px;background-image:url('20260805_한나얼빡_v3_재생성.webp')"></span><figcaption>34</figcaption></figure>
+          <figure><span class="ava" style="width:58px;height:58px;background-image:url('20260805_한나얼빡_v3_재생성.webp')"></span><figcaption>58</figcaption></figure>
+          <figure><span class="ava" style="width:104px;height:104px;background-image:url('20260805_한나얼빡_v3_재생성.webp')"></span><figcaption>104</figcaption></figure>
+          <figure><span class="ava" style="width:200px;height:200px;background-image:url('20260805_한나얼빡_v3_재생성.webp')"></span><figcaption>200</figcaption></figure>
+        </div>
+      </div>
+    </div>
+    <p class="note">작은 원에선 둘 다 멀쩡하다 — 차이는 <b>크게 띄울수록</b> 벌어진다(200 열). 이게 「재단 vs 생성」의 실제 값어치다.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>③ 수치</h2>
+    <table>
+      <tr><th>항목</th><th>v2(재단)</th><th>v3(재생성 · 채택)</th></tr>
+      <tr><td>진짜 해상도</td><td class="v">150px(시트 얼굴 박스)</td><td class="v"><b>1024²</b></td></tr>
+      <tr><td>512² 만드는 법</td><td class="v">3.4배 확대(xbr)</td><td class="v">2배 <b>축소</b>(lanczos) = 손실 0에 가깝다</td></tr>
+      <tr><td>경로</td><td class="v">ffmpeg crop</td><td class="v"><code>yeta-char-board</code> · <code>sheet=FACE</code> · <code>ref=hanna_face.webp</code>(edits = 얼굴 앵커) · takes=2</td></tr>
+      <tr><td>산출</td><td class="v">webp q88 · 20.8KB</td><td class="v">webp q90 · 27.7KB(원본 png 1.2MB는 board/에 보존)</td></tr>
+      <tr><td>배선</td><td colspan="2" class="v">둘 다 동일 — <code>roster.json</code> avatar 경로·<code>media.json</code> 무접촉(파일만 교체)</td></tr>
+    </table>
+    <p class="note">테이크 2로 갈아타려면 한 줄이면 된다 — <code>ffmpeg -i viewer/assets/yeta_char/board/hanna_face_v2.png -vf scale=512:512:flags=lanczos -c:v libwebp -quality 90 viewer/characters/season/hanna/hanna_face.webp</code>. 두 원본 모두 <code>board/</code>에 남아 있다.</p>
+  </div>
+</div>
+</body>
+</html>
