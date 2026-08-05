@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>「단톡 교대」를 껐을 때 동행의 한 마디 — 결정 요청 v1</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260805_한나얼빡_전후_v1.html 계승 · 버블 = viewer .yb/.yb.ai/.yb.me 선언 계승(재설계 0) ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --danger:#ff5b4a; --danger-rgb:255,91,74; --arm:#ffd93d;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --bubble-me:var(--accent); --bubble-ai:#1e2023;
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  b.hi { color:var(--fg); }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  @media (max-width:640px) { .pair { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .bdg.warn { color:var(--bg); background:var(--danger); }
+  .cap .val { font-size:var(--fs-xs); color:var(--fg-2); }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); }
+  td.v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); }
+  td.ok { color:var(--accent); } td.no { color:var(--danger); }
+
+  /* ── 챗 목업 = viewer #yetadlg 버블 선언 계승(.yb / .yb.ai 글래스 / .yb.me 라임 / .yb.sys 알약) ── */
+  .chat { background:var(--bubble-ai); border:1px solid var(--glass-line); border-radius:var(--r-l); padding:var(--sp-2);
+    display:flex; flex-direction:column; gap:8px; box-shadow:var(--shadow-card); }
+  .row { display:flex; gap:7px; align-items:flex-end; }
+  .row.me { justify-content:flex-end; }
+  .ava { width:26px; height:26px; border-radius:50%; flex:none; display:grid; place-items:center;
+    font-size:var(--fs-xs); font-weight:var(--fw-x); color:var(--bg); }
+  .row > div { display:flex; flex-direction:column; align-items:flex-start; min-width:0; }   /* 이름줄이 넓어도 버블은 제 글자폭대로(꼬리표 때문에 버블이 억지로 줄바꿈되던 것) */
+  .yb { max-width:min(78%, 100%); padding:8px 11px; border-radius:var(--r-l); font-size:var(--fs-sm); }
+  .row > div .yb { max-width:none; }
+  .yb.ai { background:var(--glass-2); border:1px solid var(--glass-line); border-top-left-radius:var(--r-s); box-shadow:inset 0 1px 0 var(--glass-line); }
+  .yb.me { background:var(--bubble-me); color:var(--bg); border-top-right-radius:var(--r-s); }
+  .yb.sys { align-self:center; background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-pill);
+    color:var(--fg-2); font-size:var(--fs-xs); padding:3px 12px; max-width:none; }
+  .nm { font-size:var(--fs-meta); color:var(--mut); margin:0 0 3px; letter-spacing:.06em; }
+  i.yn { font-style:italic; color:var(--fg-2); opacity:.75; }
+  /* 버려진 토막 = 생성은 됐는데 화면에 안 오는 줄(파선 + 취소선 + 붉은 꼬리표) */
+  .row.dropped { opacity:.5; }
+  .row.dropped .yb { border:1px dashed rgba(var(--danger-rgb),.55); background:transparent; text-decoration:line-through; text-decoration-color:rgba(var(--danger-rgb),.7); }
+  .tag { display:inline-block; font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.08em; padding:2px 7px; border-radius:var(--r-pill);
+    background:rgba(var(--danger-rgb),.18); border:1px solid rgba(var(--danger-rgb),.4); color:var(--danger); white-space:nowrap; }
+  .tag.keep { background:rgba(var(--accent-rgb),.14); border-color:rgba(var(--accent-rgb),.4); color:var(--accent); }
+  .flow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:var(--fs-xs); color:var(--fg-2); margin:0 0 10px; }
+  .flow .box { border:1px solid var(--glass-line); border-radius:var(--r-s); padding:4px 9px; background:var(--glass); }
+  .flow .box.bad { border-color:rgba(var(--danger-rgb),.45); color:var(--danger); }
+  .flow .arw { color:var(--mut); }
+  .pick { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .pick .opt { flex:1 1 260px; border:1px solid var(--glass-line); border-radius:var(--r-m); padding:10px 12px; background:var(--glass); }
+  .pick .opt h3 { margin:0 0 6px; font-size:var(--fs-label); font-weight:var(--fw-x); }
+  .pick .opt.a h3 { color:var(--accent); } .pick .opt.b h3 { color:var(--arm); }
+  .pick .opt p { margin:0 0 6px; font-size:var(--fs-xs); color:var(--fg-2); }
+  .pick .opt ul { margin:0; padding-left:16px; font-size:var(--fs-xs); color:var(--mut); }
+  .pick .opt li { margin-bottom:3px; }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>「단톡 교대」를 <b class="hi">껐을 때</b> 동행의 한 마디 — 어느 쪽이 정본입니까</h1>
+  <p class="cap" style="margin:0 0 10px"><span class="bdg after">결정 · 260805</span><span class="val"><b class="hi">B안</b> — 끔 = 교대 대본은 금지, 동행 리액션 <b class="hi">한 마디는 통과</b>. 반영 = <code>SEG_CAP</code> 신설(교대 켬 N · 끔 2 · 난입 자리 1) · 설정 문구 동조 · <code>check_refs</code> 「대본 상한 계약 게이트」로 기계 강제. 아래 ③의 <b class="hi">B안 화면</b>이 지금 동작입니다.</span></p>
+  <p class="lead">평의회 260804 <b class="hi">#14</b>(마지막 미결). 프롬프트는 “동행이 한 마디 덧붙여도 된다”고 <b class="hi">허락</b>하는데, 파서는 그 토막을 <b class="hi">잘라 버린다</b>. 둘 중 어느 쪽이 운영자님 의도인지에 따라 고칠 자리가 정반대라, 제가 정하지 않고 여쭙니다. — 대상 = <code>.github/scripts/yeta_chat.sh</code> 2072행(프롬프트) ↔ 585행(파서 <code>seg_cap</code>).</p>
+
+  <div class="sect grp">
+    <h2>① 언제만 어긋나나 — 기본값(켬)에서는 멀쩡하다</h2>
+    <table>
+      <tr><th>설정 「단톡 교대」</th><th>방 상태</th><th>프롬프트가 허락하는 토막</th><th>파서가 통과시키는 토막</th><th>결과</th></tr>
+      <tr><td><b class="hi">켬</b> (기본값)</td><td>동행 있음</td><td class="v">4 (내 1 + 이름표 3)</td><td class="v">4 <code>seg_cap=GB_LINES</code></td><td class="ok">일치 — 문제 없음</td></tr>
+      <tr><td><b class="hi">끔</b></td><td>동행 있음</td><td class="v">2 (내 1 + [동행] 1)</td><td class="v">1</td><td class="no">불일치 — 동행 한 마디 증발</td></tr>
+      <tr><td>끔/켬</td><td>난입 자리</td><td class="v">1 (이름표 금지)</td><td class="v">1</td><td class="ok">일치 — 260730에 이미 봉합</td></tr>
+      <tr><td>끔/켬</td><td>1:1(동행 없음)</td><td class="v">1</td><td class="v">1</td><td class="ok">일치</td></tr>
+    </table>
+    <p class="note">즉 <b class="hi">설정에서 「단톡 교대」를 끈 채로 단톡방에 들어갔을 때만</b> 나는 어긋남입니다. 기본값이 「켬」이라 지금 운영자님 계정에서 실제로 새고 있는지는 정책 값에 달렸습니다(끄신 적 없으면 미발생).</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>② 지금 무슨 일이 일어나나 — 모델은 썼고, 파서가 버린다</h2>
+    <div class="flow">
+      <span class="box">프롬프트: “동행 한 마디 붙여도 된다(최대 한 번)”</span>
+      <span class="arw">→</span>
+      <span class="box">모델: 2토막 생성 <span class="tag" style="background:none;border:none;color:var(--mut)">토큰은 이미 지불</span></span>
+      <span class="arw">→</span>
+      <span class="box bad">파서 <code>_mg[:1]</code>: 2번째 토막 삭제</span>
+      <span class="arw">→</span>
+      <span class="box">화면: 한 사람만</span>
+    </div>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg warn">지금</span><span class="val">모델이 낸 답 (러너 안)</span></p>
+        <div class="chat">
+          <div class="row me"><div class="yb me">둘이 왜 그렇게 사이가 안 좋아?</div></div>
+          <div class="row">
+            <span class="ava" style="background:#7ec8a0">하</span>
+            <div><p class="nm">하서연</p><div class="yb ai"><i class="yn">*찻잔을 내려놓는다*</i><br>사이 나쁜 거 아니야. 얘가 늘 먼저 시비를 걸 뿐이지.</div></div>
+          </div>
+          <div class="row dropped">
+            <span class="ava" style="background:#8fb6ff">백</span>
+            <div><p class="nm">백 <span class="tag">파서가 잘라냄 · seg_cap=1</span></p><div class="yb ai">…내가 언제.</div></div>
+          </div>
+        </div>
+        <p class="note">2번째 토막은 <b class="hi">이미 생성된 뒤에</b> 버려집니다 — 비용은 나가고 화면엔 안 옵니다. 게다가 모델이 실수로 <b class="hi">동행 줄을 먼저</b> 쓰면 살아남는 건 그 줄이고 <b class="hi">주인공 답이 통째로</b> 사라집니다(같은 절단의 반대 방향).</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg before">지금</span><span class="val">사용자가 보는 화면</span></p>
+        <div class="chat">
+          <div class="row me"><div class="yb me">둘이 왜 그렇게 사이가 안 좋아?</div></div>
+          <div class="row">
+            <span class="ava" style="background:#7ec8a0">하</span>
+            <div><p class="nm">하서연</p><div class="yb ai"><i class="yn">*찻잔을 내려놓는다*</i><br>사이 나쁜 거 아니야. 얘가 늘 먼저 시비를 걸 뿐이지.</div></div>
+          </div>
+          <div class="yb sys">백은 옆에 앉아 있지만 이 턴엔 한 마디도 없다</div>
+        </div>
+        <p class="note">설정 화면 문구(<code>policy.json</code>)는 <b class="hi">“끄면 상대 한 명만 답한다”</b> — 화면 결과는 이 문구와 <b class="hi">맞습니다</b>. 어긋난 건 <b class="hi">프롬프트</b> 쪽이고, 그래서 “프롬프트를 화면에 맞출까 / 화면을 프롬프트에 맞출까”가 갈립니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect grp">
+    <h2>③ 선택지 — 같은 질문에 두 답</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg after">A안</span><span class="val">끔 = 한 명만. 프롬프트에서 동행 대사를 금지</span></p>
+        <div class="chat">
+          <div class="row me"><div class="yb me">둘이 왜 그렇게 사이가 안 좋아?</div></div>
+          <div class="row">
+            <span class="ava" style="background:#7ec8a0">하</span>
+            <div><p class="nm">하서연</p><div class="yb ai"><i class="yn">*찻잔을 내려놓는다*</i><br>사이 나쁜 거 아니야. 얘가 늘 먼저 시비를 걸 뿐이지. <i class="yn">*백 쪽은 쳐다도 안 본다*</i></div></div>
+          </div>
+          <div class="yb sys"><span class="tag keep">낭비 0</span> 버려지는 토막이 없다</div>
+        </div>
+        <p class="note"><b class="hi">화면은 지금과 똑같습니다</b> — 바뀌는 건 러너 안쪽뿐(안 쓸 줄을 아예 안 쓰게). 동행의 존재감은 <b class="hi">주인공의 지문</b>으로만 남습니다. 260730 난입 자리에서 이미 쓰고 있는 문구를 그대로 계승하면 되므로 새 규칙 창작 0.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after" style="background:var(--arm)">B안</span><span class="val">끔 = 대본 금지, 리액션 한 마디는 허용. 파서를 2로</span></p>
+        <div class="chat">
+          <div class="row me"><div class="yb me">둘이 왜 그렇게 사이가 안 좋아?</div></div>
+          <div class="row">
+            <span class="ava" style="background:#7ec8a0">하</span>
+            <div><p class="nm">하서연</p><div class="yb ai"><i class="yn">*찻잔을 내려놓는다*</i><br>사이 나쁜 거 아니야. 얘가 늘 먼저 시비를 걸 뿐이지.</div></div>
+          </div>
+          <div class="row">
+            <span class="ava" style="background:#8fb6ff">백</span>
+            <div><p class="nm">백 <span class="tag keep">살아남음</span></p><div class="yb ai">…내가 언제.</div></div>
+          </div>
+        </div>
+        <p class="note">동행이 <b class="hi">딱 한 마디</b>만 받습니다(교대 대본은 여전히 금지 = 켬과 다름). 코드 주석이 말하는 “종전 계약(회귀 노브)”의 원래 결이 이쪽입니다. 대신 <b class="hi">설정 문구를 고쳐야</b> 합니다 — “한 명만 답한다”가 더 이상 사실이 아니게 되므로.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect grp">
+    <h2>④ 고치는 자리 — 어느 쪽이든 한 곳씩</h2>
+    <table>
+      <tr><th></th><th>A안 — 끔 = 한 명만</th><th>B안 — 끔 = 한 마디는 허용</th></tr>
+      <tr><td>손대는 파일</td><td class="v">yeta_chat.sh 2072행(프롬프트 1문단)</td><td class="v">yeta_chat.sh 585행(<code>seg_cap</code> 1줄)</td></tr>
+      <tr><td>설정 문구(policy.json)</td><td class="ok">그대로 — 이미 “한 명만 답한다”</td><td class="no">고쳐야 함 — “한 마디 리액션은 남는다”</td></tr>
+      <tr><td>화면 변화</td><td>없음(지금과 동일)</td><td>동행 버블이 한 개 더 뜬다</td></tr>
+      <tr><td>토큰</td><td class="ok">안 쓸 줄을 안 씀 = 소폭 절감</td><td>지금과 동일(이미 쓰고 버리던 걸 살림)</td></tr>
+      <tr><td>동행 존재감</td><td>지문으로만</td><td class="ok">자기 목소리로 한 마디</td></tr>
+      <tr><td>부수 위험</td><td class="ok">없음(문구만)</td><td>동행이 매 턴 한 마디씩 = “대체로 생략” 지시가 안 지켜지면 수다스러워질 수 있음</td></tr>
+      <tr><td>회귀 테스트</td><td colspan="2">두 안 모두 <code>tests/</code>에 파서 계약 1건 추가(프롬프트 상한 ↔ <code>seg_cap</code> 동수 검사)로 재발을 기계가 막습니다.</td></tr>
+    </table>
+    <div class="pick">
+      <div class="opt a"><h3>A안을 고르시면</h3>
+        <p>“단톡 교대를 끄면 정말로 한 사람만 말한다”가 코드·프롬프트·설정 문구 세 곳에서 같은 말이 됩니다.</p>
+        <ul><li>지금 보시는 화면이 정답이었다 → 프롬프트만 정리</li><li>조용한 1:1 결을 원할 때 쓰는 스위치가 됨</li></ul>
+      </div>
+      <div class="opt b"><h3>B안을 고르시면</h3>
+        <p>“교대 대본은 싫지만 옆 사람이 완전히 벙어리인 건 어색하다” → 한 마디만 돌려받습니다.</p>
+        <ul><li>버려지던 생성물이 화면에 오름</li><li>설정 문구 1줄 동반 수정</li></ul>
+      </div>
+    </div>
+    <p class="note">참고 — <b class="hi">결정이 필요 없는 나머지 2건</b>: <b class="hi">#13</b> 보드 스크립트 exists-skip(덜 잘린 2:3 이미지를 붙잡을 수 있음)은 다음 이미지 생성 라운드에 파이프라인과 함께 손보면 되고, <b class="hi">#15</b> 지도 초기 <code>?</code>는 첫 tick에 스스로 채워집니다. 평의회 17건 중 나머지는 359·360·362차로 전부 닫혔습니다.</p>
+  </div>
+</div>
+</body>
+</html>

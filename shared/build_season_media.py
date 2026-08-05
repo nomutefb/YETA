@@ -203,72 +203,6 @@ SEASONS = {
                     "배치 = 주방(불·주전자)→base · 뒷문(넘어진 스툴+발자국 = 도주 직후)→tense · 새벽 지붕(발자국이 넘어감)→blue. "
                     "정본=viewer/characters/season/mudi/main/<감정>/."),
     },
-    "von": {
-        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
-        "modes": {"main": ["base"]},
-        "comment": ("시즌 감정 미디어 manifest(본) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
-                    "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
-                    "⚠ 260726 현재 = 사람 없는 체육관 장소 씬만(운영자 '페르소나 구축 안 된 애들은 익명으로 넣고 나중에 보강') — 인물 초상은 미수집. "
-                    "정본=viewer/characters/season/von/main/<감정>/."),
-    },
-    "ryu": {
-        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
-        "modes": {"main": ["base"]},
-        "comment": ("시즌 감정 미디어 manifest(류) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
-                    "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
-                    "⚠ 260726 현재 = 얼굴 없는 검도 실루엣 1장뿐(운영자 '익명으로 넣고 나중에 보강') — 인물 확정 아님 · tense 국면 전용. "
-                    "정본=viewer/characters/season/ryu/main/<감정>/."),
-    },
-    "haeun": {
-        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
-        "modes": {"main": ["base"]},
-        "comment": ("시즌 감정 미디어 manifest(하서연) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
-                    "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
-                    "⚠ 260726 현재 = **배경 풀 0장**(manifest 빈 껍데기 = 뷰어 시그니처 폴백 유지). 얼빡 프사 1장은 캐릭터 루트 `<id>_face01.webp`에 둔다 "
-                    "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라 sera_face.webp 선례 계승). "
-                    "⚠ 왜 뺐나(260726 게이트 개방 실측): 얼빡 = 정사각 프사 크롭이라 420×900 세로 무대에 cover로 깔면 얼굴만 확대·잘려 "
-                    "기존 전용 배경 var_persona_<id>.webp보다 나빴다. 수집분 들어오면 main/<감정>/에 부어 확장. "
-                    "정본=viewer/characters/season/haeun/main/<감정>/."),
-    },
-    "baek": {
-        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
-        "modes": {"main": ["base"]},
-        "comment": ("시즌 감정 미디어 manifest(백) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
-                    "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
-                    "⚠ 260726 현재 = **배경 풀 0장**(manifest 빈 껍데기 = 뷰어 시그니처 폴백 유지). 얼빡 프사 1장은 캐릭터 루트 `<id>_face01.webp`에 둔다 "
-                    "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라 sera_face.webp 선례 계승). "
-                    "⚠ 왜 뺐나(260726 게이트 개방 실측): 얼빡 = 정사각 프사 크롭이라 420×900 세로 무대에 cover로 깔면 얼굴만 확대·잘려 "
-                    "기존 전용 배경 var_persona_<id>.webp보다 나빴다. 수집분 들어오면 main/<감정>/에 부어 확장. "
-                    "정본=viewer/characters/season/baek/main/<감정>/."),
-    },
-    "yun": {
-        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
-        "modes": {"main": ["base"]},
-        "comment": ("시즌 감정 미디어 manifest(윤) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
-                    "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
-                    "⚠ 260726 현재 = **배경 풀 0장**(manifest 빈 껍데기 = 뷰어 시그니처 폴백 유지). 얼빡 프사 1장은 캐릭터 루트 `<id>_face01.webp`에 둔다 "
-                    "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라 sera_face.webp 선례 계승). "
-                    "⚠ 왜 뺐나(260726 게이트 개방 실측): 얼빡 = 정사각 프사 크롭이라 420×900 세로 무대에 cover로 깔면 얼굴만 확대·잘려 "
-                    "기존 전용 배경 var_persona_<id>.webp보다 나빴다. 수집분 들어오면 main/<감정>/에 부어 확장. "
-                    "정본=viewer/characters/season/yun/main/<감정>/."),
-    },
-    "kopi": {
-        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → viewer 모드 게이트 비활성(불변 캐릭터 경로)
-        "modes": {"main": ["base"]},
-        "comment": ("시즌 감정 미디어 manifest(카피) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
-                    "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
-                    "⚠ 260726 현재 = **배경 풀 0장**(manifest 빈 껍데기 = 뷰어 시그니처 폴백 유지). 얼빡 프사 1장은 캐릭터 루트 `<id>_face01.webp`에 둔다 "
-                    "— 루트 이미지는 build_one이 안 읽으므로(클립만 읽음) 배경 풀에서 자동 제외되는 자리다(세라 sera_face.webp 선례 계승). "
-                    "⚠ 왜 뺐나(260726 게이트 개방 실측): 얼빡 = 정사각 프사 크롭이라 420×900 세로 무대에 cover로 깔면 얼굴만 확대·잘려 "
-                    "기존 전용 배경 var_persona_<id>.webp보다 나빴다. 수집분 들어오면 main/<감정>/에 부어 확장. "
-                    "정본=viewer/characters/season/kopi/main/<감정>/."),
-    },
     "san": {
         # 평면 축(flat) — 운영자 260730 「최산도 윈터랑 같은급. 아이돌로 취급해지고 리포지토리 위치랑 그 트리 구조 계승도 맞춰줘」.
         #   종전(260730 오전)엔 season/san/main/<감정>/ 하위폴더 축이었다 → 같은 날 오후 지시로 윈터와 **같은 경로·같은 트리**로 이관.
@@ -567,7 +501,22 @@ def build_one(cid: str, cfg: dict) -> dict:
     return out
 
 
+def _assert_no_dup_keys() -> None:
+    """SEASONS 중복키 금지(260804 평의회 #16) — dict 리터럴은 **뒤 정의가 조용히 이긴다**.
+
+    355차에 4인(haeun·yun·baek·kopi)이 두 번 정의돼 앞 4블록이 사문이 됐다. 산출물은 같아 아무도 못 알아채는데,
+    앞 블록을 고치면 「고쳤는데 안 바뀐다」가 된다 = 편집 함정. 소스를 직접 세어 재발을 그 자리에서 막는다.
+    """
+    import collections
+    src = open(__file__, encoding="utf-8").read()
+    keys = re.findall(r'^    "([a-z0-9_-]+)": \{', src, flags=re.M)
+    dup = [k for k, n in collections.Counter(keys).items() if n > 1]
+    if dup:
+        raise SystemExit(f"SEASONS 중복키: {', '.join(dup)} — 한 캐릭터는 한 번만 정의한다(뒤 정의가 이겨 앞이 사문이 된다)")
+
+
 def main() -> int:
+    _assert_no_dup_keys()
     check = "--check" in sys.argv
     rc = 0
     for cid, cfg in SEASONS.items():

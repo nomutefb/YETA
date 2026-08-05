@@ -566,6 +566,45 @@ def check_face_bg():
 _INPUT_RE = re.compile(r'<input\b[^>]*>', re.I)
 _AC_NEED = ('autocomplete', 'autocapitalize', 'autocorrect', 'spellcheck')
 
+def check_roster_assets():
+    """로스터가 가리키는 에셋이 실존하나 — bg·avatar·mode.{bg,avatar} 실측(하드 게이트 · 260804 평의회 #7).
+
+    왜 필요한가: 세라 `bg`가 260726에 옮겨진 파일(`sera_k01.jpg`)을 **다섯 달 넘게** 가리키고 있었는데
+    어느 게이트도 그걸 안 봤다(경로 참조 게이트는 코드 안 문자열만, 얼빡 게이트는 media.json만 본다).
+    증상은 조용하다 — 매 세션 프리로드 404 1건 + manifest 도착 전/실패 시 폴백 사다리 최종 칸이 죽어
+    **그림 없는 틴트 무대**. 로스터는 값 SSOT라 여기서 한 번 훑으면 전 캐릭터가 같이 지켜진다.
+    """
+    rp = os.path.join(ROOT, 'apps', 'yeta', 'characters', 'roster.json')
+    if not os.path.exists(rp):
+        return 0
+    try:
+        roster = json.load(open(rp, encoding='utf-8'))
+    except Exception as e:
+        print('⚠️ 로스터 에셋 게이트 — roster.json 파싱 실패:', e)
+        return 0
+    bad, n = [], 0
+    for c in roster if isinstance(roster, list) else []:
+        if not isinstance(c, dict):
+            continue
+        cand = [('bg', c.get('bg')), ('avatar', c.get('avatar'))]
+        md = c.get('mode') if isinstance(c.get('mode'), dict) else {}
+        cand += [('mode.bg', md.get('bg')), ('mode.avatar', md.get('avatar'))]
+        for field, rel in cand:
+            if not rel or not isinstance(rel, str):
+                continue
+            n += 1
+            if not os.path.exists(os.path.join(ROOT, 'viewer', rel)):
+                bad.append(f"{c.get('id', '?')}.{field} = {rel}")
+    if bad:
+        print('❌ 로스터 에셋 게이트(차단) — roster.json이 없는 파일을 가리킨다 '
+              '(처방 = 실존 경로로 고치거나 파일을 되돌려라):')
+        for b in bad:
+            print('  -', b)
+        return 1
+    print(f'✅ 로스터 에셋 게이트 — bg·avatar·mode 경로 {n}건 전원 실존.')
+    return 0
+
+
 def check_autocomplete():
     """평문 텍스트 입력칸 = OS 자동완성 끔 4종 세트 하드 게이트(§🎨 · 운영자 260628).
     편집가능 <input type=text|search>가 autocomplete/autocapitalize/autocorrect/spellcheck 중 하나라도
@@ -735,6 +774,58 @@ def check_soremeori():
     if rc == 0:
         print('✅ 소머리 게이트 — 5뷰어 소머리 텍스트 흰색·블릿 형광(특수 보라)·토큰 일치(§📐).')
     return rc
+
+
+def check_seg_cap_contract():
+    """대본 상한 계약 — **프롬프트가 허락한 토막 수 = 파서가 통과시키는 토막 수**(운영자 260805 「B안」 · 평의회 #14).
+
+    왜(260804 사고): 두 자리가 서로 다른 말을 하고 있었다. 교대를 끈 방의 프롬프트는
+    「동행 한 마디를 최대 한 번 덧붙여도 된다」고 허락하는데, 파서 상한은 `GB_LINES`(=1) 하나뿐이라
+    그 2번째 토막을 **생성된 뒤에** 잘라냈다 — 토큰은 지불되고 화면엔 0. 반대로 모델이 동행 줄을
+    먼저 쓴 턴에선 살아남는 게 그 줄이라 주인공 답이 통째로 사라졌다. 어느 방향이든 조용히 샜다.
+
+    여기서 보는 것(가볍게 · 매 커밋) — 세 방 각각에서 두 수가 같은가:
+      ① 교대 켬  = 프롬프트 `$((GB_LINES - 1))` + 무표 1토막  ↔ SEG_CAP = GB_LINES
+      ② 교대 끔  = 프롬프트 「최대 한 번」 = 2토막           ↔ SEG_CAP = 2 (동행 있고 난입 자리 아님)
+      ③ 난입 자리 = 프롬프트가 이름표 자체를 금지 = 1토막      ↔ SEG_CAP = GB_LINES(=1) 유지
+    파서가 SEG_CAP을 안 읽고 GB_LINES로 되돌아가는 회귀도 같이 막는다(그 순간 ②가 다시 샌다)."""
+    rel = '.github/scripts/yeta_chat.sh'
+    p = os.path.join(ROOT, rel)
+    if not os.path.exists(p):
+        print('⚠️ yeta_chat.sh 없음 — 대본 상한 계약 게이트 스킵'); return 0
+    src = open(p, encoding='utf-8').read()
+    miss = []
+    # ② 산출부 — 교대 끈 방에서만 2로 올린다(동행 있음 + 난입 자리 아님이 둘 다 조건에 있어야 ③이 안 풀린다)
+    m = re.search(r'^\s*SEG_CAP="\$GB_LINES";(.*)$', src, flags=re.M)
+    if not m:
+        miss.append('SEG_CAP 산출부가 없다 — 파서 상한이 다시 GB_LINES 단독이면 교대 끈 방의 동행 한 마디가 잘린다')
+    else:
+        cond = m.group(1)
+        if 'SEG_CAP=2' not in cond:
+            miss.append('SEG_CAP 산출부에 2 분기가 없다 — 프롬프트가 허락한 「최대 한 번」이 파서에서 막힌다')
+        if '$CO_ID' not in cond:
+            miss.append('SEG_CAP 2 분기에 동행 유무 조건이 없다 — 1:1 방까지 2토막이 열린다')
+        if 'BARGE_ROOM' not in cond:
+            miss.append('SEG_CAP 2 분기에 난입 자리 예외가 없다 — 260730 목소리 분리(이름표 금지) 봉합이 풀린다')
+    # 파서 소비부 — SEG_CAP 우선, 없으면 종전 GB_LINES 폴백
+    if not re.search(r'seg_cap\s*=\s*max\(1,\s*int\(os\.environ\.get\("SEG_CAP"\)\s*or\s*os\.environ\.get\("GB_LINES"\)', src):
+        miss.append('파서가 SEG_CAP을 안 읽는다 — 산출부만 살아 있고 실제 절단은 종전대로 GB_LINES로 돈다')
+    if 'SEG_CAP="${SEG_CAP:-}"' not in src:
+        miss.append('finish 호출 env에 SEG_CAP 전달이 없다 — 파이썬이 빈 값만 받아 폴백으로 되돌아간다')
+    # ① 교대 켬 프롬프트 — 이름표 세그 상한이 GB_LINES-1(무표 1토막 + 이름표 N-1 = GB_LINES)
+    if 'GB_LINES - 1' not in src:
+        miss.append('교대 켬 프롬프트의 이름표 상한($((GB_LINES - 1)))이 사라졌다 — 프롬프트·파서 수가 어긋난다')
+    # ③ 난입 자리 프롬프트 — 이름표 금지 문구 생존
+    if '이름표' not in src or '절대 쓰지 마라' not in src:
+        miss.append('난입 자리 프롬프트의 이름표 금지 문구가 사라졌다 — SEG_CAP 예외의 근거가 없어진다')
+    if miss:
+        print('❌ 대본 상한 계약 게이트 — 프롬프트가 허락한 토막 수 ↔ 파서 상한이 어긋난다:')
+        for m2 in miss:
+            print('  -', m2)
+        print('   의도된 변경이라면 프롬프트·SEG_CAP·설정 문구(policy.json chorus hint) 세 곳을 같이 고치고 이 게이트의 기대를 갱신해라(사유 기록).')
+        return 1
+    print('✅ 대본 상한 계약 게이트 — 프롬프트 허용 토막 = 파서 SEG_CAP(교대 켬 N · 끔 2 · 난입 자리 1).')
+    return 0
 
 
 def check_claude_failover():
@@ -1100,6 +1191,11 @@ def main():
     except Exception as e:
         print('⚠️ 백스택 계약 게이트 스킵:', e)
     try:
+        if check_seg_cap_contract() != 0:   # 대본 상한 = 프롬프트 허용 토막 ↔ 파서 SEG_CAP 동수(평의회 #14 · 260805 B안 — 「허락해놓고 잘라내기」 재발 차단)
+            rc = 1
+    except Exception as e:
+        print('⚠️ 대본 상한 계약 게이트 스킵:', e)
+    try:
         if check_claude_failover() != 0:   # claude -p 호출 = 폴오버 SSOT 경유 통일(자체 쿼터처리·따로놀기 차단 · 260629 weekly한도 전건실패)
             rc = 1
     except Exception as e:
@@ -1114,6 +1210,11 @@ def main():
             rc = 1
     except Exception as e:
         print('⚠️ 얼빡 배경 게이트 스킵:', e)
+    try:
+        if check_roster_assets() != 0:   # 로스터 에셋 실존(하드 게이트 · 260804 평의회 #7 — 세라 bg가 옮겨진 파일을 계속 가리켜 404)
+            rc = 1
+    except Exception as e:
+        print('⚠️ 로스터 에셋 게이트 스킵:', e)
     try:
         if check_autocomplete() != 0:   # 평문 텍스트칸 OS 자동완성 끔 4종(하드 게이트 — 자동완성 바 재발 차단·STAGE1b·260628)
             rc = 1
