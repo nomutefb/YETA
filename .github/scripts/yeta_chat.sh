@@ -446,7 +446,7 @@ finish() {  # $1=ok|error · $2=텍스트 — env: INS·ANCHOR_TS·PERSONA·MODE
   if [ "$_g" = 0 ]; then echo "::error::finish r2get 실패 — 반영 포기(답장 폐기·유저 데이터 보호)"; _did_reply=0; return 1; fi
   REPLY_TEXT="$2" PERSONA="${PERSONA:-}" MODEL="${MODEL:-}" EFF="${EFF:-}" GEN_S="${GEN_S:-0}" ANCHOR_TS="${ANCHOR_TS:-}" OPEN="${OPEN:-}" OPENING_TS="${OPENING_TS:-}" \
     CO_ID="${CO_ID:-}" CO_NAME="${CO_NAME:-}" THREAD="${THREAD:-}" TOK_I="${TOK_I:-0}" TOK_O="${TOK_O:-0}" TOK_CR="${TOK_CR:-0}" TOK_CW="${TOK_CW:-0}" CNAME="${CNAME:-}" GEN_T0MS="${GEN_T0MS:-}" GEN_ENDMS="${GEN_ENDMS:-}" OV_SKIP="${OV_SKIP:-}" \
-    GB="${GB:-0}" GB_N="${GB_N:-0}" GB_BEATS="${GB_BEATS:-0}" GB_LINES="${GB_LINES:-1}" \
+    GB="${GB:-0}" GB_N="${GB_N:-0}" GB_BEATS="${GB_BEATS:-0}" GB_LINES="${GB_LINES:-1}" SEG_CAP="${SEG_CAP:-}" \
     python3 - "$SESS" "$1" "${INS:-0}" "${CVER:-}" <<'PY'
 import json, os, re, sys, time
 sys.path.insert(0, ".github/scripts")
@@ -562,7 +562,7 @@ if kind == "ok":
     #   기억(NOTE)·DEAD·부활 소비는 원 화자(persona_env) 관점 유지 = 조연 세그는 대사만(종전 계약 계승).
     co_id, co_name = os.environ.get("CO_ID", ""), os.environ.get("CO_NAME", "")
     me_name = os.environ.get("CNAME", "")
-    try: seg_cap = max(1, int(os.environ.get("GB_LINES") or 1))
+    try: seg_cap = max(1, int(os.environ.get("SEG_CAP") or os.environ.get("GB_LINES") or 1))   # SEG_CAP = 프롬프트가 허락한 토막 수(턴 해석부에서 산출 · 교대 끈 방 = 2) · 미설정 = 종전 GB_LINES 폴백
     except ValueError: seg_cap = 1
     segs = [(persona_env, text)] if text else []
     turn_persona = persona_env
@@ -1914,6 +1914,11 @@ process_turn() {
   CO_ID="$(matv co)"; CO_NAME="$(matv co_name)"; BARGE_DEBUT="$(matv barge_debut)"; BARGE_HOST="$(matv barge_host)"; WFRZ_MS="$(matv wfrz)"; WRATE="$(matv wrate)"; WANCH="$(matv wrb)"; NOTICE_TXT="$(matv notice)"; [ "${NT_ON:-1}" = "1" ] || NOTICE_TXT=""   # 단톡 동행·난입 데뷔(합석 260707) · 난입당한 쪽(260728) · 라디오 축 OFF = 프롬프트에서도 소거(Q.133 — 화면만 끄면 캐릭터가 안 들은 방송을 계속 알던 구멍)
   BARGE_SELF="$(matv barge_self)"; BARGE_SEAT="$(matv barge_seat)"; BARGE_ROOM="$(matv barge_room)"; OMEN_REACT="$(matv omen_react)"   # 난입자 본인 축(260730) — self=이번 화자가 난입자 · seat=난입 후 앉아서 말한 횟수 · room=이 방에 난입자가 있다
   [ "$BARGE_ROOM" = "1" ] && GB_LINES=1   # 난입 자리 = 대본 교대 금지(운영자 260730 "왜 둘이 있을때는 오히려 고죠사토루가 프리실라처럼 얘기함") — 한 사람이 두 사람 대사를 쓰는 구조가 표기 규칙 교차 오염의 뿌리. 아래 CO_BLOCK 게이트와 짝.
+  # 파서 상한 SSOT(운영자 260805 「B안」 · 평의회 #14) — **프롬프트가 허락한 토막 수와 같은 수**를 통과시킨다. 종전엔 seg_cap = GB_LINES 하나뿐이라,
+  #   교대를 끈 방(GB_LINES=1)에서 프롬프트는 「동행 한 마디를 최대 한 번 덧붙여도 된다」고 허락하는데 파서가 그 2번째 토막을 **생성된 뒤에** 잘라냈다(비용은 지불·화면엔 0 ·
+  #   모델이 동행 줄을 먼저 쓰면 반대로 주인공 답이 통째로 사라졌다). 이제 그 방만 2 = 내 1 + 동행 리액션 1.
+  # ⚠ 난입 자리는 예외로 남긴다 — 거기 GROUP_RULE은 이름표 자체를 금지(260730 목소리 분리)라 허락한 토막이 1개다. 여기서 2를 주면 교차 오염 봉합이 풀린다.
+  SEG_CAP="$GB_LINES"; [ "${GB_LINES:-1}" -le 1 ] 2>/dev/null && [ -n "$CO_ID" ] && [ "$BARGE_ROOM" != "1" ] && SEG_CAP=2
   PLACE_NM="$(matv place_nm)"; PLACE_FROM="$(matv place_from)"; BARGE_VIA="$(matv barge_via)"   # 동선 장소 + 떠나온 자리(이동 중 · 260730 Q.144) + 마주침 데뷔 결(위치 SSOT places.json · 260707)
   OPEN="$(matv open)"; OPENING_TS="$(matv opening_ts)"   # 오프닝 잡(동적 첫인사 · 운영자 260707) — OPEN=1이면 유저발화 없이 캐릭터가 먼저 · OPENING_TS = nonce(finish 레이스 방어)
   RETRY_N="$(matv retry_n)"   # 자동 재시도 회차(사다리 260714) — 오프닝 JSON엔 키 없음 = 빈값(아래 -ge 가드가 흡수)
