@@ -3338,7 +3338,7 @@ function yShowSettings(noNav) {
 function yProfDerive() {   // 원천 = threads.turns(친밀도 실측 = 내 발화 수 — yFarOK 동일 지표 계승) · KST = ts+9h 후 UTC getter(§표기표준)
   const t = (YSESS || {}).threads || {}, d = { userTurns: 0, nights: new Set(), call: false, dawn: false, room: false, maxTurns: 0, seasonNight: false, byChar: {} };
   for (const id of Object.keys(t)) {
-    const tr = t[id].turns || []; let mine = 0, lastAi = '';
+    const tr = t[id].turns || []; let mine = 0, lastAi = '';   // ⚠ 아래 mine/userTurns 는 순회 뒤 yUTurns 로 보정(260804 평의회 #11 — 절단본 순회라 축소 집계됐다)
     for (const x of tr) {
       if (x.role === 'user') {
         mine++; d.userTurns++;
@@ -3352,6 +3352,8 @@ function yProfDerive() {   // 원천 = threads.turns(친밀도 실측 = 내 발�
       if (x.kind === 'call' || x.voice) d.call = true;   // 걸려온 전화 턴·음성 답장(무전) = 통화 축
     }
     if (Array.isArray(t[id].room) && t[id].room.length >= 2) d.room = true;   // 합석 = 정원 2 방 존재
+    const _u = yUTurns(t[id]);   // 260804 평의회 #11: 위 순회는 **절단본**(비활성 방 = 꼬리 2턴)이라 mine이 축소된다 — 원본 유저 발화 수로 보정.
+    if (_u > mine) { d.userTurns += _u - mine; mine = _u; }   // ⚠ nights(날짜 집합)는 보정하지 않는다 — 남아 있는 ts로만 셀 수 있고, 추정으로 채우면 없는 밤을 만든다(과대 집계 금지).
     d.maxTurns = Math.max(d.maxTurns, mine);
     d.byChar[id] = { mine, lastAi, ts: tr.length ? (tr[tr.length - 1].ts || 0) : 0 };
   }
@@ -3843,6 +3845,7 @@ function yLockLabel(c) {   // 잠금 캐릭터(카드 없는 스페셜 = roster 
 }
 function yUnmet(c) {   // 미대면(운영자 260709 "대화 안 한 사람 = 안 만난 사람 · 전부 잠금" · 260709 통일 = locked 스페셜도 동일 판정 — 이름 ???·실루엣·탭 차단 공유). 만남 = ①roster met:true 박제(하서연·루시 = 시즌 시작 개방) ②내 대화 스레드 존재 ③어느 방 room에 합석 이력
   if (!c || c.met === true) return false;
+  if (((YSESS || {}).met || {})[c.id]) return false;   // 260804 평의회 #3: 방이 휘발로 소멸해도 「만난 적 있다」는 사실은 세션에 남는다(게이트웨이 sweepSess가 박제) — 종전엔 24h 뒤 ???로 재잠기고 사용자가 풀 수단이 없었다
   const t = (YSESS || {}).threads || {};
   if (t[c.id]) return false;
   for (const id of Object.keys(t)) { const r = t[id].room; if (Array.isArray(r) && r.includes(c.id)) return false; }
@@ -3852,7 +3855,7 @@ const YUNMET_NM = '???';   // 미대면 이름 표기(운영자 260709 "??? 가 
 // ── 원거리 소통(운영자 260709 "대화창 나간 지 오래 + 지금 이 장소에 없으면 대화 불가 · 단 페르소나·친밀도 따라 원거리 가능 · 전화 배선자는 전화로") ──
 const YAWAY_MS = 2 * 3600e3;   // 대화 끊김 2시간+ = 상대가 자기 동선으로 떠남(임계 = 주변부 노브)
 function yFarNeed(c) { const g = yTuneCur(c); return Math.max(4, Math.round(6 + g[11] * 1.2 - g[9] * .6)); }   // 원거리 소통에 필요한 친밀도(내 발화 수) = 페르소나 성향 파생 — 경계심(11)↑ = 어려움 · 초기 친밀도(9)↑ = 쉬움(운영자 "페르소나와 친밀도의 영향")
-function yFarOK(c) { const th = YTH(c && c.id), n = ((th || {}).turns || []).filter(t => t.role === 'user').length; return n >= yFarNeed(c); }   // 친밀도 실측 = 누적 내 발화 수
+function yFarOK(c) { const th = YTH(c && c.id); return yUTurns(th) >= yFarNeed(c); }   // 친밀도 실측 = 누적 내 발화 수(260804: 절단본이 아니라 yUTurns = 원본 수 · 종전엔 비활성 방이 상시 미달이라 원거리가 전 캐릭터 차단됐다)
 async function yMyPlace() {   // 내 현재 장소 — 수동 설정(yeta_me_place) 우선 · 미설정 = 현재 방(cur) 상대와 같은 공간 파생(yMeRow와 동일 세계관)
   let p = ''; try { p = localStorage.getItem('yeta_me_place') || ''; } catch {}
   if (p) return p;
@@ -3872,9 +3875,16 @@ async function yAway(c) {   // 떨어져 있음 판정 — 차단·전화 유도
   if (!there || !mine || there === mine) return '';
   return (YMAPD.places[there] || {}).name || '다른 곳';
 }
+function yUTurns(th) {   // 내 발화 수 SSOT(260804 평의회 #4·#5·#11) — op get이 **비활성 방을 꼬리 2턴으로 절단**해 보내므로 배열을 세면 무조건 n≤2가 된다.
+  // 게이트웨이가 원본 수(uturns)를 같이 실어 보내니 그게 있으면 그걸 쓴다(절단 내성) · 없으면(현재 방·구 응답) 종전대로 배열을 센다.
+  if (!th) return 0;
+  const u = th.uturns;
+  if (Number.isFinite(+u)) return Math.max(+u, (th.turns || []).filter(t => t && t.role === 'user').length);   // max = 절단 뒤 새 턴이 붙은 순간(uturns가 낡음)도 흡수
+  return (th.turns || []).filter(t => t && t.role === 'user').length;
+}
 function yBond(c) {   // 유효 친밀도 = 내 발화 수 × 감쇠 — 커브(운영자 260709 정정): 1일까지 유지 → 1일 기점 훅 하락 → 이징 수렴 · 7일 = 맥스 반감(하한 0.5 · smoothstep = 초반 가속·후반 감속)
   const th = ((YSESS || {}).threads || {})[c && c.id]; if (!th) return 0;
-  const n = (th.turns || []).filter(t => t.role === 'user').length; if (!n) return 0;
+  const n = yUTurns(th); if (!n) return 0;
   const d = Math.max(0, (Date.now() - (th.updated || 0)) / 86400e3);
   const t = Math.min(1, Math.max(0, (d - 1) / 6)), ease = t * t * (3 - 2 * t);
   return n * (1 - .5 * ease);
