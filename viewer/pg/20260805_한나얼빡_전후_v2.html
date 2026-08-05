@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>도한나 얼빡 v2 — 운영자 기준 예시에 맞춘 재재단 — 전/후 비교</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260805_한나얼빡_전후_v1.html 계승(재설계 0) ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .trio { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-3); align-items:start; }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  @media (max-width:760px) { .trio, .pair { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .bdg.ref { color:var(--fg); border:1px solid rgba(var(--accent-rgb),.5); }
+  .cap .val { font-size:var(--fs-xs); color:var(--fg-2); }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); }
+  td.v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); }
+  img.shot { display:block; width:100%; border-radius:var(--r-m); border:1px solid var(--glass-line); box-shadow:var(--shadow-card); }
+  .sizes { display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap; }
+  .sizes figure { margin:0; text-align:center; }
+  .sizes span.ava { display:block; border-radius:50%; background-size:cover; background-position:center; border:1px solid var(--glass-line); }
+  .sizes figcaption { font-size:var(--fs-meta); color:var(--mut); margin-top:5px; }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>도한나 얼빡 v2 — 운영자 기준 예시에 맞춘 재재단</h1>
+  <p class="lead">운영자 260805 후속: 기준 예시 이미지 첨부 + <b>"다시 원본에서 저부분만 고화질로 재단"</b>. v1(361차)이 얼굴만 남기고 정수리를 잘랐던 것을, 예시대로 <b>머리 전체가 들어오는</b> 프레이밍으로 다시 잘랐다. 원본은 그대로 <code>ilzin_sheetE_p3.png</code> PALM 칸 — 생성 0·과금 0.</p>
+
+  <div class="sect grp">
+    <h2>① 기준 예시 ↔ v1 ↔ v2</h2>
+    <div class="trio">
+      <div>
+        <p class="cap"><span class="bdg ref">기준</span><span class="val">운영자 첨부</span></p>
+        <img class="shot" src="20260805_한나얼빡_기준예시.webp" alt="운영자가 제시한 기준 예시">
+        <p class="note">정수리부터 턱·깃까지 머리 전체 · 오른쪽에 간판 초록 띠가 살짝.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg before">v1</span><span class="val">361차 · 배경 0 우선</span></p>
+        <img class="shot" src="20260805_한나얼빡_v1_얼굴만.webp" alt="v1 — 얼굴만 남긴 재단">
+        <p class="note">「배경 안 나오게」를 최우선으로 잡아 <b>정수리를 잘랐다</b> — 예시보다 한 단계 더 조인 프레이밍.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">v2</span><span class="val">채택 — 예시 정합</span></p>
+        <img class="shot" src="20260805_한나얼빡_v2_머리전체.webp" alt="v2 — 머리 전체가 들어온 재단">
+        <p class="note">머리 전체 + 깃 살짝 + 오른쪽 초록 띠 — 예시와 같은 결. 얼굴은 가로 정중앙.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect grp">
+    <h2>② 확대 화질 — 같은 박스, 확대 방식만 다르게</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">lanczos</span><span class="val">일반 확대(v1이 쓴 방식)</span></p>
+        <img class="shot" src="20260805_한나얼빡_zoom_lanczos.webp" alt="lanczos 확대 부분 확대">
+        <p class="note">선이 번진다 — 속눈썹·머리끝이 뭉개져 회색 띠가 된다.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">xbr ×4</span><span class="val">채택 — 셀 애니 전용 확대</span></p>
+        <img class="shot" src="20260805_한나얼빡_zoom_xbr.webp" alt="xbr 확대 부분 확대">
+        <p class="note">평평한 셀 그림의 <b>선을 선으로 보존</b>한다(ffmpeg <code>xbr</code> = 도트·애니 전용 보간). 같은 원본에서 선명도만 올라간다.</p>
+      </div>
+    </div>
+    <p class="note"><b>정직 고지</b>: 확대 방식으로 얻는 건 <b>선명함이지 없던 디테일이 아니다</b>. 원본 얼굴 박스는 150px이고 그게 이 그림의 진짜 해상도다 — 첨부한 기준 예시(997×1071)도 같은 원본을 늘린 것이라 확대해 보면 같은 뭉개짐이 나온다(실측 대조함). 진짜 고해상도가 필요하면 <b>얼빡 1장 재생성</b>(유료 dispatch · 이 재단본을 레퍼런스로 첨부하는 edits 경로 = 얼굴 유지) 뿐이다.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>③ 실사용 크기 — 앱이 실제로 그리는 지름</h2>
+    <div class="sizes">
+      <figure><span class="ava" style="width:34px;height:34px;background-image:url('20260805_한나얼빡_v2_머리전체.webp')"></span><figcaption>34 헤더</figcaption></figure>
+      <figure><span class="ava" style="width:58px;height:58px;background-image:url('20260805_한나얼빡_v2_머리전체.webp')"></span><figcaption>58 레일</figcaption></figure>
+      <figure><span class="ava" style="width:104px;height:104px;background-image:url('20260805_한나얼빡_v2_머리전체.webp')"></span><figcaption>104 카드</figcaption></figure>
+      <figure><span class="ava" style="width:160px;height:160px;background-image:url('20260805_한나얼빡_v2_머리전체.webp')"></span><figcaption>160 (참고)</figcaption></figure>
+    </div>
+  </div>
+
+  <div class="sect grp">
+    <h2>④ 재단 수치</h2>
+    <table>
+      <tr><th>항목</th><th>v1(361차)</th><th>v2(채택)</th></tr>
+      <tr><td>재단 박스</td><td class="v">100×100 @ 시트 (137, 843)</td><td class="v">150×150 @ 시트 (112, 792)</td></tr>
+      <tr><td>프레이밍</td><td>얼굴만(정수리 잘림) · 배경 0</td><td>머리 전체 + 깃 살짝 · 배경 = 예시와 같은 정도</td></tr>
+      <tr><td>확대</td><td class="v">scale lanczos + unsharp (5.1배)</td><td class="v">xbr=n=4 → scale lanczos (3.4배)</td></tr>
+      <tr><td>산출</td><td class="v">webp q82 · 11.6KB</td><td class="v">webp q88 · 20.8KB</td></tr>
+    </table>
+    <p class="note">배선 변경 0 — <code>roster.json</code> avatar 경로·<code>media.json</code> 무접촉(파일만 교체) · 파일명 <code>face</code> 규약 유지 = 얼빡 배경 게이트 프사 0.</p>
+  </div>
+</div>
+</body>
+</html>
