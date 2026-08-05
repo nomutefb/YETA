@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>도한나 얼빡 재단 — 배경 제거 + 얼굴 중심 정렬 — 전/후 비교 v1</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260803_내캐릭터시트_전후_v1.html 계승(재설계 0) ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  @media (max-width:640px) { .pair { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .cap .val { font-size:var(--fs-xs); color:var(--fg-2); }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); }
+  td.v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); }
+  /* 원본 대조 — 정사각 1:1 · 중심 십자선(얼굴 중심이 프레임 중심인지 눈으로 확인) */
+  .face { position:relative; width:100%; max-width:340px; aspect-ratio:1/1; margin-inline:auto; border-radius:var(--r-m); overflow:hidden; border:1px solid var(--glass-line); box-shadow:var(--shadow-card); }
+  .face img { width:100%; height:100%; object-fit:cover; display:block; }
+  .face.cross::before, .face.cross::after { content:''; position:absolute; background:rgba(var(--accent-rgb),.55); }
+  .face.cross::before { left:50%; top:0; bottom:0; width:1px; }
+  .face.cross::after { top:50%; left:0; right:0; height:1px; }
+  /* 실사용 크기 열 — 앱이 실제로 그리는 지름(헤더 34 · 레일 58 · 카드 104) */
+  .sizes { display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap; }
+  .sizes figure { margin:0; text-align:center; }
+  .sizes span.ava { display:block; border-radius:50%; background-size:cover; background-position:center; border:1px solid var(--glass-line); }
+  .sizes figcaption { font-size:var(--fs-meta); color:var(--mut); margin-top:5px; }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>도한나 얼빡 재단 — 배경 제거 + 얼굴 중심 정렬 (전/후)</h1>
+  <p class="lead">운영자 260805: <b>"일진녀 좀 더 얼빡시켜서 배경 안나오게 해줘. 얼굴의 중심이 중심부가 되어야됨 대신"</b>. 대상 = <code>viewer/characters/season/hanna/hanna_face.webp</code>(roster <code>avatar</code>) 한 파일. 원본 = 353차와 같은 <code>ilzin_sheetE_p3.png</code> PALM 칸 — <b>새로 생성하지 않고 같은 원본을 다시 잘랐다</b>(얼굴이 안 바뀐다 · 과금 0).</p>
+
+  <div class="sect grp">
+    <h2>① 프레이밍 — 배경 있음 vs 얼굴만</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">전</span><span class="val">머리~어깨 + 편의점 간판(24h 초록)이 프레임의 1/3</span></p>
+        <div class="face cross"><img src="20260805_한나얼빡_before.webp" alt="전 — 어깨·배경이 보이는 프사"></div>
+        <p class="note">십자선 = 프레임 중심. 얼굴 중심이 중심에서 <b>왼쪽으로 밀려</b>(가로 ≈41%) 있고, 오른쪽 절반을 간판·야경이 차지한다.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">후</span><span class="val">얼굴이 프레임을 가득 · 배경 0 · 얼굴 중심 = 프레임 중심</span></p>
+        <div class="face cross"><img src="20260805_한나얼빡_after.webp" alt="후 — 배경 없이 얼굴만 채운 프사"></div>
+        <p class="note">십자선이 <b>콧대에 얹힌다</b> — 재단 기준점을 눈 중점과 입 사이(얼굴 중심)로 잡았기 때문. 네 모서리는 전부 머리카락이다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect grp">
+    <h2>② 실사용 크기 — 앱이 실제로 그리는 지름</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">전</span></p>
+        <div class="sizes">
+          <figure><span class="ava" style="width:34px;height:34px;background-image:url('20260805_한나얼빡_before.webp')"></span><figcaption>34 헤더</figcaption></figure>
+          <figure><span class="ava" style="width:58px;height:58px;background-image:url('20260805_한나얼빡_before.webp')"></span><figcaption>58 레일</figcaption></figure>
+          <figure><span class="ava" style="width:104px;height:104px;background-image:url('20260805_한나얼빡_before.webp')"></span><figcaption>104 카드</figcaption></figure>
+        </div>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">후</span></p>
+        <div class="sizes">
+          <figure><span class="ava" style="width:34px;height:34px;background-image:url('20260805_한나얼빡_after.webp')"></span><figcaption>34 헤더</figcaption></figure>
+          <figure><span class="ava" style="width:58px;height:58px;background-image:url('20260805_한나얼빡_after.webp')"></span><figcaption>58 레일</figcaption></figure>
+          <figure><span class="ava" style="width:104px;height:104px;background-image:url('20260805_한나얼빡_after.webp')"></span><figcaption>104 카드</figcaption></figure>
+        </div>
+      </div>
+    </div>
+    <p class="note">작은 원에서 차이가 제일 크다 — 전은 34px에서 얼굴이 원의 1/4이라 「누군지」가 안 읽혔고, 후는 그 크기에서도 표정이 남는다.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>③ 재단 수치(재현 가능)</h2>
+    <table>
+      <tr><th>항목</th><th>값</th></tr>
+      <tr><td>원본</td><td class="v">viewer/assets/yeta_char/board/ilzin_sheetE_p3.png (1024×1536) · PALM 칸 = 시트 좌표 (28, 772) 시작 312×686</td></tr>
+      <tr><td>얼굴 중심 실측</td><td class="v">칸 좌표 (159, 121) = 시트 좌표 (187, 893) — 눈 중점과 입 중점 사이(콧대)</td></tr>
+      <tr><td>재단 박스</td><td class="v">100×100 @ 시트 (137, 843) → 중심이 정확히 얼굴 중심</td></tr>
+      <tr><td>크기 선정 근거</td><td class="v">우상단 코너 평균 RGB로 배경 유입 계측(순수 머리카락 기준 = 좌상단 27,28,36) — 96px(34,35,41) / <b>100px(39,39,45) ← 채택</b> / 104(43,42,47) / 108(53,50,55) / 112(68,62,66 = 간판이 눈에 보이게 유입). 104부터 코너가 계속 밝아져 육안으로도 간판이 새기 시작 → 배경 0을 지키는 값으로 100</td></tr>
+      <tr><td>산출</td><td class="v">scale=512:512:flags=lanczos + unsharp=5:5:0.6 → webp q82 · 25.9KB → 11.6KB</td></tr>
+    </table>
+    <p class="note">배선 변경 0 — <code>roster.json</code> <code>avatar</code> 경로도, <code>media.json</code>도 그대로다(파일만 교체). 파일명에 <code>face</code>가 있어 배경 풀에서 자동 제외되는 규약도 유지 = <code>check_refs</code> 얼빡 배경 게이트 <b>프사 0</b> 통과.</p>
+    <p class="note"><b>해상도 정직 고지</b>: 원본 얼굴 박스가 100px이라 512²는 5.1배 업스케일이다 — 1:1로 크게 띄우면 물러 보인다. 앱이 실제로 그리는 34~104px에서는 문제가 없다(위 ② 열). 1:1에서도 또렷하게 가려면 <b>얼빡 전용 1장 재생성</b>(유료 dispatch · 원본 첨부 edits 경로)이 필요하다.</p>
+  </div>
+</div>
+</body>
+</html>
