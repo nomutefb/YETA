@@ -19,7 +19,7 @@ MODEL = (os.environ.get("OPENAI_IMAGE_MODEL") or "gpt-image-2").strip()
 API_GEN = "https://api.openai.com/v1/images/generations"
 API_EDIT = "https://api.openai.com/v1/images/edits"
 FORCE = os.environ.get("FORCE", "") == "1"
-SHEET = (os.environ.get("YETA_BOARD_SHEET") or "A").strip().upper()      # A = 감정 9칸(3×3 · 앱 정합) · B = 감정 20칸(5×4) · C = 포즈 12칸(4×3 · 표정 고정) · D = 일진 상황 9칸(3×3) · E = 9:16 상황 6칸(3×2 · 칸 목록에서 6칸씩 · n장) · F = E와 같되 옷·헤어 자유(LOCK_CORE) · CELL = 개별 칸 1장씩(9:16 크롭)
+SHEET = (os.environ.get("YETA_BOARD_SHEET") or "A").strip().upper()      # FACE = 얼빡 프사 1장(1:1 · AV_BASE 정본 임포트) · A = 감정 9칸(3×3 · 앱 정합) · B = 감정 20칸(5×4) · C = 포즈 12칸(4×3 · 표정 고정) · D = 일진 상황 9칸(3×3) · E = 9:16 상황 6칸(3×2 · 칸 목록에서 6칸씩 · n장) · F = E와 같되 옷·헤어 자유(LOCK_CORE) · CELL = 개별 칸 1장씩(9:16 크롭)
 SLUG = re.sub(r"[^0-9A-Za-z_-]", "", (os.environ.get("YETA_BOARD_SLUG") or "board")) or "board"
 REF = (os.environ.get("YETA_BOARD_REF") or "").strip()                   # 레퍼런스 이미지 경로(있으면 edits 경로 = 동일성 앵커)
 # 프롬프트 정본은 2벌로 나뉜다(운영자 260803 다캐릭터 보강) — 공용 판 + 캐릭터별 락·칸 판.
@@ -33,7 +33,7 @@ except ValueError:
 OUT = "viewer/assets/yeta_char/board"
 # 시트 비례 = 칸 3:4 기준 — A·D(3열×3행)·E(3열×2행 · 칸 9:16) → 세로 3:4 / B(5열×4행)·C(4열×3행) → 정사각.
 # gpt-image 허용 size 3종뿐이라 **칸이 9:16이어도 페이지는 1024x1536**이다(칸 비례는 프롬프트가, 최종 9:16은 자를 때 성립).
-SIZES = {"A": "1024x1536", "B": "1024x1024", "C": "1024x1024", "D": "1024x1536",
+SIZES = {"FACE": "1024x1024", "A": "1024x1536", "B": "1024x1024", "C": "1024x1024", "D": "1024x1536",
          "E": "1024x1536", "F": "1024x1536", "CELL": "1024x1536"}
 PER_SHEET = 6          # 시트 E 한 장에 들어가는 칸 수(정본 §2-E · 9:16 칸 상한)
 CROP_916 = "crop=trunc(ih*9/16/2)*2:ih"   # 개별 칸 전용 — 1024×1536 → 864×1536 = 정확히 9:16(좌우만 깎는다)
@@ -100,6 +100,15 @@ def build_sheet_grid(group, sheet):
     ov = [f'Panel {i} ("{c["label"]}"): {c["over"]}' for i, c in enumerate(group, 1) if c["over"]]
     over = ("\n" + head + "\n".join(ov) + "\n") if ov else ""
     return body.replace("{PANELS}", panels).replace("{OVERRIDES}", over)
+
+
+def build_face():
+    """얼빡 프사 1장(1:1) — 프레이밍 문구는 **여기서 짓지 않고** `yeta_char_art.AV_BASE`(1:1 극단 클로즈업 정본)를 임포트한다(정본 md §3 지시 · 문구 1벌).
+    인물 서술 = 캐릭터 락(`LOCK_<SLUG>` 우선). 레퍼런스를 붙이면 edits 경로로 얼굴이 고정된다(재단본을 ref로 주는 게 정석)."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from yeta_char_art import AV_STYLE   # 톤만 계승 — 프레이밍은 md BOARD:FACE_FRAME(머리 전체 판)이 대체한다(AV_FRAME_TIGHT 미사용 = 충돌 방지)
+    return ("Using the attached image as the ABSOLUTE character reference.\n\n"
+            + spec_block("FACE_FRAME") + " " + AV_STYLE + "\n" + lock_block("LOCK"))
 
 
 def build_cell(c):
@@ -208,6 +217,8 @@ def jobs():
             for k, g in enumerate(pages, 1):
                 out.append((os.path.join(OUT, f"{SLUG}_sheet{SHEET}_p{k}{tag}.png"),
                             build_sheet_grid(g, SHEET), False))
+        elif SHEET == "FACE":
+            out.append((os.path.join(OUT, f"{SLUG}_face{tag}.png"), build_face(), False))
         elif SHEET == "CELL":
             for c in cells():
                 out.append((os.path.join(OUT, f"{SLUG}_cell_{c['label'].lower()}{tag}.png"), build_cell(c), True))
@@ -220,7 +231,7 @@ def main():
     if not KEY:
         print("OPENAI_API_KEY 없음 — 캐릭터 보드 생성 생략(no-op)"); return 0
     if SHEET not in SIZES:
-        print(f"⚠️ 알 수 없는 시트 '{SHEET}' — A · B · C · D · E · F · CELL 중 하나"); return 1
+        print(f"⚠️ 알 수 없는 시트 '{SHEET}' — FACE · A · B · C · D · E · F · CELL 중 하나"); return 1
     size = SIZES[SHEET]
     if REF and not os.path.exists(REF):
         print(f"⚠️ 레퍼런스 경로 없음: {REF} — 글 락만으로 생성한다(동일성 보장 약함)", flush=True)
