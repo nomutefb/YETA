@@ -184,10 +184,34 @@ def webp(path):
         print(f"  ⚠️ webp 변환 실패(비치명): {e}", flush=True)
 
 
+def png_dims(path):
+    """PNG 폭·높이(IHDR 8바이트)만 읽는다 — 외부 의존 0(PIL·ffprobe 없이도 도는 게 이 파이프의 전제).
+    PNG가 아니거나 깨졌으면 (0, 0) = '모른다'(모르면 손대지 않는다 = 오작동보다 무해)."""
+    try:
+        with open(path, "rb") as f:
+            head = f.read(24)
+        if len(head) < 24 or head[:8] != b"\x89PNG\r\n\x1a\n" or head[12:16] != b"IHDR":
+            return 0, 0
+        return int.from_bytes(head[16:20], "big"), int.from_bytes(head[20:24], "big")
+    except Exception:
+        return 0, 0
+
+
+def is916(path):
+    """이 파일이 이미 9:16인가(±1px = trunc 짝수 보정 흡수). 모르면 True = 손대지 않는다."""
+    w, h = png_dims(path)
+    if not w or not h:
+        return True
+    return abs(w - round(h * 9 / 16)) <= 1
+
+
 def crop916(path):
-    """개별 칸 전용 — 좌우만 깎아 정확히 9:16으로. ffmpeg 없으면 원본(2:3) 유지(비치명)."""
+    """개별 칸 전용 — 좌우만 깎아 정확히 9:16으로. ffmpeg 없으면 원본(2:3) 유지(비치명).
+    ⚠ 260805 평의회 #13 — 여기서 조용히 실패하면 **2:3짜리 칸이 파일로 남고**, 아래 멱등 skip이
+      그 파일을 영구히 붙잡는다(다음 런은 '기존'이라 건너뛰고, 고치려면 유료 재생성뿐).
+      그래서 ⓐ 결과 비례를 실측해 실패를 말로 남기고 ⓑ skip 쪽에서 2:3을 발견하면 **공짜로 다시 자른다**."""
     if not shutil.which("ffmpeg"):
-        print("  ⚠️ ffmpeg 없음 — 9:16 크롭 생략(1024×1536 원본 유지)", flush=True); return
+        print("  ⚠️ ffmpeg 없음 — 9:16 크롭 생략(1024×1536 원본 유지 · ffmpeg 깔고 다시 돌리면 재생성 없이 잘린다)", flush=True); return False
     tmp = path[:-4] + "_crop.png"
     try:
         subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", path, "-vf", CROP_916, tmp],
@@ -195,6 +219,14 @@ def crop916(path):
         os.replace(tmp, path)
     except Exception as e:
         print(f"  ⚠️ 9:16 크롭 실패(비치명): {e}", flush=True)
+        try: os.path.exists(tmp) and os.remove(tmp)
+        except Exception: pass
+        return False
+    if not is916(path):
+        w, h = png_dims(path)
+        print(f"  ⚠️ 크롭 뒤에도 9:16이 아니다({w}×{h}) — 다음 런이 다시 시도한다(재생성 아님)", flush=True)
+        return False
+    return True
 
 
 def jobs():
@@ -230,7 +262,16 @@ def main():
     made = 0
     for path, prompt, crop in todo:
         if os.path.exists(path) and not FORCE:
-            print(f"skip {path}(기존)"); continue
+            # 멱등 skip — 단, **칸 파일이 아직 2:3이면 자르고 넘어간다**(평의회 #13). 크롭은 로컬 연산이라
+            # 과금 0이고, 안 하면 덜 잘린 칸이 영영 그대로 남는다(다음 런도 '기존'으로 건너뛴다).
+            if crop and not is916(path):
+                w, h = png_dims(path)
+                print(f"재크롭 {path}({w}×{h} — 9:16 아님 · 생성 없이 자르기만)", flush=True)
+                if crop916(path):
+                    webp(path)          # webp 사본도 덜 잘린 원본에서 떴으니 같이 다시 뜬다
+            else:
+                print(f"skip {path}(기존)")
+            continue
         print(f"생성 {path} …", flush=True)
         png = openai_image(prompt, size, REF)
         if not png:
