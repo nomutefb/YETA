@@ -1165,6 +1165,11 @@ name = info.get("name") or to
 if (s.get("invite") or {}).get("to") != to: sys.exit(1)   # 그새 취소(kick)·소비됨 = 판정 폐기(이중 처리 차단)
 s.pop("invite", None)
 raw = os.environ.get("VERDICT_RAW", "").strip()
+# 260804 평의회 #10: 본답장 finish()엔 있는 마커 세척이 초대 경로엔 한 줄도 없어, 모델이 <<MOOD:…>>·<<NOTE>>를 붙이면
+#   그 원문이 **초대 첫마디 버블에 그대로** 렌더됐다(게이트웨이 stripMarkers·뷰어 어디에도 하류 방어선 없음).
+#   판정 매칭 전에 선세척한다 = ACCEPT/DECLINE 판정도 마커에 안 가린다(첫 줄이 마커면 판정어를 못 읽던 잠재 오판도 같이 닫힌다).
+raw = re.sub(r"<<[^>]*>>", "", raw)
+raw = re.sub(r"<<.*$", "", raw, flags=re.S).strip()        # 닫히지 않은 여는 마커 = 그 뒤 통째로 컷(게이트웨이 stripMarkers와 같은 결)
 first, _, rest = raw.partition("\n")
 rest = rest.strip()
 fl = first.strip()

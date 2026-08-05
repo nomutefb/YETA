@@ -566,6 +566,45 @@ def check_face_bg():
 _INPUT_RE = re.compile(r'<input\b[^>]*>', re.I)
 _AC_NEED = ('autocomplete', 'autocapitalize', 'autocorrect', 'spellcheck')
 
+def check_roster_assets():
+    """로스터가 가리키는 에셋이 실존하나 — bg·avatar·mode.{bg,avatar} 실측(하드 게이트 · 260804 평의회 #7).
+
+    왜 필요한가: 세라 `bg`가 260726에 옮겨진 파일(`sera_k01.jpg`)을 **다섯 달 넘게** 가리키고 있었는데
+    어느 게이트도 그걸 안 봤다(경로 참조 게이트는 코드 안 문자열만, 얼빡 게이트는 media.json만 본다).
+    증상은 조용하다 — 매 세션 프리로드 404 1건 + manifest 도착 전/실패 시 폴백 사다리 최종 칸이 죽어
+    **그림 없는 틴트 무대**. 로스터는 값 SSOT라 여기서 한 번 훑으면 전 캐릭터가 같이 지켜진다.
+    """
+    rp = os.path.join(ROOT, 'apps', 'yeta', 'characters', 'roster.json')
+    if not os.path.exists(rp):
+        return 0
+    try:
+        roster = json.load(open(rp, encoding='utf-8'))
+    except Exception as e:
+        print('⚠️ 로스터 에셋 게이트 — roster.json 파싱 실패:', e)
+        return 0
+    bad, n = [], 0
+    for c in roster if isinstance(roster, list) else []:
+        if not isinstance(c, dict):
+            continue
+        cand = [('bg', c.get('bg')), ('avatar', c.get('avatar'))]
+        md = c.get('mode') if isinstance(c.get('mode'), dict) else {}
+        cand += [('mode.bg', md.get('bg')), ('mode.avatar', md.get('avatar'))]
+        for field, rel in cand:
+            if not rel or not isinstance(rel, str):
+                continue
+            n += 1
+            if not os.path.exists(os.path.join(ROOT, 'viewer', rel)):
+                bad.append(f"{c.get('id', '?')}.{field} = {rel}")
+    if bad:
+        print('❌ 로스터 에셋 게이트(차단) — roster.json이 없는 파일을 가리킨다 '
+              '(처방 = 실존 경로로 고치거나 파일을 되돌려라):')
+        for b in bad:
+            print('  -', b)
+        return 1
+    print(f'✅ 로스터 에셋 게이트 — bg·avatar·mode 경로 {n}건 전원 실존.')
+    return 0
+
+
 def check_autocomplete():
     """평문 텍스트 입력칸 = OS 자동완성 끔 4종 세트 하드 게이트(§🎨 · 운영자 260628).
     편집가능 <input type=text|search>가 autocomplete/autocapitalize/autocorrect/spellcheck 중 하나라도
@@ -1114,6 +1153,11 @@ def main():
             rc = 1
     except Exception as e:
         print('⚠️ 얼빡 배경 게이트 스킵:', e)
+    try:
+        if check_roster_assets() != 0:   # 로스터 에셋 실존(하드 게이트 · 260804 평의회 #7 — 세라 bg가 옮겨진 파일을 계속 가리켜 404)
+            rc = 1
+    except Exception as e:
+        print('⚠️ 로스터 에셋 게이트 스킵:', e)
     try:
         if check_autocomplete() != 0:   # 평문 텍스트칸 OS 자동완성 끔 4종(하드 게이트 — 자동완성 바 재발 차단·STAGE1b·260628)
             rc = 1
