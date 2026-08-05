@@ -12,6 +12,7 @@
   ① BASE = 세 조각 연결(순서·공백 무변) · 길이 983 박제 — 조각 편집 = 여기서 즉시 적색
   ② FRAME_1X1 = 정사각 얼굴 프레이밍 어휘 보유(다른 조각으로 새지 않았나)
   ③ 3컷 시트 프롬프트 = 톤 두 조각 계승 + 프레이밍 교체(1:1 어휘 잔존 0 · 전신/A-포즈 절 생존)
+  ④ 얼빡 정본(`yeta_char_art.AV_BASE`) 동일 분할 + `sheet=FACE`(머리 전체 판)가 톤만 계승하는지
 
 실행: `python3 tests/test_face_base.py`  (rc=0 통과 · rc=1 실패)
 """
@@ -21,7 +22,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS = os.path.join(ROOT, ".github", "scripts")
-BASE_LEN = 983   # 260803 분할 시점 실측(원문 = 260712 루시 톤 통일본)
+BASE_LEN = 983      # 260803 분할 시점 실측(원문 = 260712 루시 톤 통일본)
+AV_BASE_LEN = 1103   # 260805 분할 시점 실측(얼빡 정본 = yeta_char_art.AV_BASE)
 
 
 def load(name):
@@ -61,6 +63,21 @@ def main():
         ck(kw in sheet, "시트 프레이밍 절 생존 — " + kw)
     ck(meface.SHEET_SIZE == "1024x1536", "시트 size = 세로 1024x1536(칸 3개 × 512)")
     ck(meface.FACE_CROP == (512, 512), "얼굴 칸 크롭 = 512² (칸 높이와 동수)")
+
+    print("④ 얼빡 정본(AV_BASE) 분할 무손실 + sheet=FACE 프레이밍 교체")
+    art = load("yeta_char_art")
+    ck(art.AV_BASE == art.AV_FRAME_TIGHT + art.AV_STYLE, "AV_BASE = AV_FRAME_TIGHT + AV_STYLE")
+    ck(len(art.AV_BASE) == AV_BASE_LEN, "AV_BASE 길이 {} (실측 {})".format(AV_BASE_LEN, len(art.AV_BASE)))
+    ck("just above the eyebrows" in art.AV_FRAME_TIGHT, "극단 크롭 어휘 = AV_FRAME_TIGHT 안")
+    ck("just above the eyebrows" not in art.AV_STYLE, "톤 조각엔 크롭 어휘 없음")
+    os.environ["YETA_BOARD_SHEET"], os.environ["YETA_BOARD_SLUG"] = "FACE", "ilzin"
+    board = load("yeta_char_board")
+    fp = board.build_face()
+    ck(art.AV_STYLE in fp, "sheet=FACE = 톤(AV_STYLE) 계승")
+    ck("just above the eyebrows" not in fp, "sheet=FACE = 극단 크롭 미포함(md FACE_FRAME이 대체)")
+    for kw in ("whole head fills the square frame", "bridge of the nose"):
+        ck(kw in fp, "머리 전체 프레이밍 절 생존 — " + kw)
+    ck(board.SIZES.get("FACE") == "1024x1024", "FACE size = 1:1 1024²")
 
     print("\n" + ("통과 — 실패 0" if not fails else "실패 {}건: {}".format(len(fails), " · ".join(fails))))
     return 1 if fails else 0

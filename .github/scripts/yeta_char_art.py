@@ -50,10 +50,13 @@ BASE = ("Fantasy character portrait, polished Korean manhwa / webtoon key-art il
 # ⚠ run#1 반성: 스타일 어휘를 위 BASE(판타지 반신 초상)에서 통째로 계승했더니 결이 어긋났다 —
 #   반실사 글로시 + 번개·아우라·입자 범벅에 마이크·손·어깨까지 들어가 얼빡도 아니었다(운영자 "루시 얼빡 말고는 다시 만들어야 된다").
 #   그래서 계승 대상을 **BASE가 아니라 견본 프사(lucy_face.webp) 실물**로 바꿔 적는다 = 납작한 애니 셀 · 파스텔 · FX 0 · 얼굴만.
-AV_BASE = ("Extreme close-up face shot — the face fills the entire square frame edge to edge with no margin, "
+# 260805 2분할: **프레이밍**(AV_FRAME_TIGHT)과 톤(AV_STYLE)을 갈랐다 — 얼빡을 다른 프레이밍으로 뽑는 경로
+# (`yeta_char_board.py` sheet=FACE = 머리 전체 판 · 운영자 260805 기준)가 톤만 계승하고 프레이밍만 갈아끼울 수 있게.
+# AV_BASE = 두 조각 연결 = **종전 문자열과 바이트 동일**(회귀 0 · tests/test_face_base.py가 강제).
+AV_FRAME_TIGHT = ("Extreme close-up face shot — the face fills the entire square frame edge to edge with no margin, "
            "cropped through the top of the head just above the eyebrows and cut just below the lower lip, "
-           "NO shoulders, NO neck, NO hands, NO props or instruments, NO scenery or objects in frame — face only, "
-           "perfectly square 1:1, one single original fictional character, "
+           "NO shoulders, NO neck, NO hands, NO props or instruments, NO scenery or objects in frame — face only, ")
+AV_STYLE = ("perfectly square 1:1, one single original fictional character, "
            "clean flat anime illustration with crisp dark line art and soft cel shading — like a modern anime key visual, "
            "NOT semi-realistic, NOT photoreal, NOT glossy painterly rendering, NO sweaty skin, "
            "matte pastel colour palette, soft airbrushed blush across the cheeks and nose, "
@@ -62,6 +65,7 @@ AV_BASE = ("Extreme close-up face shot — the face fills the entire square fram
            "NO lightning, NO sparks, NO glowing particles, NO magic effects, NO neon streaks, NO heavy rim light, "
            "keep the described gender and apparent age exactly — the crop hides hair length and clothing, so read the description, not the framing, "   # 260725 run#1 실측: 세라(19세 여성)가 남성 얼굴로 나왔다 — 얼빡 크롭이 성별·나이 단서(포니테일·의상)를 지워 프롬프트 표류
            "no text, no caption, no watermark, no logo, no border. Character — ")
+AV_BASE = AV_FRAME_TIGHT + AV_STYLE   # 조립본 = 종전 AV_BASE 원문(순서·공백 무변)
 
 # 10인 판타지 초상(카드 서사 각색 · 포인트색 아우라 = roster color) — grounded 인물도 '낮게 새는 판타지'로 승격
 CHARS = [
