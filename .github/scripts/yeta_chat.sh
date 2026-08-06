@@ -92,6 +92,9 @@ r2put() {   # ETag 有 = 조건부 put(교차 writer 덮어쓰기 차단) · CLI
     if printf '%s' "$_e" | grep -qiE 'PreconditionFailed|At least one of the pre-conditions'; then echo "  ⚠️ r2put 경합(ETag 불일치) — fresh 재시도 필요"; return 1; fi
     printf '%s' "$_e" | grep -qiE 'Unknown options|Unrecognized|--if-match' || { printf '%s\n' "$_e" >&2; return 1; }
   fi
+  # strict 게이트(평의회 260806 race-r2 MED) — 백그라운드 보충(refill_bg)은 조건부 put이 불가하면(ETag 파싱 실패·CLI --if-match 미지원 드리프트) 포기한다.
+  #   무조건 put 폴백이 bg에서 돌면 스테일 사본이 방금 착지한 본선 답장·유저 턴을 되덮는 파괴 경로(LWW) — bg는 '배치 소실 = 계약된 fail-soft'라 폴백의 가용성 근거가 없다.
+  if [ "${R2PUT_STRICT:-0}" = "1" ]; then echo "  ⚠️ r2put strict — 조건부 put 불가(ETag 부재·CLI 미지원) = 포기(배치 소실 fail-soft)"; return 1; fi
   aws s3 cp "$SESS" "s3://${YETA_R2_BUCKET}/${KEY}" --endpoint-url "$EP" --content-type application/json --only-show-errors
 }
 
@@ -1052,6 +1055,7 @@ ${line}")"
 # ── 생성 공용(본답장 + 초대 판정) — $1=prompt · env MODEL/EFF/SAFE/PERSONA · OUT/GEN_S 설정 · rc 0=성공 ──
 gen_out() {
   local prompt="$1" inline_delay=15 attempt rc=1 _eff_dropped=0 _fb_n=0 _fb_rules=""
+  local _err="${GEN_ERR:-/tmp/yeta.err}" _ml="${GEN_METER_LAST:-/tmp/yeta_meter_last.json}"   # 임시경로 노브(260806 refill_bg 격리) — 백그라운드 보충이 본답장 err·계측 파일을 덮지 않게 서브셸이 전용본 지정 · 미설정 = 종전 경로(전 호출처 무변경)
   FRAME_BREAK=0   # 이 생성이 프레임이탈(콘텐츠 거절) 소진으로 실패했는지 — 인캐릭터 이탈 폴백 스위치(260714)
   local _dis="Write,Edit,NotebookEdit,Bash,Task,WebFetch,WebSearch,Read,Glob,Grep" _mt=1
   local _allow=() _tools=(--tools "")
@@ -1066,15 +1070,15 @@ gen_out() {
   local _sys=("${SYS_ARGS[@]}")
   if is_kimi "$MODEL" && [ "${YETA_SYS:-1}" != "0" ]; then _sys=(--system-prompt "$YSF"); fi   # 책 빼기(260721) — kimi 종량제 턴 한정 시스템 슬롯 교체(상단 SYS_ARGS 주석 참조)
   fb_sys "${_sys[0]:-}"   # 관찰축 각인(Q.61) — 이 턴의 실제 모드를 이탈 리포트에 싣는다
-  T0=$SECONDS; GEN_T0MS="$(date +%s%3N)"; OUT=""; TOK_I=0; TOK_O=0; TOK_CR=0; TOK_CW=0; rm -f /tmp/yeta_meter_last.json   # 이 생성의 실측 토큰(METER_LAST) — finish가 답장 턴 tok으로 박제(뷰어 좌상단 미터 · 운영자 260709) · GEN_T0MS = 계기판 lat(픽업 w·첫문장 f) 기준점(260714)
+  T0=$SECONDS; GEN_T0MS="$(date +%s%3N)"; OUT=""; TOK_I=0; TOK_O=0; TOK_CR=0; TOK_CW=0; rm -f "$_ml"   # 이 생성의 실측 토큰(METER_LAST) — finish가 답장 턴 tok으로 박제(뷰어 좌상단 미터 · 운영자 260709) · GEN_T0MS = 계기판 lat(픽업 w·첫문장 f) 기준점(260714)
   for attempt in $(seq 1 "$INLINE_TRIES"); do
     # kimi 턴 = 키미 Anthropic 호환 게이트 리라우트(운영자 260719 · 260730 구독 엔드포인트로 기본값 전환) — 파이프 그룹 = 서브셸이라 주입·unset이 이 호출에만 국소(다음 턴 Claude·폴오버 체인 무오염) · AUTH_TOKEN+API_KEY 겸장 = CLI 판독 축 이중 커버
     OUT="$(printf '%s' "$prompt" | { if is_kimi "$MODEL"; then export ANTHROPIC_BASE_URL="${KIMI_BASE_URL:-https://api.kimi.com/coding/}" ANTHROPIC_AUTH_TOKEN="${KIMI_API_KEY:-}" ANTHROPIC_API_KEY="${KIMI_API_KEY:-}"; unset CLAUDE_CODE_OAUTH_TOKEN; fi
-          METER_SRC=yeta METER_REF="$PERSONA" METER_MODEL="$MODEL" METER_EFFORT="$EFF" METER_LAST=/tmp/yeta_meter_last.json claude_meter 240 \
+          METER_SRC=yeta METER_REF="$PERSONA" METER_MODEL="$MODEL" METER_EFFORT="$EFF" METER_LAST="$_ml" claude_meter 240 \
           --model "$MODEL" $SAFE "${_sys[@]}" "${EFF_ARGS[@]}" "${_tools[@]}" \
           --disallowedTools "$_dis" "${_allow[@]}" \
           --max-turns "$_mt"; } \
-          2> /tmp/yeta.err)"
+          2> "$_err")"
     rc=$?
     if [ $rc -eq 0 ] && [ -n "${OUT// }" ]; then
       # ⚠️ 쿼터 한도 문구가 rc=0 정상 출력으로 오는 케이스(운영자 260709 실측 — "You've hit your weekly limit…"가 대사로 박제):
@@ -1098,30 +1102,30 @@ gen_out() {
       break
     fi
     # effort 플래그 거부 폴백(1회) — sonnet-5 는 호환이 정설이나 CLI/모델 변동 대비(아이데이션①④ 절충)
-    if [ ${#EFF_ARGS[@]} -gt 0 ] && [ "$_eff_dropped" = 0 ] && grep -qiE 'effort|thinking' /tmp/yeta.err 2>/dev/null; then   # thinking 추가(260719) — kimi 호환 게이트가 effort→thinking 계열 문구로 거부하는 케이스 흡수
+    if [ ${#EFF_ARGS[@]} -gt 0 ] && [ "$_eff_dropped" = 0 ] && grep -qiE 'effort|thinking' "$_err" 2>/dev/null; then   # thinking 추가(260719) — kimi 호환 게이트가 effort→thinking 계열 문구로 거부하는 케이스 흡수
       echo "  ⚠️ effort 거부 추정 — effort 빼고 재시도"; EFF_ARGS=(); EFF=""; _eff_dropped=1; continue
     fi
     # --tools 플래그 거부 폴백(1회) — 구버전 CLI 드리프트: 스키마 절감만 포기(권한층 _dis 가 그물) · ⚠️ 아래 system-prompt 폴백보다 먼저(둘 다 'unknown option' 매칭 — --tools 문자열로 선별)
-    if [ ${#_tools[@]} -gt 0 ] && grep -qiE 'unknown option|unrecognized' /tmp/yeta.err 2>/dev/null && grep -q -- '--tools' /tmp/yeta.err 2>/dev/null; then
+    if [ ${#_tools[@]} -gt 0 ] && grep -qiE 'unknown option|unrecognized' "$_err" 2>/dev/null && grep -q -- '--tools' "$_err" 2>/dev/null; then
       echo "  ⚠️ --tools 플래그 거부 추정(CLI 버전 드리프트) — 스키마 절감 빼고 재시도"; _tools=(); continue
     fi
     # system-prompt 플래그 거부 폴백(1회) — 주간 캐시된 구버전 CLI 가 --system-prompt/--append-system-prompt 를 모르면 하드다운 대신 프레임 드롭(가드는 유지 = L0 그물 존치)
-    if [ ${#_sys[@]} -gt 0 ] && grep -qiE 'unknown option|unrecognized|--(append-)?system-prompt' /tmp/yeta.err 2>/dev/null; then
+    if [ ${#_sys[@]} -gt 0 ] && grep -qiE 'unknown option|unrecognized|--(append-)?system-prompt' "$_err" 2>/dev/null; then
       echo "  ⚠️ system-prompt 플래그 거부 추정(CLI 버전 드리프트) — 프레임 빼고 재시도"; _sys=(); fb_sys ""; is_kimi "$MODEL" || SYS_ARGS=(); continue   # ⚠️ kimi 거부(--system-prompt) = 로컬만 드롭 — 전역 SYS_ARGS(--append 축)까지 비우면 웜 후속 Claude 턴 프레임 무음 소실(평의회C 발견1)
     fi
-    if ! is_kimi "$MODEL" && claude_failover "$OUT$(cat /tmp/yeta.err 2>/dev/null)"; then continue; fi   # 서브 미주입 = 자동 no-op(본업 보호) · kimi = 구독 체인 무관(260719)
-    if [ "$attempt" -lt "$INLINE_TRIES" ] && is_transient "$OUT$(cat /tmp/yeta.err 2>/dev/null)"; then
+    if ! is_kimi "$MODEL" && claude_failover "$OUT$(cat "$_err" 2>/dev/null)"; then continue; fi   # 서브 미주입 = 자동 no-op(본업 보호) · kimi = 구독 체인 무관(260719)
+    if [ "$attempt" -lt "$INLINE_TRIES" ] && is_transient "$OUT$(cat "$_err" 2>/dev/null)"; then
       echo "  ⏳ 일시 과부하(${attempt}/${INLINE_TRIES}) — ${inline_delay}s 후 재시도"
       sleep "$inline_delay"; inline_delay=$((inline_delay * 2)); continue
     fi
     break
   done
   GEN_S=$((SECONDS - T0)); GEN_ENDMS="$(date +%s%3N)"   # 생성 종료 ms = 겹침 60% 분모 고정점(평의회 260717 — finish 지연이 분모에 안 섞이게)
-  if [ -s /tmp/yeta_meter_last.json ] && command -v jq >/dev/null 2>&1; then   # 실측 usage 회수(계측 실패 = 0 유지 = tok 미박제 · fail-soft)
-    TOK_I="$(jq -r '.in // 0' /tmp/yeta_meter_last.json 2>/dev/null || echo 0)"
-    TOK_O="$(jq -r '.out // 0' /tmp/yeta_meter_last.json 2>/dev/null || echo 0)"
-    TOK_CR="$(jq -r '.cr // 0' /tmp/yeta_meter_last.json 2>/dev/null || echo 0)"   # 캐시 히트(Q.36 누적 사용량 — kimi 실비 환산 분리축)
-    TOK_CW="$(jq -r '.cw // 0' /tmp/yeta_meter_last.json 2>/dev/null || echo 0)"   # 캐시 적재(260723 — 클로드 턴 실부피 가시화: i=2 착시 해소 · 구독 쿼터 소모 근사)
+  if [ -s "$_ml" ] && command -v jq >/dev/null 2>&1; then   # 실측 usage 회수(계측 실패 = 0 유지 = tok 미박제 · fail-soft)
+    TOK_I="$(jq -r '.in // 0' "$_ml" 2>/dev/null || echo 0)"
+    TOK_O="$(jq -r '.out // 0' "$_ml" 2>/dev/null || echo 0)"
+    TOK_CR="$(jq -r '.cr // 0' "$_ml" 2>/dev/null || echo 0)"   # 캐시 히트(Q.36 누적 사용량 — kimi 실비 환산 분리축)
+    TOK_CW="$(jq -r '.cw // 0' "$_ml" 2>/dev/null || echo 0)"   # 캐시 적재(260723 — 클로드 턴 실부피 가시화: i=2 착시 해소 · 구독 쿼터 소모 근사)
   fi
   [ $rc -eq 0 ] && [ -n "${OUT// }" ] && return 0
   return 1
@@ -1830,6 +1834,38 @@ ambient_refill() {
   return 0
 }
 
+# ── 보충 배치 백그라운드 격리(운영자 260806 "두번째 대화가 개느리게 옴") ──
+# 왜: 종전엔 답장 직후 notice_refill(소넷·effort max·뉴스 RSS 왕복)·ambient_refill(오퍼스·effort max)을 **동기로** 돌렸다.
+#   그 수 분 동안 웜 루프가 R2 폴을 못 돌고, 유저의 다음 메시지가 발사한 새 런도 concurrency 큐(yeta-chat-main)에 묶여
+#   두 번째 답장이 보충이 끝날 때까지 통째로 대기했다. 최악 = 자정 지나 첫 대화(오늘 뉴스 無 + 새 방 사건 큐 空 = 둘 다 발동 → 수 분 침묵 · 260806 새벽 3시 실사고).
+#   ("사용자 대기 0"이던 종전 주석의 전제는 유저가 웜 창 안에 바로 답하는 순간 깨진다 — 보충 중엔 픽업 자체가 없다.)
+# 격리 계약: ① SESS·SESS_ETAG 전용본(/tmp/yeta_sess_bg.json) — 웜 폴·finish가 읽는 본선 세션 파일 무접촉.
+#   ② gen_out 임시경로 전용본(GEN_ERR/GEN_METER_LAST) — 본답장의 err 판독·토큰 박제 무오염.
+#   ③ 세션 쓰기는 store들의 ETag 조건부 put + R2PUT_STRICT(조건부 불가 = put 포기) — 본선과 경합 시 그 배치 결과만 소실.
+#      ⚠️ 역방향 주의(평의회 260806): CAS는 나중에 put하는 쪽이 진다 — 본선의 무재시도 fail-soft put(flee_block·barge_check·ambient_fire)이
+#      bg put 직후에 착지 시도하면 그쪽이 rc1로 소실될 수도 있다(종전에도 게이트웨이 casPut과 같은 확률 축 존재 · 전부 다음 턴 자연 재트리거로 유계).
+#   ④ 출력 = 파이프 대신 파일 → 러너 본체가 끝나도 백그라운드가 스텝 stdout을 붙들고 잡을 지연시키지 않는다(로그는 다음 발사·세션 종료 때 회수 출력).
+#   ⑤ 직전 배치 진행 중 = 스킵 — 프롬프트 게이트가 멱등(오늘분 有·큐 충분 = LLM 0)이라 다음 답장 뒤에 자연 만회.
+#      (kill -0 판정 = PID 재활용 오판 가능성 이론상 존재 — 55분 세션·VM 격리라 확률 극소·결과도 배치 스킵 fail-soft = 감수 · 평의회 LOW)
+#   ⑥ 배치 예산 캡(INLINE_TRIES=2) + 웜 만료 시 폴링 연장(메인 루프) — 배치가 잡 종료에 중도 킬돼 쿼터만 태우는 반복 차단(평의회 BLOCK 해소).
+#   ⑦ 쿼터 신호 전용본(NOMUTE_QUOTA_SIGNAL) — 배치발 쿼터가 활성 계정 자동 승격 카운트에 섞이지 않게 분리.
+REFILL_LOG=/tmp/yeta_refill.log
+refill_bg() {
+  { [ "${NT_ON:-1}" = "1" ] || [ "$AMB_ON" = "1" ]; } || return 0
+  if [ -n "${REFILL_PID:-}" ] && kill -0 "$REFILL_PID" 2>/dev/null; then return 0; fi
+  if [ -s "$REFILL_LOG" ]; then echo "  ── 지난 보충 배치 로그 ──"; sed 's/^/  /' "$REFILL_LOG"; fi
+  (
+    SESS=/tmp/yeta_sess_bg.json; SESS_ETAG=""; GEN_ERR=/tmp/yeta_bg.err; GEN_METER_LAST=/tmp/yeta_meter_bg.json
+    R2PUT_STRICT=1; INLINE_TRIES=2; NOMUTE_QUOTA_SIGNAL=/tmp/yeta_bg_quota_signal   # 계약 ③⑥⑦ — strict CAS · 배치 예산 캡(폴오버 깊이 2 = 보충은 기회주의 축) · 쿼터 신호 격리
+    r2get >/dev/null 2>&1 || exit 0   # notice_prompt/ambient_prompt 가 읽는 $SESS 전용본 신선화(실패 = 이번 배치 생략 = fail-soft)
+    [ "${NT_ON:-1}" = "1" ] && notice_refill
+    [ "$AMB_ON" = "1" ] && ambient_refill
+  ) > "$REFILL_LOG" 2>&1 &
+  REFILL_PID=$!
+  echo "  🔄 보충 배치(뉴스·주변 사건) 백그라운드 발사 — 웜 폴링 즉시 재개"
+  return 0
+}
+
 # 답장 **생성 전**에 호출(260726 순서 역전) — 큐에서 하나 꺼내 sys(kind=amb) 턴을 대화에 심고, 그 텍스트를 /tmp/yeta_amb_now 에 남긴다.
 # 왜 앞으로 옮겼나: 종전(답장 push 후)엔 화면이 [유저 → 답장 → 사건]이라 **사건을 아무도 안 받았다**. 유저가 다음 말을 걸기 전엔 지문 한 줄이 고아로 남고,
 #   그게 운영자가 본 "딴소리"의 실체다(관련도를 네 번 고쳐도 재발한 이유 = 원인이 생성 품질이 아니라 받는 사람의 부재였다).
@@ -2329,7 +2365,7 @@ ${CONTRACT1}${GROUP_RULE}${ME_RULE}
   draft_clear   # 확정 반영 뒤 회수(뷰어 = 세션 변경 먼저 픽업 → 버블 스왑 → 잔여 draft 소거)
   # 자율 비트(GB=1) = 유저가 부른 답이 아니다 → 푸시·PTT(유료 TTS)·난입·주변사건 전부 생략(알림 도배·과금·연출 겹침 차단). 유저 턴이 부른 답만 종전 후처리를 태운다.
   [ "$_did_reply" = 1 ] && [ "$GB" = "1" ] && echo "yeta: 자율 비트 반영(${#OUT}자 · ${GEN_S}s · ${GB_N}/${GB_BEATS})"
-  [ "$_did_reply" = 1 ] && [ "$GB" != "1" ] && { _wait_s="?"; case "$ANCHOR_TS" in ""|*[!0-9]*) : ;; *) _wait_s=$(( ($(date +%s%3N) - ANCHOR_TS) / 1000 ));; esac; echo "yeta: 답장 완료(${#OUT}자 · 생성 ${GEN_S}s · 유저 메시지 도착→완료 ${_wait_s}s)"; push_reply "$OUT"; [ "$PTT" = "1" ] && ptt_voice "$OUT"; barge_check; [ "${NT_ON:-1}" = "1" ] && notice_refill; [ "$AMB_ON" = "1" ] && ambient_refill; }   # 주변 사건 보충만(260726 · 축이 꺼져 있으면 생성 자체를 안 탄다 = LLM 쿼터 0) — 심기(ambient_fire)는 답장 **생성 전**으로 이관해 사건이 답장에 받쳐지게 했다. 보충은 종전대로 답장 뒤(이번 턴 대화까지 반영해 뽑고, 사용자 대기 0)
+  [ "$_did_reply" = 1 ] && [ "$GB" != "1" ] && { _wait_s="?"; case "$ANCHOR_TS" in ""|*[!0-9]*) : ;; *) _wait_s=$(( ($(date +%s%3N) - ANCHOR_TS) / 1000 ));; esac; echo "yeta: 답장 완료(${#OUT}자 · 생성 ${GEN_S}s · 유저 메시지 도착→완료 ${_wait_s}s)"; push_reply "$OUT"; [ "$PTT" = "1" ] && ptt_voice "$OUT"; barge_check; refill_bg; }   # 보충(뉴스·주변 사건)은 백그라운드 배치(refill_bg · 260806) — 종전 동기 실행이 웜 폴링을 수 분 막아 두 번째 답장이 그만큼 늦던 것 해소. 심기(ambient_fire)는 답장 **생성 전** 유지(260726)
   return 0
 }
 
@@ -2355,11 +2391,23 @@ while :; do
     extract_mat
     if [ "$mat" != "NOPENDING" ] && [ -n "$mat" ]; then got=1; break; fi
   done
-  [ "$got" -eq 1 ] || { echo "웜 대기 만료(${_wait_budget}s 무메시지$([ "$answered" = 0 ] && echo " · 프리웜")) — 조용히 종료(큐 양보)"; break; }
+  if [ "$got" -ne 1 ]; then
+    # 보충 배치 착지 대기(평의회 260806 BLOCK 해소) — 배치 진행 중에 종료하면 잡 정리가 배치를 중도 킬해 소넷·오퍼스 쿼터만 태우고
+    # 보충이 영영 미착지(단발 대화 = 매 답장마다 재점화·재킬 반복 · 정확히 자정 직후 패턴). ⚠️ plain wait 금지 —
+    # 폴링을 멈추면 그 사이 도착한 메시지가 concurrency 큐에 걸려 원버그 재현 → 픽업 능력을 유지한 채 폴링 창만 연장(상한 = SESSION_MAX 종전 가드).
+    if [ -n "${REFILL_PID:-}" ] && kill -0 "$REFILL_PID" 2>/dev/null; then
+      echo "웜 대기 만료 — 보충 배치 진행 중 = 폴링 연장(메시지 픽업 유지 · 상한 = 세션 예산)"
+      continue
+    fi
+    echo "웜 대기 만료(${_wait_budget}s 무메시지$([ "$answered" = 0 ] && echo " · 프리웜")) — 조용히 종료(큐 양보)"; break
+  fi
   [ $((SESSION_MAX - (SECONDS - SESSION_START))) -lt "$PER_TURN_BUDGET" ] && { echo "잔여 예산 부족 — 다음 dispatch 에 위임"; break; }
   process_turn; r=$?
   [ "$r" = 1 ] && exit 1
   [ "$r" = 0 ] && answered=1   # 웜 중 첫 답장 = 이 런은 더 이상 프리웜이 아니다(유예 180s로 승격)
 done
+if [ -s "${REFILL_LOG:-}" ] && ! { [ -n "${REFILL_PID:-}" ] && kill -0 "$REFILL_PID" 2>/dev/null; }; then
+  echo "  ── 마지막 보충 배치 로그 ──"; sed 's/^/  /' "$REFILL_LOG"   # 완주한 마지막 배치의 로그 최종 회수(다음 런은 새 VM = /tmp 소멸이라 여기가 마지막 기회 · 진행 중이면 미회수 감수)
+fi
 echo "yeta: 웜 세션 종료(총 $((SECONDS - SESSION_START))s)"
 exit 0
