@@ -132,7 +132,7 @@ const css = `
 
 // ── 상태 ──
 let dlg = null, cur = null, ringT = 0, vibT = 0, toneT = 0, audio = null, actx = null;
-let vapiSdk = null, vapiInst = null, vapiPub = null, webTick = 0, webSec = 0;   // 보이스톡(Vapi Web SDK — 운영자 목업 이식 260705)
+let vapiSdk = null, vapiInst = null, vapiPub = null, vapiSpeed = 0, webTick = 0, webSec = 0;   // 보이스톡(Vapi Web SDK — 운영자 목업 이식 260705) · vapiSpeed = 말 속도 노브(op vapikey 거울 · 0=미설정)
 const fmtSec = s => String(s / 60 | 0).padStart(2, '0') + ':' + String(s % 60 | 0).padStart(2, '0');
 
 const seen = () => { try { return +localStorage.getItem(SEEN_KEY) || 0; } catch { return 0; } };
@@ -271,11 +271,19 @@ function vapiPreload() {   // 벨 시점 = 키 fetch + SDK import 백그라운�
   if (vapiPreloading) return vapiPreloading;
   vapiPreloading = (async () => {
     try {
-      if (!vapiPub) { const r = await yApi('vapikey').catch(() => null); if (r && r.ok && r.pub) vapiPub = r.pub; }
+      if (!vapiPub) { const r = await yApi('vapikey').catch(() => null); if (r && r.ok && r.pub) { vapiPub = r.pub; vapiSpeed = +r.speed || 0; } }   // speed = Pages env YETA_VOICE_SPEED 거울(0=미설정 = 오버라이드 생략)
       if (!vapiSdk) vapiSdk = (await import('https://esm.sh/@vapi-ai/web')).default;
     } catch {}
   })();
   return vapiPreloading;
+}
+function webOverrides(call) {   // 말 속도 오버라이드 — 노브 미설정(vapiSpeed 0)이면 undefined = start() 종전 1인자 호출과 동일.
+  // Vapi voice = provider 판별 유니온이라 speed 단독 전송 불가 → roster "el:<id>"에서 voiceId 동반(서버 op phone 과 같은 계약).
+  const pid = (typeof YSESS !== 'undefined' && YSESS && (YSESS.cur || YSESS.persona)) || '';
+  const p = (typeof yPersona === 'function' && yPersona(pid)) || {};
+  const v = String(call.voice || p.voice || '');
+  if (!vapiSpeed || !v.startsWith('el:')) return undefined;
+  return { voice: { provider: '11labs', voiceId: v.slice(3), speed: vapiSpeed } };
 }
 async function webAccept(call) {
   const st = dlg.querySelector('#ycallStatus');
@@ -300,7 +308,7 @@ async function webAccept(call) {
     vapiInst.on('speech-end', () => { if (webTick) st.textContent = fmtSec(webSec); });
     vapiInst.on('call-end', () => ycallNavClose());
     vapiInst.on('error', e => { clearTimeout(guard); fail((e && (e.errorMsg || e.error || e.message)) || '연결 오류'); });
-    await vapiInst.start(call.assistant);
+    await vapiInst.start(call.assistant, webOverrides(call));   // 2인자 = assistantOverrides(말 속도 · 노브 미설정이면 undefined = 종전 호출과 동일)
   } catch (e) {
     clearTimeout(guard); fail((e && e.message) || '알 수 없는 오류');
   }
