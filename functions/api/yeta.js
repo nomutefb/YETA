@@ -18,8 +18,8 @@
 //   voice {key}                    : 통화 음성 스트림 — 비공개 버킷 voice/ 만(대사=대화 내용 → 공개 버킷 금지 · 동일출처 게이트)
 //   stt   {audio}                  : 무전기 STT 폴백(base64 webm/ogg → 텍스트) — iOS 설치형 PWA 는 Web Speech 불가(실측 260704)
 //                                    → Workers AI Whisper(env.AI 바인딩 게이트 · 미설정 501 = 뷰어가 타이핑 폴백 안내)
-//   phone {}                       : ☎️ 실전화(PSTN·Vapi) 스캐폴드 — 등록 번호로 실제 발신(⚠️분당 과금 · env 3종 게이트 · 일 상한 기본 2)
-//   vapikey {}                     : 보이스톡(브라우저 통화 · Vapi Web SDK) 공개키 — env VAPI_PUBLIC_KEY(공개 축 · Origins 제한 권장)
+//   phone {}                       : ☎️ 실전화(PSTN·Vapi) 스캐폴드 — 등록 번호로 실제 발신(⚠️분당 과금 · env 3종 게이트 · 일 상한 기본 2 · 말 속도 = YETA_VOICE_SPEED)
+//   vapikey {}                     : 보이스톡(브라우저 통화 · Vapi Web SDK) 공개키 — env VAPI_PUBLIC_KEY(공개 축 · Origins 제한 권장) + speed(말 속도 노브 거울)
 //   calllog {}                     : 🩺 통화 진단 — Vapi 메타데이터만(상태·종료사유·비용 — transcript/PII 반환 금지)
 //   tune  {persona, g[16]}         : 캐릭터 성향 게이지(L2 · 숫자 배열만 = 프롬프트 주입 차단)
 //   me    {call, about}            : 유저 프로필(호칭+소개 · "AI가 나를 부르는 법") — 전 방 공유 · stripMarkers(고정점)+캡(러너가 비신뢰 격리 주입) · 서버 관리 필드(avatar) 보존
@@ -32,7 +32,8 @@
 // 게이트: 무인증 공개(originOk=CSRF만 · Access 미부착) · 채팅 상한 없음(운영자 260706 폐지 — quota 카운터는 관측용, 소비처 없음·후속 users.cap 연동 후보) · 유료 축(ring/phone + 키미 다이얼 = 문샷 종량제 실비)만 일 상한(키미 = Q.40 260723).
 // env: GH_TOKEN(Actions write) · YETA_R2(R2 바인딩) · YETA_PIN_ADMIN(슈퍼관리자 PIN — 설정 SET 강제) · YETA_CALL_MAX_PER_DAY(선택·기본 3 — 유료 TTS 가드)
 //      AI(선택 · Workers AI 바인딩 = op stt) · VAPI_API_KEY+VAPI_PHONE_ID+YETA_PHONE_TO(선택 3종 = op phone · 번호는 시크릿 — 코드 박제 금지)
-//      YETA_PHONE_MAX_PER_DAY(선택·기본 2 — 실전화 분당 과금 가드) · YETA_KIMI_MAX_USD_PER_DAY(선택·기본 2 — 키미 종량제 일일 실비 방파제 USD · 0=무제한 · Q.40).
+//      YETA_PHONE_MAX_PER_DAY(선택·기본 2 — 실전화 분당 과금 가드) · YETA_KIMI_MAX_USD_PER_DAY(선택·기본 2 — 키미 종량제 일일 실비 방파제 USD · 0=무제한 · Q.40)
+//      YETA_VOICE_SPEED(선택·기본 미설정=오버라이드 없음 — 바피 통화 말 속도 0.7~1.2 · 1 미만 = 느리게 · phone/vapikey 공용 · 260808).
 const REPO = 'muteno/yeta';
 const ID_RE = /^[a-z0-9_-]{1,24}$/;
 const KEY = 'sessions/main.json';
@@ -54,6 +55,10 @@ const kimiSpentUsd = (sess) => {   // 오늘(KST) 키미 계열 실비 — usage
   if (!ud || ud.d !== new Date(Date.now() + 9 * 3600e3).toISOString().slice(2, 10).replace(/-/g, '')) return 0;   // 날짜 불일치 = 지난 버킷 = 오늘 0
   return Object.entries(KIMI_COST).reduce((s, [m, r]) => { const v = (ud.m || {})[m]; return v ? s + ((v.i || 0) * r[0] + (v.cr || 0) * r[1] + (v.o || 0) * r[2]) / 1e6 : s; }, 0);
 };
+// ── 바피 통화 말 속도 노브(운영자 260808 "말이 지나치게 빠르다") — 종전엔 레포가 speed 를 한 번도 안 보내서 조절 지점이 0이었다(대시보드 단독 SSOT) ──
+//   ElevenLabs speed 유효범위 0.7~1.2(기본 1.0 · 벗어난 값 = Vapi 400) → 클램프. 1 미만 = 느리게.
+//   미설정·0·오타 = 0 = **오버라이드 미부착**(종전 요청 바디와 바이트 동일 = 기본 무위험) → 켜는 건 Pages env 한 줄.
+const voiceSpeed = (v) => { const n = parseFloat(v ?? ''); return Number.isFinite(n) && n > 0 ? Math.min(1.2, Math.max(0.7, n)) : 0; };
 const kimiGate = (env, sess) => {   // 초과 = 안내 객체(호출부 429) / 미달 = null — send·attach·retry 3경로 공용
   const c0 = parseFloat(env.YETA_KIMI_MAX_USD_PER_DAY ?? '2');
   const cap = Number.isFinite(c0) ? c0 : 2;   // 빈값·오타 = 보수 기본 2(ring 동형) · 0 = 명시적 무제한
@@ -96,7 +101,7 @@ export async function onRequestPost({ request, env }) {
   if (op === 'vapikey') {   // 보이스톡(브라우저 실시간 통화 · Vapi Web SDK) 공개키 — PUBLIC key = 클라이언트 설계상 공개 가능 축.
     // ⚠️ 남용 가드는 Vapi 대시보드에서: 이 Public key 의 Origins 를 yeta.soong.kr 로 제한 권장(기본 All domains = 아무 사이트나 통화 과금 가능).
     if (!env.VAPI_PUBLIC_KEY) return json({ error: '보이스톡 미설정 — Pages env VAPI_PUBLIC_KEY 필요', setup: true }, 501);
-    return json({ ok: true, pub: env.VAPI_PUBLIC_KEY });
+    return json({ ok: true, pub: env.VAPI_PUBLIC_KEY, speed: voiceSpeed(env.YETA_VOICE_SPEED) });   // speed = 말 속도 노브(0=미설정 → 뷰어가 오버라이드 생략)
   }
 
   // 프리웜 — 세션·R2 안 건드리고 워크플로만 선기동(빈 런은 NOPENDING 웜대기 = 다음 메시지 즉답 준비).
@@ -368,13 +373,20 @@ export async function onRequestPost({ request, env }) {
     try { roster = await rc.json(); } catch { return json({ error: '로스터 파싱 실패(raw)' }, 502); }
     const ch = Array.isArray(roster) ? roster.find(c => c.id === persona) : null;
     if (!ch || !ch.phone) return json({ error: '이 캐릭터는 아직 전화 미지원 — 프리미엄(전용 음색+phone 등재) 캐릭터만' }, 409);
+    // 말 속도 오버라이드 — env YETA_VOICE_SPEED 있을 때만 부착(미설정 = 아래 바디가 종전과 동일).
+    //   Vapi voice 는 provider 판별 유니온이라 speed 단독 전송이 안 된다 → roster "el:<id>"에서 provider·voiceId 를 동반 복원.
+    //   ⚠️ 부착 = voiceId 도 레포가 지정한다는 뜻 → 대시보드 assistant 가 다른 보이스를 쓰고 있으면 roster 쪽으로 덮인다(= 드리프트 봉합이 의도).
+    const vcall = { assistantId: ch.phone, phoneNumberId: env.VAPI_PHONE_ID, customer: { number: env.YETA_PHONE_TO } };
+    const vsp = voiceSpeed(env.YETA_VOICE_SPEED);
+    if (vsp && String(ch.voice || '').startsWith('el:'))
+      vcall.assistantOverrides = { voice: { provider: '11labs', voiceId: String(ch.voice).slice(3), speed: vsp } };
     // Vapi 아웃바운드 — 예외/에러바디 방어(미방어 시 Function throw = Cloudflare 생 502 자폭 · 국제발신 차단 사유도 여기서 노출)
     let vr, vbody;
     try {
       vr = await fetch('https://api.vapi.ai/call', {
         method: 'POST',
         headers: { authorization: `Bearer ${env.VAPI_API_KEY}`, 'content-type': 'application/json' },
-        body: JSON.stringify({ assistantId: ch.phone, phoneNumberId: env.VAPI_PHONE_ID, customer: { number: env.YETA_PHONE_TO } }),
+        body: JSON.stringify(vcall),
       });
       vbody = await vr.text();
     } catch (e) {
