@@ -2541,6 +2541,7 @@ function yPolVal(e) { return Number.isInteger(_ypolCur[e.key]) ? _ypolCur[e.key]
 function yPolDefault(k) {   // 정책 키 기본값 통합 조회 — L1 축 + L0 편집 토글(dirty 판정 공용 · L0 설정 교정)
   const a = ((YPOLDEF && YPOLDEF.L1 || {}).axes || []).find(x => x.key === k); if (a) return a.default;
   const w = ((YPOLDEF && YPOLDEF.L1 || {}).switches || []).find(x => x.key === k); if (w) return w.default;   // L1 연출 축(260727) — axes와 같은 계약이라 조회만 한 줄 추가(dirty 표시·기본값 복원 공용)
+  const v = [...((YPOLDEF && YPOLDEF.L1 || {}).world || []), ...((YPOLDEF && YPOLDEF.L1 || {}).limits || [])].find(x => x.key === k); if (v) return v.default;   // L1 세계·상한 축(vals 그룹) — 여기 없으면 def=null → 칩을 눌러도 dirty 표식이 안 붙는다(첫 렌더 axRow 는 항목에서 직접 계산해 붙이므로 클릭 한 번에 표식이 사라지는 어긋남 · 260808 phonecap 편입하며 배속 축까지 함께 봉합)
   const g = ((YPOLDEF && YPOLDEF.L0 || {}).groups || []).find(x => x.toggle && x.toggle.key === k); return g ? g.toggle.default : null;
 }
 async function ySettingRender() {
@@ -2568,7 +2569,8 @@ async function ySettingRender() {
   // 라벨 = "L0/L1/L2 설정" 단순화 + 세부 설명 전면 폐지 + 내부 위계 통일 = 전 계층 .ypol-grp/.ypol-gh 골격(운영자 260709 "글래스 박스 구분 · 그 안 위계 동일")
   const l1html = `<div class="ypol-grp"><div class="ypol-gh"><b>${esc(L1.label || '시즌 — 수위·금기')}</b><i${admin ? '' : ' class="lk"'}>${admin ? '관리자' : YLOCK_SVG + ' 관리자 전용'}</i></div>${(L1.axes || []).map(axRow).join('')}</div>`
     + ((L1.switches || []).length ? `<div class="ypol-grp"><div class="ypol-gh"><b>${esc(L1.switches_label || '연출 — 자동 개입')}</b><i${admin ? '' : ' class="lk"'}>${admin ? '관리자' : YLOCK_SVG + ' 관리자 전용'}</i></div>${(L1.switches || []).map(axRow).join('')}</div>` : '')
-    + ((L1.world || []).length ? `<div class="ypol-grp"><div class="ypol-gh"><b>${esc(L1.world_label || '세계 — 시간 흐름')}</b><i${admin ? '' : ' class="lk"'}>${admin ? '관리자' : YLOCK_SVG + ' 관리자 전용'}</i></div>${(L1.world || []).map(axRow).join('')}</div>` : '');   // 세계 시간(운영자 260728 "배속 설정값에서 조정 · L1급") — 바로 위 switches 그룹 선언 100% 계승(행·칩·저장 경로 전부 axes 것 · 새 컴포넌트·스타일 0) · 라벨도 policy.json 정본(뷰어 하드코딩 0) · vals 매핑은 렌더가 아니라 소비처(yWRate)가 읽는다   // 연출 축(운영자 260727 「껐다 킬 수 있는 설정은 모두 UI에」) — 수위(axes)와 성격이 달라 박스만 가르고, 행·칩·저장 경로는 axes 것을 100% 계승(새 컴포넌트·새 스타일 0) · 라벨도 policy.json 정본(뷰어 하드코딩 0)
+    + ((L1.world || []).length ? `<div class="ypol-grp"><div class="ypol-gh"><b>${esc(L1.world_label || '세계 — 시간 흐름')}</b><i${admin ? '' : ' class="lk"'}>${admin ? '관리자' : YLOCK_SVG + ' 관리자 전용'}</i></div>${(L1.world || []).map(axRow).join('')}</div>` : '')   // 세계 시간(운영자 260728 "배속 설정값에서 조정 · L1급") — 바로 위 switches 그룹 선언 100% 계승(행·칩·저장 경로 전부 axes 것 · 새 컴포넌트·스타일 0) · 라벨도 policy.json 정본(뷰어 하드코딩 0) · vals 매핑은 렌더가 아니라 소비처(yWRate)가 읽는다   // 연출 축(운영자 260727 「껐다 킬 수 있는 설정은 모두 UI에」) — 수위(axes)와 성격이 달라 박스만 가르고, 행·칩·저장 경로는 axes 것을 100% 계승(새 컴포넌트·새 스타일 0) · 라벨도 policy.json 정본(뷰어 하드코딩 0)
+    + ((L1.limits || []).length ? `<div class="ypol-grp"><div class="ypol-gh"><b>${esc(L1.limits_label || '통화 — 하루 상한')}</b><i${admin ? '' : ' class="lk"'}>${admin ? '관리자' : YLOCK_SVG + ' 관리자 전용'}</i></div>${(L1.limits || []).map(axRow).join('')}</div>` : '');   // 통화 하루 상한(운영자 260808 "바피 1일 통화 제한을 관리자 토글로 · 3회/10회/무제한") — 바로 위 world 그룹 선언 100% 계승(행·칩·저장 경로 전부 axes 것 · 새 컴포넌트·스타일 0) · 라벨도 policy.json 정본 · vals 매핑은 렌더가 아니라 소비처(게이트웨이 phoneCap)가 읽는다 = 뷰어는 인덱스만 저장
   const l2html = `<div class="ypol-grp"><div class="ypol-gh"><b>${esc(L2.label || '캐릭터 — 성향')}</b><i>게스트 가능</i></div>${l2rows || '<div class="ypol-lock"><span>아직 열린 캐릭터가 없어</span></div>'}</div>`;
   box.innerHTML =
     roleTag

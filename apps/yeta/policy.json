@@ -205,6 +205,26 @@
         ],
         "hint": "현실 1분이 무음동 몇 분인지 — 6배 = 현실 4시간이 무음동 하루(기본). 24배 = 현실 1시간이 하루. 바꿔도 그 순간 시각은 이어진다"
       }
+    ],
+    "limits_label": "통화 — 하루 상한",
+    "_limits_doc": "운영자 260808 지시(「바피 1일 통화 제한 — 관리자가 설정할 수 있는 토글로 · 3회 > 10회 > 무제한」). axes/switches/world와 계약 동일({key,label,default,opts,hint}) → 뷰어는 같은 행 렌더러(axRow·yPolChips), 게이트웨이는 같은 enum 정수 경로(SET = 관리자 PIN). ⚠ world와 마찬가지로 추가 필드 **vals** 를 갖는다 = opts 인덱스→실제 횟수, 그리고 **0 = 무제한**(게이트웨이의 종전 `cap > 0` 관례를 그대로 계승 — ring·kimi 가드와 동일 문법). ⚠ switches처럼 **prompt 필드가 없다** = 프롬프트에 문장을 얹는 축이 아니라 게이트웨이가 읽고 발신을 끊는 축(POLICY_BLOCK 조립 루프 비대상). 소비처 1점(드리프트 금지) = functions/api/yeta.js `phoneCap()` → op phone 쿼터 게이트. 착지 순서 = 세션 키 있으면 vals[i] · 없으면 vals[default] · 정책 문서 자체를 못 읽으면 env YETA_PHONE_MAX_PER_DAY(폴백·기본 3 = 아래 default 와 동조). ⚠ 무제한 선택 = 분당 과금 방파제 해제 = 그날 요금 상한이 사라진다(대시보드 Origins 제한이 유일한 벽).",
+    "limits": [
+      {
+        "key": "phonecap",
+        "label": "하루 전화 횟수",
+        "default": 0,
+        "opts": [
+          "3회",
+          "10회",
+          "무제한"
+        ],
+        "vals": [
+          3,
+          10,
+          0
+        ],
+        "hint": "바피 실전화(내 폰이 울리는 통화) 하루 상한 — 분당 과금($0.15~0.35/분)이라 기본 3회. 무제한은 요금 방파제가 사라진다"
+      }
     ]
   },
   "L2": {

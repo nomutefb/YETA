@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>바피 실전화 하루 상한 = 관리자 토글(3회/10회/무제한) — 전/후 비교 v1 (371차)</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260803_내캐릭터시트_전후_v1.html 계승(재설계 0)
+     ⚠ 패널 CSS(.ypol-*/.yset-*)는 viewer/index.html L958~1304 선언을 **그대로 복사** — 시안이 실물과 어긋나지 않게 ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --think:#3EE0C8; --think-rgb:62,224,200;
+    --danger:#ff5b4a; --danger-rgb:255,91,74;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  @media (max-width:820px) { .pair { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .cap .val { font-size:var(--fs-xs); color:var(--fg-2); }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); }
+  td.v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); }
+  .new { outline:1px dashed rgba(var(--accent-rgb),.55); outline-offset:5px; border-radius:var(--r-s); }   /* 시안 전용 지시선 — 실물에는 없다 */
+  .newtag { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; color:var(--bg); background:var(--accent); padding:2px 7px; border-radius:var(--r-pill); }
+
+  /* ── viewer/index.html 정본 복사(L958~1304) ── */
+  .yset-chips { display:flex; gap:8px; justify-content:center; margin-bottom:10px; flex-wrap:wrap; }
+  .yset-chip { padding:7px 16px; border:1px solid var(--glass-line); border-radius:var(--r-pill); background:var(--glass); color:var(--fg-2); font:inherit; font-size:var(--fs-xs); font-weight:var(--fw-b); cursor:pointer; touch-action:manipulation; }
+  .yset-chip:active { transform:scale(var(--press-m,.9)); }
+  .yset-chip.on { color:var(--bg); background:var(--accent); border-color:transparent; font-weight:var(--fw-x); }
+  .yset-row { display:flex; align-items:center; gap:10px; padding:7px 0; }
+  .yset-nm { flex:none; width:86px; font-size:var(--fs-xs); color:var(--fg-2); display:flex; align-items:center; gap:5px; }
+  .yset-row.dirty .yset-nm::after { content:""; width:6px; height:6px; border-radius:50%; background:var(--accent); }
+  .ypol-row { flex-wrap:wrap; }
+  .ypol-row .yset-nm { width:96px; }
+  .ypol-row .yset-chips { margin:0; justify-content:flex-start; flex:1; min-width:0; }
+  .ypol-grp { border-top:1px solid var(--glass-line); padding:9px 0 4px; margin-top:4px; }
+  .ypol-gh { display:flex; align-items:center; gap:7px; font-size:var(--fs-xs); padding-bottom:4px; }
+  .ypol-gh b { color:var(--fg-2); font-weight:var(--fw-b); }
+  .ypol-gh i { font-style:normal; color:var(--mut); margin-left:auto; }
+</style>
+</head>
+<body>
+<div class="pg">
+
+<h1>바피 실전화 하루 상한 — Pages env 한 줄 → L1 관리자 토글(3회 / 10회 / 무제한)</h1>
+<p class="lead">371차 · 운영자 260808 「바피 1일 통화 제한 — 이거 제한 관리자가 설정할 수 있는 토글로 · 3회 &gt; 10회 &gt; 무제한」 ·
+대상 = <code>op phone</code>(바피 PSTN 실전화 = 내 폰이 울리는 통화). 화면 = 설정 → <b>L1 설정</b> 패널.</p>
+
+<div class="sect">
+  <h2>① 설정 패널 — L1 그룹 (관리자 로그인 상태)</h2>
+  <div class="pair">
+    <div class="grp">
+      <p class="cap"><span class="bdg before">BEFORE</span><span class="val">그룹 3개 — 상한 노브는 화면에 없음</span></p>
+
+      <div class="ypol-grp"><div class="ypol-gh"><b>시즌 — 수위·금기</b><i>관리자</i></div>
+        <div class="yset-row ypol-row"><span class="yset-nm">성적 표현</span><div class="yset-chips"><button class="yset-chip">순한</button><button class="yset-chip on">기본</button><button class="yset-chip">성인</button></div></div>
+        <div class="yset-row ypol-row"><span class="yset-nm">욕설·거친 말</span><div class="yset-chips"><button class="yset-chip">순화</button><button class="yset-chip on">기본</button><button class="yset-chip">거침</button></div></div>
+        <div class="yset-row ypol-row"><span class="yset-nm">폭력·위험 묘사</span><div class="yset-chips"><button class="yset-chip">완곡</button><button class="yset-chip on">기본</button><button class="yset-chip">직접</button></div></div>
+        <div class="yset-row ypol-row"><span class="yset-nm">어두운 주제</span><div class="yset-chips"><button class="yset-chip">회피</button><button class="yset-chip on">기본</button><button class="yset-chip">깊게</button></div></div>
+      </div>
+
+      <div class="ypol-grp"><div class="ypol-gh"><b>연출 — 자동 개입</b><i>관리자</i></div>
+        <div class="yset-row ypol-row"><span class="yset-nm">주변 사건</span><div class="yset-chips"><button class="yset-chip on">끔</button><button class="yset-chip">켬</button></div></div>
+        <div class="yset-row ypol-row"><span class="yset-nm">자율 비트</span><div class="yset-chips"><button class="yset-chip">끔</button><button class="yset-chip on">켬</button></div></div>
+      </div>
+
+      <div class="ypol-grp"><div class="ypol-gh"><b>세계 — 시간 흐름</b><i>관리자</i></div>
+        <div class="yset-row ypol-row"><span class="yset-nm">세계 시간 배속</span><div class="yset-chips"><button class="yset-chip">1배</button><button class="yset-chip">3배</button><button class="yset-chip on">6배</button><button class="yset-chip">12배</button><button class="yset-chip">24배</button></div></div>
+      </div>
+
+      <p class="note">상한을 바꾸려면 <b>Cloudflare Pages → 환경변수 <code>YETA_PHONE_MAX_PER_DAY</code> 수정 → 재배포</b>(콘솔 왕복). 앱 안에서는 확인도 변경도 불가 — 「지금 몇 통이 상한인지」를 화면에서 알 수 없었다.</p>
+    </div>
+
+    <div class="grp">
+      <p class="cap"><span class="bdg after">AFTER</span><span class="val">그룹 4개 — 네 번째 그룹만 신설(위 3개 무변경)</span></p>
+
+      <div class="ypol-grp"><div class="ypol-gh"><b>시즌 — 수위·금기</b><i>관리자</i></div>
+        <div class="yset-row ypol-row"><span class="yset-nm">성적 표현</span><div class="yset-chips"><button class="yset-chip">순한</button><button class="yset-chip on">기본</button><button class="yset-chip">성인</button></div></div>
+        <div class="yset-row ypol-row"><span class="yset-nm">욕설·거친 말</span><div class="yset-chips"><button class="yset-chip">순화</button><button class="yset-chip on">기본</button><button class="yset-chip">거침</button></div></div>
+        <div class="yset-row ypol-row"><span class="yset-nm">폭력·위험 묘사</span><div class="yset-chips"><button class="yset-chip">완곡</button><button class="yset-chip on">기본</button><button class="yset-chip">직접</button></div></div>
+        <div class="yset-row ypol-row"><span class="yset-nm">어두운 주제</span><div class="yset-chips"><button class="yset-chip">회피</button><button class="yset-chip on">기본</button><button class="yset-chip">깊게</button></div></div>
+      </div>
+
+      <div class="ypol-grp"><div class="ypol-gh"><b>연출 — 자동 개입</b><i>관리자</i></div>
+        <div class="yset-row ypol-row"><span class="yset-nm">주변 사건</span><div class="yset-chips"><button class="yset-chip on">끔</button><button class="yset-chip">켬</button></div></div>
+        <div class="yset-row ypol-row"><span class="yset-nm">자율 비트</span><div class="yset-chips"><button class="yset-chip">끔</button><button class="yset-chip on">켬</button></div></div>
+      </div>
+
+      <div class="ypol-grp"><div class="ypol-gh"><b>세계 — 시간 흐름</b><i>관리자</i></div>
+        <div class="yset-row ypol-row"><span class="yset-nm">세계 시간 배속</span><div class="yset-chips"><button class="yset-chip">1배</button><button class="yset-chip">3배</button><button class="yset-chip on">6배</button><button class="yset-chip">12배</button><button class="yset-chip">24배</button></div></div>
+      </div>
+
+      <div class="ypol-grp new"><div class="ypol-gh"><b>통화 — 하루 상한</b><span class="newtag">NEW</span><i>관리자</i></div>
+        <div class="yset-row ypol-row"><span class="yset-nm">하루 전화 횟수</span><div class="yset-chips"><button class="yset-chip on">3회</button><button class="yset-chip">10회</button><button class="yset-chip">무제한</button></div></div>
+      </div>
+
+      <p class="note">칩을 누르면 <b>800ms 디바운스 후 자동 저장</b>(기존 L1 저장 경로 그대로 · 관리자 PIN 동봉 · 「저장됨 ✓」 표시) · 기본값과 다르면 이름 옆 라임 도트.
+      <b>게스트</b>는 다른 L1 그룹과 똑같이 🔒 「관리자 전용」 + 칩 전체 비활성(서버도 PIN 재검증 = 이중 방어).</p>
+    </div>
+  </div>
+  <p class="note">디자인 = <b>신규 0</b>. 그룹 상자 <code>.ypol-grp</code>·헤더 <code>.ypol-gh</code>·행 <code>.ypol-row</code>·칩 <code>.yset-chip</code> = 바로 위 「세계 — 시간 흐름」 선언 100% 계승(새 색·px·컴포넌트 없음 · 위 점선은 시안 지시선일 뿐 실물엔 없다).</p>
+</div>
+
+<div class="sect">
+  <h2>② 상한이 정해지는 경로 — 착지 3단(실측)</h2>
+  <div class="grp">
+    <table>
+      <thead><tr><th>상황</th><th>BEFORE</th><th>AFTER</th></tr></thead>
+      <tbody>
+        <tr><td>관리자가 토글을 골랐다</td><td class="v">— (토글 없음)</td><td class="v">vals[인덱스] = 3 / 10 / 0(무제한)</td></tr>
+        <tr><td>토글 미설정(구세션·기본값 복원 직후)</td><td class="v">env ?? 2</td><td class="v">정책 문서 기본 = 3</td></tr>
+        <tr><td>정책 문서(raw) 로드 실패</td><td class="v">env ?? 2</td><td class="v">env ?? 3 (폴백)</td></tr>
+        <tr><td>env 값이 오타·빈값</td><td class="v">2</td><td class="v">3</td></tr>
+        <tr><td>인덱스가 범위 밖(SET 클램프 0~7)</td><td class="v">해당 없음</td><td class="v">env ?? 3 (폴백 흡수)</td></tr>
+      </tbody>
+    </table>
+    <p class="note">⚠️ <b>어느 경로도 「무제한」으로 착지하지 않는다</b> — 0(무제한)은 관리자가 인덱스 2를 명시적으로 고른 경우에만 나온다(유료 축이 조용히 열리는 구멍 차단).
+    <br>⚠️ 기본 상한이 <b>2통 → 3통</b>으로 바뀐다(운영자가 제시한 최소 선택지가 3회라 정책 기본·폴백을 3으로 동조 — 어긋나면 「토글은 3회인데 실제는 2통」이 된다).
+    <br><code>YETA_PHONE_MAX_PER_DAY</code>는 폐지가 아니라 <b>폴백으로 강등</b> — 정책 문서를 읽을 수 있으면 토글이 이긴다.</p>
+  </div>
+</div>
+
+<div class="sect">
+  <h2>③ 상한 도달 안내 문구</h2>
+  <div class="pair">
+    <div class="grp">
+      <p class="cap"><span class="bdg before">BEFORE</span></p>
+      <p class="note" style="color:var(--fg-2)">오늘 전화 상한(2통) 도달 — 내일 다시</p>
+      <p class="note">어디서 바꾸는지 알 수 없음(답 = 클라우드플레어 콘솔).</p>
+    </div>
+    <div class="grp">
+      <p class="cap"><span class="bdg after">AFTER</span></p>
+      <p class="note" style="color:var(--fg-2)">오늘 전화 상한(3통) 도달 — 내일 다시(상한 = 설정 → L1 → 하루 전화 횟수)</p>
+      <p class="note">막힌 자리에서 푸는 곳을 바로 지시(429 응답 문구 · call.js 는 서버 문구를 그대로 띄우므로 뷰어 무수정).</p>
+    </div>
+  </div>
+</div>
+
+<div class="sect">
+  <h2>④ 건드리지 않은 것(명시)</h2>
+  <div class="grp">
+    <table>
+      <thead><tr><th>축</th><th>상한 노브</th><th>이번 변경</th></tr></thead>
+      <tbody>
+        <tr><td><code>ring</code> — 인앱 걸려오는 전화(OpenAI·ElevenLabs TTS)</td><td class="v">env YETA_CALL_MAX_PER_DAY ?? 3</td><td>무접촉 — 바피가 아니라 TTS 종량제 축(쿼터 버킷도 <code>quota/call-*</code>로 별개)</td></tr>
+        <tr><td><code>vapikey</code> — 보이스톡(브라우저 WebRTC)</td><td class="v">상한 없음(대시보드 Origins 제한)</td><td>무접촉 — 종전대로 버튼 기본 경로에서 제외된 상태</td></tr>
+        <tr><td><code>meface</code> · <code>pinset</code> · 키미 다이얼</td><td class="v">각자 env</td><td>무접촉</td></tr>
+        <tr><td>러너(<code>yeta_chat.sh</code> 등) · 프롬프트</td><td class="v">—</td><td>무접촉 — <code>phonecap</code>은 <code>prompt</code> 필드가 없어 POLICY_BLOCK 조립 루프 비대상</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

@@ -18,7 +18,8 @@
 //   voice {key}                    : 통화 음성 스트림 — 비공개 버킷 voice/ 만(대사=대화 내용 → 공개 버킷 금지 · 동일출처 게이트)
 //   stt   {audio}                  : 무전기 STT 폴백(base64 webm/ogg → 텍스트) — iOS 설치형 PWA 는 Web Speech 불가(실측 260704)
 //                                    → Workers AI Whisper(env.AI 바인딩 게이트 · 미설정 501 = 뷰어가 타이핑 폴백 안내)
-//   phone {}                       : ☎️ 실전화(PSTN·Vapi) 스캐폴드 — 등록 번호로 실제 발신(⚠️분당 과금 · env 3종 게이트 · 일 상한 기본 2 · 말 속도 = YETA_VOICE_SPEED)
+//   phone {}                       : ☎️ 실전화(PSTN·Vapi) 스캐폴드 — 등록 번호로 실제 발신(⚠️분당 과금 · env 3종 게이트 · 말 속도 = YETA_VOICE_SPEED)
+//                                    → 일 상한 = **L1 관리자 토글**(policy.json L1.limits[phonecap] · 3회/10회/무제한 · 기본 3 · env YETA_PHONE_MAX_PER_DAY = 문서 미로드 폴백)
 //   vapikey {}                     : 보이스톡(브라우저 통화 · Vapi Web SDK) 공개키 — env VAPI_PUBLIC_KEY(공개 축 · Origins 제한 권장) + speed(말 속도 노브 거울)
 //   calllog {}                     : 🩺 통화 진단 — Vapi 메타데이터만(상태·종료사유·비용 — transcript/PII 반환 금지)
 //   tune  {persona, g[16]}         : 캐릭터 성향 게이지(L2 · 숫자 배열만 = 프롬프트 주입 차단)
@@ -30,9 +31,11 @@
 //   reset {}                       : 세션 초기화(페르소나도 비움 → 재뽑기 · tunes/policy/me 승계)
 // 저장 = R2 비공개 버킷 바인딩 env.YETA_R2 (⚠️ 대화는 public 레포 커밋 절대 금지 — 계획안 D2).
 // 게이트: 무인증 공개(originOk=CSRF만 · Access 미부착) · 채팅 상한 없음(운영자 260706 폐지 — quota 카운터는 관측용, 소비처 없음·후속 users.cap 연동 후보) · 유료 축(ring/phone + 키미 다이얼 = 문샷 종량제 실비)만 일 상한(키미 = Q.40 260723).
+//         ⚠️ 상한 노브의 위치가 축마다 다르다 — phone(바피 실전화) = **L1 관리자 토글**(policy.json · 260808) / ring·meface·pinset·키미 = 여전히 Pages env 단독.
 // env: GH_TOKEN(Actions write) · YETA_R2(R2 바인딩) · YETA_PIN_ADMIN(슈퍼관리자 PIN — 설정 SET 강제) · YETA_CALL_MAX_PER_DAY(선택·기본 3 — 유료 TTS 가드)
 //      AI(선택 · Workers AI 바인딩 = op stt) · VAPI_API_KEY+VAPI_PHONE_ID+YETA_PHONE_TO(선택 3종 = op phone · 번호는 시크릿 — 코드 박제 금지)
-//      YETA_PHONE_MAX_PER_DAY(선택·기본 2 — 실전화 분당 과금 가드) · YETA_KIMI_MAX_USD_PER_DAY(선택·기본 2 — 키미 종량제 일일 실비 방파제 USD · 0=무제한 · Q.40)
+//      YETA_PHONE_MAX_PER_DAY(선택·기본 3 — 실전화 분당 과금 가드 **폴백**: 260808부터 실값은 L1 토글 phonecap 이 정하고, 이 env 는 정책 문서를 못 읽을 때만 쓰인다) ·
+//      YETA_KIMI_MAX_USD_PER_DAY(선택·기본 2 — 키미 종량제 일일 실비 방파제 USD · 0=무제한 · Q.40)
 //      YETA_VOICE_SPEED(선택·기본 미설정=오버라이드 없음 — 바피 통화 말 속도 0.7~1.2 · 1 미만 = 느리게 · phone/vapikey 공용 · 260808).
 const REPO = 'muteno/yeta';
 const ID_RE = /^[a-z0-9_-]{1,24}$/;
@@ -59,6 +62,24 @@ const kimiSpentUsd = (sess) => {   // 오늘(KST) 키미 계열 실비 — usage
 //   ElevenLabs speed 유효범위 0.7~1.2(기본 1.0 · 벗어난 값 = Vapi 400) → 클램프. 1 미만 = 느리게.
 //   미설정·0·오타 = 0 = **오버라이드 미부착**(종전 요청 바디와 바이트 동일 = 기본 무위험) → 켜는 건 Pages env 한 줄.
 const voiceSpeed = (v) => { const n = parseFloat(v ?? ''); return Number.isFinite(n) && n > 0 ? Math.min(1.2, Math.max(0.7, n)) : 0; };
+// ── 바피 실전화 하루 상한 = **L1 관리자 토글 단일 정본**(운영자 260808 "제한을 관리자가 설정할 수 있는 토글로 · 3회 > 10회 > 무제한") ──
+//   종전엔 Pages env(YETA_PHONE_MAX_PER_DAY) 한 줄뿐이라 상한을 바꾸려면 클라우드플레어 콘솔을 왕복해야 했다 → 설정 탭 L1 칩으로 회수(yWRate 선례 100% 계승: 실값 = 정책, env·상수는 폴백).
+//   해석 = policy.json L1.limits[phonecap] 의 vals[인덱스](저장은 종전대로 enum 정수) · **0 = 무제한**(ring·kimi 가드의 `cap > 0` 관례 그대로).
+//   착지 3단(유료 축이 조용히 열리지 않게 전 경로가 유한값으로 착지): ① 세션에 키 있음 = 관리자가 고른 값 ② 없음 = 정책 문서 기본(3회) ③ 문서 미로드·vals 깨짐 = env(폴백) → 그마저 없으면 3.
+const phoneCap = async (env, sess) => {
+  const f0 = parseInt(env.YETA_PHONE_MAX_PER_DAY ?? '3', 10);
+  const fb = Number.isFinite(f0) ? f0 : 3;   // 빈값·오타 = 보수 기본 3(policy.json L1.limits phonecap 기본 = vals[default] 와 동조 — 어긋나면 "토글은 3회인데 실제는 2통"이 된다)
+  try {   // vals 매핑 = policy.json 정본(게이트웨이 하드코딩 0 · op policy SET 의 wrate 앵커와 동일 조회 문법)
+    const d = await fetch(`https://raw.githubusercontent.com/${REPO}/main/apps/yeta/policy.json`,
+      { headers: { 'user-agent': 'nomute-viewer' }, cf: { cacheTtl: 300, cacheEverything: true } });
+    if (!d.ok) return fb;
+    const j = await d.json();
+    const ax = (((j || {}).L1 || {}).limits || []).find(x => x && x.key === 'phonecap');
+    if (!ax || !Array.isArray(ax.vals)) return fb;
+    const v = ax.vals[Number.isInteger(((sess || {}).policy || {})[ax.key]) ? sess.policy[ax.key] : ax.default];
+    return (typeof v === 'number' && v >= 0) ? v : fb;   // 범위 밖 인덱스(SET 클램프 0~7) = undefined = 폴백 흡수
+  } catch { return fb; }
+};
 const kimiGate = (env, sess) => {   // 초과 = 안내 객체(호출부 429) / 미달 = null — send·attach·retry 3경로 공용
   const c0 = parseFloat(env.YETA_KIMI_MAX_USD_PER_DAY ?? '2');
   const cap = Number.isFinite(c0) ? c0 : 2;   // 빈값·오타 = 보수 기본 2(ring 동형) · 0 = 명시적 무제한
@@ -356,15 +377,14 @@ export async function onRequestPost({ request, env }) {
     //    env 3종(VAPI_API_KEY·VAPI_PHONE_ID·YETA_PHONE_TO) 전부 있어야 활성 · 페르소나별 Vapi assistant id = roster "phone" 필드.
     if (!env.VAPI_API_KEY || !env.VAPI_PHONE_ID || !env.YETA_PHONE_TO)
       return json({ error: '실전화 미설정 — VAPI_API_KEY·VAPI_PHONE_ID·YETA_PHONE_TO 시크릿 필요(CLAUDE.md §🗺 yeta-call)', setup: true }, 501);
-    const pcap0 = parseInt(env.YETA_PHONE_MAX_PER_DAY ?? '2', 10);
-    const pcap = Number.isFinite(pcap0) ? pcap0 : 2;   // 빈값·오타 = 보수 기본 2(분당 과금 가드)
+    const sessP = await readSess();   // 상한 판정보다 먼저(260808) — 상한이 세션 정책(L1 토글)에 물렸다 = 세션 없이는 상한을 모른다
+    const pcap = await phoneCap(env, sessP);   // 관리자 토글 정본 · 0 = 무제한(아래 `pcap > 0` 가드가 통째로 비활성)
     const pkst = new Date(Date.now() + 9 * 3600e3).toISOString().slice(2, 10).replace(/-/g, '');
     const pqkey = `quota/phone-${pkst}.json`;
     let pused = 0;
     const pqo = await env.YETA_R2.get(pqkey);
     if (pqo) { try { pused = (await pqo.json()).n || 0; } catch { pused = 0; } }
-    if (pcap > 0 && pused >= pcap) return json({ error: `오늘 전화 상한(${pcap}통) 도달 — 내일 다시`, remain: 0 }, 429);
-    const sessP = await readSess();
+    if (pcap > 0 && pused >= pcap) return json({ error: `오늘 전화 상한(${pcap}통) 도달 — 내일 다시(상한 = 설정 → L1 → 하루 전화 횟수)`, remain: 0 }, 429);
     const persona = String(sessP.cur || '');   // v3 = 현재 스레드 캐릭터(마이그 감사④)
     const rc = await fetch(`https://raw.githubusercontent.com/${REPO}/main/apps/yeta/characters/roster.json`,
       { headers: { 'user-agent': 'nomute-viewer' }, cf: { cacheTtl: 300, cacheEverything: true } });
