@@ -1029,6 +1029,77 @@ def check_world_rate():
     return rc
 
 
+def _exec_lines(txt, needle):
+    """주석 아닌 실행줄에만 needle이 있는지(주석 처리 우회 차단). `#`로 시작하는 줄은 제외 — 처방문 인용·예시가 위반으로 잡히는 걸 막는다."""
+    return [ln for ln in txt.splitlines() if needle in ln and not ln.lstrip().startswith('#')]
+
+
+def check_tune_chain():
+    """16축 성향이 roster → 러너 프롬프트까지 **도달하는가** 하드 게이트(260809 봉합).
+
+    ⚠️ 신설 사유 = 이 축은 **아무 경보 없이 죽어 있었다**. 배선이 다 살아 있는데(roster 17인 전원 tune 16축 · 러너 TUNE_BLOCK · 뷰어 육각형)
+      그 사이 한 칸이 비어서 값이 프롬프트에 **0바이트**로 들어갔다 — 러너가 `s["tunes"]`(세션)만 읽었고, 세션에 써지는 유일한 경로는
+      뷰어 슬라이더 input 이벤트(`ySetSave`)뿐이며, 게이지는 대화 시작 시 잠긴다(`_ysetLocked = yChatStarted`).
+      → **첫 메시지 전에 슬라이더를 직접 끌지 않은 캐릭터는 16축이 영구히 미주입.** 화면엔 roster 값으로 육각형이 그려지니 무증상이었다.
+    ⚠️ 기존 게이트는 전부 다른 축이다 — `check_roster_assets` = 에셋 **파일 실존** · `check_world_rate` = 상수 **값 짝** · `check_model_ids` = 모델 **ID 드리프트**
+      → 「roster에 있는 값이 실제로 프롬프트까지 가는가」는 축 자체가 없었다.
+    판정 = 정적(렌더·LLM·네트워크 0) · 주석 줄 제외 · 면책표 없이 하드 0."""
+    rc = 0
+    try:
+        chat = os.path.join(ROOT, '.github/scripts/yeta_chat.sh')
+        txt = open(chat, encoding='utf-8').read()
+        # ① roster 원천 — 16축 보유 캐릭터가 실재하는가(fail-closed: 못 읽으면 차단)
+        ros = json.load(open(os.path.join(ROOT, 'apps/yeta/characters/roster.json'), encoding='utf-8'))
+        have = [c.get('id') for c in ros if isinstance(c, dict) and isinstance(c.get('tune'), list) and len(c['tune']) == 16]
+        if len(have) < 5:
+            print('❌ 16축 체인 — roster.json의 tune 16축 보유 캐릭터가 %d인(하한 5) — 원천이 비면 폴백이 무의미하다.' % len(have)); return 1
+        # ② 러너 폴백 배선 — 빌드 1곳 + 소비 2곳(오프닝·본답장) 전부. 한쪽만 고치면 첫인사와 본대화의 성향이 갈린다(이 레포 최빈 미러 드리프트).
+        if not _exec_lines(txt, 'roster_tune = {c["id"]: c["tune"]'):
+            print('❌ 16축 체인 — yeta_chat.sh에 roster_tune 빌드가 없다(세션 tunes 부재 시 roster 16축이 프롬프트에 0바이트로 들어간다).'); rc = 1
+        sinks = _exec_lines(txt, 'or roster_tune.get(')
+        if len(sinks) < 2:
+            print('❌ 16축 체인 — roster 폴백 소비 지점이 %d곳(오프닝·본답장 2곳 필요) — 한쪽만 배선되면 첫인사와 본대화의 성향이 갈린다.' % len(sinks)); rc = 1
+        # ③ 구판 부활 차단 — 폴백 없는 옛 문법이 실행줄에 돌아오면 같은 무증상 사고가 재발한다
+        for bad in ('(s.get("tunes") or {}).get(persona),', '(s.get("tunes") or {}).get(T),'):
+            if _exec_lines(txt, bad):
+                print('❌ 16축 체인 — 폴백 없는 구판 문법 부활: %s' % bad); rc = 1
+        # ④ 축 라벨 16 짝 — 러너 AX ↔ 뷰어 TUNE_AX(뷰어 주석이 "축 순서 = yeta_chat.sh AX와 짝"이라 선언한 계약의 기계 강제)
+        ax = re.search(r'^AX = (\[[^\]]*\])', txt, re.M)
+        vx = re.search(r'const TUNE_AX = (\[[^\]]*\])', open(os.path.join(ROOT, 'viewer/index.html'), encoding='utf-8').read())
+        if not ax or not vx:
+            print('❌ 16축 체인 — 축 라벨 배열 미검출(러너 AX %s · 뷰어 TUNE_AX %s) — 패턴 이동 시 게이트도 같이 수정.' % (bool(ax), bool(vx))); rc = 1
+        else:
+            na, nv = len(json.loads(ax.group(1))), vx.group(1).count(',') + 1
+            if na != 16 or nv != 16:
+                print('❌ 16축 체인 — 축 개수 불일치(러너 AX=%d · 뷰어 TUNE_AX=%d · 계약 16) — op tune이 16개 배열만 받으므로 어긋나면 라벨이 밀린다.' % (na, nv)); rc = 1
+        if rc == 0:
+            print('✅ 16축 체인 — roster %d인 → 러너 폴백(빌드 1·소비 %d) → 프롬프트 도달 · 축 라벨 16 짝.' % (len(have), len(sinks)))
+    except Exception as e:
+        print('❌ 16축 체인 게이트 예외(fail-closed):', e); return 1
+    return rc
+
+
+def check_lucy_killswitch():
+    """루시 스레드봇 킬스위치 하드 게이트(260809) — `LUCY_ON` 2점(러너 게이트 + 워크플로 env) 짝.
+
+    ⚠️ **기본값이 ON(`:-1`)인 것까지 강제한다.** 여기가 이 게이트의 핵심 — 기본값이 0으로 바뀌면 변수를 안 만든 상태에서 봇이
+      **조용히 멈추고**, 크론은 초록으로 돌기 때문에 아무도 눈치채지 못한다(실패가 아니라 정상 스킵으로 보인다).
+    ⚠️ env 배선이 빠지면 러너는 변수를 못 받아 늘 ON = 스위치가 있는 척만 하는 상태가 된다(끈 줄 알았는데 계속 돈다)."""
+    rc = 0
+    try:
+        sh = open(os.path.join(ROOT, '.github/scripts/lucy_threads.sh'), encoding='utf-8').read()
+        yml = open(os.path.join(ROOT, '.github/workflows/lucy-threads.yml'), encoding='utf-8').read()
+        if not _exec_lines(sh, '${LUCY_ON:-1}'):
+            print('❌ 루시 킬스위치 — lucy_threads.sh에 `${LUCY_ON:-1}` 게이트가 없다(기본 OFF로 바꾸면 변수 미설정 시 봇이 조용히 멈춘다 = 초록 스킵으로 위장).'); rc = 1
+        if not _exec_lines(yml, 'LUCY_ON:'):
+            print('❌ 루시 킬스위치 — lucy-threads.yml env에 LUCY_ON 배선이 없다(러너가 변수를 못 받아 끈 줄 알았는데 계속 돈다).'); rc = 1
+        if rc == 0:
+            print('✅ 루시 킬스위치 — LUCY_ON 2점 짝(러너 기본 ON · 워크플로 env) · 끄기 = Variables LUCY_ON=0.')
+    except Exception as e:
+        print('❌ 루시 킬스위치 게이트 예외(fail-closed):', e); return 1
+    return rc
+
+
 def check_map_bg_pair():
     """지도 배경↔도로 좌표 짝 하드 게이트(운영자 260716 Q.08 평의회9 — "고쳐도 그대로" 반복 절단): map_*.png 재생성 시 YMAP_ROADS_TONE 좌표가 침묵 실효하던 구멍 봉합. 배경 sha1[:8] ≠ viewer YMAP_BG_SHA 토큰 = 커밋 차단 → 재실측(shared/yeta_map_trace.py) 후 토큰 갱신."""
     rc = 0
@@ -1271,6 +1342,16 @@ def main():
             rc = 1
     except Exception as e:
         print('⚠️ 지도 배경 짝 게이트 스킵:', e)
+    try:
+        if check_tune_chain() != 0:   # 16축 성향이 roster→프롬프트까지 도달(하드 — 260809 봉합 · 세션 tunes만 읽어 게이지 미조작 캐릭터는 16축 0바이트로 무증상 사망하던 축)
+            rc = 1
+    except Exception as e:
+        print('❌ 16축 체인 게이트 예외(fail-closed):', e); rc = 1
+    try:
+        if check_lucy_killswitch() != 0:   # 루시봇 킬스위치 2점 짝(하드 — 기본값 ON 강제 = 변수 미설정 시 조용히 멈추는 것 차단)
+            rc = 1
+    except Exception as e:
+        print('❌ 루시 킬스위치 게이트 예외(fail-closed):', e); rc = 1
     try:
         import ledger   # 원장 번호 중복(하드 게이트 260726 — 세션 여럿이 같은 번호를 각각 쓰면 이력 추적이 끊긴다 · 다음 번호 = python3 shared/ledger.py)
         if ledger.check() != 0:
