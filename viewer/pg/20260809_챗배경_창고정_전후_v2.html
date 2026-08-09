@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>챗 배경 배율 창 고정 — 전/후 비교 v2</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260809_챗배경_폭맞춤_전후_v1.html 100% 계승(재설계 0 · 내용만 확정안으로 교체) ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --think:#3EE0C8; --think-rgb:62,224,200;
+    --danger:#FF5A5F; --danger-rgb:255,90,95;
+    --glass:rgba(255,255,255,.005); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+    --lgap:6px;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .quad { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--sp-3); align-items:start; }
+  @media (max-width:900px) { .quad { grid-template-columns:1fr 1fr; } }
+  @media (max-width:560px) { .quad { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .bdg.bad { color:var(--danger); border:1px solid rgba(var(--danger-rgb),.4); }
+  .bdg.rung { color:var(--think); border:1px solid rgba(var(--think-rgb),.4); }
+  .cap .val { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--fg-2); }
+  img.shot { display:block; width:100%; border-radius:var(--r-m); border:1px solid var(--glass-line); box-shadow:var(--shadow-card); }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-xs); }
+  th, td { text-align:left; padding:7px 9px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--fg-2); font-weight:var(--fw-b); }
+  td.n { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--fg-2); }
+  ul { margin:6px 0 0; padding-left:18px; font-size:var(--fs-sm); color:var(--fg-2); }
+  li { margin:4px 0; }
+</style>
+</head>
+<body>
+<div class="pg">
+
+  <h1>챗 배경 배율 창 고정 — 전/후 (373차 · 확정안)</h1>
+  <p class="lead">운영자 260809 재지시 「그냥 폭맞춤 하는거로 할게. <b>그니까 기존대로 하는데</b> 키보드 올라온다고 이게 <b>비율이 달라지지 않게</b> 해주셈」
+     → 372차의 폭 맞춤(안B)은 <b>되돌리고</b>, 프레이밍은 기존 그대로 두되 배율만 창에 못 박는다.
+     아래는 <b>실제 뷰어 렌더 스샷</b>(393×852 · DPR2 · 윈터 방 · 정사각 아트 899×899).</p>
+
+  <div class="sect">
+    <h2>① 전 2컷 / 후 2컷 — 바뀐 건 오른쪽 「키보드 올라옴」 하나뿐</h2>
+    <div class="quad">
+      <div>
+        <div class="cap"><span class="bdg before">전</span><span class="val">키보드 없음</span></div>
+        <img class="shot" src="20260809_챗배경폭맞춤_sq_before_nokb.webp" alt="전 · 키보드 없음">
+        <p class="note">기준 컷. 이 프레이밍을 유지하는 게 이번 지시.</p>
+      </div>
+      <div>
+        <div class="cap"><span class="bdg bad">전</span><span class="val">키보드 올라옴 · 문제</span></div>
+        <img class="shot" src="20260809_챗배경폭맞춤_sq_before_kb.webp" alt="전 · 키보드 올라옴 — 배경이 줄어든 상태">
+        <p class="note">창이 522px로 줄면서 배율이 ×0.948 → ×0.581로 <b>1.63배 요동</b>. 같은 그림이 딴 크기로 다시 잡혔다.</p>
+      </div>
+      <div>
+        <div class="cap"><span class="bdg after">후</span><span class="val">키보드 없음 · 무변경</span></div>
+        <img class="shot" src="20260809_챗배경창고정_sq_v2_nokb.webp" alt="후 · 키보드 없음 — 전과 동일">
+        <p class="note">왼쪽 첫 컷과 <b>md5 일치(픽셀 단위 동일)</b> — 「기존대로」가 문자 그대로 지켜졌다.</p>
+      </div>
+      <div>
+        <div class="cap"><span class="bdg after">후</span><span class="val">키보드 올라옴 · 고정</span></div>
+        <img class="shot" src="20260809_챗배경창고정_sq_v2_kb.webp" alt="후 · 키보드 올라옴 — 배경이 제자리">
+        <p class="note">그림은 <b>제자리에 그대로</b> 있고 아래쪽만 키보드에 가려진다. 눈·코 위치·크기가 왼쪽 컷과 동일.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect grp">
+    <h2>고친 결 — CSS 한 줄</h2>
+    <p class="note" style="margin-top:0"><code>cover</code>는 <b>상자 높이</b>로 배율이 정해진다. <code>yVvFit</code>이 키보드 판정 시 창을 <code>visualViewport.height</code>로 줄이는데(852 → 522px) <code>.ybg</code>가 그 줄어든 창을 그대로 덮으니 배율이 다시 잡혔다.</p>
+    <p style="font-size:var(--fs-sm); margin:10px 0 0"><code>.ybg { height:100dvh; bottom:auto; }</code></p>
+    <ul>
+      <li><b>레이어 높이만</b> 창(<code>100dvh</code>)에 못 박는다 — 프레이밍(꽉 찬 <code>cover</code>·중앙)은 손대지 않는다.</li>
+      <li>온스크린 키보드는 <b>비주얼</b> 뷰포트만 줄인다(뷰포트 메타에 <code>interactive-widget=resizes-content</code>를 안 걸어둔 이유와 같은 축) → <code>dvh</code>는 키보드로 안 변한다.</li>
+      <li>키보드가 뜨면 넘치는 아래쪽은 <code>.yeta-stage</code>의 <code>overflow:hidden</code>이 잘라준다(레이아웃 영향 0).</li>
+      <li><code>bottom:auto</code> = <code>top</code>+<code>bottom</code>+<code>height</code> 과잉구속 해제.</li>
+    </ul>
+  </div>
+
+  <div class="sect grp">
+    <h2>372차(폭 맞춤·안B)에서 되돌린 것</h2>
+    <table>
+      <tr><th>항목</th><th>372차</th><th>373차(확정)</th></tr>
+      <tr><td>배경 배율</td><td class="n">폭 기준 100% auto</td><td class="n">기존 cover 그대로</td></tr>
+      <tr><td>스크림 정거장</td><td class="n">d1 · d2 62% · --bg 92%</td><td class="n">d1 · d2 (종전 2개)</td></tr>
+      <tr><td>세로 여백</td><td class="n">정사각 459px · 9:16 153px</td><td class="n">0(꽉 참)</td></tr>
+      <tr><td>좌우 드래그 패닝</td><td class="n">무효(가로 슬랙 0)</td><td class="n">✅ 복구</td></tr>
+      <tr><td>키보드 요동</td><td class="n">0</td><td class="n">0</td></tr>
+    </table>
+    <p class="note"><code>yBgFit()</code>·<code>--ybg-ar</code>·<code>.ybg.fit</code>·클립 마스크 전부 회수. 372차가 그때 봉합했던 잔버그 2건(스크림 +1px 실선 · 클립 <code>aspect-ratio</code>)은 그 배선에만 딸린 것이라 함께 소멸 — 지금 코드엔 재현 경로가 없다. <code>scrim(a,b)</code> 헬퍼만 존치(같은 문자열 3곳을 묶은 것 · 값·정거장 변경 0).</p>
+  </div>
+
+</div>
+</body>
+</html>

@@ -234,14 +234,11 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ybg { position:absolute; inset:0; background-size:cover; background-position:center; opacity:0; transition:opacity .6s var(--ease); pointer-events:none; }
   .ybg.on { opacity:.92; }   /* 시그니처/무드 배경 전경화(운영자 260707 항목9 "배경 항상 나오게" — 은은한 .32 반려) · 가독 = yPaintBg 딤 그라데(설정 「화면 어둡기」 3단 · 기본 = 캐릭터 아트 .28/.34 · 환경 씬 .18/.26 — 운영자 260729 "반으로")가 스크림 담당 · 버블은 글래스라 위에 뜸 */
   .ybg { transition:opacity .6s var(--ease), background-position-x .05s linear; }
-  /* ── 폭 맞춤(운영자 260809 "키보드 올라올때랑 아닐때 배경 크기가 차이나는디 · 항상 키보드 올라올때 크기처럼 최대한 이미지를 다 활용해줘") ──
-     원인 = cover는 **상자 높이**로 배율이 정해진다. 키보드가 뜨면 yVvFit이 창을 852→522px로 줄여 같은 그림이 딴 배율로 다시 잡혔다(정사각 아트 899×899 실측: 키보드 없음 = 가로 46%만 보임[눈만 확대] ↔ 키보드 = 75%).
-     폭 기준(100% auto)은 높이에 무관 = 키보드 개폐로 프레이밍이 **한 픽셀도 안 변하고**, 사진 가로가 통째로 남는다(= "최대한 다 활용" · 운영자 안B 채택 260809).
-     세로 여백은 창 밑판(#yetadlg background:var(--bg))이 그대로 받고, 스크림(yPaintBg)의 마지막 정거장을 var(--bg)로 끝내 사진 밑단이 그 밑판으로 스며든다 = 하드 엣지 0(페이드 관례 = .yeta-log mask 계승 · 신규 색 0).
-     --ybg-ar = 그림 세로/가로(yBgFit이 자연크기 실측 주입 · 폴백 16/9) → 스크림 층만 사진 실높이에 맞춘다(사진 층은 auto가 같은 높이를 스스로 잡는다). 100vw = 레이어 실폭(#yetadlg width:100vw). % · vw = 기하 예외축.
-     ⚠ no-repeat 필수 — cover 시절엔 그림이 상자보다 커서 안 드러났지만, 폭 맞춤은 세로가 남아 기본값 repeat면 사진이 세로로 타일링된다. */
-  .ybg.fit { background-repeat:no-repeat; background-position:center top; background-size:100% calc(100vw * var(--ybg-ar, 1.7778) + 1px), 100% auto; }   /* +1px = 스크림을 사진보다 1px 길게(광학 1px 예외축) — 두 층 높이를 똑같이 두면 반올림이 갈려 사진 마지막 한 줄이 스크림 밖으로 새어 밝은 실선이 그였다(실측 260809 · 698.675px 경계) · 스크림 끝단은 이미 불투명 --bg라 더 내려가도 밑판과 같은 색 */
-  .ybg.fit video { height:auto; bottom:auto; aspect-ratio:1 / var(--ybg-ar, 1.7778); object-fit:contain; object-position:center top; -webkit-mask-image:linear-gradient(#000 62%, transparent 100%); mask-image:linear-gradient(#000 62%, transparent 100%); }   /* 클립도 같은 축(720×1280·816×1104) — 클립은 스크림이 아니라 brightness 필터라 밑단 페이드는 마스크로(정거장 62% = 위 스크림과 동일 지점) · 높이는 aspect-ratio로 확정(height:auto만 두면 메타데이터 로드 전 UA 기본 150px로 납작해진다 — 실측 260809) · contain = 비율이 어긋나도 늘어나지 않고 레터박스(밑판 --bg) */
+  /* ── 배경 배율 창 고정(운영자 260809 재지시 "기존대로 하는데 키보드 올라온다고 이게 비율이 달라지지 않게") ──
+     원인 = cover는 **상자 높이**로 배율이 정해진다. 키보드가 뜨면 yVvFit이 창을 visualViewport.height로 줄이는데(393×852 → 393×522), .ybg가 그 줄어든 창을 그대로 덮으니 같은 그림이 딴 배율로 다시 잡혔다(정사각 아트 899×899 실측: ×0.948[가로 46%만 보임] ↔ ×0.581[75%] = 1.63배 요동).
+     고침 = **레이어 높이만 창(100dvh)에 못 박는다**. 프레이밍(꽉 찬 cover·중앙)은 기존 그대로 두고, 배율을 정하는 높이가 키보드에 안 흔들리게 한다 — 키보드가 뜨면 그림은 제자리에 그대로 있고 아래쪽이 키보드에 가려질 뿐(.yeta-stage overflow:hidden 가 잘라준다).
+     ⚠ dvh를 쓰는 이유 = 온스크린 키보드는 **비주얼** 뷰포트만 줄인다(뷰포트 메타에 interactive-widget=resizes-content 를 안 걸어둔 이유와 같은 축 — yVvFit 주석 참조) → dvh 는 키보드로 안 변한다. bottom:auto = top+bottom+height 과잉구속 해제. 100dvh = 기하 예외축 · 신규 색·토큰 0. */
+  .ybg { height:100dvh; bottom:auto; }
   /* 애도 모드(PR#281 회수 · 운영자 260714) — 사망 24h 동안 그 방 배경이 흑백으로 식는다. 부활 = 클래스 해제로 자연 색복귀.
      filter(grayscale·brightness) = 토큰 없는 축(§🎨 raw 허용) · 신규 색 토큰 0. 260725 사망 표기(프사 채색 소거)와 층이 다르다 — 저건 인물, 이건 방. */
   #yetadlg.ymourn .ybg { filter:grayscale(1) brightness(.6); transition:filter 1.2s var(--ease), opacity .6s var(--ease); }
@@ -4146,20 +4143,13 @@ function yBgReset() {   // 두 레이어 전부 소거 — 비디오 정지·제
     L.classList.remove('on');
     yBgKillVid(L.querySelector('video'));
     L.style.backgroundImage = '';
-    L.classList.remove('fit'); L.style.removeProperty('--ybg-ar');   // 폭 맞춤 배선도 같이 소거(스테일 비율로 다음 첫 프레임이 어긋나는 것 차단)
   });
   _ybgSig = '';   // 소거 = 지문도 리셋(260804) — 안 지우면 같은 방 재진입 때 첫 페인트가 통째로 막힌다
-}
-function yBgFit(L, still, vid) {   // 폭 맞춤 배선(운영자 260809 안B · CSS .ybg.fit 짝) — 실그림이 있을 때만 .fit(무드 틴트 폴백은 cover 유지) + 그림 세로/가로 실측을 --ybg-ar로 주입(스크림 층 높이 = 사진 실높이)
-  L.classList.toggle('fit', !!(still || vid));
-  if (!still) { L.style.removeProperty('--ybg-ar'); return; }
-  const im = new Image(), put = () => { if (im.naturalWidth) L.style.setProperty('--ybg-ar', (im.naturalHeight / im.naturalWidth).toFixed(4)); };
-  im.onload = put; im.src = still; if (im.complete) put();   // 캐시된 그림 = 동기 확정(크로스페이드 첫 프레임에 스테일 비율이 안 스침)
 }
 function yPaintBg(bgUrl, tint, season) {   // 레이어 페인트(페르소나 전환·무드 전환 공용) — 같은 그림 재페인트는 키 가드가 막음 · season = 감정 미디어 모드(캐릭터 아트 스크림·클립 muted)
   const wd = !!(YCUR && YCUR.id === 'winter');   // 윈터 = 블라인드 +50% 합성(운영자 260726 "배경 앞에 블라인드 투명도 50% 더") — d + (1−d)×.5(클립은 .ybg.wdim 필터가 짝 · 노브: 설정 「화면 어둡기」 한 곳)
   const DM = yDimCur(), wcomp = v => { const x = parseFloat(v); return (x + (1 - x) * .5).toFixed(2).replace(/^0/, ''); };   // 어둡기 3단 = YDIM_SET SSOT(밝게/기본/어둡게 · 기본 = 운영자 260729 "반으로" = .28/.34)
-  const scrim = (a, b) => `linear-gradient(rgba(18,18,18,${a}) 0, rgba(18,18,18,${b}) 62%, var(--bg) 92%, var(--bg) 100%)`;   // 스크림 = 종전 두 정거장(a·b) 그대로 + 마지막 정거장 var(--bg)(폭 맞춤 260809 안B) — 사진 밑단이 창 밑판(#yetadlg background:var(--bg))으로 스며들어 세로 여백과의 경계선이 사라진다. 신규 색 0(--bg는 정본 토큰) · 62·92% = 기하 예외축. ⚠ 92%에서 이미 불투명하게 끝내고 100%까지 물린다 — 100%에 딱 맞추면 마지막 몇 px가 알파 .98대라 밝은 배경(흰 벽)이 3/255쯤 새어 여백과의 경계에 실선이 보였다(실측 260809)
+  const scrim = (a, b) => `linear-gradient(rgba(18,18,18,${a}),rgba(18,18,18,${b}))`;   // 스크림 = 종전 정거장 두 개 그대로(값 SSOT = 어둡기 3단 YDIM_SET · 윈터 +50% 재합성) — 세 곳이 같은 문자열을 쓰던 것을 헬퍼로 묶었을 뿐, 값·정거장 변경 0
 
   const [d1, d2] = wd ? DM.s.map(wcomp) : DM.s;   // 캐릭터 아트 스크림(윈터는 블라인드 재합성 — 기본단 .64/.67 · 어둡게단 .78/.84 = 종전 정본 그대로)
   const _sig = `${bgUrl || ''}|${season ? 1 : 0}|${d1}|${d2}|${wd ? 1 : 0}`;   // 그림 + 딤 + 시즌 모드까지 지문에 포함(어둡기 설정을 바꾸면 당연히 다시 그려야 한다)
@@ -4168,7 +4158,7 @@ function yPaintBg(bgUrl, tint, season) {   // 레이어 페인트(페르소나 �
   const layers = [$('#ybgA'), $('#ybgB')], next = layers[1 - _ybgCur], curL = layers[_ybgCur];
   yBgKillVid(next.querySelector('video'));   // 레이어 재사용 = 이전 클립 결정적 회수
   const curV = curL.querySelector('video'); if (curV) { try { curV.pause(); } catch {} }   // 밀려나는 레이어 클립 = 즉시 정지(불투명 0 뒤 무한 디코드 차단 — 평의회1·7 공통 지적 · 제거는 레이어 재사용/리셋 때)
-  if (season && /\.(mp4|webm)(\?|$)/i.test(bgUrl || '') && !yPrefOn('bgvid', true)) { next.style.backgroundImage = (YCUR && YCUR.bg) ? `${scrim(d1, d2)}, url("${YCUR.bg}")` : 'none'; yBgFit(next, (YCUR && YCUR.bg) || '', false); next.classList.toggle('season', !!season); next.classList.remove('wdim'); next.classList.add('on'); curL.classList.remove('on'); _ybgCur = 1 - _ybgCur; return; }   // 배경 영상 끔 최종 방어선(260728) — 풀이 클립뿐이라 위 필터가 못 걷어낸 경우. 시그니처 스틸로 착지(바로 아래 클립 밑깔이와 같은 그림·같은 딤 = 새 값 0)
+  if (season && /\.(mp4|webm)(\?|$)/i.test(bgUrl || '') && !yPrefOn('bgvid', true)) { next.style.backgroundImage = (YCUR && YCUR.bg) ? `${scrim(d1, d2)}, url("${YCUR.bg}")` : 'none'; next.classList.toggle('season', !!season); next.classList.remove('wdim'); next.classList.add('on'); curL.classList.remove('on'); _ybgCur = 1 - _ybgCur; return; }   // 배경 영상 끔 최종 방어선(260728) — 풀이 클립뿐이라 위 필터가 못 걷어낸 경우. 시그니처 스틸로 착지(바로 아래 클립 밑깔이와 같은 그림·같은 딤 = 새 값 0)
   if (season && /\.(mp4|webm)(\?|$)/i.test(bgUrl || '')) {   // 시즌 클립 — "소리만 빼고 다"(운영자 260707) = muted 고정
     next.style.backgroundImage = (YCUR && YCUR.bg) ? `${scrim(d1, d2)}, url("${YCUR.bg}")` : 'none';   // 클립 디코드/자동재생 전까지 시그니처 스틸을 밑에 깔아 무대 암전 차단(분신술 260708 — 비시즌 프리로드 게이트 대응) · 딤 = 캐릭터별 d1/d2(윈터 +50%)
     const v = document.createElement('video');
@@ -4181,7 +4171,6 @@ function yPaintBg(bgUrl, tint, season) {   // 레이어 페인트(페르소나 �
     ? (season ? `${scrim(d1, d2)}, url("${bgUrl}")`   // 캐릭터 아트 = 스포티파이 블랙 스크림(운영자 260729 "반으로" · .55/.68 → .28/.34 · 윈터만 +50% 블라인드 재합성 .64/.67 = 위 d1/d2)
             : `${scrim(DM.e[0], DM.e[1])}, url("${bgUrl}")`)   // 환경(장소·무드 씬) = 같은 어둡기 칸의 env 쌍(기본 = 운영자 260729 "반으로" .18/.26 · 어둡게 = 종전 정본 .35/.52) — 캐릭터 아트 축과 같은 배율(두 축 관계 보존)
     : `radial-gradient(120% 90% at 50% 0%, ${tint}14, transparent 55%)`;                            // 이미지 없으면 페르소나색 은은한 무드 틴트
-  yBgFit(next, bgUrl && !/\.(mp4|webm)(\?|$)/i.test(bgUrl) ? bgUrl : ((YCUR && YCUR.bg) || ''), /\.(mp4|webm)(\?|$)/i.test(bgUrl || ''));   // 폭 맞춤 = 실제로 깔린 스틸 기준(클립 분기는 밑깔이 시그니처가 스틸) · 무드 틴트 폴백(bgUrl 없음)은 .fit 미부여 = cover 유지
   next.classList.toggle('season', !!season);
   next.classList.toggle('wdim', !!season && wd);   // 윈터 시즌 클립 딤 짝(.ybg.wdim video) — 타 캐릭터 레이어 재사용 시 자동 해제
   next.classList.add('on'); curL.classList.remove('on'); _ybgCur = 1 - _ybgCur;
@@ -4806,7 +4795,6 @@ function yAttHydrate(root) {
   });
 }
 // 좌우 드래그/횡스크롤 = 배경 패닝(항목5 · 화살표 없이) — cover 크롭 슬랙 안 background-position-x · 세로는 로그 네이티브 스크롤 양보(축 잠금 8px) · reduce 비활성
-// ⚠ 260809 폭 맞춤(안B) 이후 = **무효**. .ybg.fit은 가로를 항상 100%로 잡으니 옆으로 밀 슬랙이 0이다(그림 비율과 무관 — 넘치는 쪽이 세로로 바뀌었다). 운영자가 안B를 고르며 인지·수용한 대가. 배선은 남겨둔다 = 축 잠금(touch-action pan-y·8px 임계)이 이 핸들러 소유라 지우면 로그 세로 스크롤 결이 같이 바뀐다.
 // QA13: 레이어 querySelector 캐시(무캐시 반복 해소) + rAF 코얼레스(pointermove가 여러 번 와도 프레임당 style 쓰기 1회 = 60fps 유지)
 (() => {
   const log = $('#yetaLog'); if (!log) return;
