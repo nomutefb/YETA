@@ -4989,6 +4989,7 @@ let _yLastN = -1, _yTypOn = false, _yFailOn = false, _yTypHold = 0, _yTypT = nul
 let _yCurT = '';   // 마지막 렌더한 방 id — 서버발 cur 이동(단톡 재합류·휘발 소멸 · Q.06) 감지용(yThreadSwitch 미경유 전환도 방 경계로 취급)
 let _yAskOn = false;   // 공간 초대 3선택지 등장 래치(260809 — 폴 재렌더마다 촤르륵 재생되던 것 차단 · _yFailOn 등장 래치 동형)
 let _yPaceN = -1, _yPaceT = 0;   // 답장 페이스 — 공개 승인된 턴 수(꼬리 답장 런은 길이 비례 타이핑 모션 후 공개 · 운영자 260706 "바로 대답 어색" · 항목13)
+let _yWasTrim = false;   // 직전 렌더가 절단본이었나(260809 Q.166) — 비활성 방 페이로드 = 꼬리 2턴+trim(원턴수). 낙관적 재진입(260712)이 절단본을 먼저 그린 뒤 draw 전체본이 오면 prevN=2 기준으로 옛 대화 전체가 fresh 판정 = 히스토리 통째 촤르륵 재생(「직전 대화 다시 로딩」 체감 · 운영자 260809 포착) → 전환 감지용 래치
 let _yDraft = null, _yDraftOn = false, _yNoAnim = false;   // 문장 스트리밍 부분 답장(260714 한수2) — watch가 준 draft + 표시 래치 + 스왑 무애니 1회 플래그(re-whoosh 차단 · 평의회 UX)
 let _yDrN = 0, _yDrSwap = null;   // 감정 델타 리졸브(Q.81) — 이미 화면에 보인 draft 글자 유닛 수 + 확정 스왑 1회분 {b:본 유닛, at:꼬리 런 시작 인덱스}(_yNoAnim과 같은 수명 · 안 본 꼬리만 리졸브)
 let _yComposing = false, _yRenderPend = false;   // IME 조합(한글) 진행 여부 + 조합 중 밀린 렌더 플래그(운영자 260717) — 조합 중 로그 통짜 innerHTML 교체가 조합 중이던 글자를 날리는 모바일 IME 버그 차단
@@ -5171,7 +5172,7 @@ function yRender() {
   if (_yCurT !== _ct) {   // 방 정체 전환 감지(Q.06 평의회5) — 단톡 재합류·휘발 소멸로 서버가 cur을 옮기면 yThreadSwitch를 안 거쳐 키드가 이전 방 기준으로 남음 → 방 경계 리셋과 동형 처리(정규 전환 뒤 중복 실행은 무해·멱등)
     const _old = _yCurT; _yCurT = _ct;
     if (_old && _ct) {
-      _yLastN = -1; _yPaceN = -1; _yTypHold = 0; _meUnread = false; _yDrKeep = false; _yDrN = 0; _yDrSwap = null;   // 첫 렌더 취급 = 병합된 1:1 히스토리 일괄 촤르륵 폭주 차단(평의회5①) · 겹침 draft 래치·감정 델타 커서(Q.81)도 방 경계 리셋(260717)
+      _yLastN = -1; _yPaceN = -1; _yTypHold = 0; _meUnread = false; _yDrKeep = false; _yDrN = 0; _yDrSwap = null; _yWasTrim = false;   // 첫 렌더 취급 = 병합된 1:1 히스토리 일괄 촤르륵 폭주 차단(평의회5①) · 겹침 draft 래치·감정 델타 커서(Q.81)·절단본 래치(Q.166)도 방 경계 리셋(260717)
       clearTimeout(_yTypT); _yTypT = null; clearTimeout(_yPaceT); _yPaceT = 0;
       yScSet(0); _ySegs = [{ at: 0, sc: 0 }]; yScSync();   // # 상황 모드 구간 교차 방 누수 차단(방 경계 리셋 계승 · 평의회5⑤)
       if (!YTH(_old)) { try {   // 옛 방이 소멸(=병합·휘발)이면 읽음 마커 승계 + 고아 키 제거(안읽음 재점화·localStorage 누적 차단 · 평의회5②)
@@ -5192,6 +5193,11 @@ function yRender() {
   yHeadSync();   // 헤더 4픽토 상태 동기(대화 가능·문자·연락처 · 운영자 260725)
   $('#yetaIn').hidden = deadNow;
   yetadlg.classList.toggle('ymourn', deadNow);   // 애도 흑백(PR#281 회수) — 사망 방 배경 탈색 · 부활(만료) = 자연 색복귀
+  {   // 절단본→전체본 전환 = 첫 렌더 취급(260809 Q.166 「직전 대화 다시 로딩」 봉합) — 낙관적 재진입이 그린 절단본(꼬리 2턴 · trim=원턴수)을 draw/폴 전체본이 대체하는 순간, prevN(=2) 기준 fresh 판정이 옛 대화 전체를 신규 턴으로 오인해 등장 애니를 통째 재생하던 것. 전체본 도착 = 재진입 무애니 규약(아랫줄 first)과 같은 결로 흡수 — 이후 새 턴은 종전대로 촤르륵.
+    const _tr = (s.trim || 0) > all.length;   // 절단 판정 = 서버가 절단본에만 심는 trim(원 턴수 > 실린 턴수) — 전체본·미절단(원턴수 ≤ 2)은 자연 불참
+    if (_yWasTrim && !_tr) { _yLastN = -1; _yPaceN = -1; }
+    _yWasTrim = _tr;
+  }
   const prevN = _yLastN, first = prevN < 0;   // 첫 렌더(재진입 포함) = 전체 무애니(히스토리 우르르 방지)
   // 답장 페이스(운영자 260706 → 260714 버블 단위 개편): 꼬리 답장 런을 통짜 공개 대신 **버블 하나씩** 이어붙임("2개 먼저 뱉고 2개 그다음" 리듬 — 러너 finish 버블 분할과 짝).
   //   버블 사이 = staged 유지 → 타이핑 점이 자연히 끼어 메신저 결. 각 홀드 = 그 버블 길이 비례(항목13 공식 온존 · 상한 4.2s).
