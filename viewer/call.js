@@ -45,23 +45,25 @@ const WAVE_SVG = '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" st
 
 // ── 스타일 주입(토큰만 · 신규 raw = 키프레임 안무·기하 계산·::backdrop[#yetadlg 동값]뿐) ──
 const css = `
-#calldlg { width:min(420px,96vw); height:min(88dvh,720px); padding:0; border:1px solid var(--glass-line); border-radius:var(--r-modal);
-  background:var(--bg); color:var(--fg); overflow:hidden; box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card);
-  backdrop-filter:none; -webkit-backdrop-filter:none; }   /* 불투명 bg — 전역 dialog blur 상속 낭비 차단(#yetadlg 동형) */
+#calldlg { width:100vw; height:100dvh; max-width:100vw; max-height:100dvh; margin:0; padding:0; border:none; border-radius:0; box-shadow:none;
+  background:var(--bg); color:var(--fg); overflow:hidden;
+  backdrop-filter:none; -webkit-backdrop-filter:none; }   /* 풀스크린 = #yetadlg(챗) 정본 선언 100% 계승(운영자 260809 "배경을 화면 가득") — 창 테두리·라운드·그림자 폐지 = 캐릭터 배경이 화면 끝까지 · 불투명 bg = 전역 dialog blur 상속 낭비 차단 */
 #calldlg::backdrop { background:rgba(0,0,0,.6); }          /* #yetadlg::backdrop 동값 계승 */
-@media (max-width:640px) { #calldlg { margin:auto; } }     /* 모바일 좌상단 쏠림 교정(#yetadlg 동형) */
-.ycall-wrap { position:relative; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:space-between; padding:var(--sp-3); }
+.ycall-wrap { position:relative; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:space-between;
+  padding:calc(var(--sp-3) + env(safe-area-inset-top)) var(--sp-3) calc(var(--sp-3) + env(safe-area-inset-bottom)); }   /* 풀스크린 전환 = 노치·홈바 회피(safe-area = OS축 raw 예외 · .yeta-h 선례) */
 .ycall-bg { position:absolute; inset:0; background-size:cover; background-position:center; }
 .ycall-bg::after { content:''; position:absolute; inset:0; background:var(--bg-scrim); }   /* 하단 딤 = 버튼 가독(토큰) */
-.ycall-top { position:relative; display:flex; flex-direction:column; align-items:center; gap:6px; padding-top:var(--sp-3); text-align:center; }
-.ycall-status { font-size:var(--fs-label); font-weight:var(--fw-b); color:var(--mut); }
-.ycall-ava { position:relative; margin:var(--sp-2); display:grid; place-items:center; }
-.ycall-ava::before, .ycall-ava::after { content:''; position:absolute; inset:calc(var(--sp-2) * -1);
+.ycall-top { position:relative; display:flex; flex-direction:column; align-items:center; gap:6px; padding-top:calc(var(--sp-3) * 3); text-align:center; }   /* 풀스크린+프사 제거로 이름줄이 화면 꼭대기에 붙던 것 = 프사 자리만큼 숨통(토큰 배수 = .ycall-btns gap 관용구 계승 · 새 값 0) */
+.ycall-status { font-size:var(--fs-label); font-weight:var(--fw-b); color:var(--fg-2); }   /* 사진 위 회색(--mut #8B8F8A)은 밝은 캐릭터 아트에 묻힌다(실측) — 서브텍스트 리프트 토큰(--fg-2)으로 계단 이동(위계 유지·새 값 0 · 운영자 260809 "이 톤 배경에서 회색이 안 보인다") */
+/* 파문 = 이름 기준(운영자 260809 "가운데 얼굴 삭제 · 은은하게 퍼져나가는 것만 그 아래 이름 기준으로") — 배경이 이미 그 캐릭터 얼굴이라 중앙 프사 = 얼굴 위 얼굴(중복).
+   프사(.ycall-ava)만 걷고 파문 선언·키프레임은 글자 하나 안 바꾸고 #ycallName 으로 옮겨 실었다(테두리·인셋·주기·딜레이·정지조건 100% 동일 · 새 값 0). */
+#calldlg .yintro-name { position:relative; }
+#calldlg .yintro-name::before, #calldlg .yintro-name::after { content:''; position:absolute; inset:calc(var(--sp-2) * -1);
   border:1px solid rgba(var(--accent-rgb),.55); border-radius:50%; animation:ycallPulse 2s var(--ease) infinite; pointer-events:none; }
-.ycall-ava::after { animation-delay:1s; }
-#calldlg.talk .ycall-ava::before, #calldlg.talk .ycall-ava::after { animation:none; opacity:0; }
+#calldlg .yintro-name::after { animation-delay:1s; }
+#calldlg.talk .yintro-name::before, #calldlg.talk .yintro-name::after { animation:none; opacity:0; }
 @keyframes ycallPulse { 0% { transform:scale(.92); opacity:.9; } 100% { transform:scale(1.55); opacity:0; } }
-@media (prefers-reduced-motion:reduce) { .ycall-ava::before, .ycall-ava::after { animation:none; opacity:0; } }
+@media (prefers-reduced-motion:reduce) { #calldlg .yintro-name::before, #calldlg .yintro-name::after { animation:none; opacity:0; } }
 .ycall-line { position:relative; max-width:34ch; background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-l);
   backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m));
   padding:var(--sp-2); font-size:var(--fs-body); line-height:var(--lh-base); }   /* 통화 자막 = 글래스 카드 */
@@ -69,7 +71,7 @@ const css = `
 .ycall-line i.yn { font-style:italic; color:var(--fg-2); opacity:.75; }   /* *지문* 이탤릭 = .yb 결 계승 */
 .ycall-btns { position:relative; display:flex; gap:calc(var(--sp-3) * 3); padding-bottom:var(--sp-3); }
 .ycall-act { display:flex; flex-direction:column; align-items:center; gap:8px; }
-.ycall-act > span { font-size:var(--fs-xs); color:var(--mut); font-weight:var(--fw-b); }
+.ycall-act > span { font-size:var(--fs-xs); color:var(--fg-2); font-weight:var(--fw-b); }   /* 취소·통화 라벨 = .ycall-status 와 같은 처방(사진 위 --mut 묻힘 → --fg-2) */
 .ycall-btn { width:calc(var(--btn) + var(--sp-3) * 2); height:calc(var(--btn) + var(--sp-3) * 2); border-radius:50%; border:none;
   display:grid; place-items:center; cursor:pointer; touch-action:manipulation; }   /* .yeta-send 원형 CTA 스펙 계승(토큰 조합 확대) */
 .ycall-btn:active { transform:scale(var(--press-m,.9)); }
@@ -128,7 +130,14 @@ const css = `
   font:inherit; font-size:var(--fs-label); font-weight:var(--fw-b); cursor:pointer; touch-action:manipulation;
   backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }   /* 보조 = 무채 글래스 플레이트(.ycall-mic 결) */
 .yvcf-later:active { transform:scale(var(--press-l,.95)); }
-#calldlg.talk .ycall-status { font-variant-numeric:tabular-nums; }   /* 보이스톡 타이머 = tabular(.yb-cap 결) */`;
+#calldlg.talk .ycall-status { font-variant-numeric:tabular-nums; }   /* 보이스톡 타이머 = tabular(.yb-cap 결) */
+/* 발신 번호 = 플로팅 알약(운영자 260809 "스포티파이 블랙 투명도 40 알약에 담아서 흰색") — 배경이 밝은 캐릭터 아트라 --mut 회색 글자는 사진에 묻힌다(실측 #8B8F8A on 베이지 ≒ 1.6:1).
+   구성은 .yeta-h(챗 헤더 알약) 정본 그대로: 글래스 틴트 위에 스포티파이 블랙 밑칠 + --glass-line 엣지 + --blur-l + 인셋 하이라이트. 밑칠 알파만 운영자 지시값 .4(헤더는 .75) · padding 1px 8px = .yprem/.ygrade 배지 정본 계승. 명함 시트(.yvcf-num)는 #ycallNum 스코프라 무영향. */
+#ycallNum { display:inline-flex; align-items:center; padding:1px 8px; border-radius:var(--r-pill); color:var(--fg);
+  background:linear-gradient(var(--glass), var(--glass)), rgba(18,18,18,.4); border:1px solid var(--glass-line);
+  backdrop-filter:blur(var(--blur-l)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-l)) saturate(1);
+  box-shadow:inset 0 1px 0 var(--glass-line); }
+#ycallNum[hidden] { display:none; }   /* display 선언이 UA [hidden]을 이기는 구멍 봉합 — 없으면 수신 화면(번호 없음)에 빈 알약이 뜬다(실측) · .ycall-line[hidden] 선례 계승 */`;
 
 // ── 상태 ──
 let dlg = null, cur = null, ringT = 0, vibT = 0, toneT = 0, audio = null, actx = null;
@@ -151,7 +160,6 @@ function ensureDom() {
   <div class="ycall-bg" id="ycallBg" aria-hidden="true"></div>
   <div class="ycall-top">
     <span class="ycall-status" id="ycallStatus"></span>
-    <span class="ycall-ava" id="ycallAva"></span>
     <span class="yintro-name" id="ycallName"></span>
     <span class="yintro-tag" id="ycallTag"></span>
     <span class="yvcf-num" id="ycallNum" hidden></span>
@@ -206,7 +214,6 @@ async function open(call) {
   }
   const p = (typeof yPersona === 'function' && yPersona(call.persona)) || { name: call.persona || '?', initial: '?' };
   dlg.querySelector('#ycallBg').style.backgroundImage = p.bg ? `url('${p.bg}')` : '';
-  dlg.querySelector('#ycallAva').innerHTML = typeof yAva === 'function' ? yAva(p, 'yintro-ava') : '';
   dlg.querySelector('#ycallName').textContent = p.name || '';
   dlg.querySelector('#ycallTag').textContent = p.tagline || '';
   dlg.querySelector('#ycallStatus').innerHTML = '전화가 오고 있어<span class="gdots"><i>.</i><i>.</i><i>.</i></span>';   // gdots = 본체 점 애니 계승
@@ -435,7 +442,6 @@ async function dialOut() {
   outReal = !!p.phone; outStage = 1; cur = null;
   stopFx(); dlg.classList.remove('talk');
   dlg.querySelector('#ycallBg').style.backgroundImage = p.bg ? `url('${p.bg}')` : '';
-  dlg.querySelector('#ycallAva').innerHTML = typeof yAva === 'function' ? yAva(p, 'yintro-ava') : '';
   dlg.querySelector('#ycallName').textContent = p.name || '';
   dlg.querySelector('#ycallTag').textContent = p.tagline || '';
   const num = dlg.querySelector('#ycallNum'), tel = (VCF[pid] && VCF[pid].tel) || '';

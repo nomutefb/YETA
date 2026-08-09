@@ -706,6 +706,18 @@ export async function onRequestPost({ request, env }) {
     // 한 문항 = 무음동 2시간 단축(현실 20분) · 선택지가 가리키는 축을 tune_votes에 쌓고, 같은 캐릭터로 3표가 모이면 **그 자리에서** tunes에 ±1 반영(별도 크론·유저 조작 0).
     const QI = Math.max(0, parseInt(body.i, 10) || 0), OI = Math.max(0, parseInt(body.o, 10) || 0);
     const CUT_MS = 2 / 6 * 3600e3, VOTE_N = 3;
+    // ⚠️ 씨앗 = roster 16축(383차 봉합 · 평의회 260809) — 종전 `Array(16).fill(5)`는 **중립에서 시작**해서
+    //   그 캐릭터의 설계된 성향(루시 낙차 10 등 14축)을 통째로 버리고 ±1만 얹었다. 퀴즈의 취지는 「기존 성향을 조금씩 민다」지
+    //   「성향을 지우고 새로 만든다」가 아니다. 게다가 382차 이후엔 러너 폴백이 `(세션) or roster`라 좌항이 이기므로,
+    //   퀴즈 3표가 모이는 순간 중립 5 배열이 세션에 박혀 **roster 14축이 프롬프트에서 다시 0바이트**가 됐다(band()가 5~6을 생략).
+    //   그 시점엔 뷰어 게이지가 잠겨 있어(`_ysetLocked = yChatStarted`) 유저가 되돌릴 수도 없다.
+    //   페치 = op chars·ring과 같은 raw+cf 캐시 관용구(창작 0) · 실패 = 빈 맵 = 종전 중립 폴백(fail-soft · 퀴즈는 안 죽는다).
+    let rtune = {};
+    try {
+      const rr = await fetch(`https://raw.githubusercontent.com/${REPO}/main/apps/yeta/characters/roster.json`,
+        { headers: { 'user-agent': 'nomute-viewer' }, cf: { cacheTtl: 60, cacheEverything: true } });
+      if (rr.ok) { const rj = await rr.json(); if (Array.isArray(rj)) for (const c of rj) if (c && c.id && Array.isArray(c.tune) && c.tune.length === 16) rtune[c.id] = c.tune; }
+    } catch {}
     const { sess, abort } = await casPut(s => {
       const md = s.me_dead;
       if (!md || !Array.isArray(md.quiz)) return { abort: { error: '지금은 떠올릴 게 없어' } };
@@ -726,7 +738,9 @@ export async function onRequestPost({ request, env }) {
         if (arr.length >= VOTE_N) {   // 자동 반영 — 축별 표를 합산해 ±1씩만 움직인다(한 번에 튀지 않게) · 반영분은 비우고 다음 3표를 새로 모은다
           const sum = {};
           for (const v of arr) sum[v.ax] = (sum[v.ax] || 0) + v.d;
-          const T = (s.tunes = s.tunes || {}), cur = Array.isArray(T[q.p]) && T[q.p].length === 16 ? T[q.p].slice() : Array(16).fill(5);
+          const T = (s.tunes = s.tunes || {});
+          const seed = Array.isArray(rtune[q.p]) ? rtune[q.p].slice() : Array(16).fill(5);   // roster 씨앗(383차) — 페치 실패 시에만 종전 중립
+          const cur = Array.isArray(T[q.p]) && T[q.p].length === 16 ? T[q.p].slice() : seed;
           for (const k of Object.keys(sum)) { if (!sum[k]) continue; cur[k] = Math.max(0, Math.min(10, (cur[k] || 5) + (sum[k] > 0 ? 1 : -1))); }
           T[q.p] = cur; V[q.p] = [];
         }
