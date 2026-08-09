@@ -2,11 +2,17 @@
 # lucy_threads.sh — 루시 스레드(Threads) 자동 발행 러너(운영자 260726 "api 붙여서 자동으로" · Q.90)
 # lucy-threads.yml(cron 00:00/14:00 UTC = KST 09:00 시크 · 23:00 도깨비+답글 스윕)이 호출.
 # 정본 = viewer/characters/season/lucy/CLAUDE.md(페르소나 · 충돌 시 이쪽이 이김) + docs/reports/260726_루시_스레드운영_설계.md(§1 매핑·§3 문법·§4 few-shot·§5 금기).
-# 가드: THREADS_ACCESS_TOKEN 없으면 claude 호출 전 즉시 종료(쿼터 0 · yeta_nudge 동형) · LUCY_DRY_RUN=1 = 생성만(발행 0)
+# 가드: LUCY_ON=0 이면 즉시 종료(킬스위치 · 아래) · THREADS_ACCESS_TOKEN 없으면 claude 호출 전 즉시 종료(쿼터 0 · yeta_nudge 동형) · LUCY_DRY_RUN=1 = 생성만(발행 0)
 #       · 글 ≤500자·지문(*)/이모지 제거 · 답글 = 런당 LUCY_REPLY_CAP(기본 10)·이미 답한 답글 스킵(재답글 방지) · 금기 = 프롬프트 오버라이드(역린=서늘 1줄).
 # 발행 = 공식 Graph API(graph.threads.net)만 — 수집축(부계 쿠키)과 절연(설계서 §6).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"; cd "$ROOT"
+
+# ── 킬스위치(260809 · 게이트 = shared/check_refs.py check_lucy_killswitch) — repo Variables `LUCY_ON`으로 끄고 켠다 ──
+# ⚠️ **기본값 = ON**(`:-1`). 부재 = 종전 동작 100% 불변 = 이 커밋으로 조용히 멈추는 일 0(`PAGES_COALESCE` 부재=ON 관례 계승).
+#   종전엔 끄는 수단이 ⓐ Actions에서 워크플로 disable ⓑ THREADS_ACCESS_TOKEN 삭제뿐이라 둘 다 웹 콘솔 왕복 + 되돌릴 때 토큰 재등록이 필요했다.
+#   ⚠️ 이 게이트가 첫 줄인 이유 = claude·curl·source 어느 것도 타기 전에 끊어야 「껐는데 쿼터가 돈다」가 안 생긴다(nomute-editor lucy_threads.sh 게이트 관용구 계승).
+[ "${LUCY_ON:-1}" = "0" ] && { echo "lucy: OFF(LUCY_ON=0) — 스킵(설정 Variables에서 1로 되돌리면 재가동 · claude 호출 0 = 쿼터 0)"; exit 0; }
 
 SAFE=""; case "${YETA_SAFE:-1}" in 1|true|on) SAFE="--safe-mode" ;; esac   # ⚠️ --bare 절대 금지(OAuth 즉사 · check_refs judge/--bare 게이트 결)
 export CLAUDE_BARE=0 DISABLE_AUTOUPDATER=1 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
