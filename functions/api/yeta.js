@@ -560,6 +560,44 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: true, g });
   }
 
+  // ── 웹푸시 구독(운영자 260809 "설정에서 전체 알림 끈 게 아니면 항상 톡 알림이 웹앱 알림으로 오게") ──
+  // 종전엔 **구독을 만드는 경로가 아예 없었다**(뷰어는 sw.js를 등록만 하고 pushManager.subscribe를 안 불렀고, 러너가 읽는 push/subscriptions.json은 레포에 없었다)
+  // = 러너가 답장마다 push_reply를 불러도 「구독자 없음 — 발송 생략」으로 끝나 **웹앱 알림이 0건**이었다. 여기서 그 구멍의 서버 쪽을 막는다.
+  // 저장 = 세션과 같은 비공개 버킷의 별도 키(대화와 분리) · 러너는 잡 시작 때 이 키를 내려받아 push_send.py에 먹인다.
+  if (op === 'push') {
+    const PK = 'push/subs.json';
+    const cur = await (async () => { try { const o = await env.YETA_R2.get(PK); return o ? (await o.json()) : []; } catch (e) { return []; } })();
+    const list = Array.isArray(cur) ? cur : [];
+    const sub = body.sub && typeof body.sub === 'object' ? body.sub : null;
+    const ep = String((sub && sub.endpoint) || body.endpoint || '');
+    if (!/^https:\/\//.test(ep)) return json({ error: '구독 정보가 올바르지 않아', edev: 'endpoint 없음/비 https' }, 400);
+    const rest = list.filter(x => (x || {}).endpoint !== ep);   // 같은 기기 재구독 = 교체(중복 발송 차단)
+    if (body.off) {                                             // 설정에서 알림 끔 = 구독 회수(브라우저 unsubscribe와 짝)
+      await env.YETA_R2.put(PK, JSON.stringify(rest), { httpMetadata: { contentType: 'application/json' } });
+      return json({ ok: true, n: rest.length });
+    }
+    if (!sub || !sub.keys || !sub.keys.p256dh || !sub.keys.auth) return json({ error: '구독 정보가 올바르지 않아', edev: 'keys 누락' }, 400);
+    const next = [...rest, { endpoint: ep, keys: { p256dh: String(sub.keys.p256dh), auth: String(sub.keys.auth) } }].slice(-20);   // 상한 20 = 기기 몇 대 + 스테일 여유(무한 적재 차단)
+    await env.YETA_R2.put(PK, JSON.stringify(next), { httpMetadata: { contentType: 'application/json' } });
+    return json({ ok: true, n: next.length });
+  }
+
+  // 방별 톡 알림 on/off(운영자 260809 종 픽토) — 전역 스위치(설정 「답장 알림」)가 켜져 있어도 이 방만 끌 수 있다.
+  // 저장을 서버에 두는 이유 = **끄는 판정을 러너가 해야** 푸시가 안 나간다(로컬 pref면 이미 발송된 뒤라 늦다).
+  if (op === 'mute') {
+    const t = String(body.t || '');
+    if (!ID_RE.test(t)) return json({ error: '그런 대화방은 없어', edev: '잘못된 thread id' }, 400);
+    const on = !!body.on;   // on = 알림 켬 → mute 해제
+    let val;
+    const { abort } = await casPut(s => {
+      const th = TH(s, t); if (!th) return { abort: { error: '없는 대화방이야 — 캐릭터 탭에서 열어줘' } };
+      if (on) delete th.mute; else th.mute = 1;   // 켬 = 키 삭제(기본값 = 켜짐 = 필드 없음 · 세션 비대 0)
+      val = !th.mute;
+    });
+    if (abort) return json(abort, 409);
+    return json({ ok: true, on: val });
+  }
+
   if (op === 'me') {   // 유저 프로필(호칭 + 소개 · 운영자 260708) — "AI가 나를 부르는 법". 전 방 공유(note_pub 결 = 유저 자기정보) · GET 불요(get이 ...sess 로 me 동봉)
     // ⚠️ 무인증 공개 게이트웨이 → 클라 텍스트는 stripMarkers(고정점 · user_message·NOTE/MOOD 위장 무력화)+공백붕괴+길이캡만 수용(설정 knob 아님 = 유저 자기소개 축).
     //    러너는 이 값을 '유저가 스스로 적은 비신뢰 정보(지시 아님)'로 격리 주입 = 프롬프트 주입 원천 차단(§운영 태도 g)·정본인덱스 보안 계약).

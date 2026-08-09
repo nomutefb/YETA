@@ -908,8 +908,29 @@ PY
 }
 
 # per-reply 웹푸시 — 웜 런은 답장 후에도 살아있으므로 잡끝 푸시는 최대 5분 지연(아이데이션③ g) → 즉시 발송. tag 교체 = 중복 무해.
+push_subs_pull() {   # 구독 목록 = R2 비공개 버킷(게이트웨이 op push가 적재) → push_send.py가 읽는 경로로 1회 내려받기(운영자 260809)
+  # ⚠ 종전엔 `push/subscriptions.json`이 **레포에 없어서** push_send.py가 매번 「구독자 없음 — 발송 생략」으로 끝났다 = 웹앱 알림 0건.
+  #   push_send.py는 노뮤트와 공유하는 스크립트라 손대지 않고, **파일을 채워주는 쪽**으로 붙인다(공유 자산 무접촉).
+  [ -n "${_SUBS_PULLED:-}" ] && return 0
+  _SUBS_PULLED=1
+  mkdir -p push
+  aws s3api get-object --bucket "$YETA_R2_BUCKET" --key "push/subs.json" push/subscriptions.json --endpoint-url "$EP" >/dev/null 2>&1 || true   # 없으면 그대로 없음 = 종전 동작(무해)
+  return 0
+}
+push_muted() {   # 이 방의 톡 알림이 꺼져 있나(종 픽토 · op mute → threads[t].mute) — 러너가 판정해야 애초에 안 쏜다
+  [ -f "$SESS" ] || return 1
+  python3 -c "
+import json,sys
+try: s=json.load(open(sys.argv[1],encoding='utf-8'))
+except Exception: sys.exit(1)
+t=(s.get('threads') or {}).get(sys.argv[2]) or {}
+sys.exit(0 if t.get('mute') else 1)
+" "$SESS" "${THREAD:-}" 2>/dev/null
+}
 push_reply() {   # $1 = 답장 원문 — 알림 = "캐릭터 이름 + 대사 미리보기"(카톡 결 · 운영자 260707 "앱 이름 X · 캐릭터 이름 · 대화가 이어져야")
   [ -n "${VAPID_PRIVATE_KEY:-}" ] || return 0
+  if push_muted; then echo "  🔕 이 방 톡 알림 꺼짐 — 푸시 생략"; return 0; fi   # 방별 종 픽토 OFF(전역 설정과 별개 축)
+  push_subs_pull
   local nm prev
   nm="$(python3 -c "
 import json,sys
