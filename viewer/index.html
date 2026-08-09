@@ -234,6 +234,11 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ybg { position:absolute; inset:0; background-size:cover; background-position:center; opacity:0; transition:opacity .6s var(--ease); pointer-events:none; }
   .ybg.on { opacity:.92; }   /* 시그니처/무드 배경 전경화(운영자 260707 항목9 "배경 항상 나오게" — 은은한 .32 반려) · 가독 = yPaintBg 딤 그라데(설정 「화면 어둡기」 3단 · 기본 = 캐릭터 아트 .28/.34 · 환경 씬 .18/.26 — 운영자 260729 "반으로")가 스크림 담당 · 버블은 글래스라 위에 뜸 */
   .ybg { transition:opacity .6s var(--ease), background-position-x .05s linear; }
+  /* ── 배경 배율 창 고정(운영자 260809 재지시 "기존대로 하는데 키보드 올라온다고 이게 비율이 달라지지 않게") ──
+     원인 = cover는 **상자 높이**로 배율이 정해진다. 키보드가 뜨면 yVvFit이 창을 visualViewport.height로 줄이는데(393×852 → 393×522), .ybg가 그 줄어든 창을 그대로 덮으니 같은 그림이 딴 배율로 다시 잡혔다(정사각 아트 899×899 실측: ×0.948[가로 46%만 보임] ↔ ×0.581[75%] = 1.63배 요동).
+     고침 = **레이어 높이만 창(100dvh)에 못 박는다**. 프레이밍(꽉 찬 cover·중앙)은 기존 그대로 두고, 배율을 정하는 높이가 키보드에 안 흔들리게 한다 — 키보드가 뜨면 그림은 제자리에 그대로 있고 아래쪽이 키보드에 가려질 뿐(.yeta-stage overflow:hidden 가 잘라준다).
+     ⚠ dvh를 쓰는 이유 = 온스크린 키보드는 **비주얼** 뷰포트만 줄인다(뷰포트 메타에 interactive-widget=resizes-content 를 안 걸어둔 이유와 같은 축 — yVvFit 주석 참조) → dvh 는 키보드로 안 변한다. bottom:auto = top+bottom+height 과잉구속 해제. 100dvh = 기하 예외축 · 신규 색·토큰 0. */
+  .ybg { height:100dvh; bottom:auto; }
   /* 애도 모드(PR#281 회수 · 운영자 260714) — 사망 24h 동안 그 방 배경이 흑백으로 식는다. 부활 = 클래스 해제로 자연 색복귀.
      filter(grayscale·brightness) = 토큰 없는 축(§🎨 raw 허용) · 신규 색 토큰 0. 260725 사망 표기(프사 채색 소거)와 층이 다르다 — 저건 인물, 이건 방. */
   #yetadlg.ymourn .ybg { filter:grayscale(1) brightness(.6); transition:filter 1.2s var(--ease), opacity .6s var(--ease); }
@@ -4160,6 +4165,8 @@ function yBgReset() {   // 두 레이어 전부 소거 — 비디오 정지·제
 function yPaintBg(bgUrl, tint, season) {   // 레이어 페인트(페르소나 전환·무드 전환 공용) — 같은 그림 재페인트는 키 가드가 막음 · season = 감정 미디어 모드(캐릭터 아트 스크림·클립 muted)
   const wd = !!(YCUR && YCUR.id === 'winter');   // 윈터 = 블라인드 +50% 합성(운영자 260726 "배경 앞에 블라인드 투명도 50% 더") — d + (1−d)×.5(클립은 .ybg.wdim 필터가 짝 · 노브: 설정 「화면 어둡기」 한 곳)
   const DM = yDimCur(), wcomp = v => { const x = parseFloat(v); return (x + (1 - x) * .5).toFixed(2).replace(/^0/, ''); };   // 어둡기 3단 = YDIM_SET SSOT(밝게/기본/어둡게 · 기본 = 운영자 260729 "반으로" = .28/.34)
+  const scrim = (a, b) => `linear-gradient(rgba(18,18,18,${a}),rgba(18,18,18,${b}))`;   // 스크림 = 종전 정거장 두 개 그대로(값 SSOT = 어둡기 3단 YDIM_SET · 윈터 +50% 재합성) — 세 곳이 같은 문자열을 쓰던 것을 헬퍼로 묶었을 뿐, 값·정거장 변경 0
+
   const [d1, d2] = wd ? DM.s.map(wcomp) : DM.s;   // 캐릭터 아트 스크림(윈터는 블라인드 재합성 — 기본단 .64/.67 · 어둡게단 .78/.84 = 종전 정본 그대로)
   const _sig = `${bgUrl || ''}|${season ? 1 : 0}|${d1}|${d2}|${wd ? 1 : 0}`;   // 그림 + 딤 + 시즌 모드까지 지문에 포함(어둡기 설정을 바꾸면 당연히 다시 그려야 한다)
   if (_sig === _ybgSig) return;   // 같은 그림 재페인트 차단(260804 평의회 #6) — 크로스페이드 '숨' 제거
@@ -4167,9 +4174,9 @@ function yPaintBg(bgUrl, tint, season) {   // 레이어 페인트(페르소나 �
   const layers = [$('#ybgA'), $('#ybgB')], next = layers[1 - _ybgCur], curL = layers[_ybgCur];
   yBgKillVid(next.querySelector('video'));   // 레이어 재사용 = 이전 클립 결정적 회수
   const curV = curL.querySelector('video'); if (curV) { try { curV.pause(); } catch {} }   // 밀려나는 레이어 클립 = 즉시 정지(불투명 0 뒤 무한 디코드 차단 — 평의회1·7 공통 지적 · 제거는 레이어 재사용/리셋 때)
-  if (season && /\.(mp4|webm)(\?|$)/i.test(bgUrl || '') && !yPrefOn('bgvid', true)) { next.style.backgroundImage = (YCUR && YCUR.bg) ? `linear-gradient(rgba(18,18,18,${d1}),rgba(18,18,18,${d2})), url("${YCUR.bg}")` : 'none'; next.classList.toggle('season', !!season); next.classList.remove('wdim'); next.classList.add('on'); curL.classList.remove('on'); _ybgCur = 1 - _ybgCur; return; }   // 배경 영상 끔 최종 방어선(260728) — 풀이 클립뿐이라 위 필터가 못 걷어낸 경우. 시그니처 스틸로 착지(바로 아래 클립 밑깔이와 같은 그림·같은 딤 = 새 값 0)
+  if (season && /\.(mp4|webm)(\?|$)/i.test(bgUrl || '') && !yPrefOn('bgvid', true)) { next.style.backgroundImage = (YCUR && YCUR.bg) ? `${scrim(d1, d2)}, url("${YCUR.bg}")` : 'none'; next.classList.toggle('season', !!season); next.classList.remove('wdim'); next.classList.add('on'); curL.classList.remove('on'); _ybgCur = 1 - _ybgCur; return; }   // 배경 영상 끔 최종 방어선(260728) — 풀이 클립뿐이라 위 필터가 못 걷어낸 경우. 시그니처 스틸로 착지(바로 아래 클립 밑깔이와 같은 그림·같은 딤 = 새 값 0)
   if (season && /\.(mp4|webm)(\?|$)/i.test(bgUrl || '')) {   // 시즌 클립 — "소리만 빼고 다"(운영자 260707) = muted 고정
-    next.style.backgroundImage = (YCUR && YCUR.bg) ? `linear-gradient(rgba(18,18,18,${d1}),rgba(18,18,18,${d2})), url("${YCUR.bg}")` : 'none';   // 클립 디코드/자동재생 전까지 시그니처 스틸을 밑에 깔아 무대 암전 차단(분신술 260708 — 비시즌 프리로드 게이트 대응) · 딤 = 캐릭터별 d1/d2(윈터 +50%)
+    next.style.backgroundImage = (YCUR && YCUR.bg) ? `${scrim(d1, d2)}, url("${YCUR.bg}")` : 'none';   // 클립 디코드/자동재생 전까지 시그니처 스틸을 밑에 깔아 무대 암전 차단(분신술 260708 — 비시즌 프리로드 게이트 대응) · 딤 = 캐릭터별 d1/d2(윈터 +50%)
     const v = document.createElement('video');
     v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
     if (YCUR && YCUR.bg) v.poster = YCUR.bg;   // 포스터 = 시그니처(자동재생 차단 시에도 암전 대신 스틸)
@@ -4177,8 +4184,8 @@ function yPaintBg(bgUrl, tint, season) {   // 레이어 페인트(페르소나 �
     yVidAudio(v);   // 소리+페이드 배선(260728) — 설정이 꺼져 있으면 종전대로 muted 고정
     try { const pr = v.play(); pr && pr.catch(() => { v.muted = true; v.setAttribute('muted', ''); yVidFadeStop(v); v.volume = 1; try { v.play().catch(() => {}); } catch {} }); } catch {}   // 음소거 아닌 자동재생이 막히면 **무음으로 되살린다** — 그림이 멈추는 것보다 소리를 포기하는 쪽이 낫다(재생 = 종전 동작으로 안전 강등)
   } else next.style.backgroundImage = bgUrl
-    ? (season ? `linear-gradient(rgba(18,18,18,${d1}),rgba(18,18,18,${d2})), url("${bgUrl}")`   // 캐릭터 아트 = 스포티파이 블랙 스크림(운영자 260729 "반으로" · .55/.68 → .28/.34 · 윈터만 +50% 블라인드 재합성 .64/.67 = 위 d1/d2)
-            : `linear-gradient(rgba(18,18,18,${DM.e[0]}),rgba(18,18,18,${DM.e[1]})), url("${bgUrl}")`)   // 환경(장소·무드 씬) = 같은 어둡기 칸의 env 쌍(기본 = 운영자 260729 "반으로" .18/.26 · 어둡게 = 종전 정본 .35/.52) — 캐릭터 아트 축과 같은 배율(두 축 관계 보존)
+    ? (season ? `${scrim(d1, d2)}, url("${bgUrl}")`   // 캐릭터 아트 = 스포티파이 블랙 스크림(운영자 260729 "반으로" · .55/.68 → .28/.34 · 윈터만 +50% 블라인드 재합성 .64/.67 = 위 d1/d2)
+            : `${scrim(DM.e[0], DM.e[1])}, url("${bgUrl}")`)   // 환경(장소·무드 씬) = 같은 어둡기 칸의 env 쌍(기본 = 운영자 260729 "반으로" .18/.26 · 어둡게 = 종전 정본 .35/.52) — 캐릭터 아트 축과 같은 배율(두 축 관계 보존)
     : `radial-gradient(120% 90% at 50% 0%, ${tint}14, transparent 55%)`;                            // 이미지 없으면 페르소나색 은은한 무드 틴트
   next.classList.toggle('season', !!season);
   next.classList.toggle('wdim', !!season && wd);   // 윈터 시즌 클립 딤 짝(.ybg.wdim video) — 타 캐릭터 레이어 재사용 시 자동 해제
