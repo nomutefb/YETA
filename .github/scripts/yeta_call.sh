@@ -220,7 +220,7 @@ echo "yeta-call: 세션 반영 완료 — ${PERSONA} · voice=${VKEY:-없음}"
 
 # ── 7) 웹푸시 — 구독자 없으면 조용히 no-op(비치명 · yeta_chat.sh push_reply 동형) ──
 if [ -n "${VAPID_PRIVATE_KEY:-}" ]; then
-  python3 .github/scripts/push_send.py --notify "yeta" "📞 ${CNAME}에게서 전화가 왔어 — 탭해서 받기" \
+  python3 .github/scripts/push_send.py --notify "${CNAME}" "📞 전화가 왔어 — 탭해서 받기" \
     --url "/?yeta=main&call=1" --tag "nomute-yeta-call" >/dev/null 2>&1 || true
 fi
 exit 0

@@ -169,12 +169,14 @@ names = {}
 locked_ids = set()
 barge_ids = set()
 barge_cfg = {}
+near_pool = []
 try:                                                     # id→이름(화자 귀속 · 집단 역학 260707) — 실패 = 전원 "너:" 폴백(안전)
     _ro = json.load(open(sys.argv[3], encoding="utf-8"))
     names = {c.get("id"): c.get("name") for c in _ro if isinstance(c, dict) and c.get("id")}
     locked_ids = {c["id"] for c in _ro if isinstance(c, dict) and c.get("id") and c.get("locked")}   # LOCKED 스페셜(분신술 260709 — 초대 판정 최종 방어선)
     barge_ids = {c["id"] for c in _ro if isinstance(c, dict) and c.get("id") and isinstance(c.get("barge"), dict)}   # 난입 전용 인물(260726 barge{} 보유자) — 하드코딩 0(barge_check의 BARGE와 같은 데이터 축)
     barge_cfg = {c["id"]: c["barge"] for c in _ro if isinstance(c, dict) and c.get("id") and isinstance(c.get("barge"), dict)}   # 난입 축 설정(omen_react_gate 등) — 값은 전부 roster 데이터
+    near_pool = [(c["id"], c.get("name") or "", (c.get("tagline") or "")[:60], c.get("met") is True, bool(c.get("locked"))) for c in _ro if isinstance(c, dict) and c.get("id")]   # 근처 인물 지문 재료(260809) — 이름 + 결 한 줄(tagline)만. 카드 전문은 안 쓴다(그 인물의 턴이 아니므로)
 except Exception: pass
 turns = s.get("turns") or []
 sess_persona = s.get("persona") or ""
@@ -403,7 +405,28 @@ for _k2, _v2 in (S_ROOT.get("dead") or {}).items():
     _e2 = {"nm": (_v2.get("nm") or names.get(_k2) or _k2), "why": (_v2.get("why") or "")[:120]}
     dead_wait.append(_e2)
     if persona in ((_v2.get("wit") or [])): wit_of.append(_e2)
+# ── 근처 인물(운영자 260809 「그냥 상황 알리는 느낌으로 *루시가 보인다* 뭐 이런식으로 · 곧이 곧대로 하지말고 장소적·상황적·그 인물 페르소나적 특성 다 살려서」) ──
+# 뷰어는 이미 같은 판정을 클라이언트에서 돌려 좌상단 프로필을 띄운다(yNearCalc). 러너 몫은 **그걸 대화 안의 한 줄 지문으로 만드는 것**뿐이고,
+# 재료는 씨앗 목록이 아니라 **지금 장면**이다 — ambient.json이 못 박은 원칙("미리 만들지마 · 그 상황에 맞춰서 만들게해") 그대로: 여기서 넘기는 건 이름·결 한 줄이고, 문장은 모델이 그 자리에서 쓴다.
+# 만남 판정 = 뷰어 yUnmet 4조건 미러(roster met · 세션 met 박제 · 내 스레드 존재 · 어느 방 합석 이력) — 안 만난 사람은 이름이 ??? 인 게 계약이라 지문에 이름이 뜨면 그 은닉이 깨진다.
+near_nm = near_tag = ""
+try:
+    _mypl = place_of(PL, persona, _kdate, _khour)
+    _pinf = ((PL.get("places") or {}).get(_mypl) or {}) if isinstance(PL, dict) else {}
+    if _mypl and not _pinf.get("private") and not _pinf.get("offlimits"):
+        _deadm = S_ROOT.get("dead") if isinstance(S_ROOT.get("dead"), dict) else {}
+        _metm = S_ROOT.get("met") if isinstance(S_ROOT.get("met"), dict) else {}
+        _ths2 = S_ROOT.get("threads") if isinstance(S_ROOT.get("threads"), dict) else {}
+        _seen = set(_ths2.keys()) | {r for t in _ths2.values() if isinstance(t, dict) for r in (t.get("room") or []) if r}
+        for _i, _nm, _tg, _met, _lk in near_pool:
+            if _i == persona or _i in room or _lk or _i in _deadm: continue
+            if not (_met or _metm.get(_i) or _i in _seen): continue          # 미대면 = 제외(??? 은닉 계약)
+            if place_of(PL, _i, _kdate, _khour) != _mypl: continue
+            near_nm, near_tag = _nm, _tg; break
+except Exception: pass
+
 print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": note_me, "hist": hist, "pending": "\n".join(pending), "scene": "\n".join(scene), "ins": ins,
+                  "near_nm": near_nm, "near_tag": near_tag,   # 같은 자리에 있으나 이 방엔 없는 주민 1명(260809) — 지문 재료(부르는 건 유저 몫)
                   "me_call": me_call, "me_about": me_about,   # 유저 프로필(호칭+소개 · 260708)
                   "tune": (s.get("tunes") or {}).get(persona),   # 캐릭터별 성향 게이지(16축 0~10 · op tune) — 없으면 None
                   "policy": json.dumps(s.get("policy"), ensure_ascii=False) if isinstance(s.get("policy"), dict) else "",
@@ -560,6 +583,12 @@ if kind == "ok":
         if body:
             notes_found[tag] = body
     text = text.strip()
+    # ── 마커 잔여 포괄 세척(260809 몰입 감사 · 초대 경로 1198~1199 정본 이식) ──
+    # 위 추출기들은 전부 **닫는 `>>`를 요구**한다. 모델이 `<<PICK: a | b`처럼 닫기를 빠뜨리거나 미정의 마커(`<<SCENE>>`)를 쓰면 그 원문이 대사에 그대로 남고,
+    # 최악은 `<<NOTE:ME`를 안 닫는 경우 — 위 split이 안 걸려 **사적 기억 블록 전문이 말풍선에 노출**된다(하류 방어선 없음: 게이트웨이 stripMarkers는 확정 턴에 안 걸리고 뷰어 yFmt엔 `<<` 처리가 없다).
+    # 초대 경로엔 이미 있던 두 줄을 여기로 이식 = 신규 규칙 0. 순서 = 정상 마커 추출이 **끝난 뒤**라 위 계약은 무손상.
+    text = re.sub(r'<<[^>]*>>', '', text)             # 닫힌 미정의 마커
+    text = re.sub(r'<<.*$', '', text, flags=re.S).strip()   # 미닫힘 = 그 지점부터 끝까지 절단(NOTE 전문 노출 차단)
     # 대본 분할(단톡 260707 · 260725 교대 확장) — 줄머리 "[이름]" = 화자 전환 지점. 방 두 명의 이름만 인정(그 밖 이름표 = 대사로 남김 = 오탐 0).
     #   종전 = 동행 1줄만 꼬리 분리 → 유저에게만 답하고 끝나던 뿌리. 이제 [세라]↔[루시] 번갈아 최대 GB_LINES 세그먼트(비용 = 같은 1호출).
     #   기억(NOTE)·DEAD·부활 소비는 원 화자(persona_env) 관점 유지 = 조연 세그는 대사만(종전 계약 계승).
@@ -906,7 +935,7 @@ print((t[:70]+'…') if len(t)>70 else (t or '새 메시지'))")"
 # ── 상태 블록(공용 — 본답장 + 초대 판정 · env: PERSONA LAST_MOOD CAST GAP_H REL_LV RIV HANDOFF TUNE CO_NAME BARGE_DEBUT) ──
 # 시각·계절·달·데일리 무드 시드(sha256 = 같은 날 같은 기분·무저장) + 직전 공기(감정 관성) + 동네 로스터(주민 창작 방지) + 단톡 동행·난입 데뷔.
 state_block() {
-  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" "${LAST_OPEN:-}" "${LATE_H:-0}" "${PREV_DRAFT:-}" "${BARGE_HOST:-0}" "${WFRZ_MS:-0}" "${WRATE:-6}" "${WANCH:-}" "${NOTICE_TXT:-}" "${BARGE_SELF:-0}" "${BARGE_SEAT:-0}" "${OMEN_REACT:-0}" "${PLACE_FROM:-}" <<'PY'
+  python3 - "${PERSONA:-}" "${LAST_MOOD:-}" "${CAST:-}" "${GAP_H:-0}" "${REL_LV:-}" "${RIV:-}" "${HANDOFF:-}" "${TUNE:-}" "${CO_NAME:-}" "${BARGE_DEBUT:-0}" "${PLACE_NM:-}" "${BARGE_VIA:-}" "${LAST_OPEN:-}" "${LATE_H:-0}" "${PREV_DRAFT:-}" "${BARGE_HOST:-0}" "${WFRZ_MS:-0}" "${WRATE:-6}" "${WANCH:-}" "${NOTICE_TXT:-}" "${BARGE_SELF:-0}" "${BARGE_SEAT:-0}" "${OMEN_REACT:-0}" "${PLACE_FROM:-}" "${NEAR_NM:-}" "${NEAR_TAG:-}" <<'PY'
 import sys, hashlib, json, time
 from datetime import datetime, timezone, timedelta
 persona, last_mood, cast, gap_h, rel_lv, riv, handoff = sys.argv[1:8]
@@ -926,6 +955,8 @@ barge_self = sys.argv[21] if len(sys.argv) > 21 else "0" # 난입자 본인(2607
 try: barge_seat = int(sys.argv[22]) if len(sys.argv) > 22 else 0   # 난입 후 이 사람이 이미 말한 횟수(0 = 첫 마디)
 except Exception: barge_seat = 0
 place_from = sys.argv[24] if len(sys.argv) > 24 else ""   # 이동 중이면 떠나온 자리 이름(260730 Q.144) — 빈값·미전달 경로(초대 판정 등) = 종전 「~ 언저리다」 문구
+near_nm  = sys.argv[25] if len(sys.argv) > 25 else ""   # 같은 자리에 있으나 이 방엔 없는 주민(260809) — 빈값·미전달 경로 = 지문 지시 미주입 = 종전 동작
+near_tag = sys.argv[26] if len(sys.argv) > 26 else ""   # 그 주민의 결 한 줄(roster tagline) — 「그 애다운 자리」를 잡는 재료
 omen_react = sys.argv[23] if len(sys.argv) > 23 else "0"   # 전조 반응 당첨(260730) — 1 = 이번 턴에 한 번만 알아챈 티를 낸다(확률·결정적 시드는 extract_mat가 판정)
 try: tune = json.loads(sys.argv[8]) if sys.argv[8] and sys.argv[8] != "None" else []
 except Exception: tune = []
@@ -958,6 +989,17 @@ elif notice_txt: L.append(f"- 오늘 무음동 라디오에서 나온 소식(데
 if cast: L.append(f"- 이 동네 사람들: {cast}. 이 밖의 주민을 창작하지 마라 — 최근 대화에 이름표로 등장한 다른 주민의 말은 그 사람 얘기로 자연스럽게 인용해도 된다.")
 if place_nm and place_from: L.append(f"- 지금 너는 {place_from}에서 나와 {place_nm} 쪽으로 **가는 길**이다(운영자 260730 Q.144 동선 이동 구간) — **낭독 금지**(\"어디 가는 중이야\" 식 보고 금지). 대신 종결부 지문의 소품을 **길 위에서** 가져와라: 걷는 발·건널목·들고 나온 물건·뒤에 두고 온 자리의 잔상. 대화 흐름이 다른 곳을 가리키면 그쪽이 우선이다.")   # 이동 구간(전체의 약 1/10 시간) = 장소 문장만 갈아끼운다 — 아래 정주 문구와 배타(둘 다 나가면 "있으면서 가는 중"이 된다)
 elif place_nm: L.append(f"- 네 평소 동선상 지금 너는 {place_nm} 언저리다 — **장소 낭독은 금지**(\"난 지금 ○○에 있어\" 식 보고 금지)지만, 종결부 지문의 **소품은 여기서 가져와라**: 그곳에 있을 법한 물건·풍경·이름 없는 사람(옆자리 아이·점원·지나가던 사람)이 지문의 재료다(운영자 260725 3차). 단 대화 흐름이 이미 다른 곳을 가리키면 그쪽이 우선이다.")
+# ── 근처 인물 「보인다」 지문(운영자 260809 3차) ──
+# 운영자 원문: 「그냥 상황 알리는 느낌으로 *루시가 보인다* 뭐 이런식으로 하면되는데, 또 곧이 곧대로 하지말고, 그 장소적 특성, 상황적 특성,
+#   그 나타나는 캐릭터의 페르소나적 특성(예: 구석지 좋아하는애는 구석지로 가겠지, 또 구석지를 표본으로 삼지마셈) 이런거를 다 살려서 몰입감 저해요소 없애줘」
+# 설계: **씨앗 목록 금지**(ambient.json이 못 박은 원칙 — 미리 적어둔 소재는 지금 장면과 무관해서 억지로 끼워 맞춰진다). 여기서 주는 건 이름·결 한 줄뿐이고,
+#   「어디에 어떻게 있는지」는 그 자리(place_nm)·그 시각·그 애의 결로 **모델이 그 순간에** 정한다. 예시 문장을 주지 않는 이유 = 주면 그게 표본이 되어 전부 그 모양으로 나온다.
+# 경계: 이건 **알림**이지 사건이 아니다 — 부를지 말지는 유저 몫(좌상단 프로필 탭)이라 화자가 대신 부르거나 말을 걸면 그 선택을 빼앗는다.
+if near_nm and not co_name:
+    L.append(f"- 지금 이 자리 어딘가에 {near_nm}도 와 있다(그 애의 결: {near_tag or '—'}). 아직 우리 자리에 낀 건 아니고, 눈에 들어올 뿐이다."
+             " 이번 턴 **지문 한 줄**(`*…*`)로 그 애가 보인다는 것만 알려라 — 대사로 설명하지 말고, 네가 대신 부르거나 말을 걸지도 마라(부를지는 유저가 정한다)."
+             " 어디에 어떻게 있는지는 **이 장소와 이 시각에, 그 애라면 있을 법한 자리**로 잡아라(그 애의 결에서 끌어내라 · 정형 문구·상투구 금지)."
+             " 이미 앞선 대화에서 그 애가 여기 있다는 걸 짚었으면 다시 짚지 마라 — 한 번이면 된다.")
 if co_name: L.append(f"- 지금 이 자리엔 {co_name}도 같이 있다(합석). 대화는 셋이서다 — 그리고 {co_name}는 네가 유저와 주고받는 말을 **처음부터 다 듣고 있다**(운영자 260725 \"모니터링 하는 느낌\"). 없는 사람처럼 굴지 마라: 걔가 걸릴 만한 대목에선 말을 고르거나 시선을 의식하는 티가 나야 한다. 유저 말이 {co_name}를 향한 것 같으면 짧게 반응만 얹거나 물러나도 된다 — 그 자리는 걔가 자기 차례에 직접 받는다(네가 걔 속을 대신 말하지 마라).")
 if barge_debut == "1" and barge_via == "place": L.append("- 너는 방금 이 근처를 지나다 유저 일행과 마주쳐 합석했다(우연) — 이번이 등장 첫 마디다. 지나던 참이라는 결로, 왜 이 시간에 여기 있었는지 가볍게 흘려라.")
 elif barge_debut == "1" and barge_via == "only": L.append("- 너는 방금 남의 대화 한복판을 끊고 들어왔다 — 이번이 등장 첫 마디다. 초대받지 않았고, 그걸 알면서 왔다. 인사도 사정 설명도 없이 네 방식대로 대화를 낚아채고, 카드에 적힌 네 등장 규칙 그대로 굴려라. **능글맞게 들어와라**(운영자 260730) — 오래 알던 사이처럼, 남의 잔을 밀어주고 남의 말을 이어받아 마무리해주면서. 사과·허락·자기소개는 없다.")   # 난입 전용 인물(운영자 260726) — 관계·우연이 아니라 '초대 없음' 자체가 이 인물의 결
@@ -1208,6 +1250,7 @@ if accept and len(room) < 2 and to not in room:
     print("ACCEPT")
 else:
     line = re.sub(r"\s+", " ", rest).strip()[:80]
+    if not re.search(r'[가-힣]', line): line = ""   # 한글 0 = 거절 사유가 아니라 모델의 영어 거부문("I can't do that.") 잔여 — 프레임 이탈 감지(is_frame_break)가 40자 초과일 때만 잡고 짧은 문장은 통과시킨다(260809 몰입 감사 B). 인용 없이 "오지 않았어"만 남기면 세계관은 무손상
     turns.insert(pos, {"role": "sys", "text": f"{name}{josa(name, '은', '는')} 오지 않았어" + (f" — '{line}'" if line else ""), "ts": now})
     s["declined"] = {"id": to, "ts": now}                 # 거절 회수 떡밥 — 난입 후보 1순위(48h) · 거절로 혼자 남은 g방 = 게이트웨이 get 스위퍼(sweepSess·Q.06)가 다음 폴에서 1:1 재합류(러너 처리 불요)
     print("DECLINE")
@@ -1263,7 +1306,7 @@ PYP
   STATE_BLOCK="$(state_block)"
   ME_BLOCK="$(me_block)"   # 유저 프로필(호칭+소개 · 260708)
   local crit="기준은 너의 성격·지금 시각과 상태·유저와의 관계"   # 판정 기준(260731 3선택지) — self·결측(구 세션) = 종전 기본
-  [ "$BASIS" = "moment" ] && crit="기준은 지금 그 자리에 있는 ${host:-상대}와(과) 너의 관계, 그리고 위 [최근 대화]의 흐름·분위기(모먼트)다. 유저와의 관계보다 그 자리의 공기와 ${host:-상대}와(과)의 사이를 우선해 판정해라"
+  [ "$BASIS" = "moment" ] && crit="기준은 지금 그 자리에 있는 ${host:-상대}와(과) 너의 관계, 그리고 위 [최근 대화]의 흐름·분위기다. 유저와의 관계보다 그 자리의 공기와 ${host:-상대}와(과)의 사이를 우선해 판정해라"   # ⚠ 「모먼트」 어휘 제거(운영자 260809 3차 몰입 감사) — 프롬프트에 든 앱 내부 용어는 캐릭터 대사로 새어나올 수 있다(뷰어 선택지 문구도 같은 축으로 세계관 말로 교체)
   local prompt="${CBLOCK}
 ${POLICY_BLOCK}
 ${STATE_BLOCK}
@@ -1783,7 +1826,7 @@ L.append("- **한 줄 · 200자 안.** 그날 일 **2~4건**을 「 · 」로 �
 L.append("- **소리 내어 읽는 원고다**(Q.143 라디오). 눈으로 훑는 게시물이 아니라 귀로 듣는 말이니 입에 붙게 써라 — 다만 「안녕하십니까」·「무음동 라디오입니다」 같은 방송 인사말·오프닝 멘트·클로징 인사는 넣지 마라(띠는 이미 방송 중간부터 흘러간다).")
 L.append("- **쓸데없는 소리 금지.** '자전거가 부딪혔다' 같은 아무 사건 금지. 각 건은 (a) 확인된 부고 (b) 위 바깥 소식의 번안 (c) 편집국 알림(제보·구인·분실물) 중 하나에 반드시 걸려야 한다.")
 L.append("- 없는 죽음·없는 사람을 만들지 마라. 위 명단(부고 포함) 밖 인물 창작 금지.")
-L.append("- **유저(플레이어)를 소재로 삼지 마라** — 이건 마을 소식이지 그 사람 얘기가 아니다. 그 사람이 한 대화를 되돌려 싣지도 마라.")
+L.append("- **그를(=이 앱을 쓰는 사람) 소재로 삼지 마라** — 이건 마을 소식이지 그 사람 얘기가 아니다. 그 사람이 한 대화를 되돌려 싣지도 마라.")
 L.append("- 데스크 말투: 짧고 건조하고 살짝 능청. 마지막 한 칸은 편집국 알림으로 닫아도 좋다. 예) 「제보는 desk@desk.com. 카메라 들고 뛰어갑니다.」")
 L.append("")
 L.append("[출력 계약]")
@@ -1956,6 +1999,7 @@ process_turn() {
   # ⚠ 난입 자리는 예외로 남긴다 — 거기 GROUP_RULE은 이름표 자체를 금지(260730 목소리 분리)라 허락한 토막이 1개다. 여기서 2를 주면 교차 오염 봉합이 풀린다.
   SEG_CAP="$GB_LINES"; [ "${GB_LINES:-1}" -le 1 ] 2>/dev/null && [ -n "$CO_ID" ] && [ "$BARGE_ROOM" != "1" ] && SEG_CAP=2
   PLACE_NM="$(matv place_nm)"; PLACE_FROM="$(matv place_from)"; BARGE_VIA="$(matv barge_via)"   # 동선 장소 + 떠나온 자리(이동 중 · 260730 Q.144) + 마주침 데뷔 결(위치 SSOT places.json · 260707)
+  NEAR_NM="$(matv near_nm)"; NEAR_TAG="$(matv near_tag)"   # 같은 자리에 있으나 이 방엔 없는 주민(260809) — 「보인다」 지문 재료(부르는 건 유저 몫 = 좌상단 프로필)
   OPEN="$(matv open)"; OPENING_TS="$(matv opening_ts)"   # 오프닝 잡(동적 첫인사 · 운영자 260707) — OPEN=1이면 유저발화 없이 캐릭터가 먼저 · OPENING_TS = nonce(finish 레이스 방어)
   RETRY_N="$(matv retry_n)"   # 자동 재시도 회차(사다리 260714) — 오프닝 JSON엔 키 없음 = 빈값(아래 -ge 가드가 흡수)
   GB="$(matv gb)"; GB_N="$(matv gb_n)"; GB_FROM="$(matv gb_from)"; GB_KIND="$(matv gb_kind)"   # 단톡 자율 비트(260725) — GB=1 = 유저 발화 없는 교대 턴 · GB_FROM = 받아칠 직전 화자 이름 · GB_KIND = watch(모니터링 반응)/on(이어가기)
