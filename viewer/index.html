@@ -529,6 +529,9 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ypd-act:active i { transform:scale(var(--press-m,.9)); }
   .ypd-act:focus-visible { outline:none; border-radius:var(--r-s); box-shadow:0 0 0 2px rgba(var(--accent-rgb),.5); }   /* 포커스 링 = .tool-x 옵트인 결 */
   .ystk { display:flex; align-items:center; justify-content:center; flex:none; min-width:40px; min-height:40px; padding:0 2px; background:none; border:none; cursor:pointer; touch-action:manipulation; }   /* 실효 히트 ≥40(원칙16 — 시각 26 유지 · 평의회D) */
+  .ystk[hidden] { display:none; }   /* ⚠ 버그픽스(운영자 260809 "대화에 합류한 이후에는 이미 2명이라 안 떠야 되는데 그대로 뜬다") — 위 `.ystk`가 깐 `display:flex`가 브라우저 기본 `[hidden]{display:none}`을 이긴다(작성자 CSS > UA).
+       그래서 `yStackSync`가 만석·초대 대기에서 `el.hidden = true`를 줘도 **스택이 화면에 그대로 남아 있었다**(합류한 사람이 좌상단에 계속 떠 있고, 260809 디밍·호흡까지 얹혀 더 도드라졌다).
+       `.ypickbar[hidden]`(260730)·`.yeta-in[hidden]`·`.yeta-plus[hidden]`·`.ycf-chk[hidden]` 등 같은 파일이 이미 11곳에서 겪고 고친 함정 — 그 정본 한 줄을 그대로 계승(신규 값 0). display:none = 숨은 동안 호흡 애니도 정지. */
   .ystk:active { transform:scale(var(--press-m,.9)); }
   .ystk:focus-visible { outline:none; border-radius:var(--r-pill); box-shadow:0 0 0 2px rgba(var(--accent-rgb),.5); }
   .ystk .sa { width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:rgba(var(--fg-rgb),.06); background-size:cover; background-position:center; border:2px solid var(--bg); font-size:var(--fs-meta); font-weight:var(--fw-x); color:var(--yeta-ac,var(--accent)); }   /* 근처 스택 아바타 26 · 밑판 갭 테 = var(--bg) 완전 계승(.yprof-cam 동일 · 평의회C — raw 스테일 #121212 교정) · 라이브 도트 없음(선택값) */
