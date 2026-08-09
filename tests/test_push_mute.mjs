@@ -59,5 +59,27 @@ t('켜면 키 삭제(기본=켜짐)', !('mute' in JSON.parse(store.get('sessions
 r = await post({ op: 'mute', t: 'nosuch', on: false });
 t('없는 방 = 거절', r.status === 409 || !!r.j?.error, 'status=' + r.status + ' ' + JSON.stringify(r.j));
 
+// ── 평의회B가 지목한 미검증 계약 3건(260809 추가) ──
+// ⑧ 구독 상한 20 회전 — 21번째 기기에서 **가장 오래된 것부터** 탈락(신규는 항상 살아남는다)
+store.set('push/subs.json', enc([]));
+for (let i = 0; i < 22; i++) await post({ op: 'push', sub: SUB('https://fcm.example/dev' + i) });
+const cap = JSON.parse(store.get('push/subs.json'));
+t('상한 20 유지', cap.length === 20, 'n=' + cap.length);
+t('가장 오래된 것부터 탈락', cap[0].endpoint === 'https://fcm.example/dev2' && cap[19].endpoint === 'https://fcm.example/dev21', cap[0].endpoint + ' … ' + cap[19].endpoint);
+
+// ⑨ thread id 형식 계약 — 단톡 g-id는 통과, 빈값·대문자·25자는 400
+store.set('sessions/main.json', enc({ cur: 'lucy', threads: { lucy: { room: ['lucy'], turns: [] }, g1a2b3c4d5e: { room: ['lucy', 'sera'], turns: [] } }, updated: 1 }));
+r = await post({ op: 'mute', t: 'g1a2b3c4d5e', on: false });
+t('단톡 g-id mute 통과', r.j?.ok === true && r.j.on === false, JSON.stringify(r.j));
+for (const bad of ['', 'LUCY', 'x'.repeat(25)]) {
+  r = await post({ op: 'mute', t: bad, on: false });
+  t(`형식 거절: ${JSON.stringify(bad).slice(0, 12)}`, r.status === 400, 'status=' + r.status);
+}
+
+// ⑩ mute 보존 — 다른 op의 casPut 왕복을 거쳐도 살아남나(뷰어 수렴·러너 판정이 둘 다 여기 걸려 있다)
+r = await post({ op: 'mute', t: 'lucy', on: false });
+await post({ op: 'me', call: '무음', about: '테스트' });   // 무관한 상태변경 1회
+t('무관한 op 왕복 후에도 mute 보존', JSON.parse(store.get('sessions/main.json')).threads.lucy.mute === 1);
+
 console.log(`\n결과: ${pass} 통과 / ${fail} 실패`);
 process.exit(fail ? 1 : 0);

@@ -289,7 +289,23 @@ t=re.sub(r'\*[^*]*\*','',sys.stdin.read()); t=re.sub(r'\s+',' ',t).strip()
 print((t[:70]+'…') if len(t)>70 else t)")"
   if [ "$MODE" = "pray" ]; then NM="${NM} — 신당에서 빌고 있어"; fi
   if [ "$MODE" = "quiz" ]; then NM="기억이 떠오른다"; PREV="죽어 있는 동안 떠올릴 수 있는 게 생겼어 — 부활 시간을 줄일 수 있다"; fi   # 사망 중 = 알림 제목으로 상황을 먼저 알린다(대화 재촉이 아니라 부활 신호) · set -e 안전형 if(단축 && 는 조건 false에서 스크립트를 죽인다)
-  python3 .github/scripts/push_send.py --notify "$NM" "$PREV" --url "/?yeta=${PERSONA}" --tag "nomute-yeta-${PERSONA}" >/dev/null 2>&1 || true
+  # 방별 톡 알림 게이트(운영자 260809 종 픽토 · 평의회B 1번) — 넛지도 「톡」이라 끈 방이면 안 보낸다.
+  #   ⚠ 통화(yeta_call.sh)는 별개 축으로 남긴다 — 종은 「톡 알림」이고 전화는 전화다(끊고 싶으면 통화 상한·수화기 축).
+  _muted=0
+  [ -f "$SESS" ] && python3 -c "
+import json,sys
+try: s=json.load(open(sys.argv[1],encoding='utf-8'))
+except Exception: sys.exit(1)
+sys.exit(0 if ((s.get('threads') or {}).get(sys.argv[2]) or {}).get('mute') else 1)
+" "$SESS" "${PERSONA:-}" 2>/dev/null && _muted=1
+  if [ "$_muted" = 1 ]; then
+    echo "yeta-nudge: 🔕 이 방 톡 알림 꺼짐 — 푸시 생략"
+  else
+    # 구독 목록 = R2(게이트웨이 op push 적재) — 넛지 잡도 챗과 같은 키를 내려받아야 발송 대상이 생긴다(종전엔 파일이 없어 항상 「구독자 없음」)
+    mkdir -p push
+    aws s3api get-object --bucket "$YETA_R2_BUCKET" --key "push/subs.json" push/subscriptions.json --endpoint-url "$EP" >/dev/null 2>&1 || true
+    python3 .github/scripts/push_send.py --notify "$NM" "$PREV" --url "/?yeta=${PERSONA}" --tag "nomute-yeta-${PERSONA}" 2>&1 | sed 's/^/  push: /' || true
+  fi
 fi
 case "$MODE" in
   quiz) echo "yeta-nudge: 성향 퀴즈 박제 완료(${#out}바이트)" ;;
