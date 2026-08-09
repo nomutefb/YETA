@@ -3659,9 +3659,7 @@ $('#ycsettingsCard').addEventListener('click', e => {
     if (key === 'bgaud') document.querySelectorAll('#yetadlg .ybg video').forEach(v => { yVidAudio(v); if (v.paused) return; try { const pr = v.play(); pr && pr.catch(() => { v.muted = true; yVidFadeStop(v); v.volume = 1; }); } catch {} });   // 지금 도는 클립에 즉시 반영(끄면 음소거·켜면 페이드인부터) — 재렌더 없이 그 자리에서
 
     if (key === 'push') {   // 알림 스위치 = 권한 요청 + **구독 생성/회수**까지(260809 — 종전엔 권한만 묻고 구독을 안 만들어 아무것도 안 왔다)
-      const go = () => { try { yPushSync(); } catch (x) {} };
-      if (on && 'Notification' in window && Notification.permission === 'default') { try { Notification.requestPermission().then(go, go); } catch (x) { go(); } }
-      else go();
+      try { yPushSync(on); } catch (x) {}   // 켤 때 = 권한 요청까지(유저 제스처 안) · 끌 때 = 구독 회수. 요청/실패 사유는 yPushSync가 토스트로 말한다
       try { yHeadSync(); } catch (x) {}   // 헤더 종 픽토 상태 동반 갱신(전역 OFF = 빗금)
     }
     return;
@@ -3955,14 +3953,15 @@ function yHeadSync() {   // 헤더 픽토 상태 동기(운영자 260725) — [�
   // 종(이 대화 알림 · 운영자 260809) — 종전 문자 자리. 상태는 **친목이 아니라 알림 축**으로 판정한다: 전역 설정 OFF면 방별 토글이 의미 없으므로 빗금, 켜져 있으면 방별 mute 여부.
   const bell = document.getElementById('yetaBellBtn');
   if (bell) {
-    const gOn = yPrefOn('push', true);                                  // 설정 「답장 알림」 = 전역 스위치
+    const live = yPushLive();                                            // 실상태(권한·지원까지) — pref만 보면 「켜짐」이라고 거짓말한다(평의회C S9)
+    const gOn = live === 'on';
     const tOn = !((YTH() || {}).mute);                                   // 방별 = threads[t].mute 없으면 켜짐(기본 ON = 운영자 "전체 알림 끈 게 아니면 항상 오게")
     const on = gOn && tOn;
     // ⚠ `.dim`은 쓰지 않는다 — `.yh-inv.dim`이 `pointer-events:none`이라 꺼진 종을 **다시 못 켜게** 된다(초대 픽토용 비활성 문법이지 토글용이 아니다).
     //    3상태 = ① 켜짐 `.able`(터콰이즈) ② 이 방만 꺼짐 = 클래스 없음(무채 기본색 = 안 켜진 상태) ③ 전역 꺼짐 `.slash`(빗금 = 막힘 · 탭하면 사유 안내). 전부 탭 가능.
     bell.classList.toggle('able', on); bell.classList.toggle('slash', !gOn); bell.classList.remove('dim');
     bell.setAttribute('aria-pressed', on ? 'true' : 'false');
-    bell.setAttribute('aria-label', !gOn ? '알림 꺼짐 — 설정에서 켜줘' : on ? '이 대화 알림 켜짐 — 탭하면 끔' : '이 대화 알림 꺼짐 — 탭하면 켬');
+    bell.setAttribute('aria-label', live === 'unsupported' ? '이 기기는 알림 미지원' : live === 'ask' ? '알림 허용 안 함 — 탭하면 물어봄' : live === 'denied' ? '브라우저가 알림을 막음' : !gOn ? '알림 꺼짐 — 설정에서 켜줘' : on ? '이 대화 알림 켜짐 — 탭하면 끔' : '이 대화 알림 꺼짐 — 탭하면 켬');
   }
   const inv = document.getElementById('yetaInvBtn');   // 연락처 = 친목 미달이면 빗금(탭하면 사유 토스트 — .off[만석·대기]와 별개 축이라 공존) · 도달 = 터콰이즈 점등(260726 쌍 문법 — 문자 .able과 같은 토큰)
   if (inv) { inv.classList.toggle('slash', !bondOK); inv.classList.toggle('able', bondOK); inv.dataset.bond = bondOK ? '' : '1'; }
@@ -4832,7 +4831,11 @@ $('#yetaText').addEventListener('beforeinput', e => {   // 타이핑 '#'·'*' = 
 });
 $('#yetaBellBtn').addEventListener('click', async e => {   // 이 대화 알림 토글(운영자 260809) — 서버 저장(op mute)이라 **러너가 판정**해서 애초에 안 쏜다(로컬 pref면 이미 나간 뒤라 늦다)
   e.stopPropagation();
-  if (!yPrefOn('push', true)) { miniToast('알림이 꺼져 있어 — 설정에서 켜줘'); return; }   // 전역 OFF = 방별 토글 무의미
+  const live = yPushLive();
+  if (live === 'ask') { try { await yPushSync(true); } catch (x) {} yHeadSync(); return; }        // 아직 안 물어본 상태 = **여기서 권한을 뚫는다**(설정까지 안 가도 됨 · 평의회C S9)
+  if (live === 'unsupported') { miniToast(matchMedia('(display-mode: standalone)').matches ? '이 기기는 알림을 지원 안 해' : '홈 화면에 추가하면 알림이 와'); return; }
+  if (live === 'denied') { miniToast('브라우저가 알림을 막고 있어 — 사이트 설정에서 풀어줘'); return; }
+  if (live === 'off') { miniToast('알림이 꺼져 있어 — 설정에서 켜줘'); return; }                 // 전역 OFF = 방별 토글 무의미
   const t = (YSESS || {}).cur || ''; if (!t) return;
   const want = !!((YTH() || {}).mute);   // 지금 꺼져 있으면 켜기
   const b = e.currentTarget; b.disabled = true;
@@ -5669,18 +5672,33 @@ try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(fun
 // 공개키 = VAPID 키쌍의 공개 절반(운영자 260809 제공 · 짝 = 레포 시크릿 VAPID_PRIVATE_KEY). 공개값이라 뷰어에 상수로 둔다(비밀 아님 · 회전 시 이 한 줄 + 시크릿 동시 교체).
 const YVAPID_PUB = 'BORNTh3cNd05vsxi2fZ-BykxM0NwKGTvIETz81g757RVFL6cDu29aAv5I7uit0WbGOmiZ4hlyMOEvb8B2HptU-I';
 const yB64u = s => { const b = atob(String(s).replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - String(s).length % 4) % 4)); return Uint8Array.from(b, c => c.charCodeAt(0)); };
-async function yPushSync() {   // 설정 스위치·권한·구독 3자 동기(멱등 · 앱 시작 + 스위치 조작에서 호출)
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;   // 미지원 브라우저 = 조용히 종료(iOS는 홈화면 추가 후 지원)
-  const want = yPrefOn('push', true);
-  let reg; try { reg = await navigator.serviceWorker.ready; } catch (x) { return; }
-  let sub = null; try { sub = await reg.pushManager.getSubscription(); } catch (x) {}
-  if (!want) {   // 전역 OFF = 구독 회수(브라우저·서버 양쪽) — 끄면 실제로 안 와야 한다
-    if (sub) { const ep = sub.endpoint; try { await sub.unsubscribe(); } catch (x) {} yApi('push', { off: 1, endpoint: ep }).catch(() => {}); }
+// 알림이 **실제로 닿는 상태인가** — 스위치(pref)가 아니라 권한·지원 여부까지 본 실상태. UI 거짓말 차단용 단일 판정(평의회C S9).
+//   설정 스위치 기본값이 true라, 종전엔 「켜짐」으로 보이는데 권한은 default라 알림이 0건인 상태가 신규 사용자 전원의 기본값이었다.
+function yPushLive() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'unsupported';
+  if (!yPrefOn('push', true)) return 'off';                 // 사용자가 끔
+  if (Notification.permission === 'denied') return 'denied';  // 브라우저가 막음(설정에서만 풀림)
+  if (Notification.permission !== 'granted') return 'ask';    // 아직 안 물어봄 = 안 온다(탭하면 물어본다)
+  return 'on';
+}
+async function yPushSync(ask) {   // 설정 스위치·권한·구독 3자 동기(멱등 · 앱 시작 + 스위치 조작 + 종 탭에서 호출) · ask=true면 권한 요청까지(반드시 유저 제스처 안에서)
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    if (ask) miniToast(matchMedia('(display-mode: standalone)').matches ? '이 기기는 알림을 지원 안 해' : '홈 화면에 추가하면 알림이 와');   // iOS 사파리 = 홈화면 추가(standalone) 후에만 웹푸시(평의회C 3번 — 종전엔 조용히 종료라 "켜짐"이라고 거짓말했다)
     return;
   }
-  if (Notification.permission !== 'granted') return;   // 권한 없으면 여기서 끝(요청은 스위치를 켤 때만 = 기습 프롬프트 금지)
-  if (!sub) { try { sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: yB64u(YVAPID_PUB) }); } catch (x) { return; } }
-  try { await yApi('push', { sub: sub.toJSON ? sub.toJSON() : sub }); } catch (x) {}   // 서버 적재(R2 push/subs.json) — 러너가 잡 시작 때 내려받아 발송
+  const want = yPrefOn('push', true);
+  let reg; try { reg = await navigator.serviceWorker.ready; } catch (x) { console.warn('yPushSync: SW 준비 실패', x); return; }
+  let sub = null; try { sub = await reg.pushManager.getSubscription(); } catch (x) {}
+  if (!want) {   // 전역 OFF = 구독 회수(브라우저·서버 양쪽) — 끄면 실제로 안 와야 한다
+    if (sub) { const ep = sub.endpoint; try { await sub.unsubscribe(); } catch (x) {} yApi('push', { off: 1, endpoint: ep }).catch(() => {}); try { localStorage.removeItem('yeta_push_ep'); } catch (x) {} }
+    return;
+  }
+  if (Notification.permission === 'default' && ask) { try { await Notification.requestPermission(); } catch (x) {} }   // 요청은 **유저 제스처 경로에서만**(기습 프롬프트 금지) — 스위치 탭·종 탭이 그 경로
+  if (Notification.permission !== 'granted') { if (ask) miniToast(Notification.permission === 'denied' ? '브라우저가 알림을 막고 있어 — 사이트 설정에서 풀어줘' : '알림 허용을 안 했어'); return; }
+  if (!sub) { try { sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: yB64u(YVAPID_PUB) }); } catch (x) { console.warn('yPushSync: subscribe 실패', x); if (ask) miniToast('알림 등록에 실패했어 — 잠시 후 다시'); return; } }
+  const ep = sub.endpoint;
+  try { if (localStorage.getItem('yeta_push_ep') === ep) return; } catch (x) {}   // 같은 구독 재적재 생략(평의회C S13 — 앱 열 때마다 R2 쓰기 1회 + 동시성 창을 상시로 벌리던 것)
+  try { await yApi('push', { sub: sub.toJSON ? sub.toJSON() : sub }); localStorage.setItem('yeta_push_ep', ep); } catch (x) { console.warn('yPushSync: 서버 적재 실패', x); }
 }
 try { if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(() => { setTimeout(() => { try { yPushSync(); } catch (x) {} }, 1200); }).catch(() => {}); } catch {}
 /* 첫 열기 부팅 스플래시(운영자 260708) — 인라인 "YETABUS"(첫 페인트 즉시)를 스크램블로 교체해 resolve · 페이드는 CSS(.yboot ybootOut)가 보장 · animationend = 제거(스크램블 타이머 정지) */

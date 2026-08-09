@@ -918,9 +918,25 @@ push_subs_pull() {   # 구독 목록 = R2 비공개 버킷(게이트웨이 op pu
   # ⚠ 종전엔 `push/subscriptions.json`이 **레포에 없어서** push_send.py가 매번 「구독자 없음 — 발송 생략」으로 끝났다 = 웹앱 알림 0건.
   #   push_send.py는 노뮤트와 공유하는 스크립트라 손대지 않고, **파일을 채워주는 쪽**으로 붙인다(공유 자산 무접촉).
   [ -n "${_SUBS_PULLED:-}" ] && return 0
-  _SUBS_PULLED=1
   mkdir -p push
-  aws s3api get-object --bucket "$YETA_R2_BUCKET" --key "push/subs.json" push/subscriptions.json --endpoint-url "$EP" >/dev/null 2>&1 || true   # 없으면 그대로 없음 = 종전 동작(무해)
+  if aws s3api get-object --bucket "$YETA_R2_BUCKET" --key "push/subs.json" push/subscriptions.json --endpoint-url "$EP" >/dev/null 2>&1; then
+    _SUBS_PULLED=1   # ⚠ 성공했을 때만 래치(평의회C S3) — 종전엔 호출 전에 세워서 R2 GET이 실패하면 **그 잡 내내 재시도가 없었다**(웜 런 최대 55분 무알림)
+    echo "  🔔 구독 $(python3 -c "import json;print(len(json.load(open('push/subscriptions.json'))))" 2>/dev/null || echo '?')건"
+  else
+    echo "  ⚠️ 구독 목록 내려받기 실패/없음 — 이번 턴 알림 생략(다음 턴 재시도)"   # 종전엔 무음이라 「알림이 왜 안 오지」의 단서가 0이었다
+  fi
+  # VAPID 짝 대조용 — 비공개키에서 공개 절반을 파생해 1회 찍는다(뷰어 상수 YVAPID_PUB와 눈으로 대조 · 불일치면 발송이 403으로 조용히 죽는다 · 평의회C 1번)
+  [ -z "${_VAPID_ECHOED:-}" ] && { _VAPID_ECHOED=1; python3 -c "
+import base64,os
+try:
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.hazmat.primitives import serialization as S
+    r=os.environ.get('VAPID_PRIVATE_KEY','').strip()
+    if r:
+        k=ec.derive_private_key(int.from_bytes(base64.urlsafe_b64decode(r+'='*(-len(r)%4)),'big'),ec.SECP256R1())
+        print('  🔑 VAPID 공개키(비공개키에서 파생) =', base64.urlsafe_b64encode(k.public_key().public_bytes(S.Encoding.X962,S.PublicFormat.UncompressedPoint)).rstrip(b'=').decode())
+except Exception as e: print('  🔑 VAPID 파생 실패(무해):', e)
+" 2>/dev/null || true; }
   return 0
 }
 push_muted() {   # 이 방의 톡 알림이 꺼져 있나(종 픽토 · op mute → threads[t].mute) — 러너가 판정해야 애초에 안 쏜다
@@ -934,7 +950,7 @@ sys.exit(0 if t.get('mute') else 1)
 " "$SESS" "${THREAD:-}" 2>/dev/null
 }
 push_reply() {   # $1 = 답장 원문 — 알림 = "캐릭터 이름 + 대사 미리보기"(카톡 결 · 운영자 260707 "앱 이름 X · 캐릭터 이름 · 대화가 이어져야")
-  [ -n "${VAPID_PRIVATE_KEY:-}" ] || return 0
+  [ -n "${VAPID_PRIVATE_KEY:-}" ] || { [ -z "${_VAPID_WARNED:-}" ] && { _VAPID_WARNED=1; echo "  ⚠️ VAPID_PRIVATE_KEY 미설정 — 웹푸시 배선 OFF"; }; return 0; }   # 종전 무음(평의회C S6)
   if push_muted; then echo "  🔕 이 방 톡 알림 꺼짐 — 푸시 생략"; return 0; fi   # 방별 종 픽토 OFF(전역 설정과 별개 축)
   push_subs_pull
   local nm prev
@@ -955,8 +971,18 @@ t=t.replace('《','').replace('》','')       # 핵심 질문 마커 벗김(2607
 t=re.sub(r'\s+',' ',t).strip()
 print((t[:70]+'…') if len(t)>70 else (t or '새 메시지'))")"
   local ttl="$nm"; printf '%s' "${1:-}" | grep -qiE '^[[:space:]]*<<[[:space:]]*DEAD' && ttl="${nm}의 마지막 말"   # 사망 턴 = 유서처럼 폰에 도착(PR#281 회수 · OUT 원문은 finish 전이라 <<DEAD>> 잔존) · 행 시작 앵커(Q.83) = 대사 중간 인용 오탐 차단(마커 계약 = 자기 줄 · MEDEAD는 여전히 미매치 = 유저 사망은 '마지막 말' 아님)
+  # ⚠ 종전 `>/dev/null 2>&1`이 **모든 하위 실패의 마개**였다(평의회C S1·P0): 구독자 없음·pywebpush 미설치·VAPID 짝 불일치 403이 전부 사라져
+  #   「알림 켰는데 안 와요」에 단서가 0이었다. 이제 접두를 붙여 잡 로그에 남긴다(내용은 제목·본문이 아니라 push_send.py의 상태 문구뿐 = 대화 미노출).
+  local _pn0=0 _pn1=0
+  [ -s push/subscriptions.json ] && _pn0="$(python3 -c "import json;print(len(json.load(open('push/subscriptions.json'))))" 2>/dev/null || echo 0)"
   python3 .github/scripts/push_send.py --notify "$ttl" "$prev" \
-    --url "/?yeta=${CHAR}&t=${THREAD:-}" --tag "nomute-yeta-${CHAR}-${THREAD:-}" >/dev/null 2>&1 || true   # 스레드별 tag(상호 삼킴 방지)+딥링크 t(오배송 방지 · 러너감사⑤B)
+    --url "/?yeta=${CHAR}&t=${THREAD:-}" --tag "nomute-yeta-${CHAR}-${THREAD:-}" 2>&1 | sed 's/^/  push: /' || true   # 스레드별 tag(상호 삼킴 방지)+딥링크 t(오배송 방지 · 러너감사⑤B)
+  # 죽은 구독(404/410) 정리는 push_send.py가 **워크스페이스 파일에만** 반영한다 — 되올리지 않으면 R2에 시체가 영구 잔존(평의회C S10).
+  [ -s push/subscriptions.json ] && _pn1="$(python3 -c "import json;print(len(json.load(open('push/subscriptions.json'))))" 2>/dev/null || echo 0)"
+  if [ "${_pn1:-0}" -lt "${_pn0:-0}" ] 2>/dev/null; then
+    aws s3api put-object --bucket "$YETA_R2_BUCKET" --key "push/subs.json" --body push/subscriptions.json --content-type application/json --endpoint-url "$EP" >/dev/null 2>&1 \
+      && echo "  🧹 죽은 구독 정리 반영($_pn0 → $_pn1)" || echo "  ⚠️ 죽은 구독 정리 되올리기 실패"
+  fi
 }
 
 # ── 상태 블록(공용 — 본답장 + 초대 판정 · env: PERSONA LAST_MOOD CAST GAP_H REL_LV RIV HANDOFF TUNE CO_NAME BARGE_DEBUT) ──
