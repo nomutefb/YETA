@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>공간 초대 = 「불러볼까」 말풍선 폐지 → 좌상단 근처 프로필 무채색 디밍 — 전/후 비교 v1 (372차)</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     페이지 골격 CSS = 20260808_바피통화상한_토글_전후_v1.html 계승(재설계 0)
+     ⚠ 실물 컴포넌트 CSS(.yeta-h/.ystk/.yb/.yeta-pick/.ypick-row/.ynear-ask)는 viewer/index.html 선언을 **그대로 복사** ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --think:#3EE0C8; --think-rgb:62,224,200;
+    --danger:#ff5b4a; --danger-rgb:255,91,74; --arm:#ffb4a8;
+    --bubble-me:#CFFF40; --bubble-ai:#232527;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+    --yeta-ac:var(--accent);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .lead b { color:var(--fg-2); font-weight:var(--fw-b); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  @media (max-width:820px) { .pair { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .cap .val { font-size:var(--fs-xs); color:var(--fg-2); }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); }
+  td.v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); }
+  .newtag { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; color:var(--bg); background:var(--accent); padding:2px 7px; border-radius:var(--r-pill); }
+
+  /* ── 폰 프레임(9:16 무대 재현 — 배경 = 챗 무대 스포티파이 블랙 계보) ── */
+  .phone { position:relative; width:100%; max-width:390px; aspect-ratio:9/16; margin-inline:auto; overflow:hidden;
+    border-radius:var(--r-modal); border:1px solid var(--glass-line); background:#0d0e0d; box-shadow:var(--shadow-card); }
+  .phone::before { content:''; position:absolute; inset:0; background:
+      radial-gradient(120% 70% at 50% 0%, rgba(var(--accent-rgb),.10), transparent 62%),
+      radial-gradient(90% 60% at 20% 100%, rgba(var(--think-rgb),.06), transparent 60%), #121212; }
+
+  /* ── viewer/index.html 정본 복사 ── */
+  .yeta-h { position:absolute; top:10px; left:10px; right:10px; z-index:3; display:flex; align-items:center; gap:8px; padding:7px 9px;
+    background:linear-gradient(var(--glass), var(--glass)), rgba(18,18,18,.75); border:1px solid var(--glass-line); border-radius:var(--r-pill);
+    backdrop-filter:blur(var(--blur-l)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-l)) saturate(1);
+    box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card); }
+  .yeta-back { flex:none; width:var(--btn); height:var(--btn); display:grid; place-items:center; background:none; border:none; color:var(--fg-2); }
+  .yeta-back svg { width:20px; height:20px; }
+  .yeta-who { flex:1; display:flex; align-items:center; gap:8px; min-width:0; color:inherit; font:inherit; padding:0; text-align:left; cursor:pointer; }
+  .yh-ava { flex:none; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-size:var(--fs-sm); font-weight:var(--fw-x);
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); color:var(--yeta-ac); background-size:cover; background-position:center; }
+  .yeta-h b { font-size:var(--fs-h2); font-weight:var(--fw-x); white-space:nowrap; flex:none; }
+  .yeta-h .yh-tag { font-size:var(--fs-xs); color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .yeta-who .yw-chev { width:14px; height:14px; flex:none; color:var(--mut); }
+  .yh-inv { flex:none; width:var(--btn); height:var(--btn); display:grid; place-items:center; background:none; border:none; color:var(--fg-2); cursor:pointer; }
+  .yh-inv svg { width:19px; height:19px; }
+  .yh-inv.dim { opacity:.34; }
+  .yh-pair { display:flex; align-items:center; }
+
+  .ystk { display:flex; align-items:center; justify-content:center; flex:none; min-width:40px; min-height:40px; padding:0 2px; background:none; border:none; cursor:pointer; }
+  .ystk:active { transform:scale(var(--press-m,.9)); }
+  .ystk .sa { width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:rgba(var(--fg-rgb),.06); background-size:cover; background-position:center; border:2px solid var(--bg); font-size:var(--fs-meta); font-weight:var(--fw-x); color:var(--yeta-ac); }
+  .ystk .sa:first-child { position:relative; z-index:1; }
+  .ystk .sa + .sa { margin-left:-14px; }
+  /* ▼ 이번 변경분(after 열에서만 켠다 — before 열은 위 정본 그대로 = 풀컬러 정지) */
+  .aft .ystk .sa { filter:grayscale(.7) brightness(.55); animation:yNearBreathe 1.9s var(--ease) infinite; transition:filter .28s var(--ease); }
+  .aft .ystk.on .sa { animation:none; filter:none; }
+  @keyframes yNearBreathe { 0%,100% { filter:grayscale(.7) brightness(.55); } 50% { filter:grayscale(.7) brightness(.78); } }
+  @media (prefers-reduced-motion:reduce) { .aft .ystk .sa { animation:none; } }
+
+  .yeta-log { position:absolute; left:0; right:0; top:70px; bottom:66px; z-index:2; display:flex; flex-direction:column; gap:8px; padding:8px 12px; overflow:hidden; }
+  .yb { padding:10px 13px; border-radius:var(--r-l); font-size:var(--fs-body); line-height:var(--lh-base); white-space:pre-wrap; word-break:break-word; max-width:78%; }
+  .yb.ai { align-self:flex-start; background:var(--glass-2); border:1px solid var(--glass-line); border-top-left-radius:var(--r-s);
+    backdrop-filter:blur(var(--blur-m)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-m)) saturate(1); box-shadow:inset 0 1px 0 var(--glass-line); }
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) { .yb.ai { background:var(--bubble-ai); } }
+  .yb.me { align-self:flex-end; background:var(--bubble-me); color:var(--bg); border-top-right-radius:var(--r-s); }
+  .yb.sys { align-self:center; max-width:none; background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-pill); color:var(--fg-2); font-size:var(--fs-sm); padding:3px 12px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  button.yb.sys.ykick { cursor:pointer; font:inherit; transform-origin:center; }
+  button.yb.sys.ykick:active { transform:scale(var(--press-m,.9)); }
+  .ynear-ask { align-self:center; display:flex; flex-direction:column; gap:6px; width:min(78%, 340px); }
+  .ynear-ask button { text-align:left; padding:9px 13px; border-radius:var(--r-pill); background:var(--glass-2); border:1px solid var(--glass-line); color:var(--fg); font:inherit; font-size:var(--fs-sm); line-height:1.45; cursor:pointer; backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); transform-origin:center; }
+  .ynear-ask button:active { transform:scale(var(--press-m,.9)); }
+
+  .yeta-pick { position:absolute; top:8px; left:10px; z-index:8; width:min(320px,86%); max-height:min(60dvh,420px); overflow-y:auto;
+    background:linear-gradient(165deg,rgba(24,25,28,.94),rgba(16,17,19,.96)); backdrop-filter:blur(26px) saturate(0); -webkit-backdrop-filter:blur(26px) saturate(0);
+    border:1px solid rgba(255,255,255,.14); border-radius:var(--r-l); padding:6px; transform-origin:top left;
+    animation:msgUnfold .26s cubic-bezier(.22,.61,.36,1) both; }
+  @keyframes msgUnfold { from { opacity:0; transform:scale(.82) translateY(-8px); } to { opacity:1; transform:none; } }
+  .yeta-pick[hidden] { display:none; }
+  .yeta-pick.yinv { top:62px; bottom:auto; left:auto; right:10px; transform-origin:top right; }
+  .yinv-cap { font-size:var(--fs-xs); color:var(--mut); padding:5px 10px 7px; }
+  .yinv-note { padding:7px 10px 5px; font-size:var(--fs-meta); color:var(--mut); line-height:1.5; }
+  .ypick-row { display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:none; border:none; color:var(--fg); font:inherit;
+    padding:8px 10px; border-radius:var(--r-m); }
+  .yava { flex:none; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-size:var(--fs-sm); font-weight:var(--fw-x);
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); color:var(--yeta-ac); background-size:cover; background-position:center; }
+  .yp-col { display:flex; flex-direction:column; min-width:0; }
+  .yp-name { font-size:var(--fs-sm); font-weight:var(--fw-b); }
+  .yp-tag { font-size:var(--fs-xs); color:var(--mut); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .yinv-go { flex:none; margin-left:auto; position:relative; padding:4px 12px; border-radius:var(--r-pill); background:rgba(var(--accent-rgb),.12); border:1px solid rgba(var(--accent-rgb),.4); color:var(--accent); font-size:var(--fs-xs); font-weight:var(--fw-b); cursor:pointer; font-family:inherit; }
+  .yinv-go.armed { background:none; border-color:rgba(var(--danger-rgb),.4); color:var(--arm); }
+  #yetaInv .ynear-ask { align-self:stretch; width:auto; padding:2px 10px 5px; }
+
+  .yeta-in { position:absolute; left:10px; right:10px; bottom:10px; z-index:3; display:flex; align-items:center; gap:8px; padding:7px 9px;
+    background:linear-gradient(var(--glass), var(--glass)), rgba(18,18,18,.75); border:1px solid var(--glass-line); border-radius:var(--r-pill);
+    backdrop-filter:blur(var(--blur-l)); -webkit-backdrop-filter:blur(var(--blur-l)); color:var(--mut); font-size:var(--fs-sm); }
+  .hint { display:inline-flex; align-items:center; gap:6px; font-size:var(--fs-xs); color:var(--mut); margin-top:8px; }
+  .hint i { width:6px; height:6px; border-radius:50%; background:var(--accent); font-style:normal; }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>공간 초대 — 「불러볼까」 말풍선 폐지 → <span style="color:var(--accent)">좌상단 근처 프로필 무채색 디밍</span></h1>
+  <p class="lead">운영자 260809 지시: <b>“대화하고 있을 때 ‘00을 불러볼까’ 이 내용은 안 뜨게 하고, 사용자가 그냥 골라서 초대할 수 있게 좌측 상단에(부를 수 있을 때 뜨는 프로필이 나옴) 그 프로필에 어그로가 좀 끌리게 디밍만. 강조가 너무 들어가면 안 되니까 무채색으로 디밍 정도. 누르면 상황에 따라서 다음 초대 분기 뜨면 됨.”</b><br>
+  아래 미리보기는 전부 실물 CSS 사본이고, <b>후(after) 열의 프로필·팝업은 진짜로 눌린다</b>.</p>
+
+  <!-- ① 좌상단 프로필 -->
+  <section class="sect">
+    <h2>① 부를 수 있을 때 뜨는 좌상단 프로필 — 어그로</h2>
+    <div class="pair">
+      <div>
+        <div class="cap"><span class="bdg before">전</span><span class="val">풀컬러 정지 — 헤더에 얼굴 하나 더 있는 정도라 눈에 안 걸린다</span></div>
+        <div class="phone bfr">
+          <div class="yeta-h">
+            <span class="yeta-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
+            <span class="ystk" id="stkB"><span class="sa" style="background-image:url(data:image/webp;base64,UklGRjYIAABXRUJQVlA4ICoIAACQIACdASpgAGAAPnkylEakoyIhLHW+KJAPCWUAx6CKVEEyVYVjvobC5Jj89PYfKdfa+avHl/y/EJ859gDyiv9vyZ/XXAkHE/VW8P/at9dbNmv8vnu2HcceVhdUPvv/DZk2YL3Fzl5pOX7olkYyn8fc0341kZ6PKNV87QbH77qmfFe/ySM4pt7jU9n6JD6jQ1BJ3zhdzeKqff7WQnAMrUSdhVC+Pk1nlvSuWTbEf4+DIHg9CeTUHPdbtSCCTNVnOIKUn2pqMiyY6OksM2jBd4XHCbDBjzl95RbmWw9eykFZGmBaH611OXpawXndnRKM4nRzKaxeL+G2hZx6yk2+iuNAfeOxs034gjAfgl7EoAD+8N6DxdBqfzogHbWKCPLrNtfH3358a9t4CQi8EgjXpGK9Yl5FY9uFFLqZQeZ8QYFQRpCR5DW96TW0CcmGwi9/LjBW7//yYgsohSRK4a8OQUaeJw/gygnivQ9hhv9nga48K4FrHRwKmaNXGe1e4lMshdgG70QUI9GvGimCMBnlOsGp/qAT9oksJxsbZ2AutywxnNQAfS/H1tzbDolT26iX9USSOjMPuKBwsom5vnQc3C/bGTTnwPKUzDx5x+XnWdhiJElQFB+DwDrjght7USGK+PHH83NaC6DFaKY/yrPfGnp7Rz4XQwOQ9ppc8E++/Fi+z0rI1gyayD2YpOK66KNUqrvoejfL8bdpctrAnDIEL/XZSl48UVMo4QE9IhH8PWYnz7eHd6BfgunzqZfwlPAAl3nreMQpekVek/j6H3fJSff0uyGz6H1m76YxSZn1dHW+omgwMsjPWW9W45v7pySRFmbZkhw1PML7kZzXH68kUhmD89o32Y55vNBd0nmT3GXkATRXLP3q8EZjWRfNmNFp2CdwuggjnUDORt/UDQWbwMThONFAbAG68kVhLg8SVLZo5xNRuAh7f5EmSeG+x742Neui5qwP99jn3+YjMVQ5w9cEbHxTTDAluEPtGgrfPC8R1wBgqn5I2a6odKCsrVUxQWLSz8b4/LbWAAkPiYMOF1PTJvd4Ms80LyNO8UzPHICi/ixkYhvWMNn2ByBlBjYHSUAKqGrp9eRh3WxTEYs0M4xnEb7de25x2oK1BlS00gMm54OJUox+wUzJVBwVHYuAlIaqPi6w8j2c+qtl4jP9GzS4ewjObkzLTWRM4K7sjTwzIrLmP63gccbBIG2WuH+UCs3TjuemEaVWsD+tGJdge/1IlWF0s6PrnDU3TpwhPdxF6vsJVmZr4lYMuCPMiZ8ZSfjos9RSz3KSlimk54Oh5wHZMzeFcbqUIfM92azDpCYm2XqXwP0sDXib1M01hVFXxd/f+XazbQEB4pJFtn31/Z4NOdYmAVSSuNe5iWYxqgZdGNUlARvnArZi2UP9YHofy4hwlsTj8Gwb0r6fxvFONzI3KaKDPVWp2m2a6EydZSmBp9bfhIop2+SjNxaRj6aFGH8BsOHsRk//oXQpHF33rrVTccTk9l/2gt6dtHt/lrY1wKFygfN0iqftFLi3WwHMbNwHLcNtVDbRSvhVG0lsNRZJPkDe1xe3izFsnSxqKkVyyllflBkaKCNO3CEozO4PBGZ8x+7M04+0rMFGAO0dab/VmPU+BzJs0mFdGPYGzkLugS7PQ/VlpxIzDqeAOEtkK8yt/0rzw1C9Bw47uS9wXHdj1qO44y0fDjAe44NyCQx87lmOHTdT/n0MAygYfoYgdG7A5JiZG8C4zOZHOyB4JpmKYm93vLsVQ8A5WmzI7FxWSaJq34m6Ktg5PnRknnDP2YYg8Z/FbbZXi3IPdcz5GjalHWPtDvbdkUHwgVBZLMj8hjdxQGMtwIiRMusnpFBU40e7692D4ET3BXn9oQrxzcvWAB5Pwxe6WNBeqqeq8nBPMaoSqLc2w9HttfLQ1L5a32/1kNrzGGgP6FeARevWolRolvYg65oTen5+1tP9oHBlWmkg0ulDayTWu2hqnxAwDYpJ7aVqT7t5cVDnhHVgqbZIRyAo7yIK5QtIkjB4u/kHDVFVbNgyljPr5cduL/g4IHllZ4Jf2gVUG+v6yWIrTuJzsQcJ73d4SxzT7X87zSTmzsWuv0BpUzKrMLAEx6YWJU7GqJdgfCSaneg0PUlfCLCJLXRHrZWkqK0FQqopQOIZVPum7MRWXxZwNM3gDvLwgNjtQJizUUko2IMy1rdrbxVvCT9MA+o0HqfiFjjDo7vAAU0RmW8Ji+9FHoPbgrh1KP6Yc8lXSHBjqy1H9d8LHeEE71hkfAsdLC1T9JTr3eXu5I+DCTZxF+v6uIS10EAqKDW6UBoDJaF3q54gre7AHax5wtyYO0XNmwSz+SRFayZHamYzpacKLWKS694DZgpcd80MNaBbQpT647jN35BilrRSIzs4yJ8+PsqKcVOz6RD3vZi9R54KSakIMvTHDApUmPu6dx0LfCfEkjP7gqG99hOboHw/Yzwezfptdt7FfgA9eeCYFHemSiChNpb240CB5cxzHvohmmFpt+hHDkz63sSS1JEaVQQa7rTFeDlYk/G+Od4xI/jU9L50uwgK/TmmF1lfOJBlDQwaupFa7lusxWgTT9KwbdvroP3mySMkseJUUX1Bemv3dEoyrxO8cLLJ/moyMIWhh3tyiew6VWZ7X3J/xAAWdEuRODfhJgYg3OL8KD/cM7Q9LvYdB94rRQgOI11MIAMpk48HTpl9CcUfsDp5fd4aOeng3CGS3bGmiAxWZI8uBTFydee44SQGEAijJx+5B7sTBep6JvWSYqrRefFP9jveXJnTNEQAAA==)"></span><span class="sa" style="background-image:url(data:image/webp;base64,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)"></span></span>
+            <span class="yeta-who"><span class="yh-ava" style="background-image:url(data:image/webp;base64,UklGRqgFAABXRUJQVlA4IJwFAAAwGQCdASpgAGAAPnkylUckoqIhK5dsgJAPCWMAxyhkU5j21a/SGRvLr+x2k/pbmjN4yfCs4f17LFdZqKkASD3jFJktXYqzDMUejtKDX4qsFEUK+wjvxFxY7P97Ks624rZNRjDJovbW7BlAj2t5zZvMoHAfLoMKjhohmk6NAZjcuB11ZN+9qAko35RXxB34UJ6PKzbxMxNzXvdQy7wL8TvgJQvBDGHCWLN2drJ/bXLUdkyn7i0o9hyupj6thXTQMLQxxFtpUi2UxL1Ht//zP8RGwwAA/vxGKXXQcg1P4y/BWLlLovHSLHeQG/KjvZPDbRHGqtQj837SQtKcJGUrvF9uUdTKFLXDtHQ03O7JNGS8ZWxJi/b3iqv/+EDKQyk2FVlpDJrf07ItntzHL3oGBuyKWeg7GcYK9CuFfsdsaeQkrCHDujqMOqyhuVys7TcknCD6Us6hhKMwWEh8lZEFLLUM/wc7aPfugyqpC0qMFm99ZPGzdkQsvRMduEs+/upqfJMMs5rEqcv1TAfVvO9ZzjZbuujrUY/CmjVNnPVrOQFvsjFMgM7lfp04lDC+9vjbKdV9a+5bJHlzX/eC4PmdFhtuIju5JTXInLdMCoFUzEOJqGUqlvT3Y4Q6ZMMlvwwV1fNitsIZF8nJRIA3xt6L4qG7/s0iQ5F4k1onEYvUiFnV9QpoVc7Ow1hcqj0VauUzfmDHlaitf8tFdz1cntKtYCnxk9u3QXbThjJzJy/aIZqRpdOWLr0SGX5YXaVdBsz1H0zRN04IxXBO3TxcJPlenvqSecpLtU0BLB6w2k6ewzSBDUVQtcSL2JXIWxnp5kfmCnnVyrUBLv2Cndfja2kwpOOs6O4BF/awD2xto+cFa/MsuotnsUKQL+TeGw0O1T56a3t9DFAXaXzx6uZcmcCx3Anq7SFnuvSVpkPa3pRttnSpjCb6CiRxUUgnMBqTjSuJ2O+ZZjLxO1ang2fU7T7WFFtt0fw67bkEsg/GQ44dZJr9yWUiJTC25TMJMXKRxh7SiPWiCykNlLrbezzCXpkYVl3Vps+lps/zN2g5pzzq88c/YNNT1KL6X+zoaGi82QOzicJPBZdvc9UkCtH6zD0Rn3qt0Il+N7/DV0C+gq9vAESDCW2lGE1cK2yELWp0nsiR33KiiaVgIQyd5W3XbQ5HLQQg574jEusnniY9uPzXep8O74844iMJLT0byeHUYOqDCWWe6kxk1gy36LEAiVLnJ28os1P9UU6A7hR54FUHjnNvw5Wur+BedX4k5tGmPqLjh4j+sq9Zxzzbhtn9WKDpHFktdCiAwtVq8J9y8dthFBnHlvYLHqDTdb7YXGnninSikZUn6Exl/XXinbb9NvX38w/VpqyhYoedzRs5qDk8PlDO26J9ObF1sDrKYvShClH9Obnx9F26d4FogCQ47Mk0CB7jhAfEXf9BvTHnT2ZxBC/AMaaJfx2IybbHO+0I8WjlwanONgRF4tKHCKDTWvHToP+0QpiGaEbxg15zKil8/Fjod6Xng27b//xdYJcjiTZllLDE+gl0P9JX3NNjmTdBQQ9NcSFMe5WwWnlJUgRa7pG+kw7APvfumh0cE6+6EKyz9a4A4edprLMbS+WIaz1gmaDYnxMjhg82wigraw2QG/BuY2YaUrv5Bhs+6TE0eUg2+sZgIUOGIC3qZD3VgcMqtbF4WCYH+GR4+/BLbhHueKa1yten2SNmWJIh42Y24fGjOTHjSrhCFPHa+Zbhbph7ScqpTb2eoqIj0ujjnIFAx0Ef9jx81XANHU4M7MQntG+yk9Zu9Jv+8ji8IvQvMzCjzdWjX8WAvS1M9xOp4w4N0QiLMCrYDIoJ9soJ1vCrNIBzhvvJ6xXjU6f6J1yO+UpyfTodKrcMNTZeeJQU8OR6EcGn9GWyNP0b+ixUGh68AA==)"></span><b>하서연</b><span class="yh-tag">무음동 골목 · 같은 자리</span><svg class="yw-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="yh-pair"><span class="yh-inv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="7" r="4"/><path d="M1 21v-1a6 6 0 0 1 12 0v1M19 8v6M22 11h-6"/></svg></span><span class="yh-inv dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v12H4z"/><path d="M4 6l8 6 8-6"/></svg></span></span>
+          </div>
+          <div class="yeta-log">
+            <div class="yb ai">오늘은 골목이 조용하네. 바람만 지나가고.</div>
+            <div class="yb me">그러게. 나도 방금 왔어.</div>
+            <button type="button" class="yb sys ykick">골목 · 세라도 여기 있다 · 불러볼까</button>
+            <div class="ynear-ask">
+              <button type="button">세라 마음에 맡긴다 — 나와의 관계 · 그 애 페르소나로</button>
+              <button type="button">하서연과의 관계 · 지금 대화의 흐름(모먼트)으로</button>
+              <button type="button">하서연에게 먼저 물어본다</button>
+            </div>
+          </div>
+          <div class="yeta-in">메시지</div>
+        </div>
+        <p class="note">대화 로그 한복판에 <b>앱이 말을 건다</b> — 사람 말 사이에 시스템 문장이 끼어 흐름이 끊긴다.</p>
+      </div>
+      <div>
+        <div class="cap"><span class="bdg after">후</span><span class="val">무채색 디밍 + 그 안에서만 숨쉬기 · 로그는 사람 말만</span><span class="newtag">TAP</span></div>
+        <div class="phone aft">
+          <div class="yeta-h">
+            <span class="yeta-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
+            <button type="button" class="ystk" id="stkA" aria-label="근처에 있는 인물 2명 — 초대"><span class="sa" style="background-image:url(data:image/webp;base64,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)"></span><span class="sa" style="background-image:url(data:image/webp;base64,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)"></span></button>
+            <span class="yeta-who"><span class="yh-ava" style="background-image:url(data:image/webp;base64,UklGRqgFAABXRUJQVlA4IJwFAAAwGQCdASpgAGAAPnkylUckoqIhK5dsgJAPCWMAxyhkU5j21a/SGRvLr+x2k/pbmjN4yfCs4f17LFdZqKkASD3jFJktXYqzDMUejtKDX4qsFEUK+wjvxFxY7P97Ks624rZNRjDJovbW7BlAj2t5zZvMoHAfLoMKjhohmk6NAZjcuB11ZN+9qAko35RXxB34UJ6PKzbxMxNzXvdQy7wL8TvgJQvBDGHCWLN2drJ/bXLUdkyn7i0o9hyupj6thXTQMLQxxFtpUi2UxL1Ht//zP8RGwwAA/vxGKXXQcg1P4y/BWLlLovHSLHeQG/KjvZPDbRHGqtQj837SQtKcJGUrvF9uUdTKFLXDtHQ03O7JNGS8ZWxJi/b3iqv/+EDKQyk2FVlpDJrf07ItntzHL3oGBuyKWeg7GcYK9CuFfsdsaeQkrCHDujqMOqyhuVys7TcknCD6Us6hhKMwWEh8lZEFLLUM/wc7aPfugyqpC0qMFm99ZPGzdkQsvRMduEs+/upqfJMMs5rEqcv1TAfVvO9ZzjZbuujrUY/CmjVNnPVrOQFvsjFMgM7lfp04lDC+9vjbKdV9a+5bJHlzX/eC4PmdFhtuIju5JTXInLdMCoFUzEOJqGUqlvT3Y4Q6ZMMlvwwV1fNitsIZF8nJRIA3xt6L4qG7/s0iQ5F4k1onEYvUiFnV9QpoVc7Ow1hcqj0VauUzfmDHlaitf8tFdz1cntKtYCnxk9u3QXbThjJzJy/aIZqRpdOWLr0SGX5YXaVdBsz1H0zRN04IxXBO3TxcJPlenvqSecpLtU0BLB6w2k6ewzSBDUVQtcSL2JXIWxnp5kfmCnnVyrUBLv2Cndfja2kwpOOs6O4BF/awD2xto+cFa/MsuotnsUKQL+TeGw0O1T56a3t9DFAXaXzx6uZcmcCx3Anq7SFnuvSVpkPa3pRttnSpjCb6CiRxUUgnMBqTjSuJ2O+ZZjLxO1ang2fU7T7WFFtt0fw67bkEsg/GQ44dZJr9yWUiJTC25TMJMXKRxh7SiPWiCykNlLrbezzCXpkYVl3Vps+lps/zN2g5pzzq88c/YNNT1KL6X+zoaGi82QOzicJPBZdvc9UkCtH6zD0Rn3qt0Il+N7/DV0C+gq9vAESDCW2lGE1cK2yELWp0nsiR33KiiaVgIQyd5W3XbQ5HLQQg574jEusnniY9uPzXep8O74844iMJLT0byeHUYOqDCWWe6kxk1gy36LEAiVLnJ28os1P9UU6A7hR54FUHjnNvw5Wur+BedX4k5tGmPqLjh4j+sq9Zxzzbhtn9WKDpHFktdCiAwtVq8J9y8dthFBnHlvYLHqDTdb7YXGnninSikZUn6Exl/XXinbb9NvX38w/VpqyhYoedzRs5qDk8PlDO26J9ObF1sDrKYvShClH9Obnx9F26d4FogCQ47Mk0CB7jhAfEXf9BvTHnT2ZxBC/AMaaJfx2IybbHO+0I8WjlwanONgRF4tKHCKDTWvHToP+0QpiGaEbxg15zKil8/Fjod6Xng27b//xdYJcjiTZllLDE+gl0P9JX3NNjmTdBQQ9NcSFMe5WwWnlJUgRa7pG+kw7APvfumh0cE6+6EKyz9a4A4edprLMbS+WIaz1gmaDYnxMjhg82wigraw2QG/BuY2YaUrv5Bhs+6TE0eUg2+sZgIUOGIC3qZD3VgcMqtbF4WCYH+GR4+/BLbhHueKa1yten2SNmWJIh42Y24fGjOTHjSrhCFPHa+Zbhbph7ScqpTb2eoqIj0ujjnIFAx0Ef9jx81XANHU4M7MQntG+yk9Zu9Jv+8ji8IvQvMzCjzdWjX8WAvS1M9xOp4w4N0QiLMCrYDIoJ9soJ1vCrNIBzhvvJ6xXjU6f6J1yO+UpyfTodKrcMNTZeeJQU8OR6EcGn9GWyNP0b+ixUGh68AA==)"></span><b>하서연</b><span class="yh-tag">무음동 골목 · 같은 자리</span><svg class="yw-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="yh-pair"><span class="yh-inv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="7" r="4"/><path d="M1 21v-1a6 6 0 0 1 12 0v1M19 8v6M22 11h-6"/></svg></span><span class="yh-inv dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v12H4z"/><path d="M4 6l8 6 8-6"/></svg></span></span>
+          </div>
+          <div class="yeta-pick yinv" id="invA" hidden></div>
+          <div class="yeta-log">
+            <div class="yb ai">오늘은 골목이 조용하네. 바람만 지나가고.</div>
+            <div class="yb me">그러게. 나도 방금 왔어.</div>
+            <div class="yb ai">…누가 지나가는 소리가 들리는 것 같기도 하고.</div>
+          </div>
+          <div class="yeta-in">메시지</div>
+        </div>
+        <p class="hint"><i></i>좌상단 두 얼굴을 눌러봐 — 초대 팝업이 열리고, <b>[초대]</b>를 누르면 다음 분기가 펼쳐진다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② 값 계승 원장 -->
+  <section class="sect">
+    <h2>② 값 계승 원장 — <span style="color:var(--accent)">신규 토큰·신규 색·신규 타이밍 0</span></h2>
+    <div class="grp">
+      <table>
+        <tr><th>축</th><th>후(적용값)</th><th>어디서 계승했나</th></tr>
+        <tr><td>디밍 톤</td><td class="v">grayscale(.7) brightness(.55)</td><td>채색 소거 사다리 <b>중간단</b> — <code>.ycrow.estr .yava</code> · <code>.ylist-row.estr .ylist-ava</code>(반실루엣 = 아는 얼굴이 식은 톤) 동값</td></tr>
+        <tr><td>숨 폭</td><td class="v">brightness .55 ↔ .78</td><td>같은 사다리 <b>안에서만</b> 오간다(만단 <code>grayscale(1) brightness(.5)</code>=정체 은폐엔 안 닿고, 위로도 원본 1.0을 안 넘음) — “강조 너무 들어가면 안 되니까”</td></tr>
+        <tr><td>주기·커브</td><td class="v">1.9s var(--ease) infinite</td><td><code>.ym-access</code> 잠금 숨쉬기(<code>ymLockBreathe 1.9s var(--ease) infinite</code> · 운영자 확정) 그대로</td></tr>
+        <tr><td>되돌아옴</td><td class="v">transition:filter .28s var(--ease)</td><td><code>.yeta-who .yw-chev</code>·<code>.yh-inv</code> 전환 .28s/.2s 계보</td></tr>
+        <tr><td>3선택지 표면</td><td class="v">.ynear-ask (무변경)</td><td>260731 정본 선언 그대로 — 자리만 로그 → 팝업, <b>정렬 축만</b> <code>#yetaInv</code> 스코프 오버라이드(<code>#yconbCard .yprof-genlink</code> 선례)</td></tr>
+        <tr><td>모션 줄이기</td><td class="v">animation:none</td><td>숨만 멈추고 디밍은 유지(<code>.nm-shim</code> reduce 가드 결 = 정보 보존)</td></tr>
+      </table>
+      <p class="note">추가한 색·px·blur·radius·토큰 = <b>0</b>. <code>filter</code>·키프레임 % = §🎨 raw 허용 예외축(토큰 없는 축·안무).</p>
+    </div>
+  </section>
+
+  <!-- ③ 배선 -->
+  <section class="sect">
+    <h2>③ 배선 변화 — 감지는 그대로, 어포던스만 이설</h2>
+    <div class="grp">
+      <table>
+        <tr><th></th><th>전</th><th>후</th></tr>
+        <tr><td>같은 장소 감지</td><td class="v">yNearCalc → _yNear/_yNearC</td><td class="v">동일(무변경)</td></tr>
+        <tr><td>어포던스</td><td class="v">.yb.sys.ykick.ynear (로그 말풍선)</td><td class="v">#yetaNear .ystk (좌상단 · 디밍 호흡)</td></tr>
+        <tr><td>3선택지 자리</td><td class="v">로그 인라인(pill 아래)</td><td class="v">#yetaInv 후보 행 아래</td></tr>
+        <tr><td>오발사 방지</td><td class="v">[초대] armed 2탭 “확실해?”</td><td class="v">[초대] = 분기 펼침(그 탭이 기준 선택 탭이 된다)</td></tr>
+        <tr><td>펼침 상태</td><td class="v">_yNearAsk = boolean</td><td class="v">_yNearAsk = 후보 id(팝업은 후보 다수)</td></tr>
+        <tr><td>서버 계약</td><td class="v">op invite { basis: self|moment }</td><td class="v">동일 — <b>게이트웨이·러너 무접촉</b></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <p class="note">재현 한계: 폰트(Pretendard/LEMONMILK)·무대 배경 영상·실제 로스터 데이터는 이 페이지에 없어 근사로 대체했다(배경 = 그라디언트 · 얼굴 3장은 실제 로스터 아바타 96² 축소 base64). 디밍·숨쉬기·팝업 분기는 실물 선언 사본이라 그대로다.</p>
+</div>
+<script>
+  // 후(after) 열 = 실배선(운영자는 폰에서 실물처럼 만진다 — 제작 팁 ⓓ)
+  var NEAR = [
+    { id:'sera', name:'세라', pl:'골목', av:'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' },
+    { id:'lucy', name:'루시', pl:'골목', av:'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' }
+  ];
+  var HOST = '하서연';
+  var ask = '';
+  var stk = document.getElementById('stkA'), inv = document.getElementById('invA');
+  function render() {
+    var h = '<div class="yinv-cap">지금 부를 수 있는 인물 — 근처</div>';
+    NEAR.forEach(function (n) {
+      var open = ask === n.id;
+      h += '<div class="ypick-row"><span class="yava" style="background-image:url(data:image/webp;base64,' + n.av + ')"></span>'
+        + '<span class="yp-col"><span class="yp-name">' + n.name + '</span><span class="yp-tag">' + n.pl + ' · 같은 자리</span></span>'
+        + '<button type="button" class="yinv-go" data-inv="' + n.id + '" aria-expanded="' + (open ? 'true' : 'false') + '">' + (open ? '접기' : '초대') + '</button></div>';
+      if (open) h += '<div class="ynear-ask">'
+        + '<button type="button" data-go="' + n.id + '">' + n.name + ' 마음에 맡긴다 — 나와의 관계 · 그 애 페르소나로</button>'
+        + '<button type="button" data-go="' + n.id + '">' + HOST + '과의 관계 · 지금 대화의 흐름(모먼트)으로</button>'
+        + '<button type="button" data-go="' + n.id + '">' + HOST + '에게 먼저 물어본다</button>'
+        + '</div>';
+    });
+    h += '<div class="yinv-note">정원 2명 · 초대해도 상대가 관계·시각을 보고 거절할 수 있어</div>';
+    inv.innerHTML = h;
+  }
+  function open(on) { inv.hidden = !on; stk.classList.toggle('on', on); if (!on) ask = ''; if (on) render(); }
+  stk.addEventListener('click', function (e) { e.stopPropagation(); open(inv.hidden); });
+  inv.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var b = e.target.closest('.yinv-go[data-inv]');
+    if (b) { ask = ask === b.dataset.inv ? '' : b.dataset.inv; render(); return; }
+    var g = e.target.closest('[data-go]');
+    if (g) { open(false); }   // 시안 = 발사 대신 닫힘(실물은 op invite)
+  });
+  document.addEventListener('click', function () { if (!inv.hidden) open(false); });
+</script>
+</body>
+</html>
