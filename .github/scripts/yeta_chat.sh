@@ -170,6 +170,7 @@ locked_ids = set()
 barge_ids = set()
 barge_cfg = {}
 near_pool = []
+roster_tune = {}
 try:                                                     # id→이름(화자 귀속 · 집단 역학 260707) — 실패 = 전원 "너:" 폴백(안전)
     _ro = json.load(open(sys.argv[3], encoding="utf-8"))
     names = {c.get("id"): c.get("name") for c in _ro if isinstance(c, dict) and c.get("id")}
@@ -177,6 +178,11 @@ try:                                                     # id→이름(화자 �
     barge_ids = {c["id"] for c in _ro if isinstance(c, dict) and c.get("id") and isinstance(c.get("barge"), dict)}   # 난입 전용 인물(260726 barge{} 보유자) — 하드코딩 0(barge_check의 BARGE와 같은 데이터 축)
     barge_cfg = {c["id"]: c["barge"] for c in _ro if isinstance(c, dict) and c.get("id") and isinstance(c.get("barge"), dict)}   # 난입 축 설정(omen_react_gate 등) — 값은 전부 roster 데이터
     near_pool = [(c["id"], c.get("name") or "", (c.get("tagline") or "")[:60], c.get("met") is True, bool(c.get("locked"))) for c in _ro if isinstance(c, dict) and c.get("id")]   # 근처 인물 지문 재료(260809) — 이름 + 결 한 줄(tagline)만. 카드 전문은 안 쓴다(그 인물의 턴이 아니므로)
+    # 16축 성향 기본값(260809 봉합 · 게이트 = shared/check_refs.py check_tune_chain) — 세션 `tunes` 부재 시 폴백. 뷰어 `yTuneCur`(세션 > localStorage > roster)의 **마지막 단을 러너에도 맞춘다**.
+    # ⚠ 종전엔 러너가 `s["tunes"]`만 읽어서, 유저가 게이지를 **직접 끌지 않은** 캐릭터는 roster 16축이 프롬프트에 **0바이트**로 들어갔다 —
+    #   게이지는 세션에 쓰이는 경로가 슬라이더 input 이벤트뿐이고(viewer `ySetSave`), 대화가 시작되면 잠기므로(`_ysetLocked = yChatStarted`) 그 뒤엔 넣을 방법도 없었다.
+    #   화면엔 roster 값으로 육각형이 그려지니 들어가는 것처럼 보였다 = 무증상. 유저 오버라이드가 있으면 종전대로 그쪽이 이긴다(아래 `or`의 좌항).
+    roster_tune = {c["id"]: c["tune"] for c in _ro if isinstance(c, dict) and c.get("id") and isinstance(c.get("tune"), list) and len(c["tune"]) == 16}
 except Exception: pass
 turns = s.get("turns") or []
 sess_persona = s.get("persona") or ""
@@ -232,7 +238,7 @@ if not pend_idx:
         print(json.dumps({"open": 1, "opening_ts": _op, "thread": T, "persona": T,
                           "note_pub": s.get("note_pub") or s.get("note") or "",
                           "note_me": ((s.get("notes") or {}).get(T)) or "",
-                          "tune": (s.get("tunes") or {}).get(T),
+                          "tune": (s.get("tunes") or {}).get(T) or roster_tune.get(T),   # 유저 오버라이드 우선 → 없으면 roster 16축 기본값(260809 봉합)
                           "policy": json.dumps(s.get("policy"), ensure_ascii=False) if isinstance(s.get("policy"), dict) else "",
                           "rel_lv": _mo.group(1) if _mo else "", "cast": " · ".join(v for v in names.values() if v),
                           "me_call": me_call, "me_about": me_about,
@@ -428,7 +434,7 @@ except Exception: pass
 print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": note_me, "hist": hist, "pending": "\n".join(pending), "scene": "\n".join(scene), "ins": ins,
                   "near_nm": near_nm, "near_tag": near_tag,   # 같은 자리에 있으나 이 방엔 없는 주민 1명(260809) — 지문 재료(부르는 건 유저 몫)
                   "me_call": me_call, "me_about": me_about,   # 유저 프로필(호칭+소개 · 260708)
-                  "tune": (s.get("tunes") or {}).get(persona),   # 캐릭터별 성향 게이지(16축 0~10 · op tune) — 없으면 None
+                  "tune": (s.get("tunes") or {}).get(persona) or roster_tune.get(persona),   # 캐릭터별 성향 게이지(16축 0~10 · op tune) — 유저 오버라이드 우선 → 없으면 roster 기본값(260809 봉합) → 둘 다 없으면 None
                   "policy": json.dumps(s.get("policy"), ensure_ascii=False) if isinstance(s.get("policy"), dict) else "",
                   "last_mood": last_mood, "last_open": last_open, "cast": " · ".join(v for v in names.values() if v),   # 상태 블록 재료(260707 · last_open = 감정선 캐리어 260725)
                   "gap_h": round(gap_h, 1), "late_h": round(late_h, 1), "rel_lv": rel_lv, "riv": riv, "handoff": handoff,   # T1 재료(휴면·지각[260726 Q.70]·관계LV·질투메타·인계 · 260707)   # 시즌 수위·금기(L1 · op policy) — 문구 조립은 apps/yeta/policy.json 정본
@@ -2082,7 +2088,7 @@ for i, v in enumerate(g[:16]):
     b = band(v)
     if b: lines.append(f"- {AX[i]}: {b} ({v}/10)")
 if lines:
-    print("[성향 보정 — 유저가 설정한 강도 조절. 카드가 기본값이며, 아래 축만 지시 강도로 보정하라. 정체성·말투 제1규칙·금기는 절대 불변. 위 [운영 정책] 블록과 겹치는 축은 운영 정책이 상한이다]")
+    print("[성향 보정 — 이 인물의 성향 강도(유저가 게이지를 조절했으면 그 값). 카드가 기본값이며, 아래 축만 지시 강도로 보정하라. 정체성·말투 제1규칙·금기는 절대 불변. 위 [운영 정책] 블록과 겹치는 축은 운영 정책이 상한이다]")
     print("\n".join(lines))
 PY
 )"
