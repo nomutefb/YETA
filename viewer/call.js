@@ -289,7 +289,7 @@ async function webAccept(call) {
   const st = dlg.querySelector('#ycallStatus');
   let stage = 'load', ended = false;
   const fail = m => { if (ended) return; ended = true; st.textContent = '연결 실패 — ' + m; setTimeout(ycallNavClose, 3000); };
-  const guard = setTimeout(() => fail(stage === 'mic' ? '마이크 권한을 확인해줘' : '응답 없음(네트워크·권한 확인)'), 20000);   // 무한 '연결 중' 차단
+  const guard = setTimeout(() => fail(stage === 'mic' ? '마이크 권한을 확인해줘' : '닿지 않아 — 잠시 후 다시'), 20000);   // 무한 '연결 중' 차단
   try {
     // ① 마이크 먼저 — 받기 탭 제스처 안에서 동기적으로 잡아야 iOS 가 hang 안 함(제스처 소실 방지의 핵심)
     stage = 'mic'; st.textContent = '마이크 여는 중…';
@@ -298,8 +298,8 @@ async function webAccept(call) {
     // ② 키·SDK — 벨 때 프리로드됐으면 즉시 완료
     stage = 'sdk'; st.textContent = '연결 중…';
     await vapiPreload();
-    if (!vapiPub) { clearTimeout(guard); return fail('보이스톡 미설정(VAPI_PUBLIC_KEY)'); }
-    if (!vapiSdk) { clearTimeout(guard); return fail('음성 모듈 로드 실패'); }
+    if (!vapiPub) { clearTimeout(guard); return fail('지금은 통화가 안 열려'); }
+    if (!vapiSdk) { clearTimeout(guard); return fail('지금은 통화가 안 열려'); }
     // ③ 통화 시작
     stage = 'start';
     vapiInst = new vapiSdk(vapiPub);
@@ -307,10 +307,10 @@ async function webAccept(call) {
     vapiInst.on('speech-start', () => { if (webTick) st.textContent = fmtSec(webSec) + ' · 말하는 중…'; });
     vapiInst.on('speech-end', () => { if (webTick) st.textContent = fmtSec(webSec); });
     vapiInst.on('call-end', () => ycallNavClose());
-    vapiInst.on('error', e => { clearTimeout(guard); fail((e && (e.errorMsg || e.error || e.message)) || '연결 오류'); });
+    vapiInst.on('error', e => { clearTimeout(guard); (console.warn('[call]', e), fail('연결이 끊겼어 — 잠시 후 다시'))   /* SDK 원문(영문·기술문)이 통화 화면에 그대로 뜨던 자리 — 진단은 콘솔로(260809 몰입 감사 C) */; });
     await vapiInst.start(call.assistant, webOverrides(call));   // 2인자 = assistantOverrides(말 속도 · 노브 미설정이면 undefined = 종전 호출과 동일)
   } catch (e) {
-    clearTimeout(guard); fail((e && e.message) || '알 수 없는 오류');
+    clearTimeout(guard); (console.warn('[call]', e), fail('연결이 끊겼어 — 잠시 후 다시'));
   }
 }
 
@@ -369,7 +369,7 @@ function pttStart() {
   recStart();   // 2순위 = 녹음 → 서버 STT(op stt · iOS 설치형 PWA — Web Speech 불가 실측 260704)
 }
 function recStart() {
-  if (!navigator.mediaDevices || !window.MediaRecorder) { toast('이 기기는 음성 인식 미지원 — 입력해줘'); return; }
+  if (!navigator.mediaDevices || !window.MediaRecorder) { toast('여기선 말로 못 받아 — 적어줘'); return; }
   navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
     const chunks = [];
     rec = new MediaRecorder(stream);
@@ -382,7 +382,7 @@ function recStart() {
       const b64 = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1] || ''); fr.readAsDataURL(blob); });
       const r = await yApi('stt', { audio: b64 }).catch(() => null);
       if (r && r.ok && r.text) pttSend(r.text);
-      else if (r && r.setup) toast('서버 음성 인식 미설정(AI 바인딩) — 일단 입력해줘');
+      else if (r && r.setup) toast('지금은 말로 못 받아 — 일단 적어줘');
       else toast((r && r.error) || '못 알아들었어 — 다시');
     };
     rec.start(); recUi(true, '녹음 중 — 다시 탭하면 보냄');
@@ -394,7 +394,7 @@ async function pttSend(text) {
   const ta = document.querySelector('#yetaText'); if (ta) ta.value = '';
   pttPending = true; voiceWait = 0;
   const r = await yApi('send', { text, model: PTT_DIAL.model, effort: PTT_DIAL.effort, ptt: 1 }).catch(() => null);
-  if (!r || !r.ok) { pttPending = false; toast((r && r.error) || '무전 전송 실패'); if (ta) ta.value = text; return; }
+  if (!r || !r.ok) { pttPending = false; toast((r && r.error) || '말이 닿지 않았어'); if (ta) ta.value = text; return; }
   if (typeof yLoad === 'function') yLoad();               // 내 턴 즉시 반영(낙관 버블 대신 확정 렌더 — 이미 R2 반영됨)
   if (typeof yStartPoll === 'function') yStartPoll();
 }
@@ -416,7 +416,7 @@ function checkReplyVoice(sess) {   // 무전 답장 음성 자동재생 — 텍�
 }
 
 // ── 프리미엄(전용 음색) 배지 — 본체 템플릿 훅(③): 이름 옆 `yPremBadge(c)` · 모듈 제거 시 자동 소멸 ──
-window.yPremBadge = c => (c && c.voice) ? `<span class="yprem" title="전용 음색(프리미엄)">${WAVE_SVG}보이스</span>` : '';
+window.yPremBadge = c => (c && c.voice) ? `<span class="yprem" title="이 사람의 목소리">${WAVE_SVG}보이스</span>` : '';
 
 // ── 헤더 수화기 버튼(모듈 주입 · 본체 무수정) ──
 // 정책(260705 실측 결정 · 260731 UX 개편 = 2탭 무장 → 발신 확인 화면): phone 배선 캐릭터 = **실전화(op phone)** 발신 = 네 폰이 울림.
@@ -456,7 +456,7 @@ async function outPlace() {   // [통화] 확정 — 유료 발동은 여기 한
   dlg.querySelector('#ycallDropLbl').textContent = '닫기';
   const r = await yApi(outReal ? 'phone' : 'ring').catch(() => null);   // 실전화(PSTN) / 미배선 = 인앱 걸려오는 전화 폴백(기존 경로 그대로)
   if (outStage !== 2 || !dlg.open) return;   // 기다리다 닫았거나 수신이 덮음 = 결과 무시
-  if (!(r && r.ok)) { st.textContent = (r && r.error) || '전화 발신 실패'; setTimeout(() => { if (dlg.open && outStage === 2) ycallNavClose(); }, 3000); return; }
+  if (!(r && r.ok)) { st.textContent = (r && r.error) || '전화가 걸리지 않아'; setTimeout(() => { if (dlg.open && outStage === 2) ycallNavClose(); }, 3000); return; }
   clearTimeout(ringT);
   ringT = setTimeout(() => { if (dlg.open && outStage === 2) ycallNavClose(); }, RING_TIMEOUT);   // 벨 대기 상한 뒤 조용히 회수(실전화 = 내 폰이 울리는 중 · 인앱 = 수신 화면이 이 dlg 를 덮음)
 }

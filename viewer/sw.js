@@ -3,7 +3,7 @@
 self.addEventListener('push', event => {
   let d = {};
   try { d = event.data ? event.data.json() : {}; } catch { d = { body: event.data && event.data.text() }; }
-  const title = d.title || 'YETA';
+  const title = d.title || '무음동';   // 폴백도 세계관 말(260809 몰입 감사 C) — 페이로드 title 결측 시 잠금화면에 앱 코드네임이 뜨던 자리
   const opts = {
     body: d.body || '답장이 도착했어',
     icon: d.icon || '/assets/brand/yeta-icon-192.png',

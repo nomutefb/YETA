@@ -1938,6 +1938,11 @@ function yDialLoad() {
 yDialLoad();
 let _yView = 'chat';   // 'list'(SNS식 캐릭터 선택) | 'chat'(대화방) — 첫 진입/이름탭 = 리스트(운영자 260703)
 const YQA = (() => { try { return new URLSearchParams(location.search).get('qa') === '1'; } catch (e) { return false; } })();   // QA 모드 1회 판정(【바인딩】 QA = ?qa=1) — 판정식은 기존 QA 딥링크 블록과 동일 문법 계승 · 진단 표시 전용(라이브 결 무영향)
+const yErr = (r, fb) => {   // 에러 표기 단일 정본(260809 몰입 감사) — 화면엔 **세계관 말만**. 게이트웨이가 함께 주는 기술 상세(edev)는 ?qa=1일 때만 병기한다.
+  const m = (r && r.error) || fb || '';                 // 서버 문구는 260809부터 전부 세계관 말(functions/api/yeta.js) · 구버전 응답 = 그대로 통과(회귀 0)
+  const d = (r && r.edev) || '';
+  return YQA && d ? `${m} 〔${d}〕` : m;                  // 진단은 QA 링크에서만 — 라이브 대화 로그엔 R2·GH_TOKEN·dispatch 코드가 안 뜬다
+};
 const yAmbOn = () => {   // 주변 사건(kind=amb) 표시 여부 = **L1 설정값 단일 정본**(운영자 260727 「껐다 킬 수 있는 설정은 모두 UI에」) — 종전 하드 상수(YAMB_HIDE)를 폐지하고 관리자 토글에 물렸다. 러너도 같은 키(policy.ambient)를 읽으므로 스위치 하나가 생성·심기·화면을 동시에 지배한다(한쪽만 켜져 어긋나던 구멍 소멸)
   const sw = ((YPOLDEF && YPOLDEF.L1 || {}).switches || []).find(x => x.key === 'ambient');   // 정의 = 정책 문서(뷰어 하드코딩 0 · axes와 동일 조회 문법)
   const v = Number.isInteger((_ypolCur || {}).ambient) ? _ypolCur.ambient : (sw ? sw.default : 0);   // 정의 미로드(부팅 직후 프리페치 전) = 기본 0 = 숨김 = 안전측(껐다고 믿은 게 반짝 보이는 사고 차단)
@@ -2612,7 +2617,7 @@ function ySettingSave() {   // 디바운스 저장 — op policy에 admin PIN �
   _ypolT = setTimeout(async () => {
     const r = await yApi('policy', { p: _ypolCur, pin: _ypin }).catch(() => null);
     if (r && r.ok) { const sv = $('#ypolSaved'); if (sv) { sv.classList.add('on'); setTimeout(() => sv.classList.remove('on'), 1600); } }
-    else miniToast((r && r.error) || '저장 실패 — 잠시 후 다시');
+    else miniToast(yErr(r, '저장 실패 — 잠시 후 다시'));
   }, 800);
 }
 function yPolClick(e) {   // 정책 클릭 위임(설정 시트 #ycsettingsCard 리스너가 호출 — 인수 계약 260707 통합) · true = 소비
@@ -2912,7 +2917,7 @@ async function yLrAct(b) {   // 트레이 픽토 = 고정/나가기(구 .ylmenu 
   }
   if (b.dataset.act === 'leave') {   // 나가기 = 예/아니오 확인 팝업(운영자 260714 "정말 나가시겠습니까 · 예(좌)/아니오(우)" · 구 2탭 armed 폐지 → 정본 yConfirm 결)
     const nm = (yHost(t) || {}).name || '이 대화';
-    yConfirm({ title: '정말 나가시겠습니까?', body: `${nm}에서 나가면 이 대화 기록이 초기화돼.`, okLabel: '예', noLabel: '아니오', onOk: async () => {
+    yConfirm({ title: '정말 나가시겠습니까?', body: `${nm}에서 나가면 그동안 나눈 말은 사라져.`, okLabel: '예', noLabel: '아니오', onOk: async () => {
       yConfirmClose();   // 확정 = 팝업 먼저 닫고 진행
       const r = await yApi('reset', { t }).catch(() => null);
       if (r && r.ok) { YSESS = r.sess || YSESS; try { localStorage.removeItem('yeta_read_' + t); } catch {} _ylSig = ''; yLrClose(); yListRender(); miniToast('대화에서 나갔어'); }
@@ -3056,7 +3061,7 @@ async function yThreadSwitch(c) {   // 스레드 전환 단일 함수(v3) — dr
     else { miniToast(`${c.name}은(는) 지금 ${aw}에 있어 — 그리로 가면 말 걸 수 있어`); return false; }
   }
   const r = await yApi('draw', { persona: c.id, greeting: yGreet(c) }).catch(() => null);
-  if (!(r && r.ok)) { miniToast((r && r.error) || '전환 실패 — 잠시 후 다시'); return false; }
+  if (!(r && r.ok)) { miniToast(yErr(r, '전환 실패 — 잠시 후 다시')); return false; }
   YSESS = r.sess; yApply(c);
   _yLastN = -1; _yTypOn = false; _yFailOn = false; _yAskOn = false; _yNearAsk = ''; _yPaceN = -1; _yTypHold = 0;
   clearTimeout(_yTypT); _yTypT = null; clearTimeout(_yPaceT); _yPaceT = 0; _meUnread = false;   // QA13: 스레드 전환/닫기 = 이전 방 타이머 해제(유령 '입력 중'/'1' 다른 방 누출 차단)
@@ -3397,7 +3402,7 @@ const YBD = [   // 미션 뱃지 12(운영자 260712 · 픽토그램 = 시스템
   { e: '📞', nm: '첫 통화', cond: '누군가와 처음 통화하기', ok: d => d.call, tier: 'lime' },
   { e: '👥', nm: '합석 성사', cond: '한 방에 둘 이상 모이기', ok: d => d.room, tier: 'lime' },   // 난입 합류도 성립(평의회9 — 문구를 판정에 정렬)
   { e: '💜', nm: '시즌의 밤', cond: '루시와 깊은 밤 대화', ok: d => d.seasonNight, tier: 'season' },
-  { e: '📸', nm: '나의 얼굴', cond: '프로필 완성(호칭·페르소나·사진)', ok: d => d.meDone },
+  { e: '📸', nm: '나의 얼굴', cond: '내 소개 채우기(호칭·소개·사진)', ok: d => d.meDone },
   { e: '🌙', nm: '밤샘 수다', cond: '한 방에서 내 말 50번', ok: d => d.maxTurns >= 50, pg: d => `${Math.min(d.maxTurns, 50)}/50` },
   { e: '🎭', nm: '열두 얼굴', cond: '주민 전원과 대면', ok: d => d.total > 0 && d.met >= d.total, pg: d => `${d.met}/${d.total}` },
   { e: '🍵', nm: '무음 단골', cond: "찻집 '무음'의 단골 되기", ok: () => false },
@@ -3436,7 +3441,7 @@ function yProfileRender() {   // 내 프로필 카드 렌더 v2(운영자 260712
   const sheet = ((YSESS || {}).me_dead) ? '' : ((((YSESS || {}).me || {}).sheet) || '');   // 내 캐릭터 3컷 시트 = 서버 생성물 전용(기기 사진 축 없음 · 사망 중엔 프사와 함께 감춤)
   const camLbl = av ? '프로필 사진 교체' : '프로필 사진 첨부';   // 배지 시맨틱(운영자 260710 — 없으면 첨부·있으면 교체)
   const nThreads = Object.values((YSESS || {}).threads || {}).filter(t => (t.turns || []).some(x => x.role === 'user')).length;   // 진행 대화 = 내 발화가 있는 방(평의회9 — 열기만 한 방·awaiting 빈 방 제외)
-  const genLink = av ? '' : `<button type="button" class="yprof-genlink" data-act="meface"${_mfT ? ' disabled' : ''}><span>${_mfT ? '페르소나를 읽고 그리는 중…' : '페르소나로 내 캐릭터 그리기 — 얼굴 · 상반신 · 전신'}</span>${_mfT ? `<span class="ycf-bar slow" id="ymefaceBar"><i></i></span>` : ''}</button>`;   // 도형 없는 mut 텍스트 액션(운영자 260710) — 프사 있으면 숨김(카메라 배지로 교체)
+  const genLink = av ? '' : `<button type="button" class="yprof-genlink" data-act="meface"${_mfT ? ' disabled' : ''}><span>${_mfT ? '적어준 걸 읽고 그리는 중…' : '적어둔 소개로 내 얼굴 그리기 — 얼굴 · 상반신 · 전신'}</span>${_mfT ? `<span class="ycf-bar slow" id="ymefaceBar"><i></i></span>` : ''}</button>`;   // 도형 없는 mut 텍스트 액션(운영자 260710) — 프사 있으면 숨김(카메라 배지로 교체)
   const d = yProfDerive(), hero = yMissionHero(d), hc = hero.id ? yPersona(hero.id) : null, bff = yBffTop(d, 3), got = YBD.filter(b => b.ok(d)).length;
   const hi = YPG_HI[ymSlot(new Date(Date.now() + 9 * 3600e3).getUTCHours())] || '좋은 밤이야,';   // KST 시간대 인사(선택값)
   const hav = hc ? yCAva(hc) : '';   // 모드 프사 경유(도깨비 260717)
@@ -3455,7 +3460,7 @@ function yProfileRender() {   // 내 프로필 카드 렌더 v2(운영자 260712
         const on = b.ok(d), pg = on ? '획득' : (b.pg ? b.pg(d) : (b.hid ? '???' : '잠김'));
         return `<button type="button" class="ybd${on ? '' : ' lk'}${b.tier ? ` t-${b.tier}` : ''}" data-bd="${i}" aria-label="${esc(b.nm)} — ${esc(b.cond)}${on ? '' : b.pg ? ` — 진행 ${esc(b.pg(d))}` : ' (잠김)'}"><span class="ybd-core"><span class="ybd-em" aria-hidden="true">${b.e}</span>${on ? '' : `<span class="ybd-lock">${YBD_LOCK}</span>`}</span><span class="ybd-nm${b.hid ? ' yqm' : ''}">${esc(b.nm)}</span><span class="ybd-pg">${esc(pg)}</span></button>`;
       }).join('') + `</div>`
-    + `<div class="yset-sec">PROFILE</div>` + nav('이름', '', yMeGet('name') || '비어 있음', ' data-me="name"') + nav('나의 페르소나', '', bio || '비어 있음', ' data-me="bio"') + genLink
+    + `<div class="yset-sec">PROFILE</div>` + nav('이름', '', yMeGet('name') || '비어 있음', ' data-me="name"') + nav('나의 소개', '', bio || '비어 있음', ' data-me="bio"') + genLink
     + (sheet ? nav('내 캐릭터 시트', '얼굴 · 상반신 · 3D용 전신 — 탭하면 원본', '', ` data-sheet="${esc(sheet)}"`) : '')   // 3컷 원본(운영자 260803) — 도착분 있을 때만 · 프사는 이미 ① 얼굴 칸
     + `<div class="yset-sec yset-acc">Account Setting</div>`
     + (YROLE === 'admin'
@@ -3484,7 +3489,7 @@ function yMefaceStart() {
   if (!bio.trim()) { miniToast('내 소개부터 써줘 — 소개를 읽고 그려'); return; }
   if (yMeGet('dirty')) yMePush(true);   // 미동기 소개 선푸시(서버가 세션 소개를 읽음)
   yApi('meface', {}).then(r => {
-    if (!(r && r.ok)) { miniToast((r && r.error) || '생성 시작 실패 — 잠시 후 다시'); return; }
+    if (!(r && r.ok)) { miniToast(yErr(r, '생성 시작 실패 — 잠시 후 다시')); return; }
     _mfT = Date.now(); yProfileRender(); yMefaceTick();
   }).catch(() => miniToast('생성 시작 실패 — 잠시 후 다시'));
 }
@@ -3522,7 +3527,7 @@ function yPinChangeOpen() {   // 게스트 PIN 셀프 변경(운영자 260710) �
     if (next === _ypin) { miniToast('지금 쓰는 PIN이랑 같아'); return; }
     yApi('pinset', { old: _ypin, next }).then(r => {
       if (r && r.ok) { _ypin = next; miniToast('PIN 바꿨어 — 새 번호로 다시 잠금 풀면 확정돼'); }   // 완료예고 대신 확인 방법(평의회 규정 · 절대명령 #12 · CDN 전파는 시간 약속 금지)
-      else miniToast((r && r.error) || 'PIN 변경 실패 — 잠시 후 다시');
+      else miniToast(yErr(r, 'PIN 변경 실패 — 잠시 후 다시'));
     }).catch(() => miniToast('PIN 변경 실패 — 잠시 후 다시'));
   }, 4);
   const inp = document.getElementById('yeditIn'); if (inp) { inp.setAttribute('inputmode', 'numeric'); inp.setAttribute('pattern', '[1-9]*'); }   // 숫자 키패드(이 열림 한정 — yEditOpen이 매번 리셋)
@@ -3582,7 +3587,7 @@ function yOnbRender() {
   ][S];
   const cta = ['좋아, 정할게', nm ? '이 이름으로 할게' : '이름 정하기', bio ? '이걸로 할게' : '나를 한 줄로 쓰기', '사람들 보러 가기'][S];
   const sub = [['skip', '그냥 둘러볼게'], nm ? ['edit', '다시 정할게'] : ['next', '나중에 할게'], bio ? ['edit', '다시 쓸게'] : ['next', '나중에 할게'],
-    (bio && !yMeAva()) ? ['face', _mfT ? '페르소나를 읽고 그리는 중…' : '내 캐릭터도 그려줄까 — 얼굴 · 상반신 · 전신'] : null][S];   // 마무리 = 그림 **선택**(운영자 260803 "선택할 경우") · 유료 축이라 자동 발사 절대 금지 · 소개 없으면 미노출(생성 재료가 소개다)
+    (bio && !yMeAva()) ? ['face', _mfT ? '적어준 걸 읽고 그리는 중…' : '네 얼굴도 그려줄까 — 얼굴 · 상반신 · 전신'] : null][S];   // 마무리 = 그림 **선택**(운영자 260803 "선택할 경우") · 유료 축이라 자동 발사 절대 금지 · 소개 없으면 미노출(생성 재료가 소개다)
   $('#yconbCard').innerHTML = (g ? yAva(g, 'yintro-ava') : '')
     + `<span class="ycd-nm">${g ? esc(g.name) : 'YETA'}</span>`
     + `<span class="ycd-tag">${esc(tag)}</span>`
@@ -3593,7 +3598,7 @@ function yOnbRender() {
 }
 function yOnbEdit(step, keep) {   // 입력 = 프로필 편집과 같은 호출(제목·maxlen·저장 경로 전부 동일 — 두 자리가 어긋나면 그게 드리프트)
   if (step === 1) yEditOpen('이름', yMeGet('name'), v => { yMeSet('name', v); yMeApply(); try { yMeRow(); } catch (x) {} yMePush(); if (!keep && v) _yonbS = 2; yOnbRender(); }, 24);
-  else yEditOpen('나의 페르소나', yMeGet('bio'), v => { yMeSet('bio', v); yMePush(); if (!keep && v) _yonbS = 3; yOnbRender(); }, 150);
+  else yEditOpen('나의 소개', yMeGet('bio'), v => { yMeSet('bio', v); yMePush(); if (!keep && v) _yonbS = 3; yOnbRender(); }, 150);
 }
 $('#yconbCard').addEventListener('click', e => {
   const b = e.target.closest('[data-onb]'); if (!b) return;
@@ -3739,7 +3744,7 @@ $('#ycprofileCard').addEventListener('click', e => {
   const me = e.target.closest('.yset-item[data-me]');
   if (me) {
     if (me.dataset.me === 'name') yEditOpen('이름', yMeGet('name'), v => { yMeSet('name', v); yMeApply(); try { yMeRow(); } catch (x) {} yProfileRender(); yMePush(); }, 24);   // 호칭 = 서버 동기(러너가 답장에 반영 · 260708)
-    else yEditOpen('나의 페르소나', yMeGet('bio'), v => { yMeSet('bio', v); yProfileRender(); yMePush(); }, 150);   // 소개 = 서버 동기 · maxlen 150(게이트웨이 300캡)
+    else yEditOpen('나의 소개', yMeGet('bio'), v => { yMeSet('bio', v); yProfileRender(); yMePush(); }, 150);   // 소개 = 서버 동기 · maxlen 150(게이트웨이 300캡)
     return;
   }
   if (e.target.closest('.yset-item[data-open="settings"]')) { navSwap('ycprofile', 'ycsettings', yHideSettings); yShowSettings(true); }   // 프로필 → 설정 = 오버레이 교체(레이스 프리 · 디테일→챗 navSwap 관례 계승)
@@ -3770,7 +3775,7 @@ async function openYeta(charId, _noNav) {
     const r = await yApi('chars').catch(() => null);
     if (r && r.ok) { YCHARS = r.chars || []; YWORLD = r.world || null; YREADY = !!r.ready; }
   }
-  if (!YCHARS.length) { log.innerHTML = '<div class="yeta-setup">페르소나 목록을 못 불러왔어 — 잠시 후 다시 열어봐.</div>'; return; }
+  if (!YCHARS.length) { log.innerHTML = '<div class="yeta-setup">무음동 사람들을 못 불러왔어 — 잠시 후 다시 열어봐.</div>'; return; }
   if (!log.childElementCount) log.replaceChildren(yLoadingBox());   // 콜드 get 대기 = 빈 화면 금지(분신술 260709 cold — YCHARS 선로딩 시 로더 분기가 스킵돼 'Y·YETA 목업 헤더 + 블랭크'로 보이던 재발 경로 · 동시 접속 = get 왕복이 수초로 늘며 관측) · yEnterChat/yLoad가 곧 실내용으로 덮음
   yWarmBg();   // 시그니처 배경 캐시 워밍(1회 · 로딩=진입 동기 · 운영자 260707)
   const pick = charId ? yPersona(charId) : null;   // 캐릭터 탭(메뉴2) 카드 = 그 캐릭터로 직접 진입(운영자 260705) · R2 미설정은 yEnterChat이 소개 폴백 처리
@@ -3807,7 +3812,7 @@ function yRenderList() {   // 캐릭터 = SNS 리스트(.ypick-row 계승) + �
     const ava = um ? `<span class="ylock-avawrap">${yAva(c)}<span class="ylock-ava">${YLOCK_SVG}</span></span>` : yAva(c);
     const tag = um ? '아직 만나지 못한 상대 — 골목 어딘가에서 마주치면 열려' : (c.tagline || '');
     return `<button type="button" class="ypick-row${um ? ' locked' : ''}" data-id="${esc(c.id)}">${ava}<span class="yp-col"><span class="yp-name">${um ? `<span class="yqm">${YUNMET_NM}</span>` : esc(c.name)}${yGradeBadge(c)}${window.yPremBadge ? yPremBadge(c) : ''}</span><span class="yp-tag">${esc(tag)}</span></span></button>`; }).join('')
-    + `<button type="button" class="yl-dice" id="ylDice">🎲 랜덤으로 만나기</button>`;
+    + `<button type="button" class="yl-dice" id="ylDice">🎲 우연히 마주치기</button>`;
 }
 function yShowList() { yRenderList(); yView('list'); }
 async function yEnterChat(c) {   // 리스트에서 캐릭터 선택 → 대화방 진입(draw)
@@ -3864,7 +3869,7 @@ async function yDraw() {   // 랜덤 뽑기/재뽑기 — 맥락 유지·화자 
   if (!pool.length) return;
   const c = pool[Math.floor(Math.random() * pool.length)];
   const r = await yApi('draw', { persona: c.id, greeting: yGreet(c) }).catch(() => null);
-  if (!r || !r.ok) { $('#yetaLog').insertAdjacentHTML('beforeend', `<div class="yb fail">${esc((r && r.error) || '뽑기 실패 — 다시 눌러줘')}</div>`); return; }
+  if (!r || !r.ok) { $('#yetaLog').insertAdjacentHTML('beforeend', `<div class="yb fail">${esc(yErr(r, '지금은 안 돼 — 다시 눌러줘'))}</div>`); return; }
   YSESS = r.sess; yApply(c); yRender();
 }
 // ── 시즌 등급(운영자 260707) — 배지 + 감정 미디어 배경(답장 무드 따라 캐릭터 이미지 로테이션 · 클립 = muted) ──
@@ -4542,7 +4547,7 @@ async function yKick(c, btn) {   // op kick = 퇴장도 세계관 연출(sys 지
   if (btn) btn.disabled = true;
   const r = await yApi('kick', { t: (YSESS || {}).cur || '', persona: c.id, name: c.name }).catch(() => null);
   if (r && r.ok) { YSESS = r.sess; yRender(); }
-  else { if (btn) btn.disabled = false; miniToast((r && r.error) || '지금은 못 내보내'); }
+  else { if (btn) btn.disabled = false; miniToast(yErr(r, '지금은 못 내보내')); }
 }
 // ── 캐릭터 프로필 팝오버(운영자 260709 "프사 클릭 = 현재 생각·소개") — 표면 = .yeta-pick 정본 · 생각 = 마지막 답장 결(리스트 생각줄 파생과 동일 축) ──
 function yProfPop(force, pid) {
@@ -4694,11 +4699,11 @@ function yInvToggle(force) {   // 초대 2차 팝업(운영자 260712 재생 —
   const room = (s.room && s.room.length ? s.room : [YCUR.id]).map(yPersona).filter(Boolean);
   const inv = s.invite && Date.now() - (s.invite.ts || 0) < 600000 ? yPersona(s.invite.to) : null;
   const full = room.length >= 2;
-  const cap = inv ? `${inv.name || '누군가'} 대답을 기다리는 중…` : full ? '자리가 찼어 — 한 명을 보내고 불러' : _yNear.length ? '지금 부를 수 있는 인물 — 근처' : '근처에 부를 만한 사람이 없어 — 골목을 돌아봐';
+  const cap = inv ? `${inv.name || '누군가'} 대답을 기다리는 중…` : full ? '자리가 다 찼어 — 한 명을 보내고 불러' : _yNear.length ? '지금 부를 수 있는 인물 — 근처' : '근처에 부를 만한 사람이 없어 — 골목을 돌아봐';
   const mem = full ? room.map(c => `<div class="ypick-row" data-mem="1">${yAva(c)}<span class="yp-col"><span class="yp-name">${esc(c.name)}</span><span class="yp-tag">${esc(c.tagline || '')}</span></span>${c.grade === 'barge' ? '' : `<button type="button" class="yinv-x" data-kick="${esc(c.id)}">보내기</button>`}</div>`).join('') : '';   // 난입 등급 = [보내기] 자체를 안 그린다(운영자 260728 "내보내기 처음에 있는데 불가해야함") — 부를 수도 없는 사람이면 보낼 수도 없다(카드 CTA "부를 수 없는 사람 — 저녁이 오면 저쪽이 먼저 찾아온다"와 같은 축) · 가는 시각도 저쪽이 정한다 = 퇴장은 인물의 <<LEAVE>>·정지 상한이 회수
   const rows = (!full && !inv) ? _yNear.map(n => { const c = yPersona(n.id); if (!c) return '';
     return `<div class="ypick-row" data-mem="1">${yAva(c)}<span class="yp-col"><span class="yp-name">${esc(c.name)}${yGradeBadge(c)}</span><span class="yp-tag">${esc(n.pl ? `${n.pl} · 같은 자리` : (c.tagline || ''))}</span></span><button type="button" class="yinv-go" data-inv="${esc(c.id)}">고르기</button></div>`; }).join('') : '';   // 행 = div + 내부 필(중첩 버튼 금지) · 팝업은 **누구를 부를지**까지만(260809 2차 — 어떤 기준으로 부를지 = 다음 단계 3선택지 = 대화 안에서 고른다 · 후보 1명이면 이 단계 자체를 건너뛴다)
-  pk.innerHTML = `<div class="yinv-cap">${esc(cap)}</div>` + mem + rows + `<div class="yinv-note">정원 2명 · 초대해도 상대가 관계·시각을 보고 거절할 수 있어</div>`;   // 힌트 = 선택값 표시
+  pk.innerHTML = `<div class="yinv-cap">${esc(cap)}</div>` + mem + rows + `<div class="yinv-note">한 자리에 둘까지 · 불러도 저쪽이 안 올 수 있어</div>`;   // 힌트 = 선택값 표시
   pk.hidden = false;
   yNearAggro();
 }
@@ -4831,7 +4836,7 @@ $('#yetaFile').addEventListener('change', async e => {   // + 사진 첨부(운�
     try { b64 = await yImgB64(f); } catch { miniToast('사진을 읽지 못했어'); return; }
     miniToast('사진 보내는 중…');
     const r = await yApi('attach', { t: (YSESS || {}).cur || (YCUR && YCUR.id) || '', img: b64, model: YDIAL.model, effort: YDIAL.effort }).catch(() => null);
-    if (!r || !r.ok) { miniToast((r && r.error) || '사진 전송 실패 — 다시 시도해줘'); return; }
+    if (!r || !r.ok) { miniToast(yErr(r, '사진 전송 실패 — 다시 시도해줘')); return; }
     await yLoad(); yStartPoll();
   } finally { _yAttBusy = false; }
 });
@@ -4891,7 +4896,7 @@ $('#yetaLog').addEventListener('click', async e => {   // 로그 인라인 액�
     _yNearC = null; _yNearAsk = '';
     const r = await yApi('invite', { t: (YSESS || {}).cur || '', persona: c.id, name: c.name, basis }).catch(() => null);
     if (r && r.ok) { YSESS = r.sess; yRender(); }   // 초대 sys 즉시 + '올지 생각 중' 타이핑 + 폴(yRender가 invite 감지)
-    else { miniToast((r && r.error) || '부르기 실패 — 잠시 후 다시'); yRender(); }
+    else { miniToast(yErr(r, '부르기 실패 — 잠시 후 다시')); yRender(); }
     return;
   }
   const nh = e.target.closest('[data-near-hostask]');
@@ -4908,7 +4913,7 @@ async function yLoad() {
   const r = await yApi('get').catch(() => null);
   if (!r) { if (_yView !== 'list') yShowList(); return; }   // get 실패(네트워크/5xx/비-JSON) = 빈 목업 모달 동결 방지 → 리스트 폴백(헤더 기본 "YETA"·본문 공백 잔류 차단 · 분신술 260708)
   if (r.setup) { $('#yetaLog').innerHTML = '<div class="yeta-setup">⚠️ 저장소(R2) 미설정 — 셋업 후 대화가 켜져.</div>'; $('#yetaIn').hidden = true; return; }
-  if (!r.ok) { $('#yetaLog').innerHTML = `<div class="yb fail">${esc(r.error || '로드 실패')}</div>`; return; }
+  if (!r.ok) { $('#yetaLog').innerHTML = `<div class="yb fail">${esc(yErr(r, '지금은 열리지 않아 — 잠시 후 다시'))}</div>`; return; }
   YSESS = r.sess || {};
   if (window.YCALL) { try { YCALL.onSess(YSESS); } catch {} }   // [call 모듈 훅 ①] 걸려오는 전화·무전 답장 음성 — viewer/call.js(플러그인 · 제거 = 이 줄 + 하단 script 태그) · try/catch = 훅 예외가 아래 yApply/yRender 렌더 중단 못하게 격리(분신술 260708)
   if (!YSESS.cur || !YTH()) { if (_yView !== 'list') yShowList(); return; }   // 현재 방 없음 = SNS 선택 리스트
@@ -5258,10 +5263,14 @@ function yRender() {
   //   자동 등장은 여전히 0 — 좌상단 프로필(무채색 디밍 호흡)을 탭해 `_yNearAsk`가 서야만 뜬다. `.in` = 이번 렌더에 처음 붙은 회차만(폴 재렌더 재애니 차단 = `_yFailOn` 래치 동형).
   const askC = _yNearAsk && ((s.room || []).length < 2) && _yNear.some(n => n.id === _yNearAsk) ? yPersona(_yNearAsk) : null;   // ⚠ 종전 `!kickOn` 항 = pill 폐지와 함께 제거(방 2명이면 `room.length < 2`가 이미 막는다 = 중복 가드)
   if (askC) {
-    const hostNm = (yPersona((s.room || [])[0]) || YCUR || {}).name || '지금 상대';   // ①② = 판정 기준(basis)을 실어 부르기(수락은 걔 마음 · 러너 판정) · ③ = 지금 상대에게 먼저 묻는다(내 말로 전송 — ypickbar 깔때기 동형)
+    const hostNm = (yPersona((s.room || [])[0]) || YCUR || {}).name || '지금 상대';
+    // ⚠ 문구 = **세계관 말**만(운영자 260809 3차 "그 애 페르소나로~ 이런 내용이 실제로 뜨는건가? 안뜨게 해줘 · 몰입을 깨는거니까").
+    //   종전(260731)엔 판정 기준을 그대로 노출했다 — 「나와의 관계 · 그 애 페르소나로」·「대화의 흐름(모먼트)으로」 = 앱 내부 용어가 세계관 한복판에 뜬 것.
+    //   기준(basis)은 **행동의 결로 표현**한다: 곧장 부르면 나와 그 애 사이가 기준(self) · 이 자리에 앉자고 하면 그 자리의 공기와 동석자와의 사이가 기준(moment).
+    //   `data-basis` 값·서버 계약은 그대로 = 판정 로직 무변경 · 바뀐 건 사람이 읽는 말뿐.
     h += `<div class="ynear-ask${_yAskOn ? '' : ' in'}">
-      <button type="button" data-near-go="${esc(askC.id)}" data-basis="self">${esc(askC.name)} 마음에 맡긴다 — 나와의 관계 · 그 애 페르소나로</button>
-      <button type="button" data-near-go="${esc(askC.id)}" data-basis="moment">${esc(hostNm)}${yJosa(hostNm, '과', '와')}의 관계 · 지금 대화의 흐름(모먼트)으로</button>
+      <button type="button" data-near-go="${esc(askC.id)}" data-basis="self">${esc(askC.name)}${yJosa(askC.name, '을', '를')} 곧장 부른다</button>
+      <button type="button" data-near-go="${esc(askC.id)}" data-basis="moment">${esc(hostNm)}${yJosa(hostNm, '과', '와')} 셋이 앉자고 해본다</button>
       <button type="button" data-near-hostask="${esc(askC.id)}">${esc(hostNm)}에게 먼저 물어본다</button>
     </div>`;
   }
@@ -5399,7 +5408,7 @@ async function ySend() {
     ta.value = rv; _ySegs = rs.length ? rs : [{ at: 0, sc: 0 }]; _ySegPrev = rv; ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px'; yScPaint();   // 복원분 채색 재동기(260726)
     yScSet(rs.length ? rs[rs.length - 1].sc : 0);   // 모드 래치 = 복원 타임라인과 동기(합성 실패 후 모드 표시·구간 불일치 봉합 · 평의회 260717) · 생각 구간은 이미 *…*로 봉해져 텍스트에 남는다
     if (!sent) _yDrKeep = false;   // 전송 전체 실패 = 겹침 draft 래치 롤백(서버에 겹침 턴 없음 → mut 오염 방지 · 평의회 260717)
-    log.insertAdjacentHTML('beforeend', `<div class="yb fail in">${esc(r.error || '전송 실패')}</div>`); _yFailOn = true; log.scrollTop = log.scrollHeight; yDcPush('send', `s:${Date.now()}`);   // 전송 실패 적립(260725) — 발신 자체가 안 나간 축(답장 두절과 별개 원인이라 분류를 나눈다)
+    log.insertAdjacentHTML('beforeend', `<div class="yb fail in">${esc(yErr(r, '말이 닿지 않았어'))}</div>`); _yFailOn = true; log.scrollTop = log.scrollHeight; yDcPush('send', `s:${Date.now()}`);   // 전송 실패 적립(260725) — 발신 자체가 안 나간 축(답장 두절과 별개 원인이라 분류를 나눈다)
     if (sent) yStartPoll();   // 앞 파트는 커밋·dispatch 완료 — 그 답장 폴 기동(종전엔 미기동 = 답이 와도 안 보임 · 평의회 260715)
     return;
   }

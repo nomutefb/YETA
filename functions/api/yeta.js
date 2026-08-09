@@ -86,7 +86,7 @@ const kimiGate = (env, sess) => {   // 초과 = 안내 객체(호출부 429) / �
   if (!(cap > 0)) return null;
   const spent = kimiSpentUsd(sess);
   if (spent < cap) return null;
-  return { error: `오늘 키미 대화비 $${spent.toFixed(2)} — 일 상한($${cap}) 도달(과금 보호). 다이얼을 소넷·오퍼스로 돌리면 바로 이어갈 수 있어(상한 변경 = Pages env YETA_KIMI_MAX_USD_PER_DAY · 0=무제한)` };
+  return { error: '오늘 몫이 다 찼어 — 설정에서 대화 깊이를 바꾸면 바로 이어져', edev: `kimi cap $${spent.toFixed(2)}/$${cap} (YETA_KIMI_MAX_USD_PER_DAY · 0=무제한)` };
 };
 // 클라 텍스트 위장 무력화 SSOT(send/draw/invite/kick/me 공용) — NOTE/MOOD/user_message 파이프 제어토큰 제거.
 // ⚠️ 고정점 루프 = 중첩 마커(예 <<N<<NOTE:a>>OTE:PUB>>) 깊이 무관 붕괴(단일패스는 깊이1만 벗김 = 재조립 생존 · 평의회1 260708). 라벨 [^>]* = 유니코드 안전.
@@ -132,7 +132,7 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: r === 204 });
   }
 
-  if (!env.YETA_R2) return json({ error: '미설정 — Pages R2 바인딩(YETA_R2 · 비공개 버킷) 필요', setup: true }, 501);
+  if (!env.YETA_R2) return json({ error: '아직 이 동네가 열리지 않았어', edev: 'Pages R2 바인딩(YETA_R2 · 비공개 버킷) 미설정', setup: true }, 501);
 
   // ═══ v3 다중 스레드(운영자 260707 · 5인 기틀검증 반영) — 세션 = { v:3, cur, barge_day, call, threads:{<id>:{turns,state,opening,...,pin,updated}}, note_pub, notes, tunes, policy, pref, me:{call,about} } ═══
   const migrateV3 = (s) => {   // 멱등 순수 랩(v>=3 or threads 존재 = no-op) — 러너 파이썬과 동형 유지(마이그 감사① · 시뮬 대조)
@@ -173,7 +173,7 @@ export async function onRequestPost({ request, env }) {
       if (r && r.abort) return { sess, abort: r.abort };
       if (await putSessIf(sess, etag)) return { sess };
     }
-    return { sess: null, abort: { error: '세션 경합 — 잠시 후 다시' } };
+    return { sess: null, abort: { error: '방금 겹쳤어 — 잠시 후 다시', edev: 'CAS 경합' } };
   };
   const TH = (s, t) => (s.threads || {})[t];   // 스레드 접근(없으면 undefined — 신설은 draw 단일 경로 · 보안 감사①)
   const mergeBackG = (s, tid) => {   // 단톡 재합류(운영자 260716 Q.06) — g방 인원이 1명으로 줄면(내보내기·거절·사망·초대 만료) 남은 캐릭터의 1:1 방으로 대화를 시간순 합치고 g방 소멸 = 대화창이 다시 하나로
@@ -422,9 +422,9 @@ export async function onRequestPost({ request, env }) {
   }
 
   if (op === 'ring') {   // 전화 걸어달라(수신 UI·테스트 훅) → yeta-call.yml dispatch. ⚠️ TTS 유료 종량제 + 무인증 공개 사이트 → 일 상한 기본 3(보수 기본)
-    if (!env.GH_TOKEN) return json({ error: '서버 미설정 — GH_TOKEN 필요' }, 500);
+    if (!env.GH_TOKEN) return json({ error: '지금은 말이 닿지 않아 — 잠시 후 다시', edev: 'GH_TOKEN 미설정' }, 500);
     const persona = String(body.persona || '');
-    if (persona && !ID_RE.test(persona)) return json({ error: '잘못된 페르소나 id' }, 400);
+    if (persona && !ID_RE.test(persona)) return json({ error: '그런 사람은 없어', edev: '잘못된 persona id' }, 400);
     { const sd = await readSess(); if (DEAD_ON(sd, persona || sd.cur || '')) return json({ error: '신호가 가지 않아 — 누가 신당에서 빌어주거나, 무음동의 밤이 더 흘러야 닿아' }, 409); }   // 사망 = 전화 차단(260714 · 유료 TTS 헛발도 방지)
     let cap = parseInt(env.YETA_CALL_MAX_PER_DAY ?? '3', 10);
     if (!Number.isFinite(cap)) cap = 3;   // 미설정·빈값·오타 = 보수 기본 3(유료 가드가 조용히 풀리는 구멍 차단 · 0 = 명시적 무제한)
@@ -437,7 +437,7 @@ export async function onRequestPost({ request, env }) {
     await env.YETA_R2.put(qkey, JSON.stringify({ n: used + 1 }), { httpMetadata: { contentType: 'application/json' } });
     const st = await dispatch(env, 'yeta-call.yml', persona ? { persona } : {});
     if (st === 204) return json({ ok: true, remain: cap > 0 ? cap - used - 1 : -1 });
-    return json({ error: `GitHub dispatch ${st}` }, 502);
+    return json({ error: '지금은 말이 닿지 않아 — 잠시 후 다시', edev: `GitHub dispatch ${st}` }, 502);
   }
 
   if (op === 'auth') {   // PIN 로그인(운영자 260706 권한 2계층) — admin = Pages env YETA_PIN_ADMIN(레포 무노출·서버 강제) · guest = apps/yeta/users.json(깃 SSOT — 사용자 추가 = 커밋). 반환 = 역할뿐(민감필드 0)
@@ -551,7 +551,7 @@ export async function onRequestPost({ request, env }) {
 
   if (op === 'tune') {   // 캐릭터별 성향 게이지(16축 0~10 · 운영자 260706) — 숫자 배열만 수용 = 프롬프트 주입 원천 차단(라벨은 러너 상수)
     const persona = String(body.persona || '');
-    if (!ID_RE.test(persona)) return json({ error: '잘못된 페르소나 id' }, 400);
+    if (!ID_RE.test(persona)) return json({ error: '그런 사람은 없어', edev: '잘못된 persona id' }, 400);
     const raw = Array.isArray(body.g) ? body.g : null;
     if (!raw || raw.length !== 16) return json({ error: '게이지는 16개 숫자 배열' }, 400);
     const g = raw.map(v => Math.max(0, Math.min(10, Math.round(Number(v) || 0))));
@@ -573,7 +573,7 @@ export async function onRequestPost({ request, env }) {
   }
 
   if (op === 'meface') {   // 내 캐릭터 그리기(운영자 260710 · 3컷 시트 260803) — 소개(sess.me.about) 기반 한 장(러너가 얼굴 칸을 잘라 avatar · 시트 원본은 me.sheet). ⚠️ OpenAI 유료 종량제 + 무인증 공개 → 일 상한 기본 2(YETA_MEFACE_MAX_PER_DAY) · 클라 텍스트 0(소개는 서버가 세션에서 읽음 = 주입 축 없음)
-    if (!env.GH_TOKEN) return json({ error: '서버 미설정 — GH_TOKEN 필요' }, 500);
+    if (!env.GH_TOKEN) return json({ error: '지금은 말이 닿지 않아 — 잠시 후 다시', edev: 'GH_TOKEN 미설정' }, 500);
     const pre = await readSess();
     if (!String((pre.me || {}).about || '').trim()) return json({ error: '내 소개부터 써줘 — 소개를 읽고 그려' }, 400);
     if ((pre.me || {}).avatar) return json({ error: '이미 프로필 이미지가 있어 — 바꾸려면 사진을 직접 올려줘' }, 409);   // avatar 가드(평의회 파이프라인④ 타이밍 스큐 재과금 차단 · UI도 av 有면 게이지 숨김과 정합)
@@ -597,12 +597,12 @@ export async function onRequestPost({ request, env }) {
     const st = await dispatch(env, 'yeta-meface.yml', {});
     if (st === 204) return json({ ok: true, remain: cap > 0 ? cap - used - 1 : -1 });
     await casPut(s => { if (s.meface) s.meface.pending = 0; });   // 발사 실패 = pending 즉시 해제(재시도 가능)
-    return json({ error: `GitHub dispatch ${st}` }, 502);
+    return json({ error: '지금은 말이 닿지 않아 — 잠시 후 다시', edev: `GitHub dispatch ${st}` }, 502);
   }
 
   if (op === 'pin') {   // 채팅방 고정 토글(운영자 260707 롱프레스 액티브) — 숫자/불리언만 수용 · 스레드 실존 요구(신설 금지 · 보안 감사①)
     const t = String(body.t || '');
-    if (!ID_RE.test(t)) return json({ error: '잘못된 스레드 id' }, 400);
+    if (!ID_RE.test(t)) return json({ error: '그런 대화방은 없어', edev: '잘못된 thread id' }, 400);
     const on = !!body.on;
     const { sess, abort } = await casPut(s => {
       const th = TH(s, t); if (!th) return { abort: { error: '없는 대화방이야' } };
@@ -700,7 +700,7 @@ export async function onRequestPost({ request, env }) {
 
   if (op === 'reset') {   // t 有 = 그 스레드만 나가기(threads[t]+notes[t] 삭제 · 관계 리셋) / t 無 = 전체 초기화. 직전 whole 백업 유지(레이스 감사④·보안 감사③)
     const t = String(body.t || '');
-    if (t && !ID_RE.test(t)) return json({ error: '잘못된 스레드 id' }, 400);
+    if (t && !ID_RE.test(t)) return json({ error: '그런 대화방은 없어', edev: '잘못된 thread id' }, 400);
     const curO = await env.YETA_R2.get(KEY);   // 삭제 직전 1세대 백업(비가역 완화)
     if (curO) { try { await env.YETA_R2.put('sessions/main.prev.json', await curO.arrayBuffer(), { httpMetadata: { contentType: 'application/json' } }); } catch {} }
     if (t) {
@@ -722,7 +722,7 @@ export async function onRequestPost({ request, env }) {
 
   if (op === 'draw') {   // v3 = 그 캐릭터의 대화방 열기(스레드 신설 = 이 op 단일 경로 · 보안 감사①) — 기존 방 = cur 전환만
     const persona = String(body.persona || '');
-    if (!ID_RE.test(persona)) return json({ error: '잘못된 페르소나 id' }, 400);
+    if (!ID_RE.test(persona)) return json({ error: '그런 사람은 없어', edev: '잘못된 persona id' }, 400);
     const greeting = stripMarkers(body.greeting).slice(0, 300);   // 정적 폴백 사다리용(동적 실패·GH_TOKEN 無)
     const pre = await readSess();
     if (!TH(pre, persona)) {   // 신설 = 로스터 대조(임의 id 무한 스레드·PAT 소진 DoS 차단 · 보안 감사①)
@@ -781,9 +781,9 @@ export async function onRequestPost({ request, env }) {
   }
 
   if (op === 'invite') {   // 합석 초대(단톡 · 운영자 260707) — 마커+sys만 서버가 쓰고, 올지 말지는 러너가 그 캐릭터 카드·시각·관계로 판정(거절 = 콘텐츠)
-    if (!env.GH_TOKEN) return json({ error: '서버 미설정 — GH_TOKEN 필요' }, 500);
+    if (!env.GH_TOKEN) return json({ error: '지금은 말이 닿지 않아 — 잠시 후 다시', edev: 'GH_TOKEN 미설정' }, 500);
     const persona = String(body.persona || '');
-    if (!ID_RE.test(persona)) return json({ error: '잘못된 페르소나 id' }, 400);
+    if (!ID_RE.test(persona)) return json({ error: '그런 사람은 없어', edev: '잘못된 persona id' }, 400);
     const name = stripMarkers(body.name).slice(0, 24) || persona;
     const basis = body.basis === 'moment' ? 'moment' : 'self';   // 판정 기준(운영자 260731 3선택지) — self = 나와의 관계·그 애 페르소나(종전 기본) / moment = 동석 상대와의 관계·대화 흐름. 열거 화이트리스트 = 임의 문자열 마커 유입 차단
     const t = String(body.t || (await readSess()).cur || '');   // 대상 스레드(초대 = 열린 방으로)
@@ -825,15 +825,15 @@ export async function onRequestPost({ request, env }) {
     const st = await dispatch(env);
     if (st === 204) return json({ ok: true, sess });
     await casPut(s => { if (gid && s.threads[gid]) delete s.threads[gid]; if (s.cur === gid) s.cur = t; });   // 판정 런 불발 = 분기 스레드 회수·cur 원복
-    return json({ error: `GitHub dispatch ${st}` }, 502);
+    return json({ error: '지금은 말이 닿지 않아 — 잠시 후 다시', edev: `GitHub dispatch ${st}` }, 502);
   }
 
   if (op === 'kick') {   // 합석 내보내기/초대 철회 — 유저 쪽 거절권(난입의 대칭). 퇴장도 세계관 연출(sys)
     const persona = String(body.persona || '');
-    if (!ID_RE.test(persona)) return json({ error: '잘못된 페르소나 id' }, 400);
+    if (!ID_RE.test(persona)) return json({ error: '그런 사람은 없어', edev: '잘못된 persona id' }, 400);
     const name = stripMarkers(body.name).slice(0, 24) || persona;
     const t = String(body.t || (await readSess()).cur || '');
-    if (!ID_RE.test(t)) return json({ error: '잘못된 스레드 id' }, 400);
+    if (!ID_RE.test(t)) return json({ error: '그런 대화방은 없어', edev: '잘못된 thread id' }, 400);
     const { sess, abort } = await casPut(s => {
       const th = TH(s, t); if (!th) return { abort: { error: '없는 대화방이야' } };
       if (th.invite && th.invite.to === persona) {   // 아직 판정 전 = 부르기 취소
@@ -867,17 +867,17 @@ export async function onRequestPost({ request, env }) {
 
   if (op === 'focus') {   // 스레드 포커스 전환(단톡 등 페르소나 아닌 방 진입 — draw 없이 cur만 이동 · 운영자 260712)
     const t = String(body.t || '');
-    if (!ID_RE.test(t)) return json({ error: '잘못된 스레드 id' }, 400);
+    if (!ID_RE.test(t)) return json({ error: '그런 대화방은 없어', edev: '잘못된 thread id' }, 400);
     const { sess, abort } = await casPut(s => { if (!TH(s, t)) return { abort: { error: '없는 대화방이야' } }; s.cur = t; });
     if (abort) return json(abort, 409);
     return json({ ok: true, sess });
   }
 
   if (op === 'retry') {   // 자동 재시도(구 원탭 · 뷰어 260714 무배너 자동화) — 실패(state=error) 스레드의 pending 유저 턴 재발사(새 턴 추가 X)
-    if (!env.GH_TOKEN) return json({ error: '서버 미설정 — GH_TOKEN 필요' }, 500);
+    if (!env.GH_TOKEN) return json({ error: '지금은 말이 닿지 않아 — 잠시 후 다시', edev: 'GH_TOKEN 미설정' }, 500);
     const preR = await readSess();
     const t = String(body.t || preR.cur || '');
-    if (!ID_RE.test(t)) return json({ error: '잘못된 스레드 id' }, 400);
+    if (!ID_RE.test(t)) return json({ error: '그런 대화방은 없어', edev: '잘못된 thread id' }, 400);
     const rn = Math.max(1, Math.min(9, Math.round(+body.n) || 1));   // 회차(사다리 260714) — 러너가 3회차부터 뉘앙스 전환 블록 주입 · 미동봉(구 캐시 뷰어) = 1(그대로 재발사) · 정수 강제 = 주입 차단
     {   // 키미 일일 실비 방파제(Q.40) — 재시도도 pending 턴에 박제된 키미 다이얼로 실과금되는 경로(상한 우회 차단) · 클로드 턴 재시도 무영향 · 스레드 판독 실패 = 통과(fail-open · 아래 casPut이 실존 재검증)
       const th = TH(preR, t), tn = (th && th.turns) || [], la = tn.map(x => x.role).lastIndexOf('assistant');
@@ -895,7 +895,7 @@ export async function onRequestPost({ request, env }) {
     const rst = await dispatch(env);
     if (rst === 204) return json({ ok: true });
     await casPut(s => { const th = TH(s, t); if (th) { th.state = 'error'; th.err = `재발사 실패(GitHub ${rst})`; th.awaiting_since = 0; } });
-    return json({ error: `GitHub dispatch ${rst}` }, 502);
+    return json({ error: '지금은 말이 닿지 않아 — 잠시 후 다시', edev: `GitHub dispatch ${rst}` }, 502);
   }
 
   if (op === 'att') {   // 첨부 사진 서빙(운영자 260717 '+') — 비공개 버킷 att/ 프리픽스만(op voice 동형 · originOk 게이트 · POST 유지)
@@ -907,7 +907,7 @@ export async function onRequestPost({ request, env }) {
   }
 
   if (op === 'attach') {   // 사진 첨부(운영자 260717 '+') — R2 att/ 저장 + 유저 턴 적재(img 키) + dispatch(러너가 Read로 실물을 보고 반응) · ⚠️ 무인증 공개 → 크기·매직바이트·일 상한 가드
-    if (!env.GH_TOKEN) return json({ error: '서버 미설정 — GH_TOKEN 필요' }, 500);
+    if (!env.GH_TOKEN) return json({ error: '지금은 말이 닿지 않아 — 잠시 후 다시', edev: 'GH_TOKEN 미설정' }, 500);
     const b64 = String(body.img || '');
     if (!b64 || b64.length > 2000000) return json({ error: '사진이 없거나 너무 커 — 다시 골라줘(최대 ~1.4MB)' }, 400);
     let bin;
@@ -946,15 +946,15 @@ export async function onRequestPost({ request, env }) {
     const ast = await dispatch(env);
     if (ast === 204) return json({ ok: true, key: akey, remain: acap > 0 ? acap - aused - 1 : -1 });
     await casPut(s => { const th = TH(s, at); if (th) { th.state = 'error'; th.err = `발사 실패(GitHub ${ast}) — 다시 보내면 재시도`; th.awaiting_since = 0; } });
-    return json({ error: `GitHub dispatch ${ast}` }, 502);
+    return json({ error: '지금은 말이 닿지 않아 — 잠시 후 다시', edev: `GitHub dispatch ${ast}` }, 502);
   }
 
-  if (op !== 'send') return json({ error: '알 수 없는 op' }, 400);
-  if (!env.GH_TOKEN) return json({ error: '서버 미설정 — GH_TOKEN 필요' }, 500);
+  if (op !== 'send') return json({ error: '지금은 그렇게 못 해', edev: `알 수 없는 op(${op})` }, 400);
+  if (!env.GH_TOKEN) return json({ error: '지금은 말이 닿지 않아 — 잠시 후 다시', edev: 'GH_TOKEN 미설정' }, 500);
 
   // 유저 텍스트 절제 + 프롬프트 델리미터 위장 무력화(yeta_chat.sh 관대 파서와 짝 · stripMarkers 고정점 SSOT = 중첩 마커 붕괴)
   const text = stripMarkers(String(body.text || '').slice(0, 4000)).trim();
-  if (!text) return json({ error: '빈 메시지' }, 400);
+  if (!text) return json({ error: '할 말을 적어줘' }, 400);
 
   // 다이얼(모델×노력) — 화이트리스트 강제(오타·주입 = 기본 폴백 · 30초 목표라 effort 기본 low)
   let model = String(body.model || '');
@@ -972,7 +972,7 @@ export async function onRequestPost({ request, env }) {
   const preS2 = await readSess();
   if (KIMI_COST[model]) { const kb = kimiGate(env, preS2); if (kb) return json(kb, 429); }   // 키미 일일 실비 방파제(Q.40) — 턴 append 전 차단 = 헛dispatch 0 · 다이얼 전환 시 즉시 재개
   const t = String(body.t || preS2.cur || '');   // 대상 스레드(v3) — 미지정 = 현재 방
-  if (!ID_RE.test(t)) return json({ error: '페르소나가 없어 — 🎲 먼저 뽑아줘' }, 409);
+  if (!ID_RE.test(t)) return json({ error: '상대를 못 찾았어 — 캐릭터 탭에서 다시 열어줘', edev: `스레드 id 형식 불일치` }, 409);
   const { abort } = await casPut(s => {
     const th = TH(s, t); if (!th) return { abort: { error: '없는 대화방이야 — 캐릭터 탭에서 열어줘' } };
     if (DEAD_ON(s, t)) return { abort: { error: '…지금은 연락이 닿지 않아. 누가 신당에서 빌어주면 바로, 아니면 무음동 이틀은 지나야 돌아와' } };   // 사망 두절(운영자 260714 · 260725 하한) — 1:1 방 발신 차단(단톡 g방 = dead 키 아님 = 통과 · 생존자와 계속)
@@ -996,7 +996,7 @@ export async function onRequestPost({ request, env }) {
   if (st === 204) return json({ ok: true });
   // dispatch 실패 = 답장 올 런이 없음 → awaiting 고착 방지: 스레드 error 롤백
   await casPut(s => { const th = TH(s, t); if (th) { th.state = 'error'; th.err = `발사 실패(GitHub ${st}) — 다시 보내면 재시도`; th.awaiting_since = 0; } });
-  return json({ error: `GitHub dispatch ${st}` }, 502);
+  return json({ error: '지금은 말이 닿지 않아 — 잠시 후 다시', edev: `GitHub dispatch ${st}` }, 502);
 }
 
 async function dispatch(env, wf = 'yeta-chat.yml', inputs = { char: 'main' }) {   // 워크플로 기동(기본 = 챗 · 단일 스레드 = char 'main' 고정 → concurrency 직렬 / ring = yeta-call.yml)
