@@ -2050,7 +2050,7 @@ function yTab(tab) {   // 'char' | 'list' | 'settings' — 네비 활성·패널
   m.classList.toggle('tab-map', tab === 'map');
   m.classList.toggle('tab-settings', tab === 'settings');
   document.querySelectorAll('#ynav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  if (tab === 'char' || tab === 'list') { ySsnFixed(); yMeDock(); if (m.classList.contains('unlocked')) { try { yWarm(); } catch {} } }   // 공용 시즌 헤더 = char/list 상주(전환에 안 깜빡) + 내 정보 행 = 캐릭터 창 고정 회수(운영자 260709) · 프리웜 재무장(260726) = 사람을 고르는 두 화면에 들어설 때마다(언락 직후 yTab('char') 포함) 러너 선부팅 — 잠금 프리웜이 만료된 재진입·오래 머문 세션을 덮는다(unlocked 가드 = 잠금화면 헛발사 0 · 9분 디바운스가 중복 흡수)
+  if (tab === 'char' || tab === 'list') { ySsnFixed(); yMeDock(); if (m.classList.contains('unlocked')) { try { yWarm(); } catch {} } }   // 공용 시즌 헤더 = char/list 상주(전환에 안 깜빡) + 내 정보 행 = 캐릭터 창 고정 회수(운영자 260709) · 프리웜 재무장(260726) = 사람을 고르는 두 화면에 들어설 때마다(언락 직후 yTab('char') 포함) 러너 선부팅 — 잠금 프리웜이 만료된 재진입·오래 머문 세션을 덮는다(unlocked 가드 = 잠금화면 헛발사 0 · 2.5분 디바운스가 중복 흡수)
   if (tab === 'char') yCharRender();
   if (tab === 'list') yListRender();
   if (tab === 'map') yMapEnter(); else yMapLeave();   // 지도 = 진입 시 rAF 시작 · 이탈 시 정지(60fps 예산 보호 · 260707)
@@ -3855,10 +3855,10 @@ $('#yetaList').addEventListener('click', e => {
   if (e.target.closest('.yl-dice')) { const pool = YCHARS.filter(x => !yLockLabel(x) && !yUnmet(x) && !yDead(x)); if (pool.length) yEnterChat(pool[Math.floor(Math.random() * pool.length)]); return; }   // 랜덤 = 잠금·미대면·사망 제외(운영자 260708·260709·260714 — 🎲는 만난 사람 안에서만·우연 해금 우회 차단)
   const row = e.target.closest('.ypick-row'); if (row) yEnterChat(yPersona(row.dataset.id));
 });
-function yWarm() {   // 9분 디바운스(260724 4.5→9분) — WARM_WAIT 10분에 정렬: 웜 런이 살아있는 동안은 재프리웜 안 쏨(중복 dispatch·상시 서버화 억제) · 10분 지나 러너 사망 즈음 = 다시 발동해 다음 진입 콜드 방지
+function yWarm() {   // 2.5분 디바운스(260809 Q.165 9분→2.5분) — 정렬 기준 = **가장 짧은 러너 수명**(프리웜 유령 런 ≈ 셋업 ~20s + PREWARM_WAIT 180s ≈ 200s): 종전 9분은 옛 WARM_WAIT 600s 정렬값이 260804 축소(180s) 때 미동조로 남은 것 — 프리웜이 60s 만에 죽은 뒤 9분간 재프리웜 침묵 = 「타이핑과 부팅 겹치기」 설계가 통째로 무력화(260809 실측: 14:01 프리웜 사망 → 14:06 첫 메시지 콜드 38s). 150s < 200s = 앱에 머무는 동안 포커스·탭 이벤트가 러너를 이어 데운다(웜 런 생존 중 여분 dispatch = concurrency 큐 후계 런 = 무해).
   try {
     const last = +localStorage.getItem('nomute_yeta_warm') || 0;
-    if (Date.now() - last < 540000) return;
+    if (Date.now() - last < 150000) return;
     localStorage.setItem('nomute_yeta_warm', String(Date.now()));
     yApi('warm').catch(() => null);
   } catch {}
@@ -5432,7 +5432,7 @@ $('#yetaText').addEventListener('input', e => { const t = e.target;
   // 상황문 자동 종결(구 260714) 폐지 — 운영자 260725 "#으로 닫을 때까지 그 #(상황 설명)이 유지되게". 문장부호·엔터로 저절로 꺼지던 축을 걷어내고 종료 = '#'(타이핑·버튼) 단일 트리거.
 });
 $('#yetaText').addEventListener('scroll', e => { const m = $('#yetaMirror'); if (m && !m.hidden) m.scrollTop = e.target.scrollTop; });   // 긴 입력(max-height 120 스크롤) = 미러 스크롤 동기(채색 어긋남 방지 · 260726)
-$('#yetaText').addEventListener('focus', yWarm);   // 쓰기 시작 = 러너 선부팅(콜드 부팅 30~40s를 타이핑 시간과 겹침 — 유휴 복귀 첫 답장 단축 · 4.5분 디바운스는 yWarm 내장)
+$('#yetaText').addEventListener('focus', yWarm);   // 쓰기 시작 = 러너 선부팅(콜드 부팅 30~40s를 타이핑 시간과 겹침 — 유휴 복귀 첫 답장 단축 · 2.5분 디바운스는 yWarm 내장)
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && yetadlg.open && !_yWatchTk && !_yPoll) yLoad(); });   // 최종 안전망(운영자 260725) — 폴이 꺼진 상태(게이트웨이 10분 리퍼가 state=error로 내린 뒤)에서 러너가 뒤늦게 답을 붙이면 종전엔 앱을 껐다 켜야만 보였다. 탭 복귀 시 1회 재조회로 픽업 · 폴이 살아있으면 watch가 이미 커버하므로 미발사(중복 0)
 $('#yetaText').addEventListener('compositionstart', () => { _yComposing = true; });   // 한글 조합 시작 = 로그 리페인트 유예 개시(입력 유실 차단 · 운영자 260717)
 $('#yetaText').addEventListener('compositionend', () => { _yComposing = false; if (_yRenderPend) { _yRenderPend = false; if (yetadlg.open) yRender(); } });   // 조합 완료 = 밀린 답장 즉시 반영(조합 끝났으니 교체 안전)
@@ -5542,7 +5542,7 @@ try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(fun
     if (unlocked) return;
     if (entered) { ymain.classList.add('go', 'strike', 'calm', 'pin-mode'); ymPinFocus(); return; }   // 시퀀스 중 재탭 = 세리머니 스킵(최종 상태 직행 · 평의회10)
     entered = true;
-    try { yWarm(); } catch {}   // 프리웜 최이른 지점(운영자 260726 "첫 대사가 많이 늦다") — 잠금 터치 = 진입 의사 확정. 종전엔 캐릭터를 탭한 '뒤'에야 러너를 불러 콜드 부팅(dispatch→스크립트 시작 실측 ~18~20s)이 통째로 첫 대사 대기에 들어갔다. PIN 안무(1.1s)+패턴 입력+캐릭터 고르는 시간(합쳐 6~20s)을 부팅에 겹쳐 태우면 draw 시점엔 웜 러너가 이미 R2 폴 중(2s 픽업) = 남는 대기 = 생성시간뿐. 9분 디바운스가 헛발사·중복 dispatch를 흡수(앱만 열고 나가도 웜 런은 10분 뒤 조용히 종료)
+    try { yWarm(); } catch {}   // 프리웜 최이른 지점(운영자 260726 "첫 대사가 많이 늦다") — 잠금 터치 = 진입 의사 확정. 종전엔 캐릭터를 탭한 '뒤'에야 러너를 불러 콜드 부팅(dispatch→스크립트 시작 실측 ~18~20s)이 통째로 첫 대사 대기에 들어갔다. PIN 안무(1.1s)+패턴 입력+캐릭터 고르는 시간(합쳐 6~20s)을 부팅에 겹쳐 태우면 draw 시점엔 웜 러너가 이미 R2 폴 중(2s 픽업) = 남는 대기 = 생성시간뿐. 2.5분 디바운스가 헛발사·중복 dispatch를 흡수(앱만 열고 나가도 프리웜 런은 3분 뒤 조용히 종료)
     try { const cs = getComputedStyle(accessBtn), mt = new DOMMatrixReadOnly(cs.transform === 'none' ? undefined : cs.transform); accessBtn.style.setProperty('--ig-s', String(+(mt.a || 1).toFixed(3))); accessBtn.style.setProperty('--ig-o', cs.opacity); } catch {}   // 숨쉬기 현재 프레임(scale·opacity)을 점화 시작값으로 이어받기 — animation 교체 시 스냅 제거(실패 = 키프레임 기본값 폴백)
     accessBtn.classList.add('unlocking');
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) { ymain.classList.add('go', 'strike', 'calm', 'pin-mode'); ymPinFocus(); return; }   // 모션 최소화 = 최종 상태 직행
