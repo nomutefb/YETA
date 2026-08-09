@@ -182,7 +182,10 @@ try:                                                     # id→이름(화자 �
     # ⚠ 종전엔 러너가 `s["tunes"]`만 읽어서, 유저가 게이지를 **직접 끌지 않은** 캐릭터는 roster 16축이 프롬프트에 **0바이트**로 들어갔다 —
     #   게이지는 세션에 쓰이는 경로가 슬라이더 input 이벤트뿐이고(viewer `ySetSave`), 대화가 시작되면 잠기므로(`_ysetLocked = yChatStarted`) 그 뒤엔 넣을 방법도 없었다.
     #   화면엔 roster 값으로 육각형이 그려지니 들어가는 것처럼 보였다 = 무증상. 유저 오버라이드가 있으면 종전대로 그쪽이 이긴다(아래 `or`의 좌항).
-    roster_tune = {c["id"]: c["tune"] for c in _ro if isinstance(c, dict) and c.get("id") and isinstance(c.get("tune"), list) and len(c["tune"]) == 16}
+    # ⚠️ 킬스위치 `YETA_TUNE_FALLBACK=0` = 폴백 끔 = 종전(세션만 읽음) 동작으로 즉시 복귀(383차 평의회 지적 —
+    #   「17인 전원·전 대화를 바꾸는 **미실측** 변경에 되돌릴 노브가 없는데, 아무도 안 쓰는 봇에는 노브가 달렸다 = 비대칭이 거꾸로」).
+    if os.environ.get("YETA_TUNE_FALLBACK", "1") != "0":
+        roster_tune = {c["id"]: c["tune"] for c in _ro if isinstance(c, dict) and c.get("id") and isinstance(c.get("tune"), list) and len(c["tune"]) == 16}
 except Exception: pass
 turns = s.get("turns") or []
 sess_persona = s.get("persona") or ""
