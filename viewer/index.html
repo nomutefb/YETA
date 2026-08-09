@@ -553,9 +553,12 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yeta-pick.yinv { top:calc(62px + env(safe-area-inset-top)); bottom:auto; transform-origin:top right; }   /* 우상단 스택 아래로 펼침(운영자 260712 — 옛 + 버튼 하단 앵커를 스택 진입점 이설에 맞춰 개정 · 풀다운과 동일 기준선) */
   .yinv-cap { font-size:var(--fs-xs); color:var(--mut); padding:5px 10px 7px; }
   .ypick-row[disabled] { opacity:.4; pointer-events:none; }
-  .ypick-row .yinv-x { margin-left:auto; flex:none; border:1px solid var(--glass-line); background:var(--glass); color:var(--fg-2);
-    border-radius:var(--r-pill); font:inherit; font-size:var(--fs-xs); padding:3px 11px; cursor:pointer; }
-  .ypick-row .yinv-x:active { transform:scale(var(--press-m,.9)); }
+  .ypick-row .yinv-x, #yetaProfPop .yinv-x { flex:none; border:1px solid var(--glass-line); background:var(--glass); color:var(--fg-2);
+    border-radius:var(--r-pill); font:inherit; font-size:var(--fs-xs); padding:3px 11px; cursor:pointer; }   /* 내보내기 버튼 정본 — 초대 패널 행(우측 정렬)과 프로필 팝오버(가운데 정렬)가 같은 칩 하나를 공유(값 복제 0 · 260809 프사 탭 경로 신설) */
+  .ypick-row .yinv-x { margin-left:auto; }   /* 행 안에서만 우측 끝(팝오버는 세로 스택 = 가운데 정렬 그대로) */
+  .ypick-row .yinv-x:active, #yetaProfPop .yinv-x:active { transform:scale(var(--press-m,.9)); }
+  #yetaProfPop .yinv-x { touch-action:manipulation; }   /* 팝오버 = 탭 지연 제거(.ynear-ask button 선언 계승) · 세로 간격은 #yetaProfPop gap 그대로 */
+  #yetaProfPop .yinv-x[disabled] { opacity:.4; pointer-events:none; }   /* 발사 중 잠금 = .ypick-row[disabled] 선언 계승 */
   #yetaAva2 { margin-left:-12px; box-shadow:0 0 0 2px var(--yeta-bg); }   /* 스택 겹침(기하) + 분리 링(box-shadow = 토큰 없는 축) — iMessage·카톡 단톡 헤더 결 */
   button.yb.sys.ykick { cursor:pointer; font:inherit; touch-action:manipulation; transform-origin:center; }   /* 난입 직후 원탭 내보내기 — sys pill 정본 계승 · 다음 내 메시지 후 자동 소멸 */
   button.yb.sys.ykick:active { transform:scale(var(--press-m,.9)); }   /* ⚠ 클릭감 픽스(운영자 260731 "클릭감이 이상") — 등장용 .in의 transform-origin:bottom left가 눌림 스케일에도 그대로 먹어 좌하단으로 찌그러지며 눌리던 것 → 위 정칙에 origin:center 명시(.yeta-log .in 0-2-0보다 특이도 우위 0-3-1 = 눌림·등장 모두 중앙 기준) */
@@ -2992,7 +2995,7 @@ function yBargeRoom() {   // 난입자가 앉아 있는 방 id(운영자 260728 
   for (const tid in th) { const r = (th[tid] || {}).room || []; for (let i = 0; i < r.length; i++) if ((yPersona(r[i]) || {}).grade === 'barge') return tid; }
   return '';
 }
-let _yYankOn = false;   // 끌어당김 진행 래치 — 연출 중 재진입·중복 예약 차단(_yKickOn 동형)
+let _yYankOn = false;   // 끌어당김 진행 래치 — 연출 중 재진입·중복 예약 차단(_yFailOn 등장 래치 동형)
 const _yBargeSeen = new Set();   // 등장 연출을 이미 태운 방(방당 1회 — 재렌더·재진입마다 암전이 반복되면 대화가 못 굴러간다)
 async function yBargeEnter(tid) {   // 난입 첫 등장 연출(운영자 260728) — 이 방을 보고 있는데 그 사람이 들어온 경로.
   // 끌어당김(yBargeYank)은 "다른 방에 있다가 회수되는" 축이고 이쪽은 "여기 앉아 있었는데 문이 열린" 축이다 — 유저가 보는 그림은 같아야 하므로 연출 3단(암전→배경→역암전)을 공유한다.
@@ -3054,7 +3057,7 @@ async function yThreadSwitch(c) {   // 스레드 전환 단일 함수(v3) — dr
   const r = await yApi('draw', { persona: c.id, greeting: yGreet(c) }).catch(() => null);
   if (!(r && r.ok)) { miniToast((r && r.error) || '전환 실패 — 잠시 후 다시'); return false; }
   YSESS = r.sess; yApply(c);
-  _yLastN = -1; _yTypOn = false; _yFailOn = false; _yKickOn = false; _yAskOn = false; _yNearAsk = ''; _yPaceN = -1; _yTypHold = 0;
+  _yLastN = -1; _yTypOn = false; _yFailOn = false; _yAskOn = false; _yNearAsk = ''; _yPaceN = -1; _yTypHold = 0;
   clearTimeout(_yTypT); _yTypT = null; clearTimeout(_yPaceT); _yPaceT = 0; _meUnread = false;   // QA13: 스레드 전환/닫기 = 이전 방 타이머 해제(유령 '입력 중'/'1' 다른 방 누출 차단)
   yScSet(0); _ySegs = [{ at: 0, sc: 0 }]; yScSync();   // 방 경계 = # 모드·타임라인 리셋(이전 방 상황 모드·구간이 새 방 오발송으로 누수 차단 · 평의회 260715) — 초안 텍스트는 종전대로 유지(전량 대사 취급)
   yRender(); ySideRender(); yFarApply(); yNearCalc(); return true;
@@ -3819,7 +3822,7 @@ async function yEnterChat(c) {   // 리스트에서 캐릭터 선택 → 대화�
     else { miniToast(`${c.name}은(는) 지금 ${aw}에 있어 — 그리로 가면 말 걸 수 있어`); navBack('ydlg'); return; }
   }
   if (c.bg) { const im = new Image(); im.src = c.bg; }   // 진입 즉시 이 캐릭터 시그니처 배경 프리로드(로딩=진입 동기 · 운영자 260707)
-  _yLastN = -1; _yTypOn = false; _yFailOn = false; _yKickOn = false; _yAskOn = false; _yNearAsk = ''; _yPaceN = -1; _yTypHold = 0;
+  _yLastN = -1; _yTypOn = false; _yFailOn = false; _yAskOn = false; _yNearAsk = ''; _yPaceN = -1; _yTypHold = 0;
   clearTimeout(_yTypT); _yTypT = null; clearTimeout(_yPaceT); _yPaceT = 0; _meUnread = false;   // QA13: 스레드 전환/닫기 = 이전 방 타이머 해제(유령 '입력 중'/'1' 다른 방 누출 차단)
   yScSet(0); _ySegs = [{ at: 0, sc: 0 }]; yScSync();   // 방 경계 = # 모드·타임라인 리셋(이전 방 상황 모드·구간이 새 방 오발송으로 누수 차단 · 평의회 260715) — 초안 텍스트는 종전대로 유지(전량 대사 취급)
   // F(운영자 260708): draw 왕복 '전에' 이 캐릭터 대화창을 즉시 세운다 — "yeta 목업 → 인물" 교체 깜빡임 제거(헤더·배경·상황·타이핑 전부 인물로 선반영). 왕복 중 = 상황 지문 + "입력 중"(동적 오프닝 = 실제로 러너가 생성 중).
@@ -4527,6 +4530,19 @@ function yPickToggle(force) {
   pk.innerHTML = ySortChars(YCHARS).map(c => `<button type="button" class="ypick-row${YCUR && YCUR.id === c.id ? ' cur' : ''}" data-id="${esc(c.id)}">${yAva(c)}<span class="yp-col"><span class="yp-name">${esc(c.name)}</span><span class="yp-tag">${esc(c.tagline || '')}</span></span></button>`).join('');
   pk.hidden = false;
 }
+// ── 내보내기 단일 깔때기(260809) — 초대 패널 [보내기]·프로필 팝오버 [내보내기]가 같은 조건·같은 op를 쓴다(경로별 규칙 갈라짐 0) ──
+function yKickable(c) {   // 내보낼 수 있나 = 이 방 멤버 · 2명 방 · 난입 등급 아님(운영자 260728 "내보내기 처음에 있는데 불가해야함") · 사망 아님(260725 죽은 사람 액션 봉인 축)
+  if (!c || _yView !== 'chat') return false;
+  const room = ((YTH() || {}).room) || [];
+  return room.length >= 2 && room.includes(c.id) && c.grade !== 'barge' && !yDead(c);
+}
+async function yKick(c, btn) {   // op kick = 퇴장도 세계관 연출(sys 지문) · 실패 = 버튼 원복 + 토스트
+  if (!c) return;
+  if (btn) btn.disabled = true;
+  const r = await yApi('kick', { t: (YSESS || {}).cur || '', persona: c.id, name: c.name }).catch(() => null);
+  if (r && r.ok) { YSESS = r.sess; yRender(); }
+  else { if (btn) btn.disabled = false; miniToast((r && r.error) || '지금은 못 내보내'); }
+}
 // ── 캐릭터 프로필 팝오버(운영자 260709 "프사 클릭 = 현재 생각·소개") — 표면 = .yeta-pick 정본 · 생각 = 마지막 답장 결(리스트 생각줄 파생과 동일 축) ──
 function yProfPop(force, pid) {
   const pk = $('#yetaProfPop'); if (!pk) return;
@@ -4549,7 +4565,8 @@ function yProfPop(force, pid) {
     + `<span class="ypp-think">${tht ? `“${esc(tht)}…”` : '(무슨 생각을 하는진 모르겠다)'}</span>`
     + (yDeadInfo(c.id) || `<span class="ypp-meta"><span>위치 · <b>${plNm ? esc(plNm) : '알 수 없음'}</b></span><span class="sep"></span><span>공기 · <b>${esc(mood)}</b></span></span>`)   // 죽음·부활 대기·귀환 = 위치·공기 대신 그 상태(죽은 사람의 '지금 위치·기분'은 없다 · 260725)
     + (c.intro || c.desc ? `<span class="ypp-desc">${esc(c.intro || c.desc)}</span>` : '')
-    + (c.quote ? `<span class="ycd-quote">“${esc(c.quote)}”</span>` : '');
+    + (c.quote ? `<span class="ycd-quote">“${esc(c.quote)}”</span>` : '')
+    + (yKickable(c) ? `<button type="button" class="yinv-x" data-kick="${esc(c.id)}">내보내기</button>` : '');   // 내보내기 = 프사 탭 경로(운영자 260809 "좌측 상단에 프로필 클릭하면 내보내기") — 로그 pill 폐지분의 이설처. 조건·버튼 = 초대 패널 [보내기]와 같은 정본(yKickable·.yinv-x)
   pk.hidden = false;
   if (!YMAPD) yMeMap();   // 장소 SSOT 지연 로드(다음 열기에 장소명 채움)
 }
@@ -4562,6 +4579,12 @@ yetadlg.addEventListener('click', e => {
     yProfPop(undefined, p2 && p2.id); return;
   }
   const pk = $('#yetaProfPop');
+  const kb = e.target.closest('#yetaProfPop .yinv-x[data-kick]');
+  if (kb) {   // 프사 팝오버 [내보내기](260809) — 카드를 먼저 닫고 발사(나간 사람 카드가 뜬 채 남지 않게) · 로직 = 패널 경로와 동일 깔때기
+    e.stopPropagation();
+    const c = yPersona(kb.dataset.kick); if (!c) return;
+    yProfPop(false); yKick(c); return;
+  }
   if (!pk.hidden && !pk.contains(e.target)) yProfPop(false);   // 바깥 탭 = 닫힘(픽커 정본 패턴)
 });
 // ── 이름부 풀다운 프로필 시트(운영자 260712 — 헤더 이름을 잡고 아래로 = 인물 카드[감정·생각·위치·액션 4] · 트리거 = 드래그+탭 · 임계 40 · 높이 285 · 등장 .44s = 전후비교 선택값) ──
@@ -4846,11 +4869,9 @@ function yAttHydrate(root) {
 $('#yetaInv').addEventListener('click', async e => {
   e.stopPropagation();
   const kb = e.target.closest('[data-kick]');
-  if (kb) {   // 합석 내보내기(패널 경로 — 초대로 들인 멤버 정리용 · 난입 직후엔 pill이 더 빠름)
+  if (kb) {   // 합석 내보내기(패널 경로 — 초대로 들인 멤버 정리용 · 프사 팝오버 경로와 같은 yKick 깔때기)
     const c = yPersona(kb.dataset.kick); if (!c) return;
-    yInvToggle(false);
-    const r = await yApi('kick', { t: (YSESS || {}).cur || '', persona: c.id, name: c.name }).catch(() => null);
-    if (r && r.ok) { YSESS = r.sess; yRender(); } else miniToast((r && r.error) || '지금은 못 내보내');
+    yInvToggle(false); yKick(c);
     return;
   }
   const b = e.target.closest('.yinv-go[data-inv]'); if (!b || b.disabled) return;
@@ -4858,7 +4879,7 @@ $('#yetaInv').addEventListener('click', async e => {
   yInvToggle(false); yRender();
 });
 yetadlg.addEventListener('click', e => { const pk = $('#yetaInv'); if (!pk.hidden && !pk.contains(e.target)) yInvToggle(false); });   // 바깥 탭 = 닫힘(잔존 패널 안전망 — 진입점은 폐지)
-$('#yetaLog').addEventListener('click', async e => {   // 난입 원탭 내보내기 pill(소멸형) — 퇴장도 세계관 연출(op kick의 sys) · 공간 초대 3선택지(대화 안 · 260809 2차)도 여기서 받는다
+$('#yetaLog').addEventListener('click', async e => {   // 로그 인라인 액션 = 공간 초대 3선택지(대화 안 · 260809 2차)만 — 내보내기 pill은 폐지(260809 → 좌상단 프사 팝오버)
   const ng = e.target.closest('[data-near-go]');
   if (ng) {   // ①② 부르기 — 판정 기준(basis: self=나와의 관계·페르소나 / moment=동석 상대와의 관계·대화 흐름)을 invite op에 동봉(수락/거절 = 러너 판정 그대로 · 260731 서버 계약 무변경)
     const c = yPersona(ng.dataset.nearGo); if (!c) return;
@@ -4878,12 +4899,7 @@ $('#yetaLog').addEventListener('click', async e => {   // 난입 원탭 내보�
     ta.value = `${c.name}${yJosa(c.name, '이', '가')} 근처에 있다는데… 불러도 될까?`; ySend();
     return;
   }
-  const kp = e.target.closest('[data-kick-pill]'); if (!kp) return;
-  const c = yPersona(kp.dataset.kickPill); if (!c) return;
-  kp.disabled = true;
-  const r = await yApi('kick', { t: (YSESS || {}).cur || '', persona: c.id, name: c.name }).catch(() => null);
-  if (r && r.ok) { YSESS = r.sess; yRender(); } else { kp.disabled = false; miniToast((r && r.error) || '지금은 못 내보내'); }
-});
+});   // ⚠ [data-kick-pill] 핸들러 = 폐지(260809 — pill 자체가 사라졌다) · 내보내기 = 프로필 팝오버 [내보내기] 단일 경로(yKick)
 async function yLoad() {
   if (!yetadlg.open) return;
   const r = await yApi('get').catch(() => null);
@@ -4963,8 +4979,7 @@ function yAiMsg(t, fresh, cont) {   // 캐릭터 메시지 = 아바타 + 이름 
 let _yCrowPend = 0;   // 난입 퇴장 까마귀 예약(260730) — 렌더 조립 중 발견 → reconcile 뒤 발화(1회성 래치)
 let _yLastN = -1, _yTypOn = false, _yFailOn = false, _yTypHold = 0, _yTypT = null;   // 촤르륵 키드 + 타이핑 지연 홀드(읽는 시간 · 운영자 260707)
 let _yCurT = '';   // 마지막 렌더한 방 id — 서버발 cur 이동(단톡 재합류·휘발 소멸 · Q.06) 감지용(yThreadSwitch 미경유 전환도 방 경계로 취급)
-let _yKickOn = false;   // 난입 내보내기 pill 등장 래치(_yFailOn 동형 — 재렌더 재애니 방지 · 합석 260707)
-let _yAskOn = false;   // 공간 초대 3선택지 등장 래치(260809 — 폴 재렌더마다 촤르륵 재생되던 것 차단 · _yKickOn 동형)
+let _yAskOn = false;   // 공간 초대 3선택지 등장 래치(260809 — 폴 재렌더마다 촤르륵 재생되던 것 차단 · _yFailOn 등장 래치 동형)
 let _yPaceN = -1, _yPaceT = 0;   // 답장 페이스 — 공개 승인된 턴 수(꼬리 답장 런은 길이 비례 타이핑 모션 후 공개 · 운영자 260706 "바로 대답 어색" · 항목13)
 let _yDraft = null, _yDraftOn = false, _yNoAnim = false;   // 문장 스트리밍 부분 답장(260714 한수2) — watch가 준 draft + 표시 래치 + 스왑 무애니 1회 플래그(re-whoosh 차단 · 평의회 UX)
 let _yDrN = 0, _yDrSwap = null;   // 감정 델타 리졸브(Q.81) — 이미 화면에 보인 draft 글자 유닛 수 + 확정 스왑 1회분 {b:본 유닛, at:꼬리 런 시작 인덱스}(_yNoAnim과 같은 수명 · 안 본 꼬리만 리졸브)
@@ -5231,21 +5246,14 @@ function yRender() {
   const gaveUp = failNow && _an >= YAR_MAX;   // 4회 소진 = 조용한 이탈(운영자 260714 "알림 떠서 바이브 깨는거보다 나으니")
   if (failNow && !gaveUp && !deadNow) yAutoRetry(_ak, _an);   // 사망 방 = 재시도 발사 금지(서버 가드 409 — 헛발 쿼터 차단)
   if (failNow && !deadNow) yDcPush(gaveUp ? 'gaveup' : 'stall', `${gaveUp ? 'g' : 's'}:${_ak}`);   // 두절 적립(260725) — 에피소드 키(_ak) 앞에 종류 접두 = 한 에피소드에서 '늦어짐→끊김' 2단계가 각각 한 번씩만 남는다(재렌더 중복 0)
-  // 난입 직후 원탭 내보내기 pill(단톡 260707) — 다음 내 메시지 전까지만 노출(소멸형 = 로그 청결) · 언제든 말로도 가능
-  // ⚠ 난입 **등급**(grade=barge · 프리실라) 제외(운영자 260728 "내보내기 처음에 있는데 불가해야함") — 이 인물은 유저가 열 수도 닫을 수도 없는 축이다.
-  //    pill이 뜨면 "누르면 나간다"는 약속이 되는데 실제로는 서버가 막으므로(op kick 가드) 버튼 자체를 안 그린다 = 죽은 버튼 0. 우연 마주침 난입(via=place · 일반 인물)은 종전대로 pill 유지.
-  const bg = s.barged;
-  const kickOn = !!(bg && ((s.room || []).includes(bg.id)) && (yPersona(bg.id) || {}).grade !== 'barge' && !all.some(t => t.role === 'user' && (t.ts || 0) > (bg.ts || 0)));
-  if (kickOn) {
-    const bc = yPersona(bg.id) || {};
-    h += `<button type="button" class="yb sys ykick${_yKickOn || first ? '' : ' in'}" data-kick-pill="${esc(bg.id)}">${esc(bc.name || '')} 내보내기</button>`;
-  }
-  _yKickOn = kickOn;
+  // ⚠ 난입 직후 원탭 내보내기 pill(단톡 260707) = **폐지**(운영자 260809 "내보내기 저렇게 뜨진 말고 저것도 좌측 상단에 프로필 클릭하면 내보내기 뜨게").
+  //    바로 아래 「불러볼까」 sys 말풍선을 좌상단 프로필로 뺀 것과 **같은 축** — 로그는 사람 말만 담고, 인물에 대한 조작은 그 인물 카드에서 연다.
+  //    이설처 = 헤더 프사 탭 → 프로필 팝오버 [내보내기](`yKickable`·`yKick`). 난입 등급(grade=barge) 제외·사망 제외·op kick 가드는 그 조건 함수가 그대로 승계 = 죽은 버튼 0.
   // 공간 초대 = **로그에서 뺐다**(운영자 260809 "불러볼까 라는 대화 내용은 안 뜨게") — 종전 `.yb.sys.ykick.ynear` pill + 인라인 3선택지 폐지.
   //   같은 장소 감지는 그대로(`yNearCalc`·`_yNear`)고, 어포던스만 **좌상단 근처 인물 스택**(`#yetaNear` · 무채색 디밍 호흡)으로 이설 = 대화 로그는 사람 말만 남는다.
   //   ⚠ 260809 2차 개정(운영자 "선택지 3개는 자연스럽게 뜨게 · 대화 하던거랑 구분되서 선택하게 **대화 안에 들어간 느낌**"): 폐지 대상은 「앱이 말을 거는 sys 말풍선」뿐이었고 **선택지 3개는 대화 안으로 되돌린다**(1차의 팝업 이설 철회).
-  //   자동 등장은 여전히 0 — 좌상단 프로필(무채색 디밍 호흡)을 탭해 `_yNearAsk`가 서야만 뜬다. `.in` = 이번 렌더에 처음 붙은 회차만(폴 재렌더 재애니 차단 = `_yKickOn`·`_yFailOn` 래치 동형).
-  const askC = _yNearAsk && !kickOn && ((s.room || []).length < 2) && _yNear.some(n => n.id === _yNearAsk) ? yPersona(_yNearAsk) : null;
+  //   자동 등장은 여전히 0 — 좌상단 프로필(무채색 디밍 호흡)을 탭해 `_yNearAsk`가 서야만 뜬다. `.in` = 이번 렌더에 처음 붙은 회차만(폴 재렌더 재애니 차단 = `_yFailOn` 래치 동형).
+  const askC = _yNearAsk && ((s.room || []).length < 2) && _yNear.some(n => n.id === _yNearAsk) ? yPersona(_yNearAsk) : null;   // ⚠ 종전 `!kickOn` 항 = pill 폐지와 함께 제거(방 2명이면 `room.length < 2`가 이미 막는다 = 중복 가드)
   if (askC) {
     const hostNm = (yPersona((s.room || [])[0]) || YCUR || {}).name || '지금 상대';   // ①② = 판정 기준(basis)을 실어 부르기(수락은 걔 마음 · 러너 판정) · ③ = 지금 상대에게 먼저 묻는다(내 말로 전송 — ypickbar 깔때기 동형)
     h += `<div class="ynear-ask${_yAskOn ? '' : ' in'}">
