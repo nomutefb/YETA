@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>공간 초대 v2 — 디밍 강화 + 3선택지를 대화 안으로 (373차)</title>
+<style>
+  /* ⚠ v1 반려 원인 = 이 페이지가 `../tokens.css`를 **링크**해서 봤다 — 파일만 따로 열면 그게 안 붙고
+     `--ease`가 사라져 `animation:… var(--ease) …` 선언이 통째로 무효(invalid at computed-value time) = **숨쉬기가 아예 안 돌았다**.
+     v2 = 구조 토큰을 인라인 사본으로 박아 자기완결 1파일(스킬 §플그 규약). 값 원본 = viewer/tokens.css(= viewer/index.html :root 거울). */
+  :root {
+    /* 색 = viewer/index.html :root 사본 */
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --accent:#CFFF40; --accent-rgb:207,255,64;
+    --think:#3EE0C8; --think-rgb:62,224,200; --danger:#ff5b4a; --danger-rgb:255,91,74; --arm:#ffb4a8;
+    --bubble-me:#CFFF40; --bubble-ai:#232527;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42); --yeta-ac:var(--accent);
+    /* 구조 = viewer/tokens.css 사본(자동생성 거울) */
+    --r-s:9px; --r-m:11px; --r-l:16px; --r-modal:22px; --r-pill:999px;
+    --sp-2:12px; --sp-3:18px; --btn:34px;
+    --fs-h2:15px; --fs-h3:14px; --fs-body:15px; --fs-label:13px; --fs-sm:12px; --fs-xs:11px; --fs-meta:8.25px;
+    --fw-x:800; --fw-b:700; --lh-base:1.6; --ease:cubic-bezier(.2,.7,.3,1);
+    --blur-m:29px; --blur-l:11px; --z-float:60; --press-m:.9; --press-l:.95; --press-s:.9;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .lead b { color:var(--fg-2); font-weight:var(--fw-b); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px; }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  @media (max-width:820px) { .pair { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .cap .val { font-size:var(--fs-xs); color:var(--fg-2); }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); }
+  td.v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); }
+  .newtag { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; color:var(--bg); background:var(--accent); padding:2px 7px; border-radius:var(--r-pill); }
+
+  .phone { position:relative; width:100%; max-width:390px; aspect-ratio:9/16; margin-inline:auto; overflow:hidden;
+    border-radius:var(--r-modal); border:1px solid var(--glass-line); background:#0d0e0d; box-shadow:var(--shadow-card); }
+  /* 무대 = 실물이 캐릭터 배경 이미지/영상(밝다) — 새까만 판에 얹으면 「글래스 버블 ↔ 불투명 선택지」 차이가 안 보인다.
+     실물 대비를 정직하게 보이려고 밝은 씬을 근사(실제는 webp/mp4 · 그 위 --bg-scrim + 균일 딤 .3). */
+  .phone::before { content:''; position:absolute; inset:0; background:
+      radial-gradient(120% 70% at 50% 0%, rgba(var(--accent-rgb),.34), transparent 64%),
+      radial-gradient(80% 52% at 78% 30%, rgba(var(--think-rgb),.26), transparent 62%),
+      radial-gradient(95% 60% at 18% 96%, rgba(140,120,255,.20), transparent 62%),
+      linear-gradient(180deg, #2a2f24, #16171a 62%, #101112); }
+  .phone::after { content:''; position:absolute; inset:0; background:rgba(0,0,0,.3); }   /* 균일 딤 .3 = 챗 무대 정본(작업이력 83차) */
+
+  /* ── viewer/index.html 정본 복사 ── */
+  .yeta-h { position:absolute; top:10px; left:10px; right:10px; z-index:3; display:flex; align-items:center; gap:8px; padding:7px 9px;
+    background:linear-gradient(var(--glass), var(--glass)), rgba(18,18,18,.75); border:1px solid var(--glass-line); border-radius:var(--r-pill);
+    backdrop-filter:blur(var(--blur-l)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-l)) saturate(1);
+    box-shadow:inset 0 1px 0 var(--glass-line), var(--shadow-card); }
+  .yeta-back { flex:none; width:var(--btn); height:var(--btn); display:grid; place-items:center; color:var(--fg-2); }
+  .yeta-back svg { width:20px; height:20px; }
+  .yeta-who { flex:1; display:flex; align-items:center; gap:8px; min-width:0; color:inherit; font:inherit; text-align:left; }
+  .yh-ava { flex:none; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-size:var(--fs-sm); font-weight:var(--fw-x);
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); color:var(--yeta-ac); background-size:cover; background-position:center; }
+  .yeta-h b { font-size:var(--fs-h2); font-weight:var(--fw-x); white-space:nowrap; flex:none; }
+  .yeta-h .yh-tag { font-size:var(--fs-xs); color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .yw-chev { width:14px; height:14px; flex:none; color:var(--mut); }
+  .yh-inv { flex:none; width:var(--btn); height:var(--btn); display:grid; place-items:center; background:none; border:none; color:var(--fg-2); }
+  .yh-inv svg { width:19px; height:19px; }
+  .yh-inv.dim { opacity:.34; }
+  .yh-pair { display:flex; align-items:center; }
+
+  .ystk { display:flex; align-items:center; justify-content:center; flex:none; min-width:40px; min-height:40px; padding:0 2px; background:none; border:none; cursor:pointer; }
+  .ystk:active { transform:scale(var(--press-m,.9)); }
+  .ystk .sa { width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:rgba(var(--fg-rgb),.06); background-size:cover; background-position:center; border:2px solid var(--bg); font-size:var(--fs-meta); font-weight:var(--fw-x); color:var(--yeta-ac); }
+  .ystk .sa:first-child { position:relative; z-index:1; }
+  .ystk .sa + .sa { margin-left:-14px; }
+  /* ▼ 이번 변경분 — after 열에서만 켠다(before 열 = 위 정본 그대로 = 풀컬러 정지) */
+  .aft .ystk .sa { filter:grayscale(1) brightness(.5); animation:yNearBreathe 1.9s var(--ease) infinite; transition:filter .28s var(--ease); }
+  .aft .ystk.on .sa { animation:none; filter:none; }
+  @keyframes yNearBreathe { 0%,100% { filter:grayscale(1) brightness(.5); } 50% { filter:grayscale(1) brightness(1); } }
+  @media (prefers-reduced-motion:reduce) { .aft .ystk .sa { animation:none; } }
+
+  .yeta-log { position:absolute; left:0; right:0; top:70px; bottom:66px; z-index:2; display:flex; flex-direction:column; gap:10px; padding:8px 12px; overflow:hidden; }
+  .yb { padding:10px 13px; border-radius:var(--r-l); font-size:var(--fs-body); line-height:var(--lh-base); white-space:pre-wrap; word-break:break-word; max-width:78%; }
+  .yb.ai { align-self:flex-start; background:var(--glass-2); border:1px solid var(--glass-line); border-top-left-radius:var(--r-s);
+    backdrop-filter:blur(var(--blur-m)) saturate(1); -webkit-backdrop-filter:blur(var(--blur-m)) saturate(1); box-shadow:inset 0 1px 0 var(--glass-line); }
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) { .yb.ai { background:var(--bubble-ai); } }
+  .yb.me { align-self:flex-end; background:var(--bubble-me); color:var(--bg); border-top-right-radius:var(--r-s); }
+  .yb.sys { align-self:center; max-width:none; background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-pill); color:var(--fg-2); font-size:var(--fs-sm); padding:3px 12px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  @keyframes ybIn { from { opacity:0; transform:translateY(10px) scale(.92); } }
+  @keyframes ypickIn { from { opacity:0; transform:translateY(12px) scale(.985); } }
+  .yeta-log .in { animation:ybIn .3s cubic-bezier(.22,.61,.36,1) both; transform-origin:bottom left; }
+
+  /* 3선택지 — 전(v1 표면 = --glass-2 알파 0) vs 후(헤더·입력행 밑칠 계승) */
+  .ynear-ask { align-self:center; display:flex; flex-direction:column; gap:6px; width:min(78%, 340px); }
+  .bfr .ynear-ask button { text-align:left; padding:9px 13px; border-radius:var(--r-pill); background:var(--glass-2); border:1px solid var(--glass-line); color:var(--fg); font:inherit; font-size:var(--fs-sm); line-height:1.45; cursor:pointer; backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); transform-origin:center; }
+  .aft .ynear-ask button { text-align:left; padding:9px 13px; border-radius:var(--r-pill); background:linear-gradient(var(--glass), var(--glass)), rgba(18,18,18,.75); border:1px solid var(--glass-line); box-shadow:inset 0 1px 0 var(--glass-line); color:var(--fg); font:inherit; font-size:var(--fs-sm); line-height:1.45; cursor:pointer; backdrop-filter:blur(var(--blur-l)); -webkit-backdrop-filter:blur(var(--blur-l)); transform-origin:center; }
+  .ynear-ask button:active { transform:scale(var(--press-m,.9)); }
+  .ynear-ask.in button { animation:ypickIn .38s cubic-bezier(.22,.61,.36,1) both; }
+  .ynear-ask.in button:nth-child(2) { animation-delay:.05s; }
+  .ynear-ask.in button:nth-child(3) { animation-delay:.1s; }
+
+  .yeta-in { position:absolute; left:10px; right:10px; bottom:10px; z-index:3; display:flex; align-items:center; gap:8px; padding:7px 9px;
+    background:linear-gradient(var(--glass), var(--glass)), rgba(18,18,18,.75); border:1px solid var(--glass-line); border-radius:var(--r-pill);
+    backdrop-filter:blur(var(--blur-l)); -webkit-backdrop-filter:blur(var(--blur-l)); color:var(--mut); font-size:var(--fs-sm); }
+  .hint { display:inline-flex; align-items:center; gap:6px; font-size:var(--fs-xs); color:var(--mut); margin-top:8px; }
+  .hint i { width:6px; height:6px; border-radius:50%; background:var(--accent); font-style:normal; }
+
+  /* 디밍 확대 대조(26px는 작아서 안 보인다는 반려 → 4배 인셋으로 같은 filter를 크게) */
+  .zoomrow { display:flex; gap:var(--sp-3); align-items:center; flex-wrap:wrap; }
+  .zoom { text-align:center; }
+  .zoom .sa { width:104px; height:104px; border-radius:50%; background-size:cover; background-position:center; border:2px solid var(--bg); display:block; }
+  .zoom.dimv1 .sa { filter:grayscale(.7) brightness(.55); }
+  .zoom.dimv2 .sa { animation:yNearBreathe 1.9s var(--ease) infinite; }
+  .zoom span { display:block; font-size:var(--fs-xs); color:var(--mut); margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>공간 초대 v2 — <span style="color:var(--accent)">디밍이 보이게</span> + 3선택지를 <span style="color:var(--accent)">대화 안으로</span></h1>
+  <p class="lead">운영자 260809 2차: <b>“디밍이 안보이는데 html 문제인가? 여튼 보이게 해서 머지하고 / 선택지 3개는 자연스럽게 뜨게해주고 / 그 3개 좀 더 투명도를 낮춰서 구분감을 살려줘 / 그리고 대화 하던거랑 구분되서 선택하게 대화 안에 들어간 느낌 살려주면 좋을듯”</b><br>
+  <b>html 문제 맞았다</b> — v1 페이지가 <code>../tokens.css</code>를 링크해서 봤고, 파일만 따로 열면 그게 안 붙어 <code>--ease</code>가 사라진다 → <code>animation:… var(--ease) …</code> 선언이 통째로 무효 = <b>숨쉬기가 아예 안 돌았다</b>. 이 v2는 토큰을 인라인해 자기완결 1파일. 그와 별개로 <b>디밍 자체도 한 단 더 내렸다</b>(아래 ①).</p>
+
+  <section class="sect">
+    <h2>① 디밍 — 반실루엣(v1) → 완전 무채색(v2)</h2>
+    <div class="grp">
+      <div class="zoomrow">
+        <div class="zoom"><span class="sa" style="background-image:url(data:image/webp;base64,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)"></span><span>원본(방 안 사람)</span></div>
+        <div class="zoom dimv1"><span class="sa" style="background-image:url(data:image/webp;base64,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)"></span><span>v1 — grayscale(.7) brightness(.55)<br>정지 · 26px에선 판별 실패</span></div>
+        <div class="zoom dimv2"><span class="sa" style="background-image:url(data:image/webp;base64,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)"></span><span>v2 — grayscale(1) · 밝기 .5↔1 호흡<br>완전 무채색 + 숨 폭 확대</span></div>
+      </div>
+      <p class="note">v2 양 끝은 둘 다 기존값이다 — 바닥 <code>grayscale(1) brightness(.5)</code> = <code>.ycrow.locked .yava</code>·<code>.ylist-row.ydead</code> 실루엣 정본 동값 · 천장 <code>brightness(1)</code> = 원본(항등값). <b>신규 값 0</b>이고 색·발광·스케일은 여전히 가산 0.</p>
+    </div>
+  </section>
+
+  <section class="sect">
+    <h2>② 3선택지 — 팝업 속(v1) → 대화 안(v2) · 밑칠 상향 · 촤르륵 등장</h2>
+    <div class="pair">
+      <div>
+        <div class="cap"><span class="bdg before">전(v1)</span><span class="val">표면 = <code>--glass-2</code>(알파 0) — 버블과 같은 결이라 안 갈린다</span></div>
+        <div class="phone bfr">
+          <div class="yeta-h">
+            <span class="yeta-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
+            <span class="ystk"><span class="sa" style="background-image:url(data:image/webp;base64,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)"></span></span>
+            <span class="yeta-who"><span class="yh-ava" style="background-image:url(data:image/webp;base64,UklGRqgFAABXRUJQVlA4IJwFAAAwGQCdASpgAGAAPnkylUckoqIhK5dsgJAPCWMAxyhkU5j21a/SGRvLr+x2k/pbmjN4yfCs4f17LFdZqKkASD3jFJktXYqzDMUejtKDX4qsFEUK+wjvxFxY7P97Ks624rZNRjDJovbW7BlAj2t5zZvMoHAfLoMKjhohmk6NAZjcuB11ZN+9qAko35RXxB34UJ6PKzbxMxNzXvdQy7wL8TvgJQvBDGHCWLN2drJ/bXLUdkyn7i0o9hyupj6thXTQMLQxxFtpUi2UxL1Ht//zP8RGwwAA/vxGKXXQcg1P4y/BWLlLovHSLHeQG/KjvZPDbRHGqtQj837SQtKcJGUrvF9uUdTKFLXDtHQ03O7JNGS8ZWxJi/b3iqv/+EDKQyk2FVlpDJrf07ItntzHL3oGBuyKWeg7GcYK9CuFfsdsaeQkrCHDujqMOqyhuVys7TcknCD6Us6hhKMwWEh8lZEFLLUM/wc7aPfugyqpC0qMFm99ZPGzdkQsvRMduEs+/upqfJMMs5rEqcv1TAfVvO9ZzjZbuujrUY/CmjVNnPVrOQFvsjFMgM7lfp04lDC+9vjbKdV9a+5bJHlzX/eC4PmdFhtuIju5JTXInLdMCoFUzEOJqGUqlvT3Y4Q6ZMMlvwwV1fNitsIZF8nJRIA3xt6L4qG7/s0iQ5F4k1onEYvUiFnV9QpoVc7Ow1hcqj0VauUzfmDHlaitf8tFdz1cntKtYCnxk9u3QXbThjJzJy/aIZqRpdOWLr0SGX5YXaVdBsz1H0zRN04IxXBO3TxcJPlenvqSecpLtU0BLB6w2k6ewzSBDUVQtcSL2JXIWxnp5kfmCnnVyrUBLv2Cndfja2kwpOOs6O4BF/awD2xto+cFa/MsuotnsUKQL+TeGw0O1T56a3t9DFAXaXzx6uZcmcCx3Anq7SFnuvSVpkPa3pRttnSpjCb6CiRxUUgnMBqTjSuJ2O+ZZjLxO1ang2fU7T7WFFtt0fw67bkEsg/GQ44dZJr9yWUiJTC25TMJMXKRxh7SiPWiCykNlLrbezzCXpkYVl3Vps+lps/zN2g5pzzq88c/YNNT1KL6X+zoaGi82QOzicJPBZdvc9UkCtH6zD0Rn3qt0Il+N7/DV0C+gq9vAESDCW2lGE1cK2yELWp0nsiR33KiiaVgIQyd5W3XbQ5HLQQg574jEusnniY9uPzXep8O74844iMJLT0byeHUYOqDCWWe6kxk1gy36LEAiVLnJ28os1P9UU6A7hR54FUHjnNvw5Wur+BedX4k5tGmPqLjh4j+sq9Zxzzbhtn9WKDpHFktdCiAwtVq8J9y8dthFBnHlvYLHqDTdb7YXGnninSikZUn6Exl/XXinbb9NvX38w/VpqyhYoedzRs5qDk8PlDO26J9ObF1sDrKYvShClH9Obnx9F26d4FogCQ47Mk0CB7jhAfEXf9BvTHnT2ZxBC/AMaaJfx2IybbHO+0I8WjlwanONgRF4tKHCKDTWvHToP+0QpiGaEbxg15zKil8/Fjod6Xng27b//xdYJcjiTZllLDE+gl0P9JX3NNjmTdBQQ9NcSFMe5WwWnlJUgRa7pG+kw7APvfumh0cE6+6EKyz9a4A4edprLMbS+WIaz1gmaDYnxMjhg82wigraw2QG/BuY2YaUrv5Bhs+6TE0eUg2+sZgIUOGIC3qZD3VgcMqtbF4WCYH+GR4+/BLbhHueKa1yten2SNmWJIh42Y24fGjOTHjSrhCFPHa+Zbhbph7ScqpTb2eoqIj0ujjnIFAx0Ef9jx81XANHU4M7MQntG+yk9Zu9Jv+8ji8IvQvMzCjzdWjX8WAvS1M9xOp4w4N0QiLMCrYDIoJ9soJ1vCrNIBzhvvJ6xXjU6f6J1yO+UpyfTodKrcMNTZeeJQU8OR6EcGn9GWyNP0b+ixUGh68AA==)"></span><b>하서연</b><span class="yh-tag">무음동 골목</span><svg class="yw-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="yh-pair"><span class="yh-inv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="7" r="4"/><path d="M1 21v-1a6 6 0 0 1 12 0v1M19 8v6M22 11h-6"/></svg></span><span class="yh-inv dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v12H4z"/><path d="M4 6l8 6 8-6"/></svg></span></span>
+          </div>
+          <div class="yeta-log">
+            <div class="yb ai">오늘은 골목이 조용하네. 바람만 지나가고.</div>
+            <div class="yb me">그러게. 나도 방금 왔어.</div>
+            <div class="yb ai">…누가 지나가는 소리가 들리는 것 같기도 하고.</div>
+            <div class="ynear-ask">
+              <button type="button">세라 마음에 맡긴다 — 나와의 관계 · 그 애 페르소나로</button>
+              <button type="button">하서연과의 관계 · 지금 대화의 흐름(모먼트)으로</button>
+              <button type="button">하서연에게 먼저 물어본다</button>
+            </div>
+          </div>
+          <div class="yeta-in">메시지</div>
+        </div>
+        <p class="note">※ v1 실제 자리는 초대 팝업 안이었다 — 여기선 <b>밑칠 대비</b>를 같은 자리에서 보이려고 대화 안에 놓고 표면만 v1 값으로 그렸다.</p>
+      </div>
+      <div>
+        <div class="cap"><span class="bdg after">후(v2)</span><span class="val">헤더·입력행 밑칠 계승 <code>rgba(18,18,18,.75)</code> + <code>--blur-l</code></span><span class="newtag">TAP</span></div>
+        <div class="phone aft">
+          <div class="yeta-h">
+            <span class="yeta-back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
+            <button type="button" class="ystk" id="stkA" aria-label="근처에 있는 인물 1명 — 초대"><span class="sa" style="background-image:url(data:image/webp;base64,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)"></span></button>
+            <span class="yeta-who"><span class="yh-ava" style="background-image:url(data:image/webp;base64,UklGRqgFAABXRUJQVlA4IJwFAAAwGQCdASpgAGAAPnkylUckoqIhK5dsgJAPCWMAxyhkU5j21a/SGRvLr+x2k/pbmjN4yfCs4f17LFdZqKkASD3jFJktXYqzDMUejtKDX4qsFEUK+wjvxFxY7P97Ks624rZNRjDJovbW7BlAj2t5zZvMoHAfLoMKjhohmk6NAZjcuB11ZN+9qAko35RXxB34UJ6PKzbxMxNzXvdQy7wL8TvgJQvBDGHCWLN2drJ/bXLUdkyn7i0o9hyupj6thXTQMLQxxFtpUi2UxL1Ht//zP8RGwwAA/vxGKXXQcg1P4y/BWLlLovHSLHeQG/KjvZPDbRHGqtQj837SQtKcJGUrvF9uUdTKFLXDtHQ03O7JNGS8ZWxJi/b3iqv/+EDKQyk2FVlpDJrf07ItntzHL3oGBuyKWeg7GcYK9CuFfsdsaeQkrCHDujqMOqyhuVys7TcknCD6Us6hhKMwWEh8lZEFLLUM/wc7aPfugyqpC0qMFm99ZPGzdkQsvRMduEs+/upqfJMMs5rEqcv1TAfVvO9ZzjZbuujrUY/CmjVNnPVrOQFvsjFMgM7lfp04lDC+9vjbKdV9a+5bJHlzX/eC4PmdFhtuIju5JTXInLdMCoFUzEOJqGUqlvT3Y4Q6ZMMlvwwV1fNitsIZF8nJRIA3xt6L4qG7/s0iQ5F4k1onEYvUiFnV9QpoVc7Ow1hcqj0VauUzfmDHlaitf8tFdz1cntKtYCnxk9u3QXbThjJzJy/aIZqRpdOWLr0SGX5YXaVdBsz1H0zRN04IxXBO3TxcJPlenvqSecpLtU0BLB6w2k6ewzSBDUVQtcSL2JXIWxnp5kfmCnnVyrUBLv2Cndfja2kwpOOs6O4BF/awD2xto+cFa/MsuotnsUKQL+TeGw0O1T56a3t9DFAXaXzx6uZcmcCx3Anq7SFnuvSVpkPa3pRttnSpjCb6CiRxUUgnMBqTjSuJ2O+ZZjLxO1ang2fU7T7WFFtt0fw67bkEsg/GQ44dZJr9yWUiJTC25TMJMXKRxh7SiPWiCykNlLrbezzCXpkYVl3Vps+lps/zN2g5pzzq88c/YNNT1KL6X+zoaGi82QOzicJPBZdvc9UkCtH6zD0Rn3qt0Il+N7/DV0C+gq9vAESDCW2lGE1cK2yELWp0nsiR33KiiaVgIQyd5W3XbQ5HLQQg574jEusnniY9uPzXep8O74844iMJLT0byeHUYOqDCWWe6kxk1gy36LEAiVLnJ28os1P9UU6A7hR54FUHjnNvw5Wur+BedX4k5tGmPqLjh4j+sq9Zxzzbhtn9WKDpHFktdCiAwtVq8J9y8dthFBnHlvYLHqDTdb7YXGnninSikZUn6Exl/XXinbb9NvX38w/VpqyhYoedzRs5qDk8PlDO26J9ObF1sDrKYvShClH9Obnx9F26d4FogCQ47Mk0CB7jhAfEXf9BvTHnT2ZxBC/AMaaJfx2IybbHO+0I8WjlwanONgRF4tKHCKDTWvHToP+0QpiGaEbxg15zKil8/Fjod6Xng27b//xdYJcjiTZllLDE+gl0P9JX3NNjmTdBQQ9NcSFMe5WwWnlJUgRa7pG+kw7APvfumh0cE6+6EKyz9a4A4edprLMbS+WIaz1gmaDYnxMjhg82wigraw2QG/BuY2YaUrv5Bhs+6TE0eUg2+sZgIUOGIC3qZD3VgcMqtbF4WCYH+GR4+/BLbhHueKa1yten2SNmWJIh42Y24fGjOTHjSrhCFPHa+Zbhbph7ScqpTb2eoqIj0ujjnIFAx0Ef9jx81XANHU4M7MQntG+yk9Zu9Jv+8ji8IvQvMzCjzdWjX8WAvS1M9xOp4w4N0QiLMCrYDIoJ9soJ1vCrNIBzhvvJ6xXjU6f6J1yO+UpyfTodKrcMNTZeeJQU8OR6EcGn9GWyNP0b+ixUGh68AA==)"></span><b>하서연</b><span class="yh-tag">무음동 골목</span><svg class="yw-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            <span class="yh-pair"><span class="yh-inv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="7" r="4"/><path d="M1 21v-1a6 6 0 0 1 12 0v1M19 8v6M22 11h-6"/></svg></span><span class="yh-inv dim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v12H4z"/><path d="M4 6l8 6 8-6"/></svg></span></span>
+          </div>
+          <div class="yeta-log" id="logA">
+            <div class="yb ai">오늘은 골목이 조용하네. 바람만 지나가고.</div>
+            <div class="yb me">그러게. 나도 방금 왔어.</div>
+            <div class="yb ai">…누가 지나가는 소리가 들리는 것 같기도 하고.</div>
+          </div>
+          <div class="yeta-in">메시지</div>
+        </div>
+        <p class="hint"><i></i>좌상단 <b>숨 쉬는 회색 얼굴</b>을 눌러봐 — 선택지가 대화 안으로 촤르륵 내려앉는다(다시 누르면 접힘).</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sect">
+    <h2>③ 값 계승 원장 — 신규 토큰·색·타이밍 0</h2>
+    <div class="grp">
+      <table>
+        <tr><th>축</th><th>v2 적용값</th><th>계승 출처</th></tr>
+        <tr><td>디밍 바닥</td><td class="v">grayscale(1) brightness(.5)</td><td>채색 소거 사다리 <b>만단</b> — <code>.ycrow.locked .yava</code>·<code>.ylist-row.ydead .ylist-ava</code> 동값(운영자 지시어 「무채색」에 정확히 대응 = 완전 탈색)</td></tr>
+        <tr><td>디밍 천장</td><td class="v">brightness(1)</td><td>원본(항등값) — 숨 폭을 넓혀 26px에서도 걸리게</td></tr>
+        <tr><td>주기·커브</td><td class="v">1.9s var(--ease) infinite</td><td><code>.ym-access</code> 잠금 숨쉬기(<code>ymLockBreathe</code>) 그대로</td></tr>
+        <tr><td>선택지 밑칠</td><td class="v">linear-gradient(--glass,--glass), rgba(18,18,18,.75) + --blur-l + inset sheen</td><td><b>헤더 알약 <code>.yeta-h</code>·입력행 <code>.yeta-in</code> 조합 100% 계승</b> — 같은 화면의 크롬과 같은 레시피라 「대화 위에 얹힌 것」 위계가 선다(신규 색·알파 0)</td></tr>
+        <tr><td>등장</td><td class="v">ypickIn .38s + .05s 계단</td><td><code>.ycd.on .ycd-card > *</code>·<code>#yetaPdc.on .pin</code> 정본 계단(통짜 등장 금지 = 원칙5) · 컨테이너는 <code>.yeta-log .in</code>(ybIn)</td></tr>
+        <tr><td>재애니 차단</td><td class="v">_yAskOn 래치</td><td><code>_yKickOn</code>·<code>_yFailOn</code> 동형(폴 재렌더마다 촤르륵 재생 방지)</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="sect">
+    <h2>④ 동선 — 「상황에 따라서」</h2>
+    <div class="grp">
+      <table>
+        <tr><th>상황</th><th>좌상단 프로필 탭</th></tr>
+        <tr><td>근처 1명(대다수)</td><td>팝업 없이 <b>대화 안 3선택지 직행</b> — 다시 탭 = 접힘</td></tr>
+        <tr><td>근처 2명</td><td>팝업 = <b>누구를</b> 부를지만 고른다([고르기]) → 팝업 닫히고 대화 안 3선택지</td></tr>
+        <tr><td>만석 / 초대 대기</td><td>팝업 = 종전 캡션 + 멤버 [보내기](기존 그대로)</td></tr>
+        <tr><td>내 말 전송</td><td>선택지 자동 접힘(미연시 선택지 소거와 같은 결) — 재열람 = 프로필 다시 탭</td></tr>
+      </table>
+      <p class="note">「불러볼까」 sys 말풍선은 폐지 상태 유지 — 자동으로 뜨는 건 아무것도 없다. 서버 <code>op invite { basis }</code> 계약 무변경.</p>
+    </div>
+  </section>
+
+  <p class="note">재현 한계: 폰트(Pretendard/LEMONMILK)·무대 배경 영상·실제 로스터 데이터는 없어 근사(배경 = 그라디언트 · 얼굴 = 실제 로스터 아바타 96² 축소 base64). 디밍·호흡·선택지 표면·stagger는 실물 선언 사본이라 그대로다.</p>
+</div>
+<script>
+  var stk = document.getElementById('stkA'), log = document.getElementById('logA'), open = false;
+  var HOST = '하서연', NAME = '세라';
+  stk.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var old = log.querySelector('.ynear-ask');
+    if (old) { old.remove(); open = false; stk.classList.remove('on'); return; }
+    var d = document.createElement('div');
+    d.className = 'ynear-ask in';
+    d.innerHTML = '<button type="button">' + NAME + ' 마음에 맡긴다 — 나와의 관계 · 그 애 페르소나로</button>'
+      + '<button type="button">' + HOST + '과의 관계 · 지금 대화의 흐름(모먼트)으로</button>'
+      + '<button type="button">' + HOST + '에게 먼저 물어본다</button>';
+    log.appendChild(d); open = true; stk.classList.add('on');
+  });
+  log.addEventListener('click', function (e) {
+    if (!e.target.closest('.ynear-ask button')) return;
+    var w = log.querySelector('.ynear-ask'); if (w) w.remove();
+    stk.classList.remove('on');   // 시안 = 발사 대신 접힘(실물은 op invite / ySend)
+  });
+</script>
+</body>
+</html>
