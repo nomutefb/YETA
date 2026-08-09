@@ -1030,8 +1030,19 @@ def check_world_rate():
 
 
 def _exec_lines(txt, needle):
-    """주석 아닌 실행줄에만 needle이 있는지(주석 처리 우회 차단). `#`로 시작하는 줄은 제외 — 처방문 인용·예시가 위반으로 잡히는 걸 막는다."""
-    return [ln for ln in txt.splitlines() if needle in ln and not ln.lstrip().startswith('#')]
+    """needle이 **주석 바깥**에 있는 줄만 센다(383차 평의회 봉합).
+
+    ⚠️ 구판은 `lstrip().startswith('#')` 뿐이라 **줄 끝 주석**을 못 걸렀다 —
+      `pass  # 롤백: roster_tune = {c["id"]: c["tune"]}` 한 줄이면 배선이 사라져도 게이트가 통과했다(평의회 좌석1·2·3 실측 공통 지적).
+      이제 첫 `#` 이후를 잘라내고 판정한다. 문자열 안 `#`(예 `"#tag"`)은 드물고, 잘라서 생기는 오차는 **안전측**(덜 세는 쪽)이다."""
+    return [ln for ln in txt.splitlines() if needle in ln.split('#')[0]]
+
+
+def _sh_py_block(sh_text, anchor):
+    """셸 스크립트 안 히어독 파이썬 블록을 **원문 그대로** 떼어낸다(사본 0 = 정본을 실행하기 위한 도구)."""
+    if anchor not in sh_text: return None
+    tail = sh_text.split(anchor, 1)[1]
+    return tail.split("\nPY\n", 1)[0] if "\nPY\n" in tail else None
 
 
 def check_tune_chain():
@@ -1043,58 +1054,140 @@ def check_tune_chain():
       → **첫 메시지 전에 슬라이더를 직접 끌지 않은 캐릭터는 16축이 영구히 미주입.** 화면엔 roster 값으로 육각형이 그려지니 무증상이었다.
     ⚠️ 기존 게이트는 전부 다른 축이다 — `check_roster_assets` = 에셋 **파일 실존** · `check_world_rate` = 상수 **값 짝** · `check_model_ids` = 모델 **ID 드리프트**
       → 「roster에 있는 값이 실제로 프롬프트까지 가는가」는 축 자체가 없었다.
-    판정 = 정적(렌더·LLM·네트워크 0) · 주석 줄 제외 · 면책표 없이 하드 0."""
+    ⚠️ **판정 = 정본 실행 재판정**(383차 평의회 봉합 · `check_disaster_landmark_sign` 관용구 결). 구판은 소스 **문자열 매칭**이었는데
+      평의회 좌석1·2·3이 **13종 우회를 실측 rc=0으로 통과**시켰다(줄끝 주석에 needle 담기 · 미끼 소비처 3번째 · 공백 1칸 · AX 순서만 역순 등).
+      리터럴을 아무리 늘려도 같은 병이라, 이제 **러너 정본 블록을 합성 세션으로 실제 실행해 `tune` 출력값을 본다** — 표기를 어떻게 바꾸든
+      동작이 살아 있으면 통과하고, 표기가 그대로여도 동작이 죽으면 잡힌다(리팩터 위양성 + 우회 위음성 동시 해소).
+    렌더·LLM·네트워크 0 · 면책표 없이 하드 0."""
     rc = 0
+    tmp = None
     try:
+        import subprocess, tempfile
         chat = os.path.join(ROOT, '.github/scripts/yeta_chat.sh')
         txt = open(chat, encoding='utf-8').read()
         # ① roster 원천 — 16축 보유 캐릭터가 실재하는가(fail-closed: 못 읽으면 차단)
         ros = json.load(open(os.path.join(ROOT, 'apps/yeta/characters/roster.json'), encoding='utf-8'))
-        have = [c.get('id') for c in ros if isinstance(c, dict) and isinstance(c.get('tune'), list) and len(c['tune']) == 16]
+        have = [(c['id'], c['tune']) for c in ros if isinstance(c, dict) and c.get('id') and isinstance(c.get('tune'), list) and len(c['tune']) == 16]
         if len(have) < 5:
             print('❌ 16축 체인 — roster.json의 tune 16축 보유 캐릭터가 %d인(하한 5) — 원천이 비면 폴백이 무의미하다.' % len(have)); return 1
-        # ② 러너 폴백 배선 — 빌드 1곳 + 소비 2곳(오프닝·본답장) 전부. 한쪽만 고치면 첫인사와 본대화의 성향이 갈린다(이 레포 최빈 미러 드리프트).
-        if not _exec_lines(txt, 'roster_tune = {c["id"]: c["tune"]'):
-            print('❌ 16축 체인 — yeta_chat.sh에 roster_tune 빌드가 없다(세션 tunes 부재 시 roster 16축이 프롬프트에 0바이트로 들어간다).'); rc = 1
-        sinks = _exec_lines(txt, 'or roster_tune.get(')
-        if len(sinks) < 2:
-            print('❌ 16축 체인 — roster 폴백 소비 지점이 %d곳(오프닝·본답장 2곳 필요) — 한쪽만 배선되면 첫인사와 본대화의 성향이 갈린다.' % len(sinks)); rc = 1
-        # ③ 구판 부활 차단 — 폴백 없는 옛 문법이 실행줄에 돌아오면 같은 무증상 사고가 재발한다
-        for bad in ('(s.get("tunes") or {}).get(persona),', '(s.get("tunes") or {}).get(T),'):
-            if _exec_lines(txt, bad):
-                print('❌ 16축 체인 — 폴백 없는 구판 문법 부활: %s' % bad); rc = 1
-        # ④ 축 라벨 16 짝 — 러너 AX ↔ 뷰어 TUNE_AX(뷰어 주석이 "축 순서 = yeta_chat.sh AX와 짝"이라 선언한 계약의 기계 강제)
+        cid, ctune = have[0]
+
+        # ② 정본 블록 실행 재판정 — extract_mat 파이썬을 원문 그대로 떼어 합성 세션으로 돌린다(사본 0)
+        blk = _sh_py_block(txt, 'python3 - "$SESS" "$RECENT_TURNS" "$ROOT/apps/yeta/characters/roster.json" <<\'PY\'\n')
+        if not blk:
+            print('❌ 16축 체인 — yeta_chat.sh에서 extract_mat 정본 블록을 못 떼었다(히어독 앵커 이동 = 게이트도 같이 수정).'); return 1
+        tmp = tempfile.mkdtemp(prefix='tunechain_')
+        bp = os.path.join(tmp, 'extract.py'); open(bp, 'w', encoding='utf-8').write(blk)
+        env = dict(os.environ, GB_BEATS='0', GB_GAP='0', GB_TTL_MS='0', KIMI_IDS='k3', AMB_ON='1')
+
+        def run(tunes):
+            sp = os.path.join(tmp, 'sess.json')
+            sess = {'v': 3, 'cur': cid, 'threads': {cid: {'turns': [{'role': 'user', 'text': '안녕', 'ts': 1}], 'updated': 1}}}
+            if tunes is not None: sess['tunes'] = {cid: tunes}
+            open(sp, 'w', encoding='utf-8').write(json.dumps(sess, ensure_ascii=False))
+            p = subprocess.run(['python3', bp, sp, '12', 'apps/yeta/characters/roster.json'],
+                               cwd=ROOT, env=env, capture_output=True, text=True, timeout=60)
+            if p.returncode != 0: return None, (p.stderr or '')[-400:]
+            for ln in reversed(p.stdout.strip().splitlines()):
+                try: return json.loads(ln).get('tune'), ''
+                except Exception: continue
+            return None, 'JSON 출력 없음'
+
+        got, err = run(None)                       # A: 세션 오버라이드 없음 → roster 값이 나와야 한다(이 게이트의 존재 이유)
+        if got != ctune:
+            print('❌ 16축 체인 — **정본 실행 재판정 실패**: 세션 tunes 없이 %s를 돌렸더니 tune=%r (기대 roster %r)%s'
+                  % (cid, got, ctune, (' · stderr=' + err) if err else '')); rc = 1
+        ovr = [9] * 16
+        got2, err2 = run(ovr)                      # B: 유저 오버라이드가 있으면 그쪽이 이겨야 한다(회귀 0 계약)
+        if got2 != ovr:
+            print('❌ 16축 체인 — 유저 오버라이드 우선 계약 파손: tune=%r (기대 %r)%s' % (got2, ovr, (' · stderr=' + err2) if err2 else '')); rc = 1
+
+        # ③ TUNE_BLOCK 정본 실행 — roster 값이 실제로 **글자**가 되는지(band()가 전부 생략하면 도달해도 0바이트다)
+        tb = _sh_py_block(txt, 'TUNE_BLOCK="$(python3 - "$TUNE" <<\'PY\'\n')
+        if not tb:
+            print('❌ 16축 체인 — TUNE_BLOCK 정본 블록을 못 떼었다(앵커 이동 = 게이트도 같이 수정).'); rc = 1
+        elif rc == 0:
+            tp = os.path.join(tmp, 'tb.py'); open(tp, 'w', encoding='utf-8').write(tb)
+            p = subprocess.run(['python3', tp, json.dumps(ctune)], cwd=ROOT, capture_output=True, text=True, timeout=60)
+            if p.returncode != 0 or not p.stdout.strip():
+                print('❌ 16축 체인 — roster 값이 TUNE_BLOCK에서 **0바이트**로 나온다(도달해도 글자가 안 되면 봉합이 무효): rc=%d' % p.returncode); rc = 1
+
+        # ④ 축 라벨 16 짝 + **순서 동일** — 뷰어 주석이 "축 순서 = yeta_chat.sh AX와 짝"이라 선언만 해둔 계약의 기계 강제.
+        #    ⚠️ 구판은 개수만 봐서 평의회가 "16개 유지 · 순서만 역순"으로 뚫었다(전 축 오라벨인데 rc=0).
         ax = re.search(r'^AX = (\[[^\]]*\])', txt, re.M)
         vx = re.search(r'const TUNE_AX = (\[[^\]]*\])', open(os.path.join(ROOT, 'viewer/index.html'), encoding='utf-8').read())
         if not ax or not vx:
             print('❌ 16축 체인 — 축 라벨 배열 미검출(러너 AX %s · 뷰어 TUNE_AX %s) — 패턴 이동 시 게이트도 같이 수정.' % (bool(ax), bool(vx))); rc = 1
         else:
-            na, nv = len(json.loads(ax.group(1))), vx.group(1).count(',') + 1
-            if na != 16 or nv != 16:
-                print('❌ 16축 체인 — 축 개수 불일치(러너 AX=%d · 뷰어 TUNE_AX=%d · 계약 16) — op tune이 16개 배열만 받으므로 어긋나면 라벨이 밀린다.' % (na, nv)); rc = 1
+            a = json.loads(ax.group(1))
+            v = [s.strip().strip("'\"") for s in vx.group(1).strip('[]').split(',')]
+            if len(a) != 16 or len(v) != 16:
+                print('❌ 16축 체인 — 축 개수 불일치(러너 AX=%d · 뷰어 TUNE_AX=%d · 계약 16) — op tune이 16개 배열만 받으므로 어긋나면 라벨이 밀린다.' % (len(a), len(v))); rc = 1
+            else:
+                # ⚠️ 두 라벨은 **일부러 다르게** 적혀 있다(러너 = 모델용 서술형 「친밀해지는 속도」 / 뷰어 = 칩용 축약 「상승 속도」).
+                #    그래서 접두·완전 일치로 대조하면 3곳이 즉시 가짜 빨강이 된다(첫 실행 실측 = 이 레포의 「가짜 빨강 공장」 패턴).
+                #    대신 **같은 자리끼리 공통 토막(2자+)을 공유하는가**로 본다 — 현행 16축 전건이 공유하고(말수·장난기·낙차·속도·스위치·위험…),
+                #    순서가 밀리거나 뒤집히면 공유가 깨진다(평의회가 뚫은 "16개 유지·순서만 역순" 우회를 이 축이 닫는다).
+                def _share(x, y):
+                    return any(x[i:i + 2] in y for i in range(len(x) - 1))
+                bad = [i for i in range(16) if not _share(a[i], v[i])]
+                if bad:
+                    print('❌ 16축 체인 — 축 **순서** 어긋남 %d곳(라벨이 밀리면 전 축이 오라벨): ' % len(bad)
+                          + ' · '.join('#%d 러너「%s」↔뷰어「%s」' % (i, a[i], v[i]) for i in bad[:4])); rc = 1
         if rc == 0:
-            print('✅ 16축 체인 — roster %d인 → 러너 폴백(빌드 1·소비 %d) → 프롬프트 도달 · 축 라벨 16 짝.' % (len(have), len(sinks)))
+            print('✅ 16축 체인 — 정본 실행 재판정 통과(%s: 세션無→roster %r · 오버라이드 우선 · TUNE_BLOCK 비공백) · roster %d인 · 축 순서 16 짝.'
+                  % (cid, ctune[:3] + ['…'], len(have)))
     except Exception as e:
         print('❌ 16축 체인 게이트 예외(fail-closed):', e); return 1
+    finally:
+        if tmp:
+            import shutil; shutil.rmtree(tmp, ignore_errors=True)
     return rc
 
 
 def check_lucy_killswitch():
     """루시 스레드봇 킬스위치 하드 게이트(260809) — `LUCY_ON` 2점(러너 게이트 + 워크플로 env) 짝.
 
-    ⚠️ **기본값이 ON(`:-1`)인 것까지 강제한다.** 여기가 이 게이트의 핵심 — 기본값이 0으로 바뀌면 변수를 안 만든 상태에서 봇이
-      **조용히 멈추고**, 크론은 초록으로 돌기 때문에 아무도 눈치채지 못한다(실패가 아니라 정상 스킵으로 보인다).
-    ⚠️ env 배선이 빠지면 러너는 변수를 못 받아 늘 ON = 스위치가 있는 척만 하는 상태가 된다(끈 줄 알았는데 계속 돈다)."""
+    ⚠️ **삭제는 막지 않는다**(383차 평의회 봉합 — 좌석3·4·7·8 공통 지적). 운영자 확인 = 「예타는 스레드를 안 쓴다 · 루시봇은 nomute-editor 쪽 개념」이라
+      이 두 파일은 **지워지는 게 정상 경로**다. 구판은 파일 부재를 fail-closed 예외로 rc=1 처리해서 **안 쓰는 기능의 삭제를 게이트가 막았다**
+      (유지가 삭제보다 싼 구조 = 부채의 정의). 이제 「둘 다 없으면 통과(삭제 완료) · 하나만 있으면 반쪽 삭제로 차단」이다.
+    ⚠️ **판정 = 실행 재판정.** 구판은 `${LUCY_ON:-1}` 리터럴을 봐서 `: "${LUCY_ON:=1}"` 같은 **동등한 리팩터를 막고**(위양성),
+      정작 `exit 0`을 지워도 통과했다(위음성 · 평의회 실측). 이제 러너를 3상태(미설정·0·1)로 **실제로 돌려 행동**을 본다."""
     rc = 0
     try:
-        sh = open(os.path.join(ROOT, '.github/scripts/lucy_threads.sh'), encoding='utf-8').read()
-        yml = open(os.path.join(ROOT, '.github/workflows/lucy-threads.yml'), encoding='utf-8').read()
-        if not _exec_lines(sh, '${LUCY_ON:-1}'):
-            print('❌ 루시 킬스위치 — lucy_threads.sh에 `${LUCY_ON:-1}` 게이트가 없다(기본 OFF로 바꾸면 변수 미설정 시 봇이 조용히 멈춘다 = 초록 스킵으로 위장).'); rc = 1
-        if not _exec_lines(yml, 'LUCY_ON:'):
-            print('❌ 루시 킬스위치 — lucy-threads.yml env에 LUCY_ON 배선이 없다(러너가 변수를 못 받아 끈 줄 알았는데 계속 돈다).'); rc = 1
+        import subprocess
+        shp = os.path.join(ROOT, '.github/scripts/lucy_threads.sh')
+        ymp = os.path.join(ROOT, '.github/workflows/lucy-threads.yml')
+        has_sh, has_yml = os.path.exists(shp), os.path.exists(ymp)
+        if not has_sh and not has_yml:
+            print('✅ 루시 킬스위치 — 루시 스레드봇 자산 없음(삭제 완료) = 지킬 대상 없음 · 통과.'); return 0
+        if has_sh != has_yml:
+            print('❌ 루시 킬스위치 — 반쪽 삭제(러너 %s · 워크플로 %s): 워크플로만 남으면 없는 스크립트를 크론이 매일 호출한다. 둘 다 지우거나 둘 다 두어라.'
+                  % ('있음' if has_sh else '없음', '있음' if has_yml else '없음')); return 1
+        sh = open(shp, encoding='utf-8').read()
+        # ── 실행 재판정: 킬스위치 줄만 떼어 3상태로 돌린다(러너 전체 실행 = 토큰·네트워크 축이라 게이트에 부적격) ──
+        gate_ln = [ln for ln in sh.splitlines() if 'LUCY_ON' in ln.split('#')[0] and 'exit' in ln.split('#')[0]]
+        if not gate_ln:
+            print('❌ 루시 킬스위치 — lucy_threads.sh에 LUCY_ON 조기 종료 줄이 없다(스위치가 아예 없거나 exit가 빠졌다 = 꺼도 계속 돈다).'); return 1
+        probe = 'set -euo pipefail\n' + gate_ln[0] + '\necho CONT'
+        def state(v):
+            e = dict(os.environ); e.pop('LUCY_ON', None)
+            if v is not None: e['LUCY_ON'] = v
+            p = subprocess.run(['bash', '-c', probe], capture_output=True, text=True, env=e, timeout=30)
+            return ('CONT' in p.stdout), p.returncode
+        cont_unset, rc_unset = state(None)
+        cont_off, rc_off = state('0')
+        cont_on, _ = state('1')
+        if not cont_unset:
+            print('❌ 루시 킬스위치 — 변수 **미설정**에서 봇이 멈춘다(기본 OFF). 변수를 안 만든 상태에서 조용히 정지하고 크론은 초록으로 돌아 아무도 못 알아챈다.'); rc = 1
+        if cont_off or rc_off != 0:
+            print('❌ 루시 킬스위치 — `LUCY_ON=0`에서 멈추지 않는다(계속=%s · rc=%d) = 끈 줄 알았는데 계속 도는 상태.' % (cont_off, rc_off)); rc = 1
+        if not cont_on:
+            print('❌ 루시 킬스위치 — `LUCY_ON=1`에서 봇이 멈춘다(스위치가 거꾸로 걸렸다).'); rc = 1
+        if not _exec_lines(open(ymp, encoding='utf-8').read(), 'LUCY_ON:'):
+            print('❌ 루시 킬스위치 — lucy-threads.yml env에 LUCY_ON 배선이 없다(러너가 변수를 못 받아 늘 ON = 스위치가 있는 척만 한다).'); rc = 1
         if rc == 0:
-            print('✅ 루시 킬스위치 — LUCY_ON 2점 짝(러너 기본 ON · 워크플로 env) · 끄기 = Variables LUCY_ON=0.')
+            print('✅ 루시 킬스위치 — 실행 재판정 3상태 통과(미설정=가동 · 0=정지 · 1=가동) + 워크플로 env 배선.')
     except Exception as e:
         print('❌ 루시 킬스위치 게이트 예외(fail-closed):', e); return 1
     return rc
