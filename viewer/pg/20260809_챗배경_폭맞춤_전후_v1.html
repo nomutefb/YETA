@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>챗 배경 폭 맞춤 — 전/후 비교 v1</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260729_챗배경딤_반감_전후_v1.html 계승(재설계 0) · 미리보기 = 실제 뷰어 렌더 스샷(재현 아님 · 393×852 · DPR2) ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --think:#3EE0C8; --think-rgb:62,224,200;
+    --glass:rgba(255,255,255,.005); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+    --lgap:6px;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .quad { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--sp-3); align-items:start; }
+  .pair { display:grid; grid-template-columns:repeat(2,1fr); gap:var(--sp-3); align-items:start; }
+  @media (max-width:900px) { .quad, .pair { grid-template-columns:1fr 1fr; } }
+  @media (max-width:560px) { .quad, .pair { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .bdg.rung { color:var(--think); border:1px solid rgba(var(--think-rgb),.4); }
+  .cap .val { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--fg-2); }
+  img.shot { display:block; width:100%; border-radius:var(--r-m); border:1px solid var(--glass-line); box-shadow:var(--shadow-card); }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-xs); }
+  th, td { text-align:left; padding:7px 9px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--fg-2); font-weight:var(--fw-b); }
+  td.n { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--fg-2); }
+  ul { margin:6px 0 0; padding-left:18px; font-size:var(--fs-sm); color:var(--fg-2); }
+  li { margin:4px 0; }
+</style>
+</head>
+<body>
+<div class="pg">
+
+  <h1>챗 배경 폭 맞춤 — 전/후 (372차)</h1>
+  <p class="lead">운영자 260809 「키보드 올라올때랑 아닐때 배경 크기가 차이나는디 · 항상 키보드 올라올때 크기처럼 최대한 이미지를 다 활용해줘」 → 안B(폭 맞춤) 채택.
+     아래는 <b>실제 뷰어 렌더 스샷</b>(393×852 · DPR2 · 윈터 방 · 재현 시안 아님).</p>
+
+  <div class="sect grp">
+    <h2>원인 — <code>cover</code>는 상자 <b>높이</b>로 배율이 정해진다</h2>
+    <p class="note">키보드가 뜨면 <code>yVvFit</code>이 창을 <code>visualViewport.height</code>로 줄인다(852 → 522px). <code>.ybg</code>는 그 창을 그대로 덮는 레이어라, 같은 그림이 딴 배율로 다시 잡혔다.</p>
+    <table>
+      <tr><th>그림</th><th>키보드 없음(852px)</th><th>키보드 올라옴(522px)</th><th>전(cover) 차이</th><th>후(폭 맞춤)</th></tr>
+      <tr><td>정사각 899×899</td><td class="n">×0.948 · 가로 46%만 보임</td><td class="n">×0.581 · 가로 75%</td><td class="n">배율 1.63배 요동</td><td class="n">×0.437 · 가로 100% · <b>요동 0</b></td></tr>
+      <tr><td>9:16 1080×1920</td><td class="n">×0.444 · 가로 82%</td><td class="n">×0.364 · 가로 100%</td><td class="n">배율 1.22배 요동</td><td class="n">×0.364 · 가로 100% · <b>요동 0</b></td></tr>
+    </table>
+  </div>
+
+  <div class="sect">
+    <h2>① 정사각 아트(899×899) — 전 2컷 / 후 2컷</h2>
+    <div class="quad">
+      <div>
+        <div class="cap"><span class="bdg before">전</span><span class="val">키보드 없음 · cover</span></div>
+        <img class="shot" src="20260809_챗배경폭맞춤_sq_before_nokb.webp" alt="전 · 키보드 없음 — 눈만 크게 확대된 배경">
+        <p class="note">가로 46%만 남아 「눈만 확대」. 운영자 스샷 1과 동일 상태.</p>
+      </div>
+      <div>
+        <div class="cap"><span class="bdg before">전</span><span class="val">키보드 올라옴 · cover</span></div>
+        <img class="shot" src="20260809_챗배경폭맞춤_sq_before_kb.webp" alt="전 · 키보드 올라옴 — 얼굴이 다 보이는 배경">
+        <p class="note">같은 그림이 딴 크기로. 운영자가 「이 크기로 해달라」 한 상태.</p>
+      </div>
+      <div>
+        <div class="cap"><span class="bdg after">후</span><span class="val">키보드 없음 · 폭 맞춤</span></div>
+        <img class="shot" src="20260809_챗배경폭맞춤_sq_fix_nokb.webp" alt="후 · 키보드 없음 — 사진 가로 전체가 보이고 아래는 밑판으로 스밈">
+        <p class="note">사진 가로가 통째로. 남는 세로는 스크림 마지막 정거장(<code>var(--bg)</code>)으로 스며 경계선 0.</p>
+      </div>
+      <div>
+        <div class="cap"><span class="bdg after">후</span><span class="val">키보드 올라옴 · 폭 맞춤</span></div>
+        <img class="shot" src="20260809_챗배경폭맞춤_sq_fix_kb.webp" alt="후 · 키보드 올라옴 — 위와 프레이밍 동일">
+        <p class="note">왼쪽 컷과 <b>프레이밍 동일</b> — 폭 기준은 높이에 무관하니 키보드가 떠도 안 움직인다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <h2>② 9:16 씬(1080×1920) — 꽉 채우던 그림은 어떻게 되나</h2>
+    <div class="pair">
+      <div>
+        <div class="cap"><span class="bdg before">전</span><span class="val">cover · 가로 18% 잘림</span></div>
+        <img class="shot" src="20260809_챗배경폭맞춤_tall_before_nokb.webp" alt="전 · 9:16 씬 cover">
+      </div>
+      <div>
+        <div class="cap"><span class="bdg after">후</span><span class="val">폭 맞춤 · 가로 100% · 아래 153px 스밈</span></div>
+        <img class="shot" src="20260809_챗배경폭맞춤_tall_fix_nokb.webp" alt="후 · 9:16 씬 폭 맞춤">
+      </div>
+    </div>
+    <p class="note">9:16은 잘림이 원래 적어 변화도 작다(가로 82% → 100%). 인물 팔·소품이 잘리던 좌우가 돌아온다.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>고친 결 — 신규 색·토큰 0</h2>
+    <ul>
+      <li><code>.ybg.fit</code> 신설 — <code>background-size:100% calc(100vw * var(--ybg-ar) + 1px), 100% auto</code> · <code>background-position:center top</code> · <b><code>no-repeat</code>(필수)</b>. 폭 기준은 높이에 무관 = 키보드 개폐로 프레이밍 불변.</li>
+      <li><code>--ybg-ar</code>(그림 세로/가로) = <code>yBgFit()</code>이 자연크기 실측 주입(캐시면 동기 확정) · 폴백 16/9. 스크림 층만 사진 실높이에 맞춘다(사진 층은 <code>auto</code>가 스스로).</li>
+      <li>스크림 마지막 정거장 = <code>var(--bg)</code>(92%에서 불투명 도달 후 100%까지 물림) — 사진 밑단이 창 밑판으로 스며 하드 엣지 0. 종전 딤 두 정거장(d1·d2)은 값 그대로.</li>
+      <li>클립(<code>.ybg.fit video</code>)도 같은 축 — 높이는 <code>aspect-ratio</code>로 확정, 밑단 페이드는 마스크(정거장 62% = 스크림과 동일 지점).</li>
+      <li><b>대가</b>: 좌우 드래그 배경 패닝은 무효(가로 슬랙 0). 운영자가 안B를 고르며 인지·수용. 배선은 축 잠금 때문에 존치.</li>
+    </ul>
+  </div>
+
+  <div class="sect grp">
+    <h2>실측 잔버그 2건(이 작업 중 발견·봉합)</h2>
+    <ul>
+      <li><b>밝은 실선</b>: 스크림 층과 사진 층 높이를 똑같이 두면 반올림이 갈려 사진 마지막 한 줄이 스크림 밖으로 샜다(698.675px 경계에서 <code>rgb(120,127,143)</code> 실측) → 스크림 <code>+1px</code>(광학 1px 예외축)로 봉합. 재실측 = 경계 전후 전부 <code>rgb(22,23,22)</code> = <code>--bg</code>.</li>
+      <li><b>클립 납작</b>: <code>height:auto</code>만 두면 메타데이터 로드 전 UA 기본 150px로 눌렸다(실측) → <code>aspect-ratio:1 / var(--ybg-ar)</code>로 확정. 재실측 393×699.</li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>
