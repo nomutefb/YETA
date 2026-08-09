@@ -218,6 +218,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
           `flex:0 1 auto`(줄어들되 늘지는 않음) + `min-width:0`(flex 자식 축소 잠금 해제) + 말줄임 = `.yh-tag`가 이미 쓰는 정본 처방 계승(신규 값 0 · 세로 줄바꿈 금지는 그대로). */
   .yeta-h .yh-tag { font-size:var(--fs-xs); color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex-shrink:99; }   /* 상대 설명 = 흰색 불투명(운영자 260709 첨부2 "투명하지 않게" — mut 폐지)
        flex-shrink:99 = **태그가 먼저 양보한다**(바로 위 b 주석의 원래 의도). 이름도 줄어들 수 있게 되면서 둘이 같은 비율로 깎여 이름이 필요 이상으로 잘리던 것 교정 — 축소 순서만 정하는 축(신규 색·px·토큰 0). */
+  .yeta-h .yh-tag:empty { display:none; }   /* 폭 0으로 눌린 태그가 flex gap 8px를 계속 먹던 것 회수(단톡 좁은 폭 · 260809 — 실측 360px 부족분 5px < 8px = 이것만으로 전체 이름이 들어간다) · `.ymeter:empty` 관례 계승 */
   .yeta-h .yh-r { margin-left:auto; display:flex; align-items:center; gap:6px; }   /* 우측 묶음 = 래퍼에 margin-left:auto(CII) */
   /* .yh-remote(원거리 배지) 제거 — 원거리 개념 폐지·[문자][초대][대화가능][전화] 픽토로 대체(운영자 260717) */
   /* .yh-reset("새 대화") 제거(운영자 260705) — 2탭 armed 색 패턴 정본 = .yset-reset.armed(수화기 armed 는 발신 확인 화면으로 대체 · 260731) */
@@ -4485,8 +4486,15 @@ function yHeadRoom() {   // 단톡 헤더(합석 260707) — room 2명 = 아바�
   }
   if (!a2) { a2 = document.createElement('span'); a2.id = 'yetaAva2'; a2.className = 'yh-ava'; a2.setAttribute('aria-hidden', 'true'); $('#yetaAva').after(a2); }
   yAvaSet($('#yetaAva'), room[0]); yAvaSet(a2, room[1]);
-  $('#yetaTitle').textContent = `${room[0].name}, ${room[1].name}`;
-  $('#yetaTag').textContent = '단톡';
+  // 제목 = 전체 이름 우선, **넘칠 때만** 앞 2글자씩(운영자 260809 "저렇게 겹치면 각 캐릭터의 앞글자 2개만 따서 쉼표로 끊어줄래? 한 명이 길게 나오는 것보다, 한 명 조금만 나와도 캐릭터 누군지 아니까").
+  //   말줄임은 한쪽만 잘라 「고죠 사토루,…」처럼 뒷사람이 통째로 사라진다 — 축약은 **둘 다 똑같이** 남겨서 누구누구인지가 유지된다.
+  //   판정 = 실측(scrollWidth > clientWidth) 한 번뿐 · 폭이 넉넉하면 전체 이름 그대로(짧은 이름 방은 종전과 동일 = 회귀 0) · 창이 넓어지면 다음 렌더에 전체로 복귀.
+  const _T = $('#yetaTitle'), _G = $('#yetaTag');
+  _T.textContent = `${room[0].name}, ${room[1].name}`;
+  _G.textContent = '단톡';
+  const _over = () => _T.scrollWidth > _T.clientWidth + 1;   // +1 = 서브픽셀 여유
+  if (_over()) _G.textContent = '';                          // ① 「단톡」 태그부터 접는다 — 폭 0으로 눌려도 flex gap 8px는 계속 먹고 있었다(실측 360px 부족분 5px < 8px = 이것만으로 전체 이름이 들어간다) · 두 아바타+두 이름이 이미 단톡을 말한다
+  if (_over()) _T.textContent = room.map(c => String(c.name || '').slice(0, 2)).join(', ');   // ② 그래도 넘치면 앞 2글자씩 — 한 글자 이름(백·윤·류)은 slice가 그대로 통과
 }
 function yMeterFmt(n) { return n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n); }
 let _ymView = 0;   // 계기판 뷰(운영자 260714 "이력 측정 계기판") — 0 토큰(현행) · 1 속도 · 2 길이/지문 — 3번째 세그 탭 = 순환
