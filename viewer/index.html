@@ -212,8 +212,12 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yh-pair { flex:none; display:inline-flex; align-items:center; border-radius:var(--r-pill); background:var(--glass-0); box-shadow:inset 0 0 0 1px var(--glass-line-0); }   /* 연락처→문자 진전 쌍(운영자 260726 "같은 쌍으로") — 최저층 글래스 토큰만 계승(신규 값 0) · 레이아웃 불변(인셋 링 = 높이 증가 0) */
   .yh-inv.slash { position:relative; }
   .yh-inv.slash::after { content:''; position:absolute; left:6px; right:6px; top:50%; height:2px; background:var(--danger); transform:translateY(-50%) rotate(-32deg); border-radius:2px; box-shadow:0 0 0 1.5px var(--bg); }   /* 빗금 = 배선 없음(전화 미연결 상대 · 운영자 260717) */
-  .yeta-h b { font-size:var(--fs-h2); font-weight:var(--fw-x); white-space:nowrap; flex:none; }   /* 이름 세로 줄바꿈 방지(좁은 헤더) — 태그가 ellipsis로 양보 */
-  .yeta-h .yh-tag { font-size:var(--fs-xs); color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }   /* 상대 설명 = 흰색 불투명(운영자 260709 첨부2 "투명하지 않게" — mut 폐지) */
+  .yeta-h b { font-size:var(--fs-h2); font-weight:var(--fw-x); white-space:nowrap; flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; }   /* 이름 세로 줄바꿈 방지(좁은 헤더) — 태그가 ellipsis로 먼저 양보하고, 그래도 모자라면 이름도 말줄임
+       ⚠ 버그픽스(운영자 260809 "캐릭터 2명 이상되면 폰에서 상단 nav 버튼이 겹친다"): 종전 `flex:none`이라 이름이 **줄어들 수 없었다** — 단톡 제목은 `이름, 이름`이라 길어지는데 못 줄어드니
+          `.yeta-who`(flex:1·min-width:0) 밖으로 넘쳐 우측 픽토(.yh-pair 초대·문자 / .yh-r 수화기) 위에 겹쳐 그려졌다(실측 390px 「고죠 사토루, 조지 로이스」 = 17.4px · 360px 47.4px · 320px 87.4px 침범).
+          `flex:0 1 auto`(줄어들되 늘지는 않음) + `min-width:0`(flex 자식 축소 잠금 해제) + 말줄임 = `.yh-tag`가 이미 쓰는 정본 처방 계승(신규 값 0 · 세로 줄바꿈 금지는 그대로). */
+  .yeta-h .yh-tag { font-size:var(--fs-xs); color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex-shrink:99; }   /* 상대 설명 = 흰색 불투명(운영자 260709 첨부2 "투명하지 않게" — mut 폐지)
+       flex-shrink:99 = **태그가 먼저 양보한다**(바로 위 b 주석의 원래 의도). 이름도 줄어들 수 있게 되면서 둘이 같은 비율로 깎여 이름이 필요 이상으로 잘리던 것 교정 — 축소 순서만 정하는 축(신규 색·px·토큰 0). */
   .yeta-h .yh-r { margin-left:auto; display:flex; align-items:center; gap:6px; }   /* 우측 묶음 = 래퍼에 margin-left:auto(CII) */
   /* .yh-remote(원거리 배지) 제거 — 원거리 개념 폐지·[문자][초대][대화가능][전화] 픽토로 대체(운영자 260717) */
   /* .yh-reset("새 대화") 제거(운영자 260705) — 2탭 armed 색 패턴 정본 = .yset-reset.armed(수화기 armed 는 발신 확인 화면으로 대체 · 260731) */
