@@ -53,12 +53,20 @@ const css = `
   padding:calc(var(--sp-3) + env(safe-area-inset-top)) var(--sp-3) calc(var(--sp-3) + env(safe-area-inset-bottom)); }   /* 풀스크린 전환 = 노치·홈바 회피(safe-area = OS축 raw 예외 · .yeta-h 선례) */
 .ycall-bg { position:absolute; inset:0; background-size:cover; background-position:center; }
 .ycall-bg::after { content:''; position:absolute; inset:0; background:var(--bg-scrim); }   /* 하단 딤 = 버튼 가독(토큰) */
-.ycall-top { position:relative; display:flex; flex-direction:column; align-items:center; gap:6px; padding-top:calc(var(--sp-3) * 3); text-align:center; }   /* 풀스크린+프사 제거로 이름줄이 화면 꼭대기에 붙던 것 = 프사 자리만큼 숨통(토큰 배수 = .ycall-btns gap 관용구 계승 · 새 값 0) */
+/* 이름·번호 = 화면 정중앙 못박기(운영자 260809 "화면 중앙에 박으셈") — 상단 정렬 폐지.
+   벨/발신 국면은 중앙 절대배치, 통화중(.talk)은 자막(.ycall-line)과 겹치므로 흐름 배치로 복귀.
+   .ycall-top 이 흐름에서 빠지면 space-between 이 버튼을 위로 끌어올리므로 버튼은 margin-top:auto 로 바닥 고정. */
+.ycall-top { position:absolute; left:var(--sp-3); right:var(--sp-3); top:50%; transform:translateY(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center; }
+#calldlg.talk .ycall-top { position:static; transform:none; padding-top:calc(var(--sp-3) * 3); }   /* 통화중 = 자막 위 흐름 배치(토큰 배수 = .ycall-btns gap 관용구 계승) */
 .ycall-status { font-size:var(--fs-label); font-weight:var(--fw-b); color:var(--fg-2); }   /* 사진 위 회색(--mut #8B8F8A)은 밝은 캐릭터 아트에 묻힌다(실측) — 서브텍스트 리프트 토큰(--fg-2)으로 계단 이동(위계 유지·새 값 0 · 운영자 260809 "이 톤 배경에서 회색이 안 보인다") */
 /* 파문 = 이름 기준(운영자 260809 "가운데 얼굴 삭제 · 은은하게 퍼져나가는 것만 그 아래 이름 기준으로") — 배경이 이미 그 캐릭터 얼굴이라 중앙 프사 = 얼굴 위 얼굴(중복).
    프사(.ycall-ava)만 걷고 파문 선언·키프레임은 글자 하나 안 바꾸고 #ycallName 으로 옮겨 실었다(테두리·인셋·주기·딜레이·정지조건 100% 동일 · 새 값 0). */
-#calldlg .yintro-name { position:relative; }
-#calldlg .yintro-name::before, #calldlg .yintro-name::after { content:''; position:absolute; inset:calc(var(--sp-2) * -1);
+/* 35% 확대(운영자 260809 "그거 35% 더 키워서") — 타이포 SSOT(:root)는 건드리지 않고 배율만 곱한다(새 px 하드코딩 0 · 토큰 갱신 0). 파문 인셋도 같은 배율로 따라간다 = 커진 이름과 동심 유지. */
+#calldlg .yintro-name { position:relative; font-size:calc(var(--fs-h2) * 1.35); }
+#calldlg .yintro-tag { font-size:calc(var(--fs-sm) * 1.35); }
+#calldlg #ycallNum { font-size:calc(var(--fs-sm) * 1.35); }
+#calldlg .yintro-name::before, #calldlg .yintro-name::after { content:''; position:absolute; inset:calc(var(--sp-2) * -1.35);
   border:1px solid rgba(var(--accent-rgb),.55); border-radius:50%; animation:ycallPulse 2s var(--ease) infinite; pointer-events:none; }
 #calldlg .yintro-name::after { animation-delay:1s; }
 #calldlg.talk .yintro-name::before, #calldlg.talk .yintro-name::after { animation:none; opacity:0; }
@@ -69,7 +77,7 @@ const css = `
   padding:var(--sp-2); font-size:var(--fs-body); line-height:var(--lh-base); }   /* 통화 자막 = 글래스 카드 */
 .ycall-line[hidden] { display:none; }
 .ycall-line i.yn { font-style:italic; color:var(--fg-2); opacity:.75; }   /* *지문* 이탤릭 = .yb 결 계승 */
-.ycall-btns { position:relative; display:flex; gap:calc(var(--sp-3) * 3); padding-bottom:var(--sp-3); }
+.ycall-btns { position:relative; margin-top:auto; display:flex; gap:calc(var(--sp-3) * 3); padding-bottom:var(--sp-3); }   /* margin-top:auto = .ycall-top 절대배치 전환분 바닥 고정(space-between 만으로는 위로 붙음) */
 .ycall-act { display:flex; flex-direction:column; align-items:center; gap:8px; }
 .ycall-act > span { font-size:var(--fs-xs); color:var(--fg-2); font-weight:var(--fw-b); }   /* 취소·통화 라벨 = .ycall-status 와 같은 처방(사진 위 --mut 묻힘 → --fg-2) */
 .ycall-btn { width:calc(var(--btn) + var(--sp-3) * 2); height:calc(var(--btn) + var(--sp-3) * 2); border-radius:50%; border:none;
@@ -216,7 +224,7 @@ async function open(call) {
   dlg.querySelector('#ycallBg').style.backgroundImage = p.bg ? `url('${p.bg}')` : '';
   dlg.querySelector('#ycallName').textContent = p.name || '';
   dlg.querySelector('#ycallTag').textContent = p.tagline || '';
-  dlg.querySelector('#ycallStatus').innerHTML = '전화가 오고 있어<span class="gdots"><i>.</i><i>.</i><i>.</i></span>';   // gdots = 본체 점 애니 계승
+  dlg.querySelector('#ycallStatus').textContent = '';   // 수신 상태문구 폐지(운영자 260809 "전화가 오고있어 없애고") — 인앱 수신은 실전화(op phone)가 폰 앱으로 울려 화면 자체가 거의 안 뜬다(운영자 실측). 칸은 남긴다 = 발신 '전화를 겁니다'·대기·통화 타이머·에러가 같은 칸을 쓴다
   dlg.querySelector('#ycallLine').hidden = true;
   dlg.querySelector('#ycallNum').hidden = true;   // 발신 화면 잔재(번호) 회수 — 수신은 번호 없이 얼굴·이름만
   dlg.querySelector('#ycallTakeWrap').hidden = false;
