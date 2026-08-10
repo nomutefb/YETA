@@ -212,8 +212,13 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .yh-pair { flex:none; display:inline-flex; align-items:center; border-radius:var(--r-pill); background:var(--glass-0); box-shadow:inset 0 0 0 1px var(--glass-line-0); }   /* 연락처→문자 진전 쌍(운영자 260726 "같은 쌍으로") — 최저층 글래스 토큰만 계승(신규 값 0) · 레이아웃 불변(인셋 링 = 높이 증가 0) */
   .yh-inv.slash { position:relative; }
   .yh-inv.slash::after { content:''; position:absolute; left:6px; right:6px; top:50%; height:2px; background:var(--danger); transform:translateY(-50%) rotate(-32deg); border-radius:2px; box-shadow:0 0 0 1.5px var(--bg); }   /* 빗금 = 배선 없음(전화 미연결 상대 · 운영자 260717) */
-  .yeta-h b { font-size:var(--fs-h2); font-weight:var(--fw-x); white-space:nowrap; flex:none; }   /* 이름 세로 줄바꿈 방지(좁은 헤더) — 태그가 ellipsis로 양보 */
-  .yeta-h .yh-tag { font-size:var(--fs-xs); color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }   /* 상대 설명 = 흰색 불투명(운영자 260709 첨부2 "투명하지 않게" — mut 폐지) */
+  .yeta-h b { font-size:var(--fs-h2); font-weight:var(--fw-x); white-space:nowrap; flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; }   /* 이름 세로 줄바꿈 방지(좁은 헤더) — 태그가 ellipsis로 먼저 양보하고, 그래도 모자라면 이름도 말줄임
+       ⚠ 버그픽스(운영자 260809 "캐릭터 2명 이상되면 폰에서 상단 nav 버튼이 겹친다"): 종전 `flex:none`이라 이름이 **줄어들 수 없었다** — 단톡 제목은 `이름, 이름`이라 길어지는데 못 줄어드니
+          `.yeta-who`(flex:1·min-width:0) 밖으로 넘쳐 우측 픽토(.yh-pair 초대·문자 / .yh-r 수화기) 위에 겹쳐 그려졌다(실측 390px 「고죠 사토루, 조지 로이스」 = 17.4px · 360px 47.4px · 320px 87.4px 침범).
+          `flex:0 1 auto`(줄어들되 늘지는 않음) + `min-width:0`(flex 자식 축소 잠금 해제) + 말줄임 = `.yh-tag`가 이미 쓰는 정본 처방 계승(신규 값 0 · 세로 줄바꿈 금지는 그대로). */
+  .yeta-h .yh-tag { font-size:var(--fs-xs); color:var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex-shrink:99; }   /* 상대 설명 = 흰색 불투명(운영자 260709 첨부2 "투명하지 않게" — mut 폐지)
+       flex-shrink:99 = **태그가 먼저 양보한다**(바로 위 b 주석의 원래 의도). 이름도 줄어들 수 있게 되면서 둘이 같은 비율로 깎여 이름이 필요 이상으로 잘리던 것 교정 — 축소 순서만 정하는 축(신규 색·px·토큰 0). */
+  .yeta-h .yh-tag:empty { display:none; }   /* 폭 0으로 눌린 태그가 flex gap 8px를 계속 먹던 것 회수(단톡 좁은 폭 · 260809 — 실측 360px 부족분 5px < 8px = 이것만으로 전체 이름이 들어간다) · `.ymeter:empty` 관례 계승 */
   .yeta-h .yh-r { margin-left:auto; display:flex; align-items:center; gap:6px; }   /* 우측 묶음 = 래퍼에 margin-left:auto(CII) */
   /* .yh-remote(원거리 배지) 제거 — 원거리 개념 폐지·[문자][초대][대화가능][전화] 픽토로 대체(운영자 260717) */
   /* .yh-reset("새 대화") 제거(운영자 260705) — 2탭 armed 색 패턴 정본 = .yset-reset.armed(수화기 armed 는 발신 확인 화면으로 대체 · 260731) */
@@ -1562,7 +1567,8 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     <div class="yeta-h">   <!-- 플로팅 알약 헤더(운영자 260705) = [←뒤로][상대 전폭][수화기(call.js 주입)] · X 폐지 -->
       <button class="yeta-back" id="yetaBack" type="button" aria-label="뒤로 — 대화 목록으로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
       <div class="yeta-who" id="yetaWho" role="button" tabindex="0" aria-label="인물 프로필 열기 — 아래로 당기거나 탭"><span class="yh-ava" id="yetaAva" aria-hidden="true">y</span><b id="yetaTitle">yeta</b><span class="yh-tag" id="yetaTag"></span><svg class="yw-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>   <!-- 지금 대화하는 상대 = 좌우 한 폭(운영자 260705) · 260712 풀다운 그래버(드래그/탭 = 인물 카드) -->
-      <span class="yh-pair"><button class="yh-inv" id="yetaInvBtn" type="button" aria-label="연락처·초대 — 근처 인물 부르기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="7" r="4"/><path d="M1 21v-1a6 6 0 0 1 12 0v1M19 8v6M22 11h-6"/></svg></button><button class="yh-inv yh-msg dim" id="yetaMsgBtn" type="button" aria-label="문자 — 연락처를 나누면 열려"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v12H4z"/><path d="M4 6l8 6 8-6"/></svg></button></span>   <!-- 연락처→문자 진전 쌍(운영자 260726 "연락처가 불 켜지면 문자 가능 · 연락처가 문자 자리로 — 더 우선된 액션 진전단계") — 좌=연락처(1단 · 친밀도 도달 = 터콰이즈 점등) 우=문자(2단 · 연락처 켜져야 가능 · 미구현 자리표라 탭 = 준비 중 안내) · 초대 동작·만석 .off·아이콘(프로필 카드 초대 CII 계승)·스택 좌측 이동(yStackSync) 전부 종전 그대로 -->
+      <span class="yh-pair"><button class="yh-inv" id="yetaInvBtn" type="button" aria-label="연락처·초대 — 근처 인물 부르기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="7" r="4"/><path d="M1 21v-1a6 6 0 0 1 12 0v1M19 8v6M22 11h-6"/></svg></button><button class="yh-inv" id="yetaBellBtn" type="button" aria-label="이 대화 알림" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button></span>   <!-- 연락처(초대) + 이 대화 알림(종) 쌍 — 종전 2단은 「연락처 켜지면 문자 가능」이었으나 문자는 배선이 0인 자리표였다(게이트웨이 op·러너 경로·데이터 축 전부 없음 · 260809 감사).
+           운영자 260809 "문자 말고 종 모양 픽토그램으로 바꾼 다음 톡 알림 여부로" → 종 = **이 방 알림 on/off**(op mute → threads[t].mute · 러너 push_reply가 그 값을 보고 안 쏜다) -->
       <!-- .yh-talk(💬 대면 가능 여부) 제거(운영자 260725 A안 "헤더는 채널만") — 같은 말풍선이 한 화면에 두 번(헤더=상태·하단 도킹=이동) 떠서 문자↔채팅 혼동의 진원이었다. 헤더 우측 = 채널([✉문자][👤+연락처][📞전화])만 · 대면 여부는 이름 옆 태그 문장(yHeadSync)이 말한다 -->   <!-- 대면 대화 가능 상태(가운데 · 같은 장소+관계 양호 = 터콰이즈 활성 / 불가 = 흐림 · 운영자 260717) -->
       <span class="yh-r"></span>   <!-- 수화기 = call.js가 이 래퍼 끝 자리에 주입(옵셔널 축) -->
     </div>
@@ -3652,7 +3658,10 @@ $('#ycsettingsCard').addEventListener('click', e => {
     if (key === 'bgvid') { _yStageKey = ''; try { yStage(yLastMood()); } catch {} }   // 대화 무대도 즉시 갈아끼움(클립 ↔ 이미지) — 방이 안 열려 있으면 YCUR 가드가 알아서 빠진다
     if (key === 'bgaud') document.querySelectorAll('#yetadlg .ybg video').forEach(v => { yVidAudio(v); if (v.paused) return; try { const pr = v.play(); pr && pr.catch(() => { v.muted = true; yVidFadeStop(v); v.volume = 1; }); } catch {} });   // 지금 도는 클립에 즉시 반영(끄면 음소거·켜면 페이드인부터) — 재렌더 없이 그 자리에서
 
-    if (key === 'push' && on && 'Notification' in window && Notification.permission === 'default') { try { Notification.requestPermission(); } catch (x) {} }   // 알림 켜면 권한 요청
+    if (key === 'push') {   // 알림 스위치 = 권한 요청 + **구독 생성/회수**까지(260809 — 종전엔 권한만 묻고 구독을 안 만들어 아무것도 안 왔다)
+      try { yPushSync(on); } catch (x) {}   // 켤 때 = 권한 요청까지(유저 제스처 안) · 끌 때 = 구독 회수. 요청/실패 사유는 yPushSync가 토스트로 말한다
+      try { yHeadSync(); } catch (x) {}   // 헤더 종 픽토 상태 동반 갱신(전역 OFF = 빗금)
+    }
     return;
   }
   const ac = e.target.closest('.yset-item[data-act]'); if (ac) { ySetAct(ac.dataset.act, ac); return; }   // 실행 행(대화 초기화·캐시 비우기)
@@ -3930,7 +3939,7 @@ function yBond(c) {   // 유효 친밀도 = 내 발화 수 × 감쇠 — 커브(
   return n * (1 - .5 * ease);
 }
 const YBOND_CONTACT = 8;   // 연락처 교환 임계(운영자 260725 "상호간 어느정도 친목이 올라왔을 때만") — yBond(내 발화 수×감쇠) 기준 · 소원 임계 1.5와 같은 척도의 상위 눈금(노브: 여기 한 곳)
-function yHeadSync() {   // 헤더 픽토 상태 동기(운영자 260725) — [✉문자][👤+연락처][💬대면][📞전화] 4픽토를 한 함수에서 판정(전화는 call.js 소관 · 빗금 문법 .slash 공통 계승)
+function yHeadSync() {   // 헤더 픽토 상태 동기(운영자 260725) — [🔔알림][👤+연락처][💬대면][📞전화] 4픽토를 한 함수에서 판정(전화는 call.js 소관 · 빗금 문법 .slash 공통 계승)
   const c = YCUR, one = !!(c && (YSESS || {}).cur === c.id);   // 1:1 방일 때만 인물 판정(단톡 = 방 축이라 인물 게이트 미적용)
   const blocked = one && (yDead(c) || yEstranged(c) || yLockLabel(c) || yUnmet(c));
   const talkOK = !!c && !blocked && !_yFarOnly;   // 대화 가능 = 사망·소원·잠금·미대면·원거리 아님
@@ -3941,9 +3950,19 @@ function yHeadSync() {   // 헤더 픽토 상태 동기(운영자 260725) — [�
     const want = why || c.tagline || '';
     if (tag.textContent !== want) tag.textContent = want;   // 무변경 재페인트 차단(시그니처 가드 결)
   }
-  const msgOK = talkOK && bondOK;   // 문자 = 연락처(친목) 선행 조건(운영자 260726 "연락처가 없으면 문자도 안 되는 거잖아 — 불이 켜지면 문자 가능") · 쌍 진전: 연락처(1단)→문자(2단)
-  const msg = document.getElementById('yetaMsgBtn');   // 가능 = 터콰이즈 점등(.able · dim 해제 = 탭하면 준비 중 안내) / 불가 = 흐림+빗금(운영자 260725 문법 유지)
-  if (msg) { msg.classList.toggle('slash', !msgOK); msg.classList.toggle('able', msgOK); msg.classList.toggle('dim', !msgOK); }
+  // 종(이 대화 알림 · 운영자 260809) — 종전 문자 자리. 상태는 **친목이 아니라 알림 축**으로 판정한다: 전역 설정 OFF면 방별 토글이 의미 없으므로 빗금, 켜져 있으면 방별 mute 여부.
+  const bell = document.getElementById('yetaBellBtn');
+  if (bell) {
+    const live = yPushLive();                                            // 실상태(권한·지원까지) — pref만 보면 「켜짐」이라고 거짓말한다(평의회C S9)
+    const gOn = live === 'on';
+    const tOn = !((YTH() || {}).mute);                                   // 방별 = threads[t].mute 없으면 켜짐(기본 ON = 운영자 "전체 알림 끈 게 아니면 항상 오게")
+    const on = gOn && tOn;
+    // ⚠ `.dim`은 쓰지 않는다 — `.yh-inv.dim`이 `pointer-events:none`이라 꺼진 종을 **다시 못 켜게** 된다(초대 픽토용 비활성 문법이지 토글용이 아니다).
+    //    3상태 = ① 켜짐 `.able`(터콰이즈) ② 이 방만 꺼짐 = 클래스 없음(무채 기본색 = 안 켜진 상태) ③ 전역 꺼짐 `.slash`(빗금 = 막힘 · 탭하면 사유 안내). 전부 탭 가능.
+    bell.classList.toggle('able', on); bell.classList.toggle('slash', !gOn); bell.classList.remove('dim');
+    bell.setAttribute('aria-pressed', on ? 'true' : 'false');
+    bell.setAttribute('aria-label', live === 'unsupported' ? '이 기기는 알림 미지원' : live === 'ask' ? '알림 허용 안 함 — 탭하면 물어봄' : live === 'denied' ? '브라우저가 알림을 막음' : !gOn ? '알림 꺼짐 — 설정에서 켜줘' : on ? '이 대화 알림 켜짐 — 탭하면 끔' : '이 대화 알림 꺼짐 — 탭하면 켬');
+  }
   const inv = document.getElementById('yetaInvBtn');   // 연락처 = 친목 미달이면 빗금(탭하면 사유 토스트 — .off[만석·대기]와 별개 축이라 공존) · 도달 = 터콰이즈 점등(260726 쌍 문법 — 문자 .able과 같은 토큰)
   if (inv) { inv.classList.toggle('slash', !bondOK); inv.classList.toggle('able', bondOK); inv.dataset.bond = bondOK ? '' : '1'; }
 }
@@ -4481,8 +4500,15 @@ function yHeadRoom() {   // 단톡 헤더(합석 260707) — room 2명 = 아바�
   }
   if (!a2) { a2 = document.createElement('span'); a2.id = 'yetaAva2'; a2.className = 'yh-ava'; a2.setAttribute('aria-hidden', 'true'); $('#yetaAva').after(a2); }
   yAvaSet($('#yetaAva'), room[0]); yAvaSet(a2, room[1]);
-  $('#yetaTitle').textContent = `${room[0].name}, ${room[1].name}`;
-  $('#yetaTag').textContent = '단톡';
+  // 제목 = 전체 이름 우선, **넘칠 때만** 앞 2글자씩(운영자 260809 "저렇게 겹치면 각 캐릭터의 앞글자 2개만 따서 쉼표로 끊어줄래? 한 명이 길게 나오는 것보다, 한 명 조금만 나와도 캐릭터 누군지 아니까").
+  //   말줄임은 한쪽만 잘라 「고죠 사토루,…」처럼 뒷사람이 통째로 사라진다 — 축약은 **둘 다 똑같이** 남겨서 누구누구인지가 유지된다.
+  //   판정 = 실측(scrollWidth > clientWidth) 한 번뿐 · 폭이 넉넉하면 전체 이름 그대로(짧은 이름 방은 종전과 동일 = 회귀 0) · 창이 넓어지면 다음 렌더에 전체로 복귀.
+  const _T = $('#yetaTitle'), _G = $('#yetaTag');
+  _T.textContent = `${room[0].name}, ${room[1].name}`;
+  _G.textContent = '단톡';
+  const _over = () => _T.scrollWidth > _T.clientWidth + 1;   // +1 = 서브픽셀 여유
+  if (_over()) _G.textContent = '';                          // ① 「단톡」 태그부터 접는다 — 폭 0으로 눌려도 flex gap 8px는 계속 먹고 있었다(실측 360px 부족분 5px < 8px = 이것만으로 전체 이름이 들어간다) · 두 아바타+두 이름이 이미 단톡을 말한다
+  if (_over()) _T.textContent = room.map(c => String(c.name || '').slice(0, 2)).join(', ');   // ② 그래도 넘치면 앞 2글자씩 — 한 글자 이름(백·윤·류)은 slice가 그대로 통과
 }
 function yMeterFmt(n) { return n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n); }
 let _ymView = 0;   // 계기판 뷰(운영자 260714 "이력 측정 계기판") — 0 토큰(현행) · 1 속도 · 2 길이/지문 — 3번째 세그 탭 = 순환
@@ -4803,7 +4829,21 @@ $('#yetaText').addEventListener('beforeinput', e => {   // 타이핑 '#'·'*' = 
   const m = YSC_KEY[e.data]; if (!m) return;
   e.preventDefault(); yScToggle(e.target, m);   // 그 글자는 남기지 않는다 = 버튼 탭과 100% 같은 결과(모드 스위치 · 2줄 갭)
 });
-$('#yetaMsgBtn').addEventListener('click', e => { e.stopPropagation(); miniToast('문자는 준비 중이야 — 곧 열려'); });   // 문자 가능(.able = dim 해제) 상태 탭 = 준비 중 안내(운영자 260726 쌍 진전 · 무반응 금지 결) — 불가 상태는 .dim pointer-events:none이라 여기 안 옴
+$('#yetaBellBtn').addEventListener('click', async e => {   // 이 대화 알림 토글(운영자 260809) — 서버 저장(op mute)이라 **러너가 판정**해서 애초에 안 쏜다(로컬 pref면 이미 나간 뒤라 늦다)
+  e.stopPropagation();
+  const live = yPushLive();
+  if (live === 'ask') { try { await yPushSync(true); } catch (x) {} yHeadSync(); return; }        // 아직 안 물어본 상태 = **여기서 권한을 뚫는다**(설정까지 안 가도 됨 · 평의회C S9)
+  if (live === 'unsupported') { miniToast(matchMedia('(display-mode: standalone)').matches ? '이 기기는 알림을 지원 안 해' : '홈 화면에 추가하면 알림이 와'); return; }
+  if (live === 'denied') { miniToast('브라우저가 알림을 막고 있어 — 사이트 설정에서 풀어줘'); return; }
+  if (live === 'off') { miniToast('알림이 꺼져 있어 — 설정에서 켜줘'); return; }                 // 전역 OFF = 방별 토글 무의미
+  const t = (YSESS || {}).cur || ''; if (!t) return;
+  const want = !!((YTH() || {}).mute);   // 지금 꺼져 있으면 켜기
+  const b = e.currentTarget; b.disabled = true;
+  const r = await yApi('mute', { t, on: want }).catch(() => null);
+  b.disabled = false;
+  if (r && r.ok) { const th = YTH(t); if (th) { if (r.on) delete th.mute; else th.mute = 1; } yHeadSync(); miniToast(r.on ? '이 대화 알림 켰어' : '이 대화 알림 껐어'); }   // ⚠ YTH() → YTH(t)(평의회B) — 인자를 안 주면 「지금 열린 방」이라, await 동안 방을 옮기면 **엉뚱한 방에** 로컬 플래그가 꽂힌다(서버는 t로 정확히 박제되므로 화면만 어긋남)
+  else miniToast(yErr(r, '지금은 안 바뀌어 — 잠시 후 다시'));
+});
 $('#yetaInvBtn').addEventListener('click', e => { e.stopPropagation();
   if (e.currentTarget.dataset.bond === '1') { miniToast(`${(YCUR || {}).name || '이 사람'}과는 아직 연락처를 나눌 사이가 아니야 — 좀 더 얘기해봐`); return; }   // 친목 게이트(운영자 260725) — 빗금 픽토 탭 = 사유 안내(무반응 금지)
   yPdClose(); yInvToggle(); });   // 헤더 초대 + = 초대 팝업(운영자 260712 · .off = pointer-events:none이라 만석·대기 시 무반응 = 자리만 유지)
@@ -5193,7 +5233,7 @@ function yRender() {
     _yOpenGate = false; miniToast(`${(YCUR || {}).name || '상대'}은(는) 사망했어 — 누가 신당에서 빌어주면 바로 돌아와`); yShowList(); return;   // 문구 = 기도 게이트(Q.51 260725)와 동기 — 구 "현실 24시간" 표기는 시간 만료 시절 잔류(드리프트 정정)
   }
   _yOpenGate = false;   // 정상 진입 = 게이트 소진(이후 폴 렌더는 통과 — 대화 중 사망은 종전 두절 연출 유지 · 운영자 260714)
-  yHeadSync();   // 헤더 4픽토 상태 동기(대화 가능·문자·연락처 · 운영자 260725)
+  yHeadSync();   // 헤더 4픽토 상태 동기(대화 가능·알림·연락처 · 운영자 260725)
   $('#yetaIn').hidden = deadNow;
   yetadlg.classList.toggle('ymourn', deadNow);   // 애도 흑백(PR#281 회수) — 사망 방 배경 탈색 · 부활(만료) = 자연 색복귀
   {   // 절단본→전체본 전환 = 첫 렌더 취급(260809 Q.166 「직전 대화 다시 로딩」 봉합) — 낙관적 재진입이 그린 절단본(꼬리 2턴 · trim=원턴수)을 draw/폴 전체본이 대체하는 순간, prevN(=2) 기준 fresh 판정이 옛 대화 전체를 신규 턴으로 오인해 등장 애니를 통째 재생하던 것. 전체본 도착 = 재진입 무애니 규약(아랫줄 first)과 같은 결로 흡수 — 이후 새 턴은 종전대로 촤르륵.
@@ -5626,7 +5666,45 @@ try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(fun
   const _yprofEl = $('#yprof'); if (_yprofEl) _yprofEl.onclick = () => yShowProfile();   // 우상단 개인 프로필 화면(목업 · 운영자 260706)
 })();
 /* PWA 서비스워커 등록 */
-try { if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {}); } catch {}
+// ── 웹푸시 구독(운영자 260809 "설정에서 전체 알림 끈 게 아니면 항상 톡 알림이 웹앱 알림으로 오게") ──
+// ⚠ 260809 감사 전까지 **여기가 통째로 비어 있었다**: sw.js를 등록만 하고 `pushManager.subscribe()`를 한 번도 안 불러서 구독이 생길 경로가 없었고,
+//   러너가 답장마다 push_reply를 불러도 구독 목록이 비어 「발송 생략」 = **웹앱 알림 0건**. 설정의 「답장 알림」 스위치는 권한만 묻는 표시등이었다.
+// 공개키 = VAPID 키쌍의 공개 절반(운영자 260809 제공 · 짝 = 레포 시크릿 VAPID_PRIVATE_KEY). 공개값이라 뷰어에 상수로 둔다(비밀 아님 · 회전 시 이 한 줄 + 시크릿 동시 교체).
+const YVAPID_PUB = 'BORNTh3cNd05vsxi2fZ-BykxM0NwKGTvIETz81g757RVFL6cDu29aAv5I7uit0WbGOmiZ4hlyMOEvb8B2HptU-I';
+const yB64u = s => { const b = atob(String(s).replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - String(s).length % 4) % 4)); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+// 알림이 **실제로 닿는 상태인가** — 스위치(pref)가 아니라 권한·지원 여부까지 본 실상태. UI 거짓말 차단용 단일 판정(평의회C S9).
+//   설정 스위치 기본값이 true라, 종전엔 「켜짐」으로 보이는데 권한은 default라 알림이 0건인 상태가 신규 사용자 전원의 기본값이었다.
+function yPushLive() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'unsupported';
+  if (!yPrefOn('push', true)) return 'off';                 // 사용자가 끔
+  if (Notification.permission === 'denied') return 'denied';  // 브라우저가 막음(설정에서만 풀림)
+  if (Notification.permission !== 'granted') return 'ask';    // 아직 안 물어봄 = 안 온다(탭하면 물어본다)
+  return 'on';
+}
+async function yPushSync(ask) {   // 설정 스위치·권한·구독 3자 동기(멱등 · 앱 시작 + 스위치 조작 + 종 탭에서 호출) · ask=true면 권한 요청까지(반드시 유저 제스처 안에서)
+  const want = yPrefOn('push', true);
+  // 스위치를 껐으면 **브라우저가 못 도와줘도 서버 구독은 걷는다**(평의회B 4번) — 종전엔 미지원·SW 실패에서 조기 return이라
+  //   「껐는데 계속 온다」가 성립했다(서버는 옛 endpoint를 그대로 들고 있으므로). 캐시해 둔 endpoint가 그 회수의 열쇠다.
+  const dropServer = () => { let ep = ''; try { ep = localStorage.getItem('yeta_push_ep') || ''; } catch (x) {} if (ep) { yApi('push', { off: 1, endpoint: ep }).catch(() => {}); try { localStorage.removeItem('yeta_push_ep'); } catch (x) {} } };
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    if (!want) dropServer();
+    if (ask) miniToast(matchMedia('(display-mode: standalone)').matches ? '이 기기는 알림을 지원 안 해' : '홈 화면에 추가하면 알림이 와');   // iOS 사파리 = 홈화면 추가(standalone) 후에만 웹푸시(평의회C 3번 — 종전엔 조용히 종료라 "켜짐"이라고 거짓말했다)
+    return;
+  }
+  let reg; try { reg = await navigator.serviceWorker.ready; } catch (x) { console.warn('yPushSync: SW 준비 실패', x); if (!want) dropServer(); return; }
+  let sub = null; try { sub = await reg.pushManager.getSubscription(); } catch (x) {}
+  if (!want) {   // 전역 OFF = 구독 회수(브라우저·서버 양쪽) — 끄면 실제로 안 와야 한다
+    if (sub) { const ep = sub.endpoint; try { await sub.unsubscribe(); } catch (x) {} yApi('push', { off: 1, endpoint: ep }).catch(() => {}); try { localStorage.removeItem('yeta_push_ep'); } catch (x) {} }
+    return;
+  }
+  if (Notification.permission === 'default' && ask) { try { await Notification.requestPermission(); } catch (x) {} }   // 요청은 **유저 제스처 경로에서만**(기습 프롬프트 금지) — 스위치 탭·종 탭이 그 경로
+  if (Notification.permission !== 'granted') { if (ask) miniToast(Notification.permission === 'denied' ? '브라우저가 알림을 막고 있어 — 사이트 설정에서 풀어줘' : '알림 허용을 안 했어'); return; }
+  if (!sub) { try { sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: yB64u(YVAPID_PUB) }); } catch (x) { console.warn('yPushSync: subscribe 실패', x); if (ask) miniToast('알림 등록에 실패했어 — 잠시 후 다시'); return; } }
+  const ep = sub.endpoint;
+  try { if (localStorage.getItem('yeta_push_ep') === ep) return; } catch (x) {}   // 같은 구독 재적재 생략(평의회C S13 — 앱 열 때마다 R2 쓰기 1회 + 동시성 창을 상시로 벌리던 것)
+  try { await yApi('push', { sub: sub.toJSON ? sub.toJSON() : sub }); localStorage.setItem('yeta_push_ep', ep); } catch (x) { console.warn('yPushSync: 서버 적재 실패', x); }
+}
+try { if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(() => { setTimeout(() => { try { yPushSync(); } catch (x) {} }, 1200); }).catch(() => {}); } catch {}
 /* 첫 열기 부팅 스플래시(운영자 260708) — 인라인 "YETABUS"(첫 페인트 즉시)를 스크램블로 교체해 resolve · 페이드는 CSS(.yboot ybootOut)가 보장 · animationend = 제거(스크램블 타이머 정지) */
 (function () { var el = document.getElementById('yboot'); if (!el) return;
   var w = document.getElementById('ybootW'); if (w) { try { var sc = yScramble('YETABUS'); sc.className = w.className; w.replaceWith(sc); } catch (e) {} }

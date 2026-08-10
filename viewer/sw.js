@@ -12,7 +12,12 @@ self.addEventListener('push', event => {
     data: { url: d.url || '/' },
     lang: 'ko',
   };
-  event.waitUntil(self.registration.showNotification(title, opts));
+  // 앱을 **보고 있는 동안**엔 배너를 띄우지 않는다(평의회C · 260809) — 화면에서 답장이 이미 촤르륵 들어오는데 잠금화면 배너까지 뜨면 중복이다.
+  // ⚠ `userVisibleOnly:true` 계약상 매번 스킵하면 브라우저가 구독을 회수할 수 있으므로 **포커스된 창이 실제로 있을 때만** 건너뛴다(백그라운드·잠금 상태는 항상 표시).
+  event.waitUntil((async () => {
+    try { const cs = await self.clients.matchAll({ type: 'window', includeUncontrolled: true }); if (cs.some(c => c.focused)) return; } catch (e) {}
+    return self.registration.showNotification(title, opts);
+  })());
 });
 
 self.addEventListener('notificationclick', event => {
