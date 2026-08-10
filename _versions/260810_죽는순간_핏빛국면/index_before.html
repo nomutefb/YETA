@@ -181,15 +181,6 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   @keyframes ydeadFade { to { opacity:1; } }
   #yetadlg.ydlg-dead::after { content:''; position:fixed; inset:0; z-index:var(--z-float); background:var(--bg); opacity:0; animation:ydeadFade .9s var(--ease) forwards; }   /* 유저 사망(운영자 260725 "대화창이 어두워지며 이탈") = 페이드 암전 후 이탈 — 색 = --bg 계승(새 색 0) · 퇴장 이징 = ydlgOut과 같은 --ease */
   @media (prefers-reduced-motion:reduce){ #yetadlg.ydlg-dead::after { animation:none; opacity:1; } }
-  /* 죽는 순간 1단 = 핏빛(운영자 260810 "죽는 순간이 너무 확 전환되서 어색해 — 보는 순간 화면이 피로 물들면서 어두워지고 · 진동 · 계속 어두워지다가 죽었다고 떠야") —
-     비네트가 가장자리부터 스며들며 화면이 절반쯤 식는다. 그 뒤 위 .ydlg-dead 암전(::after)이 마저 덮는다(::before/::after 층 분리 = 한 창에서 피→암전 연속 · 발화 순서 = yMeDeadCheck).
-     색 = --danger-rgb 계승(사망 라디오·난입 축과 같은 자몽) · 알파 .4/.7 = 기존 danger 사다리 동값 · 밑깔개 rgba(0,0,0,.6) = ::backdrop 정본값 계승 = 신규 색·알파 0.
-     지속 .9s = .ydlg-dead 「죽음의 무게」 동값 · 비네트 기하(%·중심점)·키프레임 = 안무축(raw 예외). pointer-events 생략 = 암전과 같이 입력을 막는다(죽는 중 오탭 차단). */
-  @keyframes ybleedIn { to { opacity:1; } }
-  #yetadlg.ydlg-bleed::before { content:''; position:fixed; inset:0; z-index:var(--z-float);
-    background:radial-gradient(140% 105% at 50% 44%, transparent 32%, rgba(var(--danger-rgb),.4) 66%, rgba(var(--danger-rgb),.7) 100%), rgba(0,0,0,.6);
-    opacity:0; animation:ybleedIn .9s var(--ease) forwards; }
-  @media (prefers-reduced-motion:reduce){ #yetadlg.ydlg-bleed::before { animation:none; opacity:1; } }
   #yetadlg.ydlg-yank::after { content:''; position:fixed; inset:0; z-index:var(--z-float); background:var(--bg); opacity:0; animation:ydeadFade .62s var(--ease) forwards; }   /* 난입 종속 끌어당김(운영자 260728 "화면 움직이면서 거기로 다시 들어가져야함") — 위 .ydlg-dead 선언 100% 계승(값·커브·z 전부 동일), 다른 건 지속시간뿐(.9s = 죽음의 무게 / .62s = 회수는 빠르다)·클래스명(의미 축 분리) */
   @media (prefers-reduced-motion:reduce){ #yetadlg.ydlg-yank::after { animation:none; opacity:1; } }   /* reduce = 즉시 암전(.ydlg-dead 가드 계승) */   /* reduce = 즉시 암전(ydlg-in 결 계승) */
   /* 암전 역재생(운영자 260728 "어두워지는거 역으로 되면서 채팅창 보이면됨") — 종전엔 회수가 끝나면 .ydlg-yank를 그냥 떼서 검은 막이 **툭** 사라졌다(연출의 절반이 없던 셈).
@@ -349,7 +340,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   @supports not selector(:has(*)) { .yb.ai.barge { background:rgba(var(--danger-rgb),.24); border-color:rgba(var(--danger-rgb),.4); } }   /* :has 미지원(구 사파리) = 난입 버블 전체 착색으로 폴백 — 위 폰트 폴백(.yb.ai.barge 전체 명조)과 같은 판단: 질문 버블을 못 집느니 난입 전체가 갈리는 게 의도에 가깝다 */
   /* 난입 퇴장 = 까마귀가 한 박자 늦게 따라 나간다(운영자 260730 "까마귀 그거 ㄱㄱ") — drusilla.md §겉모습 「프리실라보다 먼저 자리에 앉고, 나갈 땐 늘 한 박자 늦게 따라 나간다」의 화면 대응.
      발동 = 난입 등급 인물의 퇴장 sys가 **새로** 붙는 순간 = `<<LEAVE>>`가 달린 턴 전부. 합격 퇴장이든 불합격(사망) 퇴장이든 같다 — 카드상 두 결말 모두 LEAVE로 나가므로 「사망일 때만」이 아니다.
-     사망 결말에선 이 연출이 먼저 끝나고 그 뒤에 핏빛(.ydlg-bleed)→암전(.ydlg-dead)이 온다(순서 = sys 렌더 완주 → yMeDeadCheck 260810 국면 — 게이트가 마지막 대사 렌더를 기다린다).
+     사망 결말에선 이 연출이 먼저 끝나고 그 뒤에 .ydlg-dead 암전이 온다(순서 = sys 렌더 → yMeDeadCheck).
      값 계승: 색 --fg-2(지문 톤) · 커브 --ease · z --z-float(.ydlg-yank 계승) · 지속 .9s(.ydlg-dead 「무게」 계승) · 지연 .62s(.ydlg-yank 계승 = 「한 박자 늦게」). 신규 시간·색 0 · 기하(px·scale·키프레임 %) = raw 예외 축. */
   .ycrowfly { position:fixed; z-index:var(--z-float); pointer-events:none; color:var(--fg-2); opacity:0; animation:ycrowFly .9s var(--ease) .62s forwards; will-change:transform, opacity; }
   .ycrowfly svg { display:block; width:40px; height:27px; fill:currentColor; }   /* 40×27 = viewBox 48×32(3:2) 비율 유지 · 34px에선 실루엣이 뭉개지고 40px부터 새로 읽힌다(헤드리스 6단 대조 실측) */
@@ -5139,7 +5130,6 @@ function yReconcile(root, html) {   // 증분 렌더(운영자 260717 근본) �
 }
 let _yOpenGate = false;   // 진입 1회 게이트 — openYeta가 세우고 첫 렌더가 소진(사망 상대 방 복원 차단용 · 대화 중 사망은 종전 두절 연출 유지)
 let _yMeDeadSeq = false;   // 유저 사망 연출 진행 중 래치(중복 발화 0) — 팝업이 뜨면 풀린다(다음 진입 시도 = 다시 물음)
-let _yMdCine = 0, _yMdWaitT = 0;   // 죽는 순간 국면(운영자 260810) — _yMdCine = 핏빛~암전 진행 중 래치(그동안 렌더는 삼키되 팝업은 아직) · _yMdWaitT = 마지막 대사가 다 붙기를 기다리는 재점검 타이머
 // 유저 부활 하한(운영자 260725 "누가 기도 안해주면 48시간 대기 — 게임 내 시간 · 접속 안 해도 흘러감")
 //   무음동은 현실의 6배속이라 무음동 48h = 현실 8h. 저장은 현실 ts(md.d)로 하고 비교만 환산 = 접속 여부와 무관하게 흐른다(뷰어 yWorldMin·러너 wmin과 같은 축).
 const YMEREV_WORLD_H = 48;
@@ -5181,22 +5171,14 @@ function yMeDeadPaint() {   // 사망 상주 창(운영자 260725 "메인 대화
   if (BT._h !== html) { BT.innerHTML = html; BT._h = html; BT.className = 'yexit-btns ymd-col'; }   // 버튼 구성이 그대로면 타이머만 갱신(1초마다 DOM 통짜 교체 = 눌림 씹힘)
   else { const el = document.getElementById('ymdTimer'); if (el) { el.textContent = ok ? '지금 돌아갈 수 있다' : yMdClock(left); el.classList.toggle('done', ok); } }
 }
-function yMeDeadCheck() {   // 유저 사망(운영자 260725 "타의든 자의든" · 260810 죽는 순간 국면) — 러너 <<MEDEAD: 맥락>> → sess.me_dead 박제 · 마지막 대사 렌더 완주 → 핏빛+진동 → 암전 → 이탈 → 대화 목록 → 상주 창
+function yMeDeadCheck() {   // 유저 사망(운영자 260725 "타의든 자의든") — 러너 <<MEDEAD: 맥락>> → sess.me_dead 박제 · 대화창 암전 → 이탈 → 대화 목록 → 상주 창
   const md = (YSESS || {}).me_dead;
-  if (!md) { _yMeDeadSeq = false; _yMdCine = 0; clearTimeout(_yMdWaitT); _yMdWaitT = 0; yMeDeadClose(); return false; }
+  if (!md) { _yMeDeadSeq = false; yMeDeadClose(); return false; }
   if (_yMeDeadSeq || _ymdTick) { yMeDeadPaint(); return true; }   // 이미 상주 중 = 다시 열지 않고 갱신만
+  _yMeDeadSeq = true; yStopPoll();   // 죽은 채로 폴 돌 이유 없음(부활 = op revive가 세션을 되돌림)
   const ask = () => { _yMeDeadSeq = false; yMeDeadPaint(); clearInterval(_ymdTick); _ymdTick = setInterval(yMeDeadPaint, 1000); };
-  if (!yetadlg.open) { _yMeDeadSeq = true; yStopPoll(); ask(); return true; }   // 대화창 밖(재접속·목록) = 종전대로 상주 창 직행(연출은 죽는 그 순간에만)
-  if (_yMdCine) return true;   // 핏빛~암전 진행 중 = 이번 렌더만 삼킨다(로그는 이미 최종 상태 · 팝업은 아직)
-  if ((((YTH() || {}).turns) || []).length > _yLastN) {   // 죽음이 담긴 마지막 대사들이 아직 화면에 다 안 붙었다(운영자 260810 "지금은 걍 바로 죽었다고 전환됨" — 종전엔 이 게이트가 렌더보다 먼저 먹어 프리실라의 마지막 동작이 통째로 증발) → 이번 렌더는 통과 = 페이스가 마저 그린다
-    clearTimeout(_yMdWaitT); _yMdWaitT = setTimeout(() => { _yMdWaitT = 0; if (yetadlg.open) yRender(); else yMeDeadCheck(); }, 1100);   // 1.1s = 마지막 말풍선을 읽는 한 박자(페이스 홀드 600ms+α와 같은 결) — 페이스 체인이 도는 동안엔 매 렌더 재장전이라 실제 발화는 「마지막 렌더 + 1.1s」 한 번뿐 · 그 사이 창을 닫았으면 상주 창 경로로
-    return false;
-  }
-  _yMdCine = 1; yStopPoll();   // 죽은 채로 폴 돌 이유 없음(부활 = op revive가 세션을 되돌림)
-  yetadlg.classList.add('ydlg-bleed');   // 1단 = 핏빛 비네트(.9s) — 보는 순간 화면이 피로 물들며 절반쯤 어두워진다
-  if (yPrefOn('haptic', true)) { try { if (navigator.vibrate) navigator.vibrate([90, 60, 150]); } catch (x) {} }   // 진동(운영자 260810) — 새 답장 26ms보다 무거운 두 박(스위치·문법 = 위 렌더 축 100% 계승 · ms 패턴 = 안무축)
-  setTimeout(() => { if (yetadlg.open) yetadlg.classList.add('ydlg-dead'); }, 1500);   // 2단 = 핏빛이 자리 잡은 뒤 기존 암전(--bg·.9s)이 그 위를 마저 덮는다 — "계속 어두워지다가"
-  setTimeout(() => { navBack('ydlg'); setTimeout(() => { if (yetadlg.open) yDlgClose(); yetadlg.classList.remove('ydlg-bleed', 'ydlg-dead'); _yMdCine = 0; ask(); }, 260); }, 2400);   // 암전 완주(1500+900) 후 이탈 → 상주 창 · 장막은 창이 닫힌 뒤에 걷는다(종전엔 900ms에 미리 걷어 퇴장 중 챗이 잠깐 비쳤다) · 백스택 미등재 경로 직접 닫기 받침(실측 260725 계승)
+  if (yetadlg.open) { yetadlg.classList.add('ydlg-dead'); setTimeout(() => { yetadlg.classList.remove('ydlg-dead'); navBack('ydlg'); setTimeout(() => { if (yetadlg.open) yDlgClose(); ask(); }, 260); }, 900); }   // 암전(.9s) → 이탈 = 대화 목록 복귀(닫힘 핸들러가 yTab('list')) → 상주 창 · 백스택 미등재 경로(레이어 없이 열린 챗)에선 navBack이 헛발이라 직접 닫기로 받침(실측 260725 — 죽은 채 대화창에 갇히는 경로 봉인)
+  else ask();
   return true;
 }
 // ── 성향 퀴즈(운영자 260725) — 만난 사람만 대상 10문항(러너 넛지가 출제·me_dead.quiz 박제) · 한 문항 = 4개 미연시 선택지 · 고른 결이 누적돼 그 사람의 성향 축을 움직인다 ──

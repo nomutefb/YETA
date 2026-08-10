@@ -672,8 +672,12 @@ if kind == "ok":
             S_ROOT["usage_day"] = _ud   # 뷰어 설정 '오늘 사용량' 행 소비(운영자 260721 Q.38 "오늘 얼마인지도")
         # 발행 목록 = 주화자 버블 다발 + 이후 교대 세그(각 1턴) — ts 연번 = 대본 순서 그대로(뷰어 페이스가 한 버블씩 공개 = 살아있는 단톡 리듬)
         emit = [(turn_persona, ct) for ct in chunks] + [(sid, tx) for sid, tx in segs[1:]]
+        # 퇴장 sys 좌석(운영자 260810 "프리실라는 한마디 남기고 사라져서 없고") — 뒤에 동행 교대 세그(다급 반응)가 붙는 write면 「일어났다」 지문이 그 반응 **앞**(떠나는 사람의 마지막 대사 직후)에 앉아야 한다.
+        #   _lvj = 떠나는 화자의 마지막 대사 위치 · 그 뒤 세그는 ts를 1 밀어 sys 자리(now+_lvj+1)를 비워둔다(ts 단조 유지 = 충돌 0). 교대 세그가 없거나 퇴장이 아니면 _lvj = 끝 = 종전과 완전 동일.
+        _lvmid = leave_tag and not open_job and turn_persona and not dead_tag   # 아래 퇴장 반영 블록과 같은 식(발동 조건 동기)
+        _lvj = max((i for i, (q, _) in enumerate(emit) if q == turn_persona), default=len(emit) - 1) if _lvmid else len(emit) - 1
         for ci, (_eid, ct) in enumerate(emit):
-            turn = {"role": "assistant", "text": ct, "ts": now + ci, "persona": _eid}
+            turn = {"role": "assistant", "text": ct, "ts": now + ci + (1 if ci > _lvj else 0), "persona": _eid}
             if ov_mark: turn["ov"] = 1               # 겹침 답장 표식(260717 ⑨⑩) — 뷰어가 mut 톤으로 렌더(사이에 낑긴 말)
             if ci == 0:                                # 다이얼·소요·토큰 = 첫 버블에만 박제(캡션 중복 방지 · 아이데이션④)
                 turn["model"] = os.environ.get("MODEL", "")
@@ -739,7 +743,7 @@ if kind == "ok":
                     _th3["room"] = [r for r in _rm3 if r != turn_persona]
                     if _th3.get("last_sp") == turn_persona: _th3["last_sp"] = _th3["room"][0]
                     if (_th3.get("barged") or {}).get("id") == turn_persona: _th3["barged"] = 0
-            turns.insert(ins + k, {"role": "sys", "kind": "leave", "who": turn_persona, "text": f"{_lnm}{'은' if (ord(_lnm[-1]) - 0xAC00) % 28 else '는'} 자리에서 일어났다", "ts": now + k}); k += 1   # 퇴장 지문(합류 sys 대칭) · kind/who(260730) = 뷰어 퇴장 연출 판정용(난입 인물이면 까마귀가 한 박자 늦게 따라 나간다) — amb·barge sys의 kind 규약 계승, 소비처 없으면 그냥 무시되는 필드
+            turns.insert(ins + _lvj + 1, {"role": "sys", "kind": "leave", "who": turn_persona, "text": f"{_lnm}{'은' if (ord(_lnm[-1]) - 0xAC00) % 28 else '는'} 자리에서 일어났다", "ts": now + _lvj + 1}); k += 1   # 퇴장 지문(합류 sys 대칭) — 자리 = 떠나는 사람의 마지막 대사 직후(260810 · 위 _lvj 좌석 예약과 짝 = 동행 다급 반응이 「사라진 뒤」에 온다 · 교대 세그 없으면 ins+k 동일) · kind/who(260730) = 뷰어 퇴장 연출 판정용(난입 인물이면 까마귀가 한 박자 늦게 따라 나간다) — amb·barge sys의 kind 규약 계승, 소비처 없으면 그냥 무시되는 필드
             # 세계 시계 재개는 여기서 손대지 않는다 — room에서 빠진 사실만 남기면 게이트웨이 sweepSess(단일 깔때기)가 다음 폴에서 wfz를 회수한다(러너/게이트웨이 이중 구현 0 · Q.06 계보).
         if dead_tag and not open_job and turn_persona:   # 사망 반영(운영자 260714) — dead[persona]={t:부활ts, d:사망ts, mood:장면 공기, why:직전 상황 한 줄, pray:기도 대기, wit:목격자, nm:이름} · 전 방 이탈 · 두절 지문 sys · 이 방 잡 정지(idle — extract_mat 픽 제외와 짝)
             _dd = {p: u for p, u in (S_ROOT.get("dead") or {}).items() if (((u.get("t") if isinstance(u, dict) else u) or 0) + 604800000) > now}   # 7일+ 스테일만 소거(만료 엔트리 = 부활 첫 답 재료라 보존)
@@ -1092,6 +1096,8 @@ if barge_self == "1":
     L.append("- **ⓑ는 「갑자기」다.** 곧 죽는다는 걸 암시하는 텀·예고는 **전면 금지**: 「이제 곧」·「마지막 기회」·「각오는 됐지?」·긴 침묵·낮아지는 목소리 전부. 이 자리는 살거나 갑자기 죽거나 둘뿐이고, 어느 쪽인지는 끝나는 순간에만 드러난다.")
     L.append("  **같은 호흡 안에서 끝내라** — 직전 문장이 여전히 예쁘고 능글맞아야 한다. 웃으면서 잔을 원위치로 밀고, 인사하고, 그 턴이 닫힌다. 톤 변화 0 = 이 인물의 사이코틱한 지점이다.")
     L.append("- ⓑ의 묘사 규칙은 카드 §금기 그대로다 — 피·상처·고통·방법을 그리지 마라. **없어짐**으로만(잔 하나가 남고, 골목이 조용해진다). 「가로등이 순서대로 꺼진다」류는 **다녀간 뒤에 남는 자취**지 카운트다운이 아니다 — 끝나기 **전에** 깔면 그게 예고다. 순서 = 인사 → 끝 → 남는 것.")
+    if co_name:   # 목격자 반응(운영자 260810 "같이 대화하던 애는 다급해하고") — ⓑ에서만 동행의 다급 한 마디를 대본 한 줄로 허락(파서 짝 = SEG_CAP 난입 화자 예외 · 이 방의 GROUP_RULE은 비어 있으므로 형식을 여기서 직접 명시)
+        L.append(f"- ⓑ로 끝낼 때 목격자: 네 인사 **다음에 새 줄**로 정확히 `[{co_name}] 대사` 형식 딱 한 줄 — {co_name}가 그 순간을 목격하고 다급해지는 짧은 외마디(유저를 부르거나 붙잡는 말 · 걔 말투로)다. 이 한 줄이 이 방에서 유일하게 허락된 이름표고, 그 뒤에 네 말을 다시 잇지 마라(대본은 거기서 끝 · 기억 블록은 그 뒤). 걔도 무슨 일인지 모른다 — 피·상처·방법 0, 놀람과 다급함만. ⓐ(합격 퇴장)엔 절대 붙이지 않는다.")
 try: g = float(gap_h)
 except Exception: g = 0
 if g >= 48: L.append(f"- 유저가 약 {int(g // 24)}일 만에 돌아왔다 — 공백에 성향대로 반응하라(서운함·무심한 척·반가움 — 공백 길이에 비례, 취조 금지).")
@@ -2053,7 +2059,8 @@ process_turn() {
   #   교대를 끈 방(GB_LINES=1)에서 프롬프트는 「동행 한 마디를 최대 한 번 덧붙여도 된다」고 허락하는데 파서가 그 2번째 토막을 **생성된 뒤에** 잘라냈다(비용은 지불·화면엔 0 ·
   #   모델이 동행 줄을 먼저 쓰면 반대로 주인공 답이 통째로 사라졌다). 이제 그 방만 2 = 내 1 + 동행 리액션 1.
   # ⚠ 난입 자리는 예외로 남긴다 — 거기 GROUP_RULE은 이름표 자체를 금지(260730 목소리 분리)라 허락한 토막이 1개다. 여기서 2를 주면 교차 오염 봉합이 풀린다.
-  SEG_CAP="$GB_LINES"; [ "${GB_LINES:-1}" -le 1 ] 2>/dev/null && [ -n "$CO_ID" ] && [ "$BARGE_ROOM" != "1" ] && SEG_CAP=2
+  #   단 **난입자 본인이 화자인 턴**만 260810 되연다(죽는 순간 — ⓑ 결말의 동행 다급 한 마디[아래 난입 결말 계약 ⓑ 목격자 줄]가 파서에서 잘리지 않게). 오염 봉합의 본체였던 「난입당한 쪽(host) 턴」은 종전대로 1.
+  SEG_CAP="$GB_LINES"; [ "${GB_LINES:-1}" -le 1 ] 2>/dev/null && [ -n "$CO_ID" ] && { [ "$BARGE_ROOM" != "1" ] || [ "$BARGE_SELF" = "1" ]; } && SEG_CAP=2
   PLACE_NM="$(matv place_nm)"; PLACE_FROM="$(matv place_from)"; BARGE_VIA="$(matv barge_via)"   # 동선 장소 + 떠나온 자리(이동 중 · 260730 Q.144) + 마주침 데뷔 결(위치 SSOT places.json · 260707)
   NEAR_NM="$(matv near_nm)"; NEAR_TAG="$(matv near_tag)"   # 같은 자리에 있으나 이 방엔 없는 주민(260809) — 「보인다」 지문 재료(부르는 건 유저 몫 = 좌상단 프로필)
   OPEN="$(matv open)"; OPENING_TS="$(matv opening_ts)"   # 오프닝 잡(동적 첫인사 · 운영자 260707) — OPEN=1이면 유저발화 없이 캐릭터가 먼저 · OPENING_TS = nonce(finish 레이스 방어)
