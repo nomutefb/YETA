@@ -863,11 +863,6 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ymp-node { fill:rgba(18,18,18,.4); stroke:rgba(255,255,255,.28); stroke-width:1; }
   .ymp-node.zone { fill:rgba(18,18,18,.14); stroke:rgba(255,255,255,.2); stroke-dasharray:3 4; }   /* 야외 배회 구획(운영자 260709) = 은은한 점선 링(워커 시인성 우선) */
   .ymp-node.meet { stroke:var(--accent); stroke-width:1.6; }
-  /* 신당 강조 = 기도를 기다리는 죽은 주민이 있는 동안(운영자 260811) — 색·굵기는 위 .meet **동값** 계승(새 값 0) · .meet(붐빔)과는 다른 축이라 클래스만 분리 */
-  .ymp-node.wait { stroke:var(--accent); stroke-width:1.6; }
-  .ymp-name.wait { fill:var(--accent); }
-  .ymp-ghost { fill:var(--accent); pointer-events:none; animation:ymbob 1.05s ease-in-out infinite; }   /* 둥실 = 워커 스프라이트 ymbob 정본 재사용(새 키프레임 0) */
-  @media (prefers-reduced-motion:reduce) { .ymp-ghost { animation:none; } }   /* 모션 줄이기 = 표식은 남기고 둥실만 생략(.ycrowsit 판단 계승 — 이건 정보다) */
   .ymp-off { fill:rgba(var(--danger-rgb),.08); stroke:rgba(var(--danger-rgb),.55); stroke-dasharray:5 4; stroke-width:1.2; }
   .ymp-offtxt { fill:var(--danger); font-size:8px; font-weight:var(--fw-x); letter-spacing:.14em; }
   .ymp-off, .ymp-offtxt { pointer-events:none; }   /* 출입금지 = places.json 계약 그대로 "지도에 표시만"(동선·마주침·워커 제외) = 핸들러 0인 순수 장식. SVG 기본 visiblePainted라 탭을 삼켰고, 뒤에 그려지는 탓에 260811엔 성당(신당) 노드를 통째로 먹었다 — 장식 판이 진짜 탭 표면을 다시는 못 가리게 못 박는다(좌표가 또 엇나가도 신당은 열린다) */
@@ -2514,9 +2509,6 @@ function ymBuild(svg) {   // 정적 레이어 — 배경(낮/밤 = KST 시각 ·
     S.push(`<text class="ymp-name" id="ymnl-${esc(id)}" x="${zn ? zn.x * YMAP_SC : px(id)}" y="${(zn ? zn.y * YMAP_SC : py(id)) + (zn ? zn.r * YMAP_SC + 9 : 17)}" text-anchor="middle">${esc(p.name)}</text>`);   // id = 실내 뷰 탭 타깃(라벨도 탭 표면 · 260725)
   }
   S.push(`<mask id="ymRoadM" maskUnits="userSpaceOnUse" x="0" y="0" width="500" height="500"><image id="ymRoadImg" href="assets/yeta_map/road_mask_${ymIsDay(yWorldDH().h) ? 'day' : 'night'}.png" x="0" y="0" width="500" height="500"/></mask>`);   // 픽셀 도로 마스크(v5 — 운영자 260716 "픽셀 단위 레이어 분리"): 백색 = 아스팔트. 차 레이어를 이 마스크로 클리핑 = 도로 밖·건물 위 렌더 불가 · 건물이 도로를 덮는 픽셀 = 구멍 = 차가 건물 뒤로 숨음(z)
-  { const zc = YMAP_ZONE[YSHRINE] || { x: (YMAP_POS[YSHRINE] || [72, 30])[0], y: (YMAP_POS[YSHRINE] || [72, 30])[1], r: 1.8 };   // 유령 = 신당 노드 **바로 위**(운영자 260811) — 앵커는 노드와 같은 좌표원을 쓴다(성당이 또 옮겨져도 따라온다 = 388차 어긋남 재발 차단)
-    const gx = zc.x * YMAP_SC, gy = zc.y * YMAP_SC - zc.r * YMAP_SC - 15;
-    S.push(`<g id="ymGhost" class="ymp-ghost" style="display:none" aria-hidden="true"><g transform="translate(${gx - 9.4},${gy - 12}) scale(.78)">${YGHOST_INNER}</g></g>`); }   // scale .78 = 24×26 원도를 19×20으로(워커 스프라이트 22보다 작게 = 사람이 아니라 표식으로 읽히되, 폰 실치수 ~14px는 확보 · .58은 실기기에서 뭉갰다)
   S.push(`<g id="ymLights"></g><g id="ymCars" mask="url(#ymRoadM)"></g><g id="ymWalkers"></g><g id="ymTags"></g>`);   // 태그 = 워커에서 분리(구역 앵커 고정 · 운영자 260709 "이름 태그는 구획 원 위에 지금처럼")
   svg.innerHTML = S.join('');
   for (const pid of [...Object.keys(YIN_PLACES), YSHRINE]) {   // 실내 뷰 개방 장소(260725 시범 = 찻집 '무음') + 신당(260730 성당) — 노드 원 + 이름 라벨 둘 다 탭 표면(작은 원만이면 폰에서 놓침)
@@ -2598,9 +2590,6 @@ async function ymPlaceAll() {   // 현재 시각 실위치 재판정 → 워커 
     ymApplyMode(w);
   }
   for (const id of Object.keys(YMAPD.places)) { const el = document.getElementById('ymn-' + id); if (el) el.classList.toggle('meet', ((byPlace[id] || []).length) >= 2); }
-  { const nw = yShrineWait(), sn = document.getElementById('ymn-' + YSHRINE), sl = document.getElementById('ymnl-' + YSHRINE), gh = document.getElementById('ymGhost');   // 죽은 사람이 기다리는 동안 = 신당 강조 + 유령 표식(운영자 260811) — 종전엔 지도 어디에도 「지금 빌러 갈 데가 있다」 신호가 없어서, 카드를 열어보기 전엔 죽음이 방치됐다
-    if (sn) sn.classList.toggle('wait', nw > 0); if (sl) sl.classList.toggle('wait', nw > 0);   // 강조 = 노드 원 + 이름 라벨 둘 다(탭 표면과 같은 짝 · 작은 원만 물들면 폰에서 놓친다)
-    if (gh) gh.style.display = nw > 0 ? '' : 'none'; }   // 기다리는 사람 0 = 표식 회수(신당이 늘 반짝이면 신호가 아니라 장식이 된다)
   ymZSort();   // 재판정 직후 즉시 정렬(reduce-motion = tick 부재 경로 포함)
 }
 function ymZonePt(zn, avoid) {   // 구역 내 랜덤 지점(균등 원판 — 건물·도로 비침범은 존 반경이 보장 = 실측 공터) + 같은 존 워커와 최소 12px 간격(운영자 260710 "항상 뭉쳐있어" — 9회 시도 · 실패 = 가장 먼 후보 폴백 = 존 포화 시에도 최선 산개)
@@ -4192,13 +4181,6 @@ const YGEM_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14l3
 const YSKULL_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6c-4.3 0-7.8 3.4-7.8 7.5 0 2.3 1.1 4.4 2.8 5.8.26.2.4.52.4.85v1.2c0 .6.5 1.05 1.1 1.05h7c.6 0 1.1-.45 1.1-1.05v-1.2c0-.33.14-.65.4-.85 1.7-1.4 2.8-3.5 2.8-5.8 0-4.1-3.5-7.5-7.8-7.5Z"/><ellipse cx="9.1" cy="10.2" rx="2.1" ry="2.45" fill="#000" fill-opacity=".55"/><ellipse cx="14.9" cy="10.2" rx="2.1" ry="2.45" fill="#000" fill-opacity=".55"/><path d="M12 12.7c.42 0 .8.42.8.94s-.38.94-.8.94-.8-.42-.8-.94.38-.94.8-.94Z" fill="#000" fill-opacity=".55"/></svg>';   // 해골(난입 등급 전용 · 운영자 260726 "해골 모양") — YGEM_SVG와 같은 인라인 상수 결(nm-svg.js 공유 아이콘 아님 = SSOT 게이트 무저촉) · 눈·코 구멍 = currentColor 위 검정 저투명(배지 색 자동 추종)
 const YCROW_SVG = '<svg viewBox="0 0 48 32" aria-hidden="true"><path d="M23.5 16.6c-3.6-4.9-5.9-9.2-6.9-12.9 3 2.2 6.6 6.2 10.8 12z"/><path d="M20.6 21.4c-5.1 1.3-9.2 3.4-12.4 6.3 4.2-.4 8.8-1.8 13.9-4.2z"/><ellipse cx="23.5" cy="20" rx="12.4" ry="4.1" transform="rotate(-13 23.5 20)"/><circle cx="35.4" cy="13.9" r="3.5"/><path d="M38.2 12.1 46.6 9.9 38.6 15.4z"/><path d="M13.2 22.6 2.4 26.9l11.4.6z"/></svg>';   // 까마귀(난입 퇴장 전용 · 운영자 260730 "까마귀 그거 ㄱㄱ") — 위 YSKULL_SVG와 같은 인라인 상수 결(nm-svg.js 공유 아이콘 아님 = SSOT 게이트 무저촉) · 눈 = currentColor 위 검정 저투명(해골 눈구멍 패턴 계승)
 const YCROWSIT_SVG = '<svg viewBox="0 0 36 34" aria-hidden="true"><path d="M9 21.6 1 27.4 10.6 25z"/><ellipse cx="16.6" cy="19.4" rx="8.8" ry="6.2" transform="rotate(-22 16.6 19.4)"/><path d="M12 15c3.4 2.9 7.6 5.1 11 5.6-3.8 2.2-8.6 1-11.9-1.8z"/><circle cx="25.4" cy="9.8" r="4.1"/><path d="M28.6 8.2 35.6 9.6 28.8 12z"/><path d="M15.2 24h1.7v6.6h-1.7zM18.8 24h1.7v6.6h-1.7z"/></svg>';   // 앉은 까마귀(난입 전조 전용 · 운영자 260730) — 꽁지·몸통·접은 날개·머리·부리·다리 6조각 조립(위 YCROW_SVG와 같은 결의 인라인 상수 · 아이콘 SSOT 무저촉). 고개를 든 자세 = "이쪽을 보고 있다"(카드 §겉모습) · 나는 실루엣을 정지시켜 두면 「앉아 있다」로 안 읽힌다(헤드리스 3자세 대조로 고름)
-// 유령(지도 신당 전용 · 운영자 260811 "누가 죽어있을때 신당 이 강조되고 위에 유령표시 나오게") — 위 YSKULL/YCROW와 **같은 인라인 상수 결**(nm-svg.js 공유 아이콘 아님 = SSOT 게이트 무저촉).
-//   조립 = 둥근 머리+몸통 한 덩어리에 아랫단 물결 3산(까마귀가 조각 6개로 실루엣을 만든 방식 그대로) · 눈 = currentColor 위 검정 저투명(해골 눈구멍 패턴 계승 = 색이 바뀌어도 눈이 따라온다).
-const YGHOST_INNER = '<path d="M12 1.8c-4.5 0-8.1 3.6-8.1 8.1v13.9c0 .95 1.1 1.42 1.78.76l1.9-1.86c.5-.49 1.3-.46 1.77.06l1.2 1.34c.53.6 1.47.6 2 0l1.2-1.34c.47-.52 1.27-.55 1.77-.06l1.9 1.86c.68.66 1.78.19 1.78-.76V9.9c0-4.5-3.6-8.1-8.1-8.1Z"/><ellipse cx="9" cy="9.6" rx="1.5" ry="2" fill="#000" fill-opacity=".55"/><ellipse cx="15" cy="9.6" rx="1.5" ry="2" fill="#000" fill-opacity=".55"/>';
-function yShrineWait() {   // 지금 신당의 기도를 기다리는 죽은 주민 수 — 판정 = ySnRender의 `wait`와 **같은 식**(죽어 있고 · 아직 아무도 안 빌어줌)
-  const dd = ((YSESS || {}).dead) || {};
-  return Object.keys(dd).filter(id => yPersona(id) && yDeadT(id) && yDead({ id }) && !yPrayed(id)).length;
-}
 function yCrowSit(om) {   // 전조 국면 동안 까마귀가 화면에 앉아 있다(운영자 260730 한 수 채택 "2턴 동안 화면 어딘가에 계속 앉아 있게 · 저게 아직 있다는 압박")
   const st = document.querySelector('.yeta-stage'); if (!st) return;
   const el = st.querySelector('.ycrowsit');
