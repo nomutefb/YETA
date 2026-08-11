@@ -303,8 +303,8 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   #yetatopblur > div:nth-child(5) { --a:65px; --b:83px; backdrop-filter:blur(calc(var(--blur-m) * .2)); -webkit-backdrop-filter:blur(calc(var(--blur-m) * .2)); }
   #yetatopblur > div.tf-scrim { -webkit-mask-image:none; mask-image:none; background:linear-gradient(to bottom, rgba(0,0,0,.54) calc(24px + env(safe-area-inset-top)), transparent calc(83px + env(safe-area-inset-top))); }   /* 스크림 = 5레이어 위 착색(블러 안 먹음) · 상단 24 솔리드캡 후 페이드 */
   .ymsg { display:flex; gap:8px; align-items:flex-start; max-width:86%; }   /* 캐릭터 메시지 = 아바타+이름+버블(제타 결) */
-  .ymsg .yava, .ymd-kin-b .yava { flex:none; width:32px; height:32px; border-radius:50%; display:grid; place-items:center; font-size:var(--fs-sm); font-weight:var(--fw-x);
-    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); color:var(--yeta-ac); margin-top:2px; }   /* .ymd-kin-b = 사망 창 픽토그램(260811) — 버블 아바타 치수·톤 **동값** 계승(새 값 0) */
+  .ymsg .yava { flex:none; width:32px; height:32px; border-radius:50%; display:grid; place-items:center; font-size:var(--fs-sm); font-weight:var(--fw-x);
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); color:var(--yeta-ac); margin-top:2px; }
   .yava.has-img, .yh-ava.has-img, .ypick-row .yava.has-img { background-size:cover; background-position:center; color:transparent; }   /* GPT 얼굴(yeta_face) = 이미지 채움·이니셜 숨김 · 없으면 이니셜 폴백 */
   .ymsg .ycol { display:flex; flex-direction:column; gap:3px; min-width:0; }
   .ymsg .yname { font-size:var(--fs-xs); color:var(--fg); font-weight:var(--fw-b); padding-left:2px; }   /* 화자 이름 = 흰색 리프트(운영자 260709 "대화창에서도 잘 보이게" — 옛 mut) */
@@ -884,26 +884,6 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ymq-opts .yexit-btn { text-align:left; line-height:1.5; }   /* 미연시 선택지 = 문장이라 좌측 정렬(가운데 정렬은 두 줄에서 계단처럼 어긋난다) */
   .ymd-timer { font-size:var(--fs-h3); font-weight:var(--fw-x); color:var(--accent); text-align:center; font-variant-numeric:tabular-nums; margin:-2px 0 12px; }   /* 부활 카운트다운 — tabular = 숫자 폭 고정(1초마다 흔들리지 않게 · yeta-design 표 정렬 원칙) */
   .ymd-timer.done { color:var(--fg); }
-  /* 「이름을 부를 수 있는 사람」 픽토그램 행(운영자 260811) — 아바타 = yAva 정본 그대로 · 필/무장은 .yinv-go 2탭 관례 계승(새 색·새 부품 0) */
-  .ymd-kin { display:flex; flex-direction:column; align-items:center; gap:7px; margin-top:4px; }
-  .ymd-kin-l { font-size:var(--fs-xs); color:var(--mut); }
-  .ymd-kin-r { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
-  .ymd-kin-b { position:relative; line-height:0; }
-  .ymd-kin-go { margin-top:2px; padding:4px 12px; border-radius:var(--r-pill); background:rgba(var(--accent-rgb),.12); border:1px solid rgba(var(--accent-rgb),.4); color:var(--accent); font-size:var(--fs-xs); font-weight:var(--fw-b); font-family:inherit; cursor:pointer; touch-action:manipulation; }   /* = .yinv-go 필 정본 동값 계승(새 값 0) */
-  .ymd-kin-go:active { transform:scale(var(--press-s,.94)); }
-  /* 선택 박스 = 한 명만 · 올 확률 내림차순(운영자 260811) — 행 골격 = .yexit-btn 계승 · 촤르륵 = .yeta-list ypickIn stagger 정본 재사용(새 커브 0) */
-  .ymd-cand { position:relative; display:flex; align-items:center; gap:10px; text-align:left; }
-  .ymd-cand .yava { flex:none; }
-  .ymd-cand-n { flex:1; }
-  .ymd-cand-p { flex:none; color:var(--accent); font-variant-numeric:tabular-nums; }   /* tabular = % 자릿수 세로 정렬(yeta-design 표 정렬 원칙) */
-  .ymd-cand.armed { border-color:rgba(var(--danger-rgb),.4); }
-  .ymd-cand-say { position:absolute; right:12px; padding:2px 8px; border-radius:var(--r-pill); background:rgba(var(--danger-rgb),.14); border:1px solid rgba(var(--danger-rgb),.4); color:var(--arm); font-size:var(--fs-xs); font-weight:var(--fw-b); line-height:1.5; }
-  .ymd-stagger > button { animation:ypickIn .42s cubic-bezier(.22,.61,.36,1) both; }
-  .ymd-stagger > button:nth-child(1){animation-delay:.02s} .ymd-stagger > button:nth-child(2){animation-delay:.06s}
-  .ymd-stagger > button:nth-child(3){animation-delay:.1s} .ymd-stagger > button:nth-child(4){animation-delay:.14s}
-  .ymd-stagger > button:nth-child(5){animation-delay:.18s} .ymd-stagger > button:nth-child(6){animation-delay:.22s}
-  @media (prefers-reduced-motion:reduce) { .ymd-stagger > button { animation:none; } }
-  .ytdots.ymd-seek { display:inline-flex; vertical-align:middle; margin-left:6px; }   /* 「찾는 중」 점 3개 = 타이핑 정본 .ytdots 재사용(애니·크기 전부 계승) */
   .yexit-btn { flex:1; padding:11px; border-radius:var(--r-pill); font:inherit; font-size:var(--fs-sm); font-weight:var(--fw-b); cursor:pointer; touch-action:manipulation; }
   .yexit-btn:active { transform:scale(var(--press-m,.9)); }
   .yexit-btn.yes { background:var(--glass-2); border:1px solid var(--glass-line); color:var(--fg); }   /* 예 = 뉴트럴 글래스 + 흰(운영자 "너무 안 보여도 안 됨") */
@@ -1137,8 +1117,6 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ycd-cta { position:relative; overflow:hidden; }
   .ycd-cta.go::after { content:''; position:absolute; inset:0; transform-origin:left; transform:scaleX(0); background:rgba(var(--accent-rgb),.3); animation:ycfGauge .38s linear forwards; border-radius:inherit; }   /* 대화 시작 게이지(운영자 260709 — ycfGauge 정본 계승) */
   .ycd-cta.locked, .ycd-cta:disabled { opacity:.5; color:var(--mut); cursor:default; }
-  .ycd-dead-h { margin-top:10px; text-align:center; color:var(--accent); font-size:var(--fs-label); font-weight:var(--fw-x); letter-spacing:.14em; }   /* 「죽음」 단독 표제(운영자 260811) — 강조색·자간 = .ymp-offtxt 표지 결 계승(신규 값 0) */
-  .ycd-dead-warn { margin-top:6px; text-align:center; color:var(--mut); font-size:var(--fs-xs); }   /* 목숨값 경고 = .ycd-desc 부속설명 톤 계승 */
   .ypd-act:disabled { opacity:.5; color:var(--mut); cursor:default; }
   .ypd-act:disabled:active { transform:none; }   /* 사망 = 통화·초대 잠금(위 .ycd-cta:disabled 결 100% 계승 · 눌림도 죽인다 · 260725) */   /* 잠금 캐릭터 = 대화 차단(READ ONLY = 미리보기만 · 운영자 260708) */
   .ycd-cta.locked:active { transform:none; }
@@ -1930,8 +1908,7 @@ document.addEventListener('DOMContentLoaded', () => {   // 팝업 바인딩 — 
     const b = e.target.closest('[data-md]'); if (!b) return;
     const k = b.dataset.md;
     if (k === 'quiz') yMdQuizOpen();
-    else if (k === 'kin') yMdKinOpen();
-    else if (k === 'beg') yMdBegOpen('');
+    else if (k === 'beg') yMdBegOpen();
     else if (k === 'rev') yRevive();
     else if (k === 'reply') yRevive((((YSESS || {}).me_dead || {}).pray || {}).id);
   });
@@ -1945,22 +1922,8 @@ document.addEventListener('DOMContentLoaded', () => {   // 팝업 바인딩 — 
   const mb = document.getElementById('ymdbeg');   // 부탁 대상 고르기(260811) — 닫힘 계약 = #ymdquiz 100% 계승(X·바깥클릭 = 이 창만 접음 · 사망 창은 상주)
   if (mb) {
     mb.addEventListener('click', e => {
-      if (e.target.closest('#ymbX') || !e.target.closest('.yexit-card')) { ySnGameStop(); mb.hidden = true; return; }   // 닫기 = 향불 rAF도 동반 회수(시트 닫힘에 루프 잔류 금지 · yInClose 관례 계승)
-      const b = e.target.closest('[data-mb]'); if (!b) return;
-      const k = b.dataset.mb;
-      if (k === 'x') { mb.hidden = true; yMeDeadPaint(); return; }
-      if (k === 'rev') { mb.hidden = true; yRevive(); return; }
-      if (k === 'self') { ySnGame('', 'ymdbeg', true); return; }   // 혼령 자가 향불 = 기존 게임 한 벌 그대로(박스만 사망 창으로)
-      if (k.startsWith('call:')) {   // 선택 박스에서 한 명 = 그 이름을 부른다(2탭 확정 = 그 사람 목숨이 걸린다)
-        if (!b.classList.contains('armed')) {
-          mb.querySelectorAll('.ymd-cand.armed').forEach(x => { x.classList.remove('armed'); const s = x.querySelector('.ymd-cand-say'); if (s) s.remove(); });
-          b.classList.add('armed'); b.insertAdjacentHTML('beforeend', `<span class="ymd-cand-say">나 살려줘</span>`);
-          setTimeout(() => { if (b.classList.contains('armed')) { b.classList.remove('armed'); const s = b.querySelector('.ymd-cand-say'); if (s) s.remove(); } }, 3200);   // 무장 해제 = .yinv-go armed 관례 계승
-          return;
-        }
-        document.getElementById('ymbOpts').classList.remove('ymd-stagger');
-        yMdBegOpen(k.slice(5)); return;
-      }
+      if (e.target.closest('#ymbX') || !e.target.closest('.yexit-card')) { mb.hidden = true; return; }
+      const b = e.target.closest('[data-mb]'); if (b) yMdBegSend(b.dataset.mb);
     });
   }
 });
@@ -2349,8 +2312,9 @@ function ySnRender() {
   const dd = ((YSESS || {}).dead) || {};
   const ids = Object.keys(dd).filter(id => yPersona(id) && yDeadT(id));
   const wait = ids.filter(id => yDead({ id }) && !yPrayed(id));   // 아직 아무도 안 빌어준 죽은 주민 = 기도 대상
+  const lock = ySnLockLeft();   // 3연속 실패 잠금(운영자 260730) — 잠긴 동안엔 [빌어주기] 자체를 안 그린다(서버가 또 막지만, 누를 수 있는 버튼을 두는 게 더 나쁘다)
   const rows = ids.map(id => {
-    const c = yPersona(id), pray = wait.includes(id);   // 260811 벌칙 개정 — 종전 「3연속 실패 = 24h 신당 잠금」 축(ySnLockLeft) 폐지. 이제 실패의 벌은 잠금이 아니라 **비는 자의 죽음**(op pray)이라, 신당은 언제나 열려 있다.
+    const c = yPersona(id), pray = !lock && wait.includes(id);
     const sub = pray ? `부활까지 무음동 ${yWDur(yDeadT(id) - Date.now())}` : (yDead({ id }) ? `${yPrayBy(id) || '누군가'}의 기도가 닿았어` : '성당 앞뜰에서 눈을 뜨는 중');   // 죽은 시각·경과는 인물 카드(yDeadInfo)가 이미 전담 — 여기 한 줄에 3칸을 우겨넣으면 말줄임(실측 199>197px)
     return `<div class="ypick-row ydead">${yAva(c)}<span class="yp-col"><span class="yp-name">${esc(c.name || '')}</span><span class="yp-tag">${esc(sub)}</span></span>${pray ? `<button type="button" class="yinv-go" data-pray="${esc(id)}">빌어주기</button>` : ''}</div>`;   // 행 = 초대 팝업 정본(div + 내부 필 · 중첩 버튼 금지 · armed 2탭) · 채색 소거 = .ydead 계승
   }).join('');
@@ -2358,28 +2322,28 @@ function ySnRender() {
     + `<div class="yin-ttl"><b>신당</b><i>${wait.length ? `${wait.length}명이 기다려` : '기다리는 사람 없음'}</i></div>`
     + (info.look ? `<div class="yin-look">${esc(String(info.look).split(' — ')[0])}</div>` : '')
     + (rows || `<div class="yin-empty">지금 무음동엔 죽은 사람이 없다.</div>`)
-    + `<div class="yinv-note">빌려면 <b>향불 세 번</b>을 연속으로 맞혀야 해 — <span class="ysng-lock">한 번이라도 빗나가면 그 자리에서 <b>네가 죽는다</b>.</span><br>무음동의 신당은 비는 자가 목숨을 거는 자리야.</div>`;   // 힌트 = 초대 팝업 .yinv-note 결 계승 · 벌칙 개정(운영자 260811 "실패하면 본인이 죽는거로 컨셉바꾸자") — 종전 「3연속 실패 = 하루 잠금」 문구 폐기
+    + (lock ? `<div class="yinv-note"><span class="ysng-lock">신당이 닫혔다 — 무음동 ${esc(yWDur(lock))} 뒤에 다시 올 수 있어.</span><br>세 번 다 빗나갔으니 이 죽음은 네 손을 떠났다.</div>`
+            : `<div class="yinv-note">빌려면 <b>향불 세 번</b>을 연속으로 맞혀야 해 — 한 번이라도 빗나가면 거기서 끝이고, <b>세 번 실패하면 하루 동안 신당이 닫힌다</b>.</div>`);   // 힌트 = 초대 팝업 .yinv-note 결 계승
   box.hidden = false;
 }
 // ── 향불 타이밍 링(운영자 260730 "미니 게임 만들어서 그 안에서 이겨야 · 난이도 조금 어렵게 · 3연속 실패 시 도전 불가 24시간 뒤 가능")
 //   규칙 = 도는 표식이 향불 자리(강조색 호)를 지날 때 탭. **3연속** 성공해야 기도가 닿는다. 한 번이라도 빗나가면 그 도전은 거기서 끝(실패 1건).
 //   난이도 = 회전이 빨라지고 향불 자리가 좁아진다(허용 오차 ±50ms → ±27ms → ±16ms 실측 환산). 판정·잠금의 진짜 게이트는 **서버 op pray**(뷰어는 표시만 — 새로고침 우회 차단).
 const YSNG_R = [{ v: .95, w: 34 }, { v: 1.25, w: 24 }, { v: 1.55, w: 18 }];   // v = 회전/초 · w = 향불 자리 폭(도). 3라운드 = 운영자 "3연속"
-let _ysng = null;   // {id, i, hits, ang, tgt, raf, last, done, self}
-let _ysngBox = 'yin';   // 향불 링을 그릴 칸 — 'yin' = 지도 신당 시트(주민을 위해 빌 때) · 'ymdbeg' = 사망 창(운영자 260811 "찾다가 실패하면 자체적으로 미니 게임해서 깨면 부활하게" · 죽은 유저는 지도에 못 간다). 게임 코드는 한 벌 그대로 = 새 부품 0
+let _ysng = null;   // {id, i, hits, ang, tgt, raf, last, done}
+function ySnLockLeft() { const u = ((YSESS || {}).pray_fail || {}).until || 0; return u > Date.now() ? u - Date.now() : 0; }   // 신당 잠금 잔여(서버 박제 pray_fail.until · 유저 단위 = 신당 자체가 닫힌다)
 function ySnGameStop() { if (_ysng && _ysng.raf) cancelAnimationFrame(_ysng.raf); _ysng = null; }
-function ySnGame(id, boxId, self) {
-  _ysngBox = boxId || 'yin';
-  const box = document.getElementById(_ysngBox), c = self ? { name: '' } : yPersona(id); if (!box || !c) return;
+function ySnGame(id) {
+  const box = document.getElementById('yin'), c = yPersona(id); if (!box || !c) return;
   ySnGameStop();
-  _ysng = { id, i: 0, hits: 0, ang: 0, tgt: Math.random() * 360, raf: 0, last: 0, done: 0, self: !!self };
+  _ysng = { id, i: 0, hits: 0, ang: 0, tgt: Math.random() * 360, raf: 0, last: 0, done: 0 };
   const pips = () => `<div class="ysng-pip">${YSNG_R.map((_, k) => `<i class="${k < _ysng.hits ? 'on' : ''}"></i>`).join('')}</div>`;
   box.innerHTML = `<div class="ysng">`
     + `<svg class="ysng-ring" id="ysngRing" viewBox="0 0 100 100" role="button" tabindex="0" aria-label="향불 자리를 지날 때 탭">`
     +   `<circle class="trk" cx="50" cy="50" r="40"/><path class="tgt" id="ysngTgt"/><circle class="mk" id="ysngMk" cx="50" cy="10" r="4.6"/></svg>`
     + pips()
     + `<div class="ysng-t" id="ysngT">향불 자리를 지날 때 탭 — <b>세 번 연속</b></div>`
-    + `<div class="ysng-s">${self ? '혼령이 스스로 향불을 사르는 중 · 한 번이라도 빗나가면 거기서 끝' : `${esc(c.name || '')}을(를) 위해 비는 중 · 빗나가면 <b>네가 대신 간다</b>`}</div>`
+    + `<div class="ysng-s">${esc(c.name || '')}을(를) 위해 비는 중 · 한 번이라도 빗나가면 거기서 끝</div>`
     + `</div>`;
   box.hidden = false;
   const ring = document.getElementById('ysngRing');
@@ -2412,38 +2376,23 @@ function ySnTap() {
   if (d > R.w / 2) { _ysng.done = 1; if (ring) ring.classList.add('miss'); ySnFinish(false); return; }
   _ysng.hits++;
   if (ring) { ring.classList.add('hit'); setTimeout(() => ring.classList.remove('hit'), 220); }
-  const pip = document.querySelectorAll('#'+_ysngBox+' .ysng-pip i')[_ysng.hits - 1]; if (pip) pip.classList.add('on');
+  const pip = document.querySelectorAll('#yin .ysng-pip i')[_ysng.hits - 1]; if (pip) pip.classList.add('on');
   if (_ysng.hits >= YSNG_R.length) { _ysng.done = 1; ySnFinish(true); return; }
   _ysng.i++; _ysng.tgt = Math.random() * 360; _ysng.ang = (_ysng.tgt + 180) % 360;   // 다음 라운드 = 향불 반대편에서 재출발(탭 직후 우연 적중 차단)
   ySnRoundPaint();
   const t = document.getElementById('ysngT'); if (t) t.innerHTML = `<b>${_ysng.hits}</b>번 닿았어 — 남은 <b>${YSNG_R.length - _ysng.hits}</b>번, 더 빨라진다`;
 }
 async function ySnFinish(win) {
-  const id = _ysng.id, c = yPersona(id) || {}, self = !!_ysng.self;
+  const id = _ysng.id, c = yPersona(id) || {};
   if (_ysng.raf) cancelAnimationFrame(_ysng.raf);
   const t = document.getElementById('ysngT');
-  if (t) t.innerHTML = win ? '향이 끝까지 탔어 — <b>기도가 닿는다</b>' : (self ? '향이 꺼졌다 — <b>아직 돌아갈 수 없다</b>' : '향이 꺼졌다 — <b>네가 대신 간다</b>');
-  if (self) {   // 혼령 자가 향불(운영자 260811) — 이미 죽어 있으니 더 잃을 목숨이 없다(실패 = 재도전 쿨다운뿐) · 부활 게이트는 기존 op revive 그대로
-    const rs = await yApi('prayself', { res: win ? 'win' : 'lose' }).catch(() => null);
-    ySnGameStop();
-    if (rs && rs.sess) YSESS = rs.sess;
-    if (rs && rs.wait) { miniToast(`향이 아직 식지 않았어 — ${Math.ceil(rs.wait / 60)}분 뒤에 다시`); }
-    else if (win) miniToast('향이 끝까지 탔어 — 돌아갈 수 있다');
-    else miniToast('향이 꺼졌어 — 잠시 뒤에 다시 사를 수 있어');
-    document.getElementById('ymdbeg').hidden = true;
-    yMeDeadPaint();   // 사망 상주 창으로 복귀 = 성공했으면 「눈을 뜬다」가 그 자리에 떠 있다
-    return;
-  }
+  if (t) t.innerHTML = win ? '향이 끝까지 탔어 — <b>기도가 닿는다</b>' : '향이 꺼졌다 — <b>빗나갔어</b>';
   const r = await yApi('pray', { persona: id, res: win ? 'win' : 'lose' }).catch(() => null);
   ySnGameStop();
   if (r && r.sess) YSESS = r.sess;
-  if (r && r.died) {   // 향불을 놓쳤다 = **내가 죽는다**(운영자 260811 · 서버 op pray가 me_dead 박제) — 신당 시트를 접고 기존 사망 국면에 그대로 넘긴다(핏빛·암전·상주 창 = 재사용)
-    navBack('yin'); yListRender();
-    setTimeout(() => { try { yMeDeadCheck(); } catch {} }, 240);   // 시트 회수 뒤 사망 시퀀스 = 두 레이어가 겹쳐 뜨지 않게
-    return;
-  }
+  if (r && r.locked) { miniToast('세 번 다 빗나갔어 — 신당이 닫혔다'); ySnRender(); ymPlaceAll(); return; }   // 잠금 = 목록 대신 잠금 안내(ySnRender가 판정)
   if (r && r.ok && win) { miniToast(`${c.name || ''}이(가) 성당 앞뜰에서 눈을 떴어`); }
-  else if (r && r.error) miniToast(r.error);
+  else if (r && r.lost) miniToast(`빗나갔어 — 남은 기회 ${r.left}번`);
   else if (!r || !r.ok) miniToast('기도가 닿지 않았어 — 잠시 후 다시');
   ySnRender(); ymPlaceAll(); yListRender();
 }
@@ -2454,10 +2403,10 @@ document.addEventListener('click', e => {   // 위임 1핸들러(개별 배선 �
   if (go) { if (go.dataset.yinUm) { miniToast('아직 만나지 못한 사람이야'); return; } navBack('yin'); openYeta(go.dataset.yinGo); return; }   // 260804: 직접 닫기 → 레이어 회수(고아 칸 0)
   const pb = e.target.closest('.yinv-go[data-pray]');
   if (pb && !pb.disabled) {   // 신당 기도(260730) — 2탭 재확인 = 초대 필 armed 정본 100% 계승 · 확정 = 부활이 아니라 **향불 게임 진입**(운영자 260730 "그 안에서 이겨야")
-    if ((YSESS || {}).me_dead) { miniToast('너는 지금 빌 수 있는 몸이 아니야'); return; }   // 죽은 사람이 남을 위해 빌 수는 없다(서버 op pray와 같은 식 · 뷰어는 헛발 차단만)
+    if (ySnLockLeft()) { miniToast(`신당이 닫혔어 — 무음동 ${yWDur(ySnLockLeft())} 뒤에`); return; }
     if (!pb.classList.contains('armed')) {
       document.querySelectorAll('#yin .yinv-go[data-pray]').forEach(x => { x.classList.remove('armed'); x.textContent = '빌어주기'; x.removeAttribute('aria-label'); });
-      pb.classList.add('armed'); pb.textContent = '목숨을 걸고?'; pb.setAttribute('aria-label', '한 번 더 누르면 향불을 올린다 — 빗나가면 네가 죽는다'); return;   // 2탭 문구 = 목숨값 고지(운영자 260811)
+      pb.classList.add('armed'); pb.textContent = '간절히?'; pb.setAttribute('aria-label', '한 번 더 누르면 향불을 올린다'); return;
     }
     pb.disabled = true;
     const c = yPersona(pb.dataset.pray); if (!c) return;
@@ -3222,13 +3171,9 @@ function yShowDetail(id) {   // 캐릭터 세부 디테일 — 대형 아바타�
     + (c.video ? `<video class="ycd-video" src="${esc(c.video)}"${c.video_poster ? ` poster="${esc(c.video_poster)}"` : ''} muted loop playsinline autoplay preload="metadata"></video>` : '')
     + yDeadInfo(c.id)   // 죽음 프로세스 줄(운영자 260725) — 죽음/부활 대기/귀환 3상태 공용 · 해당 없으면 빈 문자열 · 육각 위 = 부활 조건 CTA 바로 앞
     + yHexSvg(c.stats, true, yStatBoost(c))
-    + (yDead(c)   // 사망 = 「죽음」 한 줄(강조색·가운데 단독) + 실제로 갈 수 있는 버튼 + 목숨값 경고(운영자 260811 "죽음 을따로 가운데 정렬 혼자 있게 하고(강조색) · 신당가서 부활 빌어주기 · (실패 시 본인이 사망할 수 있음)")
-        ? `<div class="ycd-dead-h">죽음</div>`   // 종전엔 이 자리에 비활성 회색 알약 한 덩어리("죽음 — 누가 신당에서 빌어주면…")뿐이라, 안내는 있고 **갈 길이 없었다**
-          + `<button type="button" class="ycd-cta" data-shrine="${esc(c.id)}">신당가서 부활 빌어주기</button>`
-          + `<div class="ycd-dead-warn">(실패 시 본인이 사망할 수 있음)</div>`
-        : (yLockLabel(c) || um || yEstranged(c)
-        ? `<button type="button" class="ycd-cta locked" disabled>${c.grade === 'barge' ? '부를 수 없는 사람 — 저녁이 오면 저쪽이 먼저 찾아온다' : um ? '아직 만나지 못했어 — 골목 어딘가에서 마주치면 열려' : yEstranged(c) ? '한동안 뜸했어 — 다시 마주치면 이어져' : yLockLabel(c) === '아직 모르는 인물' ? '아직 대화할 수 없어' : '아직 열리지 않은 인물'}</button>`
-        : `<button type="button" class="ycd-cta" data-id="${esc(c.id)}">대화 시작</button>`))
+    + (yLockLabel(c) || um || yEstranged(c) || yDead(c)
+        ? `<button type="button" class="ycd-cta locked" disabled>${yDead(c) ? '죽음 — 누가 신당에서 빌어주면 바로, 아니면 시간이 다 흘러야 돌아와' : c.grade === 'barge' ? '부를 수 없는 사람 — 저녁이 오면 저쪽이 먼저 찾아온다' : um ? '아직 만나지 못했어 — 골목 어딘가에서 마주치면 열려' : yEstranged(c) ? '한동안 뜸했어 — 다시 마주치면 이어져' : yLockLabel(c) === '아직 모르는 인물' ? '아직 대화할 수 없어' : '아직 열리지 않은 인물'}</button>`
+        : `<button type="button" class="ycd-cta" data-id="${esc(c.id)}">대화 시작</button>`)
     + (c.phone ? `<button type="button" class="ycd-sub" data-vcf="${esc(c.id)}" aria-label="연락처 등록" title="연락처 등록 — 전화 올 때 사진·이름이 뜨게"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg></button>` : '');   // 글자 → 픽토그램-온리(운영자 260709 — 헤더서 옮겨온 그 자리 픽토 재사용 · 라벨 = aria/title)
   $('#ycdCard').classList.toggle('ydead', !!yDead(c));   // 사망 = 카드 프사도 채색 소거(목록 행·캐릭터 탭과 같은 톤 · 260725)
   $('#ycdGear').dataset.set = c.id;   // ⚙ = 헤더 행 상주 버튼(카드 재주입 아님) — 대상 캐릭터만 갱신
@@ -3858,9 +3803,6 @@ $('#ycdCard').addEventListener('click', e => {
     return;
   }
   const b = e.target.closest('.ycd-cta'); if (!b || b.disabled || b.classList.contains('go')) return;
-  if (b.dataset.shrine) {   // 죽음 카드 → 신당 직행(운영자 260811) — 종전엔 "누가 신당에서 빌어주면 돌아와"라고 **안내만** 하고 갈 길이 없어서, 지도 탭에서 언덕 위 성당을 스스로 찾아내야 했다
-    navBack('ycdetail'); yTab('map'); setTimeout(() => yInOpen(YSHRINE), 260); return;   // 260ms = 탭 전환 페이드(.ypickIn .3s)와 겹치지 않게 = 시트가 전환 도중 뜨지 않는다
-  }
   b.classList.add('go');   // 게이지 차오르는 액티브(운영자 260709 "로딩 픽토가 게이지바에 쭉 뜨면서 열리는 느낌") — .38s 후 줌 전환
   setTimeout(() => { navSwap('ycdetail', 'ydlg', yDlgClose); openYeta(b.dataset.id, true); }, 380); });   // 디테일→챗 = 레이어 교체(history 칸 재사용 · 뒤로 = 대화목록 복귀)
 async function openYeta(charId, _noNav) {
@@ -5271,20 +5213,17 @@ function yMeDeadPaint() {   // 사망 상주 창(운영자 260725 "메인 대화
   const btn = [];
   if (pr) btn.push(`<button type="button" class="yexit-btn no" data-md="reply">돌아가서 답한다</button>`);
   else if (ok) btn.push(`<button type="button" class="yexit-btn no" data-md="rev">눈을 뜬다</button>`);
-  if (!pr && !ok) {   // 「비는 이를 찾는다」(운영자 260811 "카카오택시 부르는것 처럼") — 죽은 채로 유저가 유일하게 할 수 있는 능동 행동(이미 눈을 뜰 수 있으면 부를 이유가 없다 = 미표시)
-    const bg = md.beg, gone = bg && Date.now() - (bg.at || 0) < YMD_BEG_COOL_MS;   // 재호출 잠금(서버 429와 같은 값·같은 식) — 연타로 주민을 연쇄 사망시키는 것도 이 값이 막는다
+  if (!pr && !ok) {   // 부탁 보내기(운영자 260811) — 죽은 채로 유저가 유일하게 할 수 있는 능동 행동. 종전엔 타이머만 보며 기다리는 것 말곤 손댈 게 없었다(이미 눈을 뜰 수 있으면 부탁할 이유가 없다 = 미표시)
+    const bg = md.beg, gone = bg && Date.now() - (bg.at || 0) < YMD_BEG_COOL_MS;   // 부탁이 가는 중 = 재발신 잠금(서버 429와 같은 값·같은 식)
+    const bnm = gone && bg.id ? ((yPersona(bg.id) || {}).name || '') : '';
     btn.push(gone
-      ? `<button type="button" class="yexit-btn no" disabled>무음동이 아직 조용하다 — ${yMdClock(YMD_BEG_COOL_MS - (Date.now() - (bg.at || 0)))}</button>`
-      : `<button type="button" class="yexit-btn no" data-md="beg">빌어줄 이를 찾는다</button>`);
+      ? `<button type="button" class="yexit-btn no" disabled>${bnm ? esc(bnm) + '에게' : '누군가에게'} 부탁이 가는 중…</button>`
+      : `<button type="button" class="yexit-btn no" data-md="beg">신당에 빌어달라고 부탁한다</button>`);
   }
   const qleft = yMdQuizLeft(md);
-  if (!ok && qleft) btn.push(`<button type="button" class="yexit-btn yes" data-md="quiz">부활 시간 줄이기 (${qleft})</button>`);   // 260811: 퀴즈가 없을 때 뜨던 비활성 「기억이 아직 흐릿하다…」·「더 떠올릴 게 없다」 폐기 — 눌러도 아무 일이 없는 버튼은 자리만 먹는다(운영자 "어짜피 눌러도 없지않아?")
-  if (!pr && !ok) {   // 친밀도 상위 · 살아 있는 사람 = 픽토그램 행(운영자 260811 "친밀도가 높은 인물이 있을 경우(살아있을 경우) 픽토그램 눌러서 누르면 버튼식으로 나와서 나 살려줘")
-    const kin = yMdKin();   // 「찾기」는 누가 올지 모르지만, 아는 얼굴에겐 **이름을 불러** 직접 청할 수 있다(대신 그 사람 목숨이 걸린다 = 무게가 다르다)
-    if (kin.length) btn.push(`<div class="ymd-kin"><span class="ymd-kin-l">이름을 부를 수 있는 사람</span><span class="ymd-kin-r">`
-      + kin.map(k => `<span class="ymd-kin-b">${yAva(yPersona(k.id) || { id: k.id })}</span>`).join('')
-      + `</span><button type="button" class="ymd-kin-go" data-md="kin">이름을 불러본다</button></div>`);   // 탭 → 선택 박스 촤르륵(한 명만)
-  }
+  if (!ok && qleft) btn.push(`<button type="button" class="yexit-btn yes" data-md="quiz">부활 시간 줄이기 (${qleft})</button>`);
+  else if (!ok && !((md.quiz || []).length)) btn.push(`<button type="button" class="yexit-btn yes" disabled>기억이 아직 흐릿하다…</button>`);
+  else if (!ok) btn.push(`<button type="button" class="yexit-btn yes" disabled>더 떠올릴 게 없다</button>`);
   const html = tm + btn.join('');
   if (BT._h !== html) { BT.innerHTML = html; BT._h = html; BT.className = 'yexit-btns ymd-col'; }   // 버튼 구성이 그대로면 타이머만 갱신(1초마다 DOM 통짜 교체 = 눌림 씹힘)
   else { const el = document.getElementById('ymdTimer'); if (el) { el.textContent = ok ? '지금 돌아갈 수 있다' : yMdClock(left); el.classList.toggle('done', ok); } }
@@ -5329,70 +5268,36 @@ async function yMdQuizPick(i) {
 // 종전 = 유저가 죽으면 손댈 게 없었다(챗 입력 차단 + 타이머 응시). 살아날 길은 크론이 **사망 60분 뒤** 제멋대로 뽑은 한 명이거나 무음동 48h 대기뿐.
 // 지금 = 그 크론을 「지금 · 내가 고른 사람으로」 당긴다(op praybeg). 부활 파이프·기도 프롬프트는 종전 그대로 — 트리거만 유저 손에 쥐어준 것.
 // 후보 = **만난 사람 중 살아 있는 사람**(러너 추첨 후보 조건과 같은 식 · 최종 판정은 서버 단독). 맨 위 「아무나」 = 서버 위임 = 종전 가중 추첨(기도 인연 > 성향 > 관계).
-function yMdKin() {   // 이름을 부를 수 있는 사람 = 만난 적 있고 · 살아 있고 · 내가 말을 많이 쏟은 순 상위 4(픽토그램 행 재료 · 최종 자격 판정은 서버 단독)
+function yMdBegCands() {
   const th = (YSESS || {}).threads || {};
-  return Object.keys(th).filter(p => !p.startsWith('g') && !yDead({ id: p }) && yPersona(p)
-      && ((th[p] || {}).turns || []).some(x => x && x.role === 'user'))
-    .map(p => ({ id: p, n: ((th[p] || {}).turns || []).filter(x => x && x.role === 'user').length }))
-    .sort((a, b) => b.n - a.n).slice(0, 4);
+  return Object.keys(th).filter(p => !p.startsWith('g')                                   // 단톡 방 = 사람이 아님
+    && ((th[p] || {}).turns || []).some(x => x && x.role === 'user')                      // 만난 적 없는 사람은 나를 위해 빌러 가지 않는다
+    && !yDead({ id: p }))                                                                  // 죽어 있는 사람은 못 빈다(yDead = 사망 락 판정 정본 · 인자 = {id} 객체)
+    .map(p => ({ id: p, name: (yPersona(p) || {}).name || p }));
 }
-// ── 「비는 이를 찾는다」(운영자 260811 "카카오택시 부르는것 처럼 · 혼령이 되어 나의 소생을 비는 이를 찾습니다") ──
-//   호출 → 찾는 중 → 결과 3갈래. 판정은 전부 서버(op praybeg) — 뷰어는 **호출 화면과 결과 표시만** 한다.
-//   ⓐ 아무도 안 옴(대개) → 「혼령이 스스로 향불을 사른다」 = 기존 향불 게임 그대로(_ysngBox='ymdbeg')
-//   ⓑ 왔고 향불 성공 → 돌아갈 수 있다 · ⓒ 왔고 향불 실패 → **그 사람이 죽는다**(신당은 비는 자가 목숨을 거는 자리)
-const YMD_SEEK_MS = 2200;   // 최소 체류 = 「찾는 중」이 눈에 남는 시간(서버가 즉답해도 점 3개가 한 번은 도는 길이 · 택시 호출 결)
-// 이름 부르기 = 선택 박스 촤르륵(운영자 260811 "클릭하면 촤르륵 선택박스로 나오게하고 > 한명만 선택가능하게 · 올 확률이 높은 순도 보여주고").
-//   ⚠️ % = **서버가 내려준 값**(op praycands) — 뷰어가 같은 공식을 다시 짜면 화면의 숫자와 실제 굴림이 조용히 갈라진다(확률 SSOT = 게이트웨이 prayCands 한 곳).
-async function yMdKinOpen() {
-  const box = document.getElementById('ymdbeg'), T = document.getElementById('ymbT'), B = document.getElementById('ymbB'), O = document.getElementById('ymbOpts');
-  if (!box || !T || !B || !O) return;
-  T.textContent = '이름을 부른다'; B.innerHTML = `누가 와줄지 헤아리는 중…<span class="ytdots ymd-seek"><i></i><i></i><i></i></span>`; B.hidden = false; O.innerHTML = ''; box.hidden = false;
-  const r = await yApi('praycands').catch(() => null);
-  const cs = ((r && r.cands) || []).filter(c => yPersona(c.id));
-  if (!cs.length) { T.textContent = '부를 이름이 없다'; B.textContent = '아직 아무도 만나지 못했거나, 아는 사람이 전부 죽어 있다.'; O.innerHTML = `<button type="button" class="yexit-btn yes" data-mb="x">닫는다</button>`; return; }
-  B.innerHTML = `한 사람만 부를 수 있다. <b>%</b>는 그 사람이 목숨을 걸고 와줄 확률 — 친밀도·성향·신당까지의 거리로 갈린다.`;
-  O.innerHTML = cs.map(c => { const p = yPersona(c.id) || {};
-    return `<button type="button" class="yexit-btn no ymd-cand" data-mb="call:${esc(c.id)}">${yAva(p)}<span class="ymd-cand-n">${esc(p.name || c.id)}</span><span class="ymd-cand-p">${c.p}%</span></button>`;
-  }).join('');
-  O.classList.add('ymd-stagger');   // 촤르륵 = .yeta-list ypickIn stagger 정본 계승(새 커브·새 값 0)
-}
-function yMdBegOpen(id) {
-  const box = document.getElementById('ymdbeg'), T = document.getElementById('ymbT'), B = document.getElementById('ymbB'), O = document.getElementById('ymbOpts');
-  if (!box || !T || !B || !O) return;
-  const nm = id ? ((yPersona(id) || {}).name || '') : '';
-  T.textContent = '혼령이 되어';
-  B.innerHTML = `${nm ? `${esc(nm)}${yJosa(nm, '이', '가')} 들어줄까 — ` : ''}나의 소생을 비는 이를 찾습니다…<span class="ytdots ymd-seek"><i></i><i></i><i></i></span>`;   // 점 3개 = 타이핑 정본(.ytdots) 계승 = 새 부품 0
+function yMdBegOpen() {
+  const box = document.getElementById('ymdbeg'), B = document.getElementById('ymbB'), O = document.getElementById('ymbOpts');
+  if (!box || !B || !O) return;
+  const cs = yMdBegCands();
+  B.textContent = cs.length
+    ? '북동쪽 언덕 신당까지 찾아가 빌어줄 사람을 고른다. 부탁은 한 번에 한 사람에게만 닿는다.'
+    : '부탁할 사람이 없다 — 아직 아무도 만나지 못했거나, 아는 사람이 전부 죽어 있다.';
   B.hidden = false;
-  O.innerHTML = '';
+  O.innerHTML = (cs.length ? [`<button type="button" class="yexit-btn no" data-mb="">아무나 — 닿는 사람이 간다</button>`] : [])
+    .concat(cs.map(c => `<button type="button" class="yexit-btn yes" data-mb="${esc(c.id)}">${esc(c.name)}</button>`)).join('');
   box.hidden = false;
-  yMdBegSend(id);
 }
 async function yMdBegSend(id) {
-  const t0 = Date.now();
+  document.getElementById('ymdbeg').hidden = true;
+  const nm = id ? ((yPersona(id) || {}).name || '') : '';
   const r = await yApi('praybeg', id ? { persona: id } : {}).catch(() => null);
-  await new Promise(z => setTimeout(z, Math.max(0, YMD_SEEK_MS - (Date.now() - t0))));   // 즉답이어도 최소 체류 — 결과가 번쩍 튀면 「찾았다」는 실감이 안 난다
   if (r && r.sess) YSESS = r.sess;
-  const T = document.getElementById('ymbT'), B = document.getElementById('ymbB'), O = document.getElementById('ymbOpts');
-  const close = `<button type="button" class="yexit-btn yes" data-mb="x">닫는다</button>`;
-  const fin = (title, body, btns) => { if (!T || !B || !O) return; T.textContent = title; B.innerHTML = body; O.innerHTML = btns; yMeDeadPaint(); };
-  if (!r || (!r.ok && !r.wait)) { fin('닿지 않았다', '무음동이 대답하지 않는다 — 잠시 뒤에 다시 불러봐.', close); return; }
-  if (r.wait) { fin('아직은 아니다', `방금 부른 소리가 아직 언덕을 넘는 중이야 — <b>${Math.ceil(r.wait / 60)}분</b> 뒤에 다시 부를 수 있어.`, close); return; }
-  if (r.error) { fin('부를 수 없다', esc(r.error), close); return; }
-  if (r.noop) { fin('이미 닿았다', '그새 누군가 너를 위해 빌어줬어.', close); return; }
-  if (r.none) { fin('아무도 없다', '아직 아무도 만나지 못했거나, 아는 사람이 전부 죽어 있다.', close); return; }
-  const nm = r.nm || (yPersona(r.id) || {}).name || '누군가';
-  if (!r.came) {   // ⓐ 대개 여기 — 목숨값 때문에 아무도 나서지 않는다. 그래서 마지막 수단이 내 손에 남는다
-    fin('아무도 오지 않았다', '신당은 비는 자가 목숨을 거는 자리다. 오늘 밤엔 누구도 그 값을 치르려 하지 않았다.',
-      `<button type="button" class="yexit-btn no" data-mb="self">혼령이 스스로 향불을 사른다</button>` + close);
-    return;
-  }
-  if (r.saved) {   // ⓑ 살아서 끝까지 향을 태웠다
-    fin(`${nm}${yJosa(nm, '이', '가')} 신당에 올랐다`, `향불이 끝까지 탔다. 이제 돌아갈 수 있다.`,
-      `<button type="button" class="yexit-btn no" data-mb="rev">눈을 뜬다</button>`);
-    return;
-  }
-  fin('향불이 꺼졌다', `향불을 피우다 구하러 온 <b>${esc(nm)}</b>${yJosa(nm, '이', '가')} 죽었습니다.<br><br>네 이름을 부르며 올라간 사람이 대신 갔다. 무음동의 규칙은 아무도 봐주지 않는다.`, close);   // ⓒ 운영자 260811 문안 그대로
-  yListRender();
+  yMeDeadPaint();
+  if (!r) { miniToast('부탁이 닿지 않았어 — 잠시 후 다시'); return; }
+  if (r.wait) { miniToast(`이미 부탁이 가는 중이야 — ${Math.ceil(r.wait / 60)}분 뒤에 다시`); return; }   // 서버 429(BEG_COOL_MS) = 남은 초 · 문구 정본 = 뷰어
+  if (r.error) { miniToast(r.error); return; }
+  if (r.noop) return;   // 그새 누가 빌어줬거나 이미 살아남 = 화면만 갱신(에러 아님)
+  miniToast(nm ? `${nm}${yJosa(nm, '이', '가')} 신당으로 향한다.` : '누군가 신당으로 향한다.');
 }
 async function yRevive(replyTo) {   // 부활 = 서버 me_dead 해제 단일 경로(op revive) · 실패해도 로컬 해제 후 다음 폴이 서버 진실로 재동기(죽은 채 갇힘 차단)
   yConfirmClose(); yMeDeadClose();
