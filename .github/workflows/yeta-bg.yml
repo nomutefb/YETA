@@ -45,15 +45,30 @@ jobs:
 
       - name: roster 커밋 (rebase 재시도 = yeta-face 패턴)
         run: |
+          # 산출은 **디스패치한 그 ref**로(260812 평의회 — run#7 유실과 완전히 동일한 조건이 여기 남아 있었다:
+          #   origin/main 하드코딩 + checkout fetch-depth 기본 1(shallow) = 브랜치 dispatch 시 공통조상 없음 → rebase 5회 전패).
+          BR="${GITHUB_REF_NAME}"
           git config user.name "yeta-bot"
           git config user.email "bot@nomute.local"
           # ⚠️ pathspec 분리 필수 — 한 add에 없는 경로 섞이면 git add 전체 무스테이징(전례)
-          git add apps/yeta/characters/roster.json
           git add viewer/assets/yeta_bg 2>/dev/null || true
+          git add apps/yeta/characters/roster.json 2>/dev/null || true
           git commit -m "yeta: 무대 배경 생성 → roster bg 주입" || { echo "커밋할 것 없음"; exit 0; }
           pushed=0
           for i in 1 2 3 4 5; do
-            if git fetch origin main && git rebase origin/main && git push origin HEAD:main; then pushed=1; break; fi
+            if git fetch origin "$BR" && git rebase "origin/$BR" && git push origin "HEAD:$BR"; then pushed=1; break; fi
             git rebase --abort 2>/dev/null || true; sleep $((i*3))
           done
-          [ "$pushed" = 1 ] || { echo "::error::push 5회 실패"; exit 1; }
+          [ "$pushed" = 1 ] || { echo "::error::push 5회 실패 — ${BR} 전진 과다 · 생성물 소실 방지 = 아래 아티팩트에서 받아 수동 커밋"; exit 1; }
+
+      # ⚠️ 260812 평의회 — 커밋이 실패하면 **이미 과금된 산출물이 러너와 함께 사라진다**(run#7 실측).
+      #    push 전패든 취소든 여기서 한 벌 건져 두면 운영자가 받아 수동 커밋할 수 있다. 정본 = yeta-char-board.yml.
+      #    조건에 cancelled() 를 포함하는 건 yeta-chat.yml 실측 계승 — 취소·잡 타임아웃은 failure()가 false라 백업이 조용히 스킵된다.
+      - name: 실패 시 산출물 보존 (과금분 소실 방지)
+        if: ${{ failure() || cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: yeta-bg-out
+          path: viewer/assets/yeta_bg/
+          retention-days: 7
+          if-no-files-found: ignore

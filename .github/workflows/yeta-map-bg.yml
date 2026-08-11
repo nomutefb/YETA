@@ -76,6 +76,19 @@ jobs:
           git commit -m "무음동 지도 에셋 생성 — yeta-map-bg 수동 dispatch (${BR})"
           for i in 1 2 3 4 5; do
             git pull --rebase origin "$BR" && git push origin "HEAD:$BR" && exit 0
+            git rebase --abort 2>/dev/null || true   # ⚠ 없으면 1회차 충돌이 워크트리에 unmerged 를 남겨 2~5회차가 착수도 못 하고 같은 이유로 죽는다(run#7 "5회 전부 unmerged files" 실측) · 정본 = yeta-char-board.yml
             echo "push 재시도 ${i}/5 …"; sleep $((i*5))
           done
           echo "::error::push 5회 실패 — ${BR} 전진 과다"; exit 1
+
+      # ⚠️ 260812 평의회 — 커밋이 실패하면 **이미 과금된 산출물이 러너와 함께 사라진다**(run#7 실측).
+      #    push 전패든 취소든 여기서 한 벌 건져 두면 운영자가 받아 수동 커밋할 수 있다. 정본 = yeta-char-board.yml.
+      #    조건에 cancelled() 를 포함하는 건 yeta-chat.yml 실측 계승 — 취소·잡 타임아웃은 failure()가 false라 백업이 조용히 스킵된다.
+      - name: 실패 시 산출물 보존 (과금분 소실 방지)
+        if: ${{ failure() || cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: yeta-map-bg-out
+          path: viewer/assets/yeta_map/
+          retention-days: 7
+          if-no-files-found: ignore

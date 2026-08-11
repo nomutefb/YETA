@@ -30,7 +30,12 @@ jobs:
       # ⚠️ 260726 실측: 이 스텝이 없어서 mudi 3씬이 png만 커밋되고 webp가 조용히 생략됐다(뷰어는 .webp만 참조 = 그대로면 안 보임).
       # yeta-char-art.yml의 동일 스텝 계승 — bg_var.webp()가 shutil.which("ffmpeg") 없으면 비치명 스킵이라 실패 신호도 안 뜬다.
       - name: ffmpeg (webp 사본 변환 — 러너 기본 이미지에 없음)
-        run: sudo apt-get install -y -qq ffmpeg >/dev/null 2>&1 || echo "ffmpeg 미설치 — png 원본만(뷰어 참조 불가 · 수동 변환 필요)"
+        run: timeout 180 sudo apt-get install -y -qq ffmpeg >/dev/null 2>&1 || echo "설치 실패/시간초과 — ffmpeg 미설치 — png 원본만(뷰어 참조 불가 · 수동 변환 필요)"
+
+      # 장소 씬 시트(2×6=12칸)를 칸으로 자를 때 필요 — shared/cut_board_sheet.py 가 Pillow 의존(yeta-map-bg.yml 동일 스텝 계승).
+      # 없으면 시트만 뽑히고 자르기는 비치명 스킵(뷰어는 씬 없는 종전 모습으로 정상 동작).
+      - name: pillow (시트 자르기)
+        run: python3 -m pip install --quiet --break-system-packages pillow 2>/dev/null || echo "pillow 미설치 — 시트 자르기 생략(시트 원본은 커밋됨)"
 
       - name: 배경 배리에이션 생성
         env:
@@ -42,14 +47,32 @@ jobs:
 
       - name: 커밋 (신규 있을 때만)
         run: |
+          # 산출은 **디스패치한 그 ref**로 되돌린다(260811 · yeta-map-bg.yml 395차 수정 계승).
+          # ⚠️ 종전 `origin/main` 하드코딩으로 실제로 한 번 태웠다(run#7): 브랜치에서 돌리면 shallow 체크아웃(fetch-depth 1)에
+          #    main과의 공통조상이 없어 rebase가 충돌로 깨지고, **유료로 뽑은 시트가 커밋되지 못한 채 증발**했다.
+          #    main에서 돌리면 BR=main = 종전과 동일 동작이므로 잃는 것 없이 안전해진다.
+          BR="${GITHUB_REF_NAME}"
           git config user.name "yeta-bg-var[bot]"
           git config user.email "actions@users.noreply.github.com"
           git add viewer/assets/yeta_bg/ 2>/dev/null || true
           git diff --cached --quiet && { echo "신규 없음 — 커밋 생략"; exit 0; }
-          git commit -m "무음동 배경 배리에이션 생성 — yeta-bg-var 수동 dispatch"
-          # 장시간 런 중 main 전진 대비 — pull --rebase 후 push 재시도(run#2 rejected 재발 방지 · 신규 파일뿐이라 충돌 없음)
+          git commit -m "무음동 배경 생성 — yeta-bg-var 수동 dispatch (${BR})"
+          # 장시간 런 중 브랜치 전진 대비 — pull --rebase 후 push 재시도(신규 파일뿐이라 충돌 없음)
           for i in 1 2 3 4 5; do
-            git pull --rebase origin main && git push && exit 0
+            git pull --rebase origin "$BR" && git push origin "HEAD:$BR" && exit 0
+            git rebase --abort 2>/dev/null || true   # ⚠ 없으면 1회차 충돌이 워크트리에 unmerged 를 남겨 2~5회차가 착수도 못 하고 같은 이유로 죽는다(run#7 "5회 전부 unmerged files" 실측) · 정본 = yeta-char-board.yml
             echo "push 재시도 ${i}/5 …"; sleep $((i*5))
           done
-          echo "::error::push 5회 실패 — main 전진 과다"; exit 1
+          echo "::error::push 5회 실패 — ${BR} 전진 과다"; exit 1
+
+      # ⚠️ 260812 평의회 — 커밋이 실패하면 **이미 과금된 산출물이 러너와 함께 사라진다**(run#7 실측).
+      #    push 전패든 취소든 여기서 한 벌 건져 두면 운영자가 받아 수동 커밋할 수 있다. 정본 = yeta-char-board.yml.
+      #    조건에 cancelled() 를 포함하는 건 yeta-chat.yml 실측 계승 — 취소·잡 타임아웃은 failure()가 false라 백업이 조용히 스킵된다.
+      - name: 실패 시 산출물 보존 (과금분 소실 방지)
+        if: ${{ failure() || cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: yeta-bg-var-out
+          path: viewer/assets/yeta_bg/
+          retention-days: 7
+          if-no-files-found: ignore

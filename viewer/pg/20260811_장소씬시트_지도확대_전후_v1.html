@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>장소 씬 = 한 도화지 12칸 + 지도 확대 (398차)</title>
+<style>
+  /* 자기완결 1파일(스킬 §플그 규약) — `../tokens.css`를 링크하면 파일만 따로 열 때 토큰이 통째로 무효가 된다.
+     값 원본 = viewer/index.html :root(= viewer/tokens.css 거울). 아래는 그 사본. */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --accent:#CFFF40; --accent-rgb:207,255,64;
+    --think:#3EE0C8; --think-rgb:62,224,200; --danger:#ff5b4a; --danger-rgb:255,91,74; --arm:#ffb4a8;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+    --r-s:9px; --r-m:11px; --r-l:16px; --r-modal:22px; --r-pill:999px;
+    --sp-2:12px; --sp-3:18px; --btn:34px;
+    --fs-h2:15px; --fs-h3:14px; --fs-body:15px; --fs-label:13px; --fs-sm:12px; --fs-xs:11px; --fs-meta:8.25px;
+    --fw-x:800; --fw-b:700; --lh-base:1.6; --ease:cubic-bezier(.2,.7,.3,1);
+    --blur-m:14px;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .lead b { color:var(--fg-2); font-weight:var(--fw-b); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px; }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  @media (max-width:820px) { .pair { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .cap .val { font-size:var(--fs-xs); color:var(--fg-2); }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); }
+  td.v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); }
+  td.gone { color:var(--danger); }
+  td.keep { color:var(--fg-2); }
+
+  /* ── 지도 프레임 = viewer/index.html `.ymap-frame` 정본 사본(값 창작 0) ── */
+  .ymap-frame { border:1px solid var(--glass-line); border-radius:var(--r-l); background:var(--glass); overflow:hidden;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .ymap-frame svg { display:block; width:100%; height:auto; touch-action:pan-y; transform-origin:0 0; }
+  .ymap-frame.ymz svg { touch-action:none; }
+  .ymap-frame.ymz { cursor:grab; }
+  .ymap-frame.ymz.grabbing { cursor:grabbing; }
+  .ymp-tag rect { fill:rgba(18,18,18,.8); stroke:rgba(255,255,255,.22); stroke-width:.6; }
+  .ymp-tag text { fill:var(--fg); font-size:8px; font-weight:var(--fw-b); paint-order:stroke; stroke:rgba(18,18,18,.92); stroke-width:2px; }
+  .ymp-name { fill:var(--fg-2); font-size:9px; font-weight:var(--fw-b); paint-order:stroke; stroke:rgba(18,18,18,.85); stroke-width:2.6px; }
+  .frmeta { display:flex; justify-content:space-between; gap:8px; font-size:var(--fs-xs); color:var(--mut); margin-top:6px; }
+  .frmeta b { color:var(--accent); font-weight:var(--fw-b); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+
+  /* ── 실내 시트 = viewer/index.html `.yin-*` 정본 사본 ── */
+  .yin { background:rgba(22,23,22,.92); border:1px solid var(--glass-line); border-radius:var(--r-l); padding:10px; max-width:360px; }
+  .yin-bg { display:block; width:100%; height:130px; object-fit:cover; border-radius:var(--r-m); }
+  .yin-ttl { display:flex; align-items:baseline; gap:6px; padding:var(--sp-2) 8px 6px; }
+  .yin-ttl b { font-size:var(--fs-h3); font-weight:var(--fw-x); }
+  .yin-ttl i { font-style:normal; font-size:var(--fs-xs); color:var(--mut); }
+  .yin-look { font-size:var(--fs-xs); color:var(--mut); line-height:var(--lh-base); padding:0 8px 8px; }
+  .ypick-row { display:flex; align-items:center; gap:10px; width:100%; padding:8px; border:0; background:transparent; color:var(--fg); text-align:left; border-radius:var(--r-m); }
+  .ypick-row .av { width:26px; height:26px; border-radius:var(--r-pill); background:rgba(var(--accent-rgb),.16); border:1px solid var(--glass-line); flex:none; }
+  .yp-col { display:flex; flex-direction:column; min-width:0; }
+  .yp-name { font-size:var(--fs-label); font-weight:var(--fw-b); }
+  .yp-tag { font-size:var(--fs-xs); color:var(--mut); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .noimg { height:130px; border-radius:var(--r-m); border:1px dashed var(--glass-line); display:flex; align-items:center; justify-content:center; font-size:var(--fs-xs); color:var(--mut); }
+  .noimg[hidden] { display:none; }   /* ⚠ 위 display:flex 가 브라우저 기본 [hidden]{display:none} 을 이긴다(작성자 CSS > UA) — 안 막으면 그림이 떠도 「대기」 안내가 같이 남는다. 뷰어 `.ypickbar[hidden]`·`.yeta-in[hidden]` 선례 그대로 계승 */
+
+  /* ── 도화지 도해(2×6) ── */
+  .sheet { background:#F6F2EA; border-radius:var(--r-m); padding:16px; display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .cell { position:relative; aspect-ratio:2/1; border:1px solid #D2CDC4; border-radius:3px; overflow:hidden; background:#20221f; display:flex; align-items:flex-end; }
+  .cell img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .cell .lbl { position:relative; z-index:1; width:100%; padding:4px 6px; font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.06em; color:var(--fg); background:linear-gradient(transparent, rgba(0,0,0,.72)); }
+  .cell.waiting { background:repeating-linear-gradient(135deg,#23251f,#23251f 6px,#1d1f1a 6px,#1d1f1a 12px); }
+  .sheetwrap { max-width:430px; }
+  .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; font-size:var(--fs-xs); color:var(--mut); }
+  @media (max-width:820px) { .steps { grid-template-columns:1fr; } }
+  .steps .st { border:1px solid var(--glass-line); border-radius:var(--r-m); padding:10px 12px; }
+  .steps .st b { display:block; color:var(--fg-2); font-size:var(--fs-label); font-weight:var(--fw-b); margin-bottom:3px; }
+</style>
+</head>
+<body>
+<div class="pg">
+
+  <h1>장소 씬 = 한 도화지 12칸 + 지도 확대 <span style="color:var(--mut);font-weight:400">(398차 · 운영자 260811)</span></h1>
+  <p class="lead">운영자 ① <b>“각 장소 클릭하면 나오는 이미지 — 한 컷에 여러 분할로 소스 뽑아서 잘라서 넣어줘 · 프롬프트 1개로 1개 도화지”</b> ② <b>“지도 확대하는 모션 pc든 모바일이든 · 단 지금의 크기 안에서 지도만 확대되는거”</b></p>
+
+  <!-- ══════════ §1 지도 확대 ══════════ -->
+  <div class="sect">
+    <h2>§1. 지도 확대 — 프레임은 그대로, 안의 지도만 (실제로 만져지는 비교)</h2>
+    <div class="pair">
+      <div>
+        <div class="cap"><span class="bdg before">BEFORE</span><span class="val">휠·핀치·더블탭 = 아무 일도 안 일어남</span></div>
+        <div class="ymap-frame" id="frB"><svg viewBox="0 0 500 500" aria-label="확대 전 지도"></svg></div>
+        <div class="frmeta"><span>프레임 <b id="szB">–</b></span><span>배율 <b>1.00×</b> 고정</span></div>
+      </div>
+      <div>
+        <div class="cap"><span class="bdg after">AFTER</span><span class="val">휠 / 두 손가락 / 두 번 탭 — 확대 중 끌어서 이동</span></div>
+        <div class="ymap-frame" id="frA"><svg viewBox="0 0 500 500" aria-label="확대 후 지도"></svg></div>
+        <div class="frmeta"><span>프레임 <b id="szA">–</b> <span id="same" style="color:var(--accent)"></span></span><span>배율 <b id="kA">1.00×</b></span></div>
+      </div>
+    </div>
+    <p class="note">두 프레임의 실측 치수가 <b style="color:var(--accent)">같아야</b> 운영자 요구(“지금의 크기 안에서”)를 지킨 것 — 위 <code>프레임</code> 값이 그 실측이다. 확대해도 <code>.ymap-frame</code>·탭 레이아웃은 1px도 안 움직이고, 넘치는 지도는 프레임이 이미 갖고 있던 <code>overflow:hidden</code>이 자른다.</p>
+    <div class="grp" style="margin-top:12px">
+      <table>
+        <tr><th style="width:16%">축</th><th style="width:34%">BEFORE</th><th>AFTER</th></tr>
+        <tr><td>배율</td><td class="v gone">1× 고정</td><td class="v">1×~<b style="color:var(--accent)">4×</b> · 두 번 탭 = 2.2× ↔ 1×</td></tr>
+        <tr><td>PC</td><td class="v gone">없음</td><td class="v">휠 — <b>커서 아래 지점을 붙잡고</b> 확대(중앙 고정이면 보려던 데가 밀려난다)</td></tr>
+        <tr><td>모바일</td><td class="v gone">브라우저가 앱 전체를 확대</td><td class="v">두 손가락 — <b>손가락 한가운데</b> 고정 · <code>touch-action</code>으로 브라우저 핀치는 끔</td></tr>
+        <tr><td>이동</td><td class="v gone">없음</td><td class="v">확대 중 드래그 패닝 · 가장자리 물림(프레임 안에 지도 밖 허공이 안 생김)</td></tr>
+        <tr><td>1배일 때</td><td class="v keep">세로 스크롤</td><td class="v keep">세로 스크롤 <b>그대로</b>(<code>pan-y</code>) = 종전 조작감 무변</td></tr>
+        <tr><td>탭·끌기 구분</td><td class="v keep">탭만 있음</td><td class="v">8px 넘게 끌면 그 손뗌은 <b>탭이 아님</b>(끌다 놓은 자리의 주민이 열리던 것 차단)</td></tr>
+        <tr><td>구현</td><td class="v">–</td><td class="v"><code>style.transform</code> 한 줄(합성) — <b>viewBox 아님</b>. viewBox는 레이아웃이라 매 프레임 지도 전체를 다시 그린다(워커 17명 rAF와 같은 프레임에서 경합)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════ §2 장소 씬 ══════════ -->
+  <div class="sect">
+    <h2>§2. 장소를 탭하면 나오는 그림 — 종전엔 <span style="color:var(--danger)">찻집 한 곳뿐</span>이었다</h2>
+    <div class="pair">
+      <div>
+        <div class="cap"><span class="bdg before">BEFORE</span><span class="val">시장·놀이터·학교… 10곳 = 그림 없이 명단만</span></div>
+        <div class="yin">
+          <div class="noimg">— 씬 없음 (<code>YIN_PLACES</code>에 없는 장소) —</div>
+          <div class="yin-ttl"><b>시장</b><i>지금 3명</i></div>
+          <div class="yin-look">색색 천막 노점이 줄지은 재래시장 골목</div>
+          <div class="ypick-row"><span class="av"></span><span class="yp-col"><span class="yp-name">최산</span><span class="yp-tag">무음동 골목의 해결사</span></span></div>
+          <div class="ypick-row"><span class="av"></span><span class="yp-col"><span class="yp-name">하서연</span><span class="yp-tag">낮에는 선생, 밤에는…</span></span></div>
+        </div>
+      </div>
+      <div>
+        <div class="cap"><span class="bdg after">AFTER</span><span class="val">탭되는 장소 <b>전부</b> 그 안의 그림이 뜬다</span></div>
+        <div class="yin">
+          <img class="yin-bg" id="afterBg" src="../assets/yeta_bg/var_place_market.webp" alt="시장 안">
+          <div class="noimg" id="afterNo" hidden>— 시트 생성 대기(<code>yeta-bg-var</code> dispatch 후 이 자리에 실물 컷) —</div>
+          <div class="yin-ttl"><b>시장</b><i>지금 3명</i></div>
+          <div class="yin-look">색색 천막 노점이 줄지은 재래시장 골목</div>
+          <div class="ypick-row"><span class="av"></span><span class="yp-col"><span class="yp-name">최산</span><span class="yp-tag">무음동 골목의 해결사</span></span></div>
+          <div class="ypick-row"><span class="av"></span><span class="yp-col"><span class="yp-name">하서연</span><span class="yp-tag">낮에는 선생, 밤에는…</span></span></div>
+        </div>
+      </div>
+    </div>
+    <p class="note">표면·행·아바타 부품은 <code>.yeta-pick</code>/<code>.ypick-row</code> 정본 그대로 — 바뀐 건 <b>맨 위 그림 띠 하나</b>(<code>.yin-bg</code> 130px)가 생겼다는 것뿐이다. 새 부품 0.</p>
+  </div>
+
+  <!-- ══════════ §3 도화지 ══════════ -->
+  <div class="sect">
+    <h2>§3. 왜 한 도화지인가 — 프롬프트 1개 · 호출 1회 · 12칸</h2>
+    <div class="pair">
+      <div class="sheetwrap">
+        <div class="sheet" id="sheet"></div>
+        <p class="note">위가 실제 산출 배치다(2열 × 6행 = 12칸 · 각 칸 약 2:1). 칸이 아직 회색 빗금이면 그 컷이 아직 안 왔다는 뜻 — 시트가 커밋되면 이 자리에 실물이 뜬다.</p>
+      </div>
+      <div>
+        <div class="steps">
+          <div class="st"><b>① 한 장으로 그린다</b>따뜻한 오프화이트 종이 + 얇은 구분선 + 고른 거터 — 캐릭터 보드 시트와 <b>같은 규약</b>(정본 §2 SHEET LAYOUT)</div>
+          <div class="st"><b>② 종이색으로 자른다</b><code>shared/cut_board_sheet.py</code> 그대로 계승. 격자 좌표를 지어내지 않고 <b>종이색 거터를 실측</b>해 칸을 찾는다 — 새 커터 0</div>
+          <div class="st"><b>③ 이름은 위치로</b>그림 안에 글자를 안 넣는다. 좌→우·위→아래 순서가 곧 장소 순서(<code>PLACE_CUTS</code>)</div>
+        </div>
+        <div class="grp" style="margin-top:12px">
+          <table>
+            <tr><th style="width:30%">축</th><th style="width:32%">낱장 12번</th><th>한 도화지 1번 <span class="bdg after" style="margin-left:4px">채택</span></th></tr>
+            <tr><td>API 호출</td><td class="v gone">12회</td><td class="v"><b style="color:var(--accent)">1회</b></td></tr>
+            <tr><td>팔레트·광원·붓</td><td class="v gone">매번 갈림 = 12개의 딴 밤</td><td class="v">한 벌 = <b>같은 동네의 하룻밤</b></td></tr>
+            <tr><td>칸 해상도</td><td class="v keep">1024×1536</td><td class="v keep">약 450×219 (표시 = 130px 띠 → 충분)</td></tr>
+            <tr><td>격자가 어긋나면</td><td class="v">–</td><td class="v"><b>자르지 않고 멈춘다</b> — 찻집 자리에 체육관이 박히느니 시트만 남긴다</td></tr>
+            <tr><td>재실행</td><td class="v">이미 있으면 skip</td><td class="v">칸이 다 있으면 <b>무과금 skip</b> · 시트만 있으면 자르기만</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ §4 배선 ══════════ -->
+  <div class="sect">
+    <h2>§4. 배선 — <code>YIN_PLACES</code> 표 한 줄씩(코드 무수정 확장 규약 유지)</h2>
+    <div class="grp">
+      <table id="wire">
+        <tr><th style="width:16%">장소</th><th style="width:26%">BEFORE 씬</th><th style="width:30%">AFTER 씬</th><th>비고</th></tr>
+      </table>
+      <p class="note">성당만 <code>YIN_PLACES</code>가 아니라 <code>YSN_SCENE</code>이 쓴다 — 성당 탭은 실내 뷰가 아니라 <b>신당</b>(<code>ySnRender</code>)으로 갈라지기 때문. 종전엔 전용 성당 그림이 없어 <code>moon_stairs</code>(달빛 계단)를 대역으로 쓰고 있었고, 코드 주석이 “생기면 이 한 값만 교체”라고 예고해 둔 자리다.</p>
+    </div>
+  </div>
+
+  <p class="note" style="margin-top:var(--sp-3)">검증: <code>python3 shared/check_refs.py</code> rc=0 · 인라인 스크립트 문법 0실패 · 합성 시트로 자르기 실측(2×6=12칸 · 450×219) · 산출 = <code>viewer/index.html</code> · <code>.github/scripts/yeta_bg_var.py</code> · <code>.github/workflows/yeta-bg-var.yml</code></p>
+</div>
+
+<script>
+// ══════════ 지도 그리기(도해용 최소판 — 배경 + 이름표 몇 개 · 실제 지도는 viewer/index.html ymBuild) ══════════
+const TAGS = [['찻집', 30, 52], ['골목', 50, 50], ['편의점', 50, 63], ['시장', 35, 71], ['놀이터', 46, 84], ['학교', 65, 75], ['성당', 72, 30], ['라디오', 50, 14]];
+function paint(sel) {
+  const svg = document.querySelector(sel + ' svg');
+  svg.innerHTML = `<image href="../assets/yeta_map/map_night.png" x="0" y="0" width="500" height="500" preserveAspectRatio="xMidYMid slice"/>`
+    + TAGS.map(([nm, x, y]) => {
+        const w = nm.length * 9 + 10;
+        return `<g class="ymp-tag" transform="translate(${x * 5},${y * 5})"><rect x="${-w / 2}" y="-13" width="${w}" height="13" rx="6.5"/><text x="0" y="-3.4" text-anchor="middle">${nm}</text></g>`;
+      }).join('');
+}
+paint('#frB'); paint('#frA');
+
+// ══════════ 확대 = viewer/index.html 의 ymz* 정본 사본(값·수식 동일) ══════════
+const YMZ = { k: 1, x: 0, y: 0, pinch: 0 }, YMZ_MAX = 4, YMZ_DBL = 2.2;
+function ymzApply() {
+  const svg = document.querySelector('#frA svg'), fr = svg.parentElement;
+  const w = fr.clientWidth, h = fr.clientHeight;
+  YMZ.x = Math.min(0, Math.max(w - w * YMZ.k, YMZ.x));
+  YMZ.y = Math.min(0, Math.max(h - h * YMZ.k, YMZ.y));
+  svg.style.transform = YMZ.k === 1 ? '' : `translate(${YMZ.x}px,${YMZ.y}px) scale(${YMZ.k})`;
+  fr.classList.toggle('ymz', YMZ.k > 1);
+  document.getElementById('kA').textContent = YMZ.k.toFixed(2) + '×';
+  size();
+}
+function ymzTo(k, ax, ay) {
+  const k2 = Math.max(1, Math.min(YMZ_MAX, k)), r = k2 / YMZ.k;
+  YMZ.x = ax - (ax - YMZ.x) * r; YMZ.y = ay - (ay - YMZ.y) * r; YMZ.k = k2;
+  ymzApply();
+}
+function ymzD(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
+(function ymzInit() {
+  const fr = document.getElementById('frA');
+  const at = e => { const r = fr.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  fr.addEventListener('wheel', e => { e.preventDefault(); const [x, y] = at(e); ymzTo(YMZ.k * Math.exp(-e.deltaY / 1000), x, y); }, { passive: false });
+  fr.addEventListener('dblclick', e => { e.preventDefault(); const [x, y] = at(e); if (YMZ.k > 1) { YMZ.k = 1; YMZ.x = YMZ.y = 0; ymzApply(); } else ymzTo(YMZ_DBL, x, y); });
+  let px = 0, py = 0, moved = 0, drag = 0;
+  fr.addEventListener('pointerdown', e => { if (YMZ.k <= 1 || YMZ.pinch) return; drag = 1; moved = 0; px = e.clientX; py = e.clientY; try { fr.setPointerCapture(e.pointerId); } catch {} fr.classList.add('grabbing'); });
+  fr.addEventListener('pointermove', e => { if (!drag) return; const dx = e.clientX - px, dy = e.clientY - py; px = e.clientX; py = e.clientY; moved += Math.abs(dx) + Math.abs(dy); YMZ.x += dx; YMZ.y += dy; ymzApply(); });
+  const up = () => { drag = 0; fr.classList.remove('grabbing'); };
+  fr.addEventListener('pointerup', up); fr.addEventListener('pointercancel', up);
+  let d0 = 0, k0 = 1;
+  fr.addEventListener('touchstart', e => { if (e.touches.length !== 2) return; YMZ.pinch = 1; drag = 0; d0 = ymzD(e.touches); k0 = YMZ.k; }, { passive: true });
+  fr.addEventListener('touchmove', e => {
+    if (e.touches.length !== 2 || !d0) return;
+    e.preventDefault();
+    const r = fr.getBoundingClientRect(), t = e.touches;
+    ymzTo(k0 * ymzD(t) / d0, (t[0].clientX + t[1].clientX) / 2 - r.left, (t[0].clientY + t[1].clientY) / 2 - r.top);
+  }, { passive: false });
+  const tend = e => { if (e.touches.length < 2) { d0 = 0; setTimeout(() => { YMZ.pinch = 0; }, 60); } };
+  fr.addEventListener('touchend', tend); fr.addEventListener('touchcancel', tend);
+})();
+
+// 프레임 실측 — “지금의 크기 안에서”가 지켜졌는지 눈으로 확인시키는 값(확대해도 이 숫자는 안 변해야 한다)
+function size() {
+  const b = document.getElementById('frB').getBoundingClientRect(), a = document.getElementById('frA').getBoundingClientRect();
+  const f = r => `${Math.round(r.width)}×${Math.round(r.height)}`;
+  document.getElementById('szB').textContent = f(b);
+  document.getElementById('szA').textContent = f(a);
+  document.getElementById('same').textContent = (Math.round(b.width) === Math.round(a.width) && Math.round(b.height) === Math.round(a.height)) ? '= BEFORE와 동일' : '⚠ 다름';
+}
+addEventListener('resize', size); addEventListener('load', size); size();
+
+// ══════════ 도화지 도해 + 배선 표 = PLACE_CUTS / YIN_PLACES 정본 순서 사본 ══════════
+const CUTS = [
+  ['tea', '찻집 무음', 'tea_sunset', 'YIN_PLACES'], ['alley', '골목', '—', 'YIN_PLACES'],
+  ['store', '편의점', '—', 'YIN_PLACES'], ['market', '시장', '—', 'YIN_PLACES'],
+  ['park', '놀이터', '—', 'YIN_PLACES'], ['school', '학교', '—', 'YIN_PLACES'],
+  ['dojo', '검도장 월광', '—', 'YIN_PLACES'], ['gym', '체육관 강철', '—', 'YIN_PLACES'],
+  ['studio', '지하 연습실', '—', 'YIN_PLACES'], ['office', '3층 편집국', '—', 'YIN_PLACES'],
+  ['radio', '라디오국', '—', 'YIN_PLACES'], ['cathedral', '성당(신당)', 'moon_stairs', 'YSN_SCENE'],
+];
+document.getElementById('sheet').innerHTML = CUTS.map(([id, nm]) =>
+  `<div class="cell waiting"><img src="../assets/yeta_bg/var_place_${id}.webp" alt="${nm}" onerror="this.remove()" onload="this.parentElement.classList.remove('waiting')"><span class="lbl">${nm}</span></div>`).join('');
+document.getElementById('wire').insertAdjacentHTML('beforeend', CUTS.map(([id, nm, before, via]) =>
+  `<tr><td>${nm}</td><td class="v ${before === '—' ? 'gone' : 'keep'}">${before === '—' ? '없음 — 명단만' : 'var_' + before}</td><td class="v"><b style="color:var(--accent)">var_place_${id}</b></td><td class="v">${via}${before === 'tea_sunset' ? ' · 종전 시범 1곳' : (before === 'moon_stairs' ? ' · 대역 회수' : '')}</td></tr>`).join(''));
+
+// 실물 컷이 아직이면 AFTER 시트의 그림 띠를 안내로 바꾼다(뷰어 yInBgFix 와 같은 처방)
+document.getElementById('afterBg').addEventListener('error', function () { this.remove(); document.getElementById('afterNo').hidden = false; }, { once: true });
+</script>
+</body>
+</html>
