@@ -15,7 +15,6 @@ v1.15.2류 사본 드리프트(파일 rename 후 참조 미갱신·파일명↔�
 사용: python3 shared/check_refs.py   (레포 어디서 실행해도 됨)
 """
 
-import hashlib
 import os
 import re
 import sys
@@ -1193,6 +1192,13 @@ def check_lucy_killswitch():
     return rc
 
 
+# 지도 배경↔도로 좌표 짝 게이트(check_map_bg_pair · 260716~260811) = **철거**.
+# 사유: 게이트가 지키던 대상(YMAP_ROADS_TONE 도로 좌표 · road_mask_*.png · YMAP_FG 가림체)이 260811 지도 재건으로 전부 사라졌다.
+#   그 축들은 「생성 이미지 위에 손으로 좌표를 그려 넣는」 구조라 배경을 다시 구울 때마다 침묵 실효했고, v4→v5→v7 재실측을 반복해도 수렴하지 못했다
+#   (운영자 260811 "차량 통제 맨날 개선하는데 개선이 한번도 안 됨 · 이상하게 날아다니는 벌레같은 거" = 도로를 벗어나 건물·언덕 위를 떠다니던 .ymp-car 24대).
+#   지금 지도가 배경에서 읽는 값은 0 = 배경을 재생성해도 실효할 좌표 자체가 없다 → 지킬 짝이 없어 게이트도 함께 내린다.
+
+
 def check_shrine_hop():
     """신당 거리 짝 게이트(260811 Q.173): 게이트웨이 SHRINE_HOP(거처→성당 홉)은 places.json neighbors 그래프의 **파생값**이다.
     동선표가 바뀌면 이 표가 침묵 실효해 「누가 빌러 오는가」 확률이 슬그머니 틀어진다 → BFS 재계산과 불일치면 커밋 차단."""
@@ -1221,31 +1227,6 @@ def check_shrine_hop():
     except Exception as e:
         print('⚠️ 신당 거리 짝 게이트 스킵:', e)
     return 0
-
-
-def check_map_bg_pair():
-    """지도 배경↔도로 좌표 짝 하드 게이트(운영자 260716 Q.08 평의회9 — "고쳐도 그대로" 반복 절단): map_*.png 재생성 시 YMAP_ROADS_TONE 좌표가 침묵 실효하던 구멍 봉합. 배경 sha1[:8] ≠ viewer YMAP_BG_SHA 토큰 = 커밋 차단 → 재실측(shared/yeta_map_trace.py) 후 토큰 갱신."""
-    rc = 0
-    try:
-        src = open(os.path.join(ROOT, 'viewer/index.html'), encoding='utf-8').read()
-        m = re.search(r'YMAP_BG_SHA: night=([0-9a-f]{8}) day=([0-9a-f]{8})', src)
-        if not m:
-            print('❌ 지도 배경 짝 게이트 — viewer YMAP_BG_SHA 토큰 없음(YMAP_ROADS_TONE 위 주석)'); return 1
-        want = {'night': m.group(1), 'day': m.group(2)}
-        for tone, tok in want.items():
-            path = os.path.join(ROOT, f'viewer/assets/yeta_map/map_{tone}.png')
-            if not os.path.exists(path):
-                print(f'❌ 지도 배경 짝 게이트 — map_{tone}.png 없음'); rc = 1; continue
-            real = hashlib.sha1(open(path, 'rb').read()).hexdigest()[:8]
-            if real != tok:
-                print(f'❌ 지도 배경 짝 게이트 — map_{tone}.png 변경 감지(sha {real} ≠ 토큰 {tok}): 도로 좌표·가림체 실효 위험 → python3 shared/yeta_map_trace.py 재실측(마스크·YMAP_FG 지문 검증 포함) + 토큰 갱신'); rc = 1
-        if 'YMAP_FG' in src and not re.search(r'YMAP_FG_FP: night=[0-9a-f]{8} day=[0-9a-f]{8}', src):
-            print('⚠️ 지도 배경 짝 게이트(비차단) — YMAP_FG는 있는데 YMAP_FG_FP 지문 토큰 없음: yeta_map_trace.py 실행값으로 등재(가림체 스테일 침묵 방지 · Q.11)')
-        if rc == 0:
-            print('✅ 지도 배경 짝 게이트 — map_night/day.png ↔ 도로 좌표 토큰 일치.')
-    except Exception as e:
-        print('⚠️ 지도 배경 짝 게이트 스킵:', e)
-    return rc
 
 
 # ── 모델 ID 드리프트 게이트 (운영자 260725 한 수 · 정본 = shared/models.json) ──
@@ -1460,11 +1441,6 @@ def main():
             rc = 1
     except Exception as e:
         print('❌ check_model_ids 예외(fail-closed):', e); rc = 1
-    try:
-        if check_map_bg_pair() != 0:   # 지도 배경↔도로 좌표 짝(하드 게이트 — 배경 재생성 = 좌표 침묵 실효 차단 · Q.08 평의회9)
-            rc = 1
-    except Exception as e:
-        print('⚠️ 지도 배경 짝 게이트 스킵:', e)
     try:
         if check_shrine_hop() != 0:   # 거처→성당 홉 짝(하드 — 동선표 변경이 「누가 빌러 오는가」 확률을 침묵 왜곡하는 것 차단 · Q.173)
             rc = 1

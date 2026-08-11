@@ -56,7 +56,7 @@ jobs:
           REF_SELF: ${{ inputs.ref_self }}
         run: python3 .github/scripts/yeta_map_bg.py
 
-      - name: 미니 캐릭터 스프라이트 생성 (10인 · 그린스크린 → 투명)
+      - name: 미니 캐릭터 스프라이트 생성 (로스터 17인 · 그린스크린 → 투명 · 있으면 skip)
         if: ${{ inputs.what != 'bg' }}
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -65,13 +65,17 @@ jobs:
 
       - name: 커밋 (신규 있을 때만)
         run: |
+          # 산출은 **디스패치한 그 ref**로 되돌린다(260811 — 종전엔 origin/main 하드코딩이라
+          # 브랜치에서 what=char 를 돌리면 shallow 체크아웃에 공통조상이 없어 rebase가 깨지고,
+          # 유료로 뽑은 스프라이트가 그대로 증발했다. main에서 돌리면 BR=main = 종전과 동일 동작).
+          BR="${GITHUB_REF_NAME}"
           git config user.name "yeta-map-bg[bot]"
           git config user.email "actions@users.noreply.github.com"
           git add viewer/assets/yeta_map/ 2>/dev/null || true
           git diff --cached --quiet && { echo "신규 없음 — 커밋 생략"; exit 0; }
-          git commit -m "무음동 지도 배경 생성 — yeta-map-bg 수동 dispatch"
+          git commit -m "무음동 지도 에셋 생성 — yeta-map-bg 수동 dispatch (${BR})"
           for i in 1 2 3 4 5; do
-            git pull --rebase origin main && git push && exit 0
+            git pull --rebase origin "$BR" && git push origin "HEAD:$BR" && exit 0
             echo "push 재시도 ${i}/5 …"; sleep $((i*5))
           done
-          echo "::error::push 5회 실패 — main 전진 과다"; exit 1
+          echo "::error::push 5회 실패 — ${BR} 전진 과다"; exit 1

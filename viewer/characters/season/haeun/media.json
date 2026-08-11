@@ -1,6 +1,7 @@
 {
  "_comment": "시즌 감정 미디어 manifest(하서연) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종 — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. ⚠ 출처 = 시트 F(캐릭터별 락 · docs/캐릭터보드_캐릭터별_보강.md)를 shared/cut_board_sheet.py로 자른 9:16 칸. 정본=viewer/characters/season/haeun/main/<감정>/.",
  "base": [
+  "characters/season/haeun/main/2026-08-12 05 54 46.jpg",
   "characters/season/haeun/main/base/haeun_base.webp"
  ],
  "joy": [
