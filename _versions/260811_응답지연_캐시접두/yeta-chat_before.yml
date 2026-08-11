@@ -56,16 +56,8 @@ jobs:
       - name: CLI PATH
         run: echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
 
-      # pywebpush (per-reply 푸시용) — ⚠️ 종전 `( … >/dev/null 2>&1 || true) &` 는 '&' 를 붙였는데도 스텝이 5초를 잡아먹었다
-      #   (260811 실측 런 890: 03:02:42→03:02:47 = 콜드 고정비 26초의 19%). 이유 = 리다이렉트가 괄호 '안'의 python3 에만 걸려 있어서
-      #   백그라운드 **서브셸 자신**이 스텝의 stdout/stderr 파이프를 계속 쥐고 있었고, 러너는 그 파이프가 닫힐 때까지 스텝을 못 끝낸다.
-      #   → 3대 fd 를 그룹 전체에 걸어 파이프 밖으로 돌리고(setsid 로 세션까지 분리 · 미설치 환경은 평범한 백그라운드로 폴백) 즉시 exit.
-      #   설치 자체는 종전대로 ~5초 걸리지만 첫 푸시 시점(첫 답장 생성 후 ≥10s)보다 먼저 끝난다 = 「미완이면 푸시만 생략」 fail-soft 계약 무변경.
-      - name: pywebpush (per-reply 푸시용 · 완전 분리 설치 = 콜드 첫 답장 경로에서 5s 제거)
-        run: |
-          { setsid python3 -m pip install --quiet --break-system-packages pywebpush >/dev/null 2>&1 \
-            || python3 -m pip install --quiet --break-system-packages pywebpush >/dev/null 2>&1 || true; } </dev/null >/dev/null 2>&1 &
-          exit 0
+      - name: pywebpush (per-reply 푸시용 · 백그라운드 설치 = 콜드 첫 답장 경로에서 3~6s 제거 — 첫 푸시 시점(첫 답장 생성 후 ≥10s)엔 설치 완료 · 미완이면 푸시만 생략=비치명 현행 계약 유지)
+        run: (python3 -m pip install --quiet --break-system-packages pywebpush >/dev/null 2>&1 || true) &
 
       - name: 캐릭터 답장 생성 (claude -p · 세션 R2)
         id: chat

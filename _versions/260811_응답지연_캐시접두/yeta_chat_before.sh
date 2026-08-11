@@ -36,8 +36,6 @@ PREWARM_WAIT="${YETA_PREWARM_WAIT:-180}"   # 프리웜 런(첫 턴이 NOPENDING)
 WARM_POLL="${YETA_WARM_POLL:-2}"   # 웜 픽업 지연 평균 2.5s→1s(대화 속도 260713) — R2 GET 300s/2s=150회/창 = Class B 무료 티어에 무시량
 SESSION_MAX="${YETA_SESSION_MAX:-3300}"  # 55분(잡 timeout 60분보다 낮게 = mid-turn 킬 차단 · 아이데이션③)
 PER_TURN_BUDGET="${YETA_TURN_BUDGET:-300}"   # 새 턴 시작 전 필요한 잔여 예산(claude 240 + finish 여유 · env = 테스트 노브)
-SETTLE="${YETA_SETTLE:-4}"   # 유저 입력 정착 대기 초(260811 Q.172) — 겹침 폐기 21%의 뿌리 처방 · 0 = 축 OFF(종전 결) · 상세 = 아래 settle_wait 주석
-case "$SETTLE" in ''|*[!0-9]*) SETTLE=4 ;; esac   # 정수 강제(오타 env = 기본값 · 아래 산술·sleep 이 셸 에러 없이 돌게 · GB_BEATS 선례)
 # ── 단톡 대화 이어가기(운영자 260725 "단톡이면 자기들끼리 얘기를 이어나가야") — 두 축 ──
 #   ① 대본 교대: 한 호출 안에서 [이름] 프리픽스로 두 사람이 번갈아 GB_LINES줄까지(종전 = 동행 1줄·"대체로 생략" = 유저에게만 답하고 끝나던 뿌리) · 비용 = 같은 1호출.
 #   ② 자율 비트: 답장 뒤 유저가 조용하면 상대가 받아치는 턴을 GB_BEATS회까지 스스로 발사(finish가 s.gb 예약 → extract_mat이 픽 · 유저 메시지 도착 = pending 우선 = 자동 중단).
@@ -61,36 +59,13 @@ source "$ROOT/shared/inject_character.sh"   # character_block/character_version/
 #   시스템 슬롯에 캐릭터 프레임을 올려 위계를 바로잡는다(user 턴은 시스템을 못 넘는다 = 모델 훈련된 강한 경계).
 # YETA_SYS: 0=off(현상유지 회귀) · 1=append(기본 · 기저 유지 + 프레임 덧댐 = 저위험 가산) · 2=replace(기저 CC 정체성 완전 제거 = 최강·토큰 절감 · 라이브 관찰 후 승격 권장).
 # ⚠️ 배열 전달(EFF_ARGS 패턴) = 멀티라인·특수문자 셸쿼팅 안전. CLI 버전 드리프트로 플래그 거부 시 gen_out 가 unknown-option 폴백으로 드롭(effort 폴백 미러 = 하드다운 방지).
-YSF="$(yeta_sys_frame)"   # 프레임 1회 계산 — sys_compose·gen_out kimi 교체분 공용
-# ── 캐시 접두 분리(운영자 260811 Q.172 "k3 유지 — 대신 캐시부터 고쳐라") ──
-# 왜: 종전엔 고정부(캐릭터 지침+세계관+카드 = 38~71KB)와 가변부(시각·상태·최근 대화)를 stdin **한 덩어리**로 보냈다.
-#   프롬프트 캐시가 끊는 지점은 그 덩어리 '끝'이라 접두에 가변부가 통째로 섞인다 = 다음 턴 접두 불일치 = 히트가 원리적으로 불가능.
-#   실측 근거: 클로드 소넷 75회 연속 cr=0(Q.82 · 매턴 22,366토큰 전량 재처리) · 키미 26턴 히트율 16%(functions/api/yeta.js §KIMI_COST).
-#   시스템 슬롯은 **별도 블록**으로 끊기므로, 고정부를 그쪽에 실으면 턴 사이에 접두가 불변 = 히트. 260726 Q.82가 "진짜 낭비의 89%"라 적고
-#   후속으로 예약했던 축인데, 예약 번호(Q.83)가 다른 안건에 재사용되며 지금까지 착수된 적이 없다.
-# 계약: 고정부는 **시스템 슬롯 또는 stdin 선두 둘 중 하나에 반드시 실린다**(증발 0) — 호출부가 env GEN_SYS_EXTRA 로 넘기고,
-#   슬롯이 못 받는 3경우(YETA_SYS=0 · CLI 플래그 거부 · argv 과대)는 gen_out 이 stdin 선두로 되돌린다. 미지정 호출부(초대 판정·보충 배치) = 종전 결 100%.
-# 회귀 노브: YETA_SYS_CARD=0 (카드를 종전대로 stdin 으로 · 한 줄 롤백) · YETA_SYS=0 (프레임 축 전체 off = 종전 우선).
-SYS_CARD="${YETA_SYS_CARD:-1}"                  # 1 = 고정부를 시스템 슬롯에(캐시 접두 · 기본) · 0 = 종전대로 stdin 선두
-SYS_MAX_BYTES="${YETA_SYS_MAX_BYTES:-100000}"   # 단일 argv 한계(리눅스 MAX_ARG_STRLEN 131072)에 마진 — 초과 = stdin 폴백(실측 최대 = drusilla 71,220바이트 = 46% 여유, 카드가 더 커져도 E2BIG 자폭 대신 조용히 종전 경로)
-SYS_OFF=0                                       # CLI 가 system-prompt 플래그를 거부한 각인(웜 후속 턴도 프레임 생략 = 종전 전역 계약 계승)
-sys_compose() {   # $1 = 고정부(빈값 가능) → 배열 SYSA 채움 · rc0 = 슬롯 사용 가능 · rc1 = 불가(호출부가 stdin 폴백)
-  local extra="${1:-}" body="$YSF"
-  SYSA=()
-  [ "${SYS_OFF:-0}" = "1" ] && return 1
-  case "${YETA_SYS:-1}" in 0|off|false) return 1 ;; esac
-  if [ -n "$extra" ]; then
-    [ "$(printf '%s' "$extra" | wc -c)" -le "$SYS_MAX_BYTES" ] || return 1
-    body="${YSF}
-
-${extra}"
-  fi
-  case "${YETA_SYS:-1}" in
-    2|replace) SYSA=(--system-prompt "$body") ;;
-    *) SYSA=(--append-system-prompt "$body") ;;
-  esac
-  return 0
-}
+YSF="$(yeta_sys_frame)"   # 프레임 1회 계산 — SYS_ARGS·gen_out kimi 교체분 공용
+SYS_ARGS=()
+case "${YETA_SYS:-1}" in
+  2|replace) SYS_ARGS=(--system-prompt "$YSF") ;;
+  0|off|false) SYS_ARGS=() ;;
+  *) SYS_ARGS=(--append-system-prompt "$YSF") ;;
+esac
 # 책 빼기(운영자 260721 "최대한 책을 빼고 보내") — kimi 종량제 턴만 시스템 슬롯을 프레임으로 '교체'(--system-prompt = CC 기저 정체성 미전송 = 턴당 입력 토큰 절감 + 영어 메타발화 프레임 이탈의 뿌리 제거 = 재시도 재과금도 축소).
 #   Claude 구독 턴 = 종전 append 유지(정액이라 절감 실익 0 · 검증된 현상 유지) · YETA_SYS=0 = 전 모델 프레임 off(회귀 노브가 교체보다 우선).
 
@@ -494,37 +469,6 @@ PY
 )"
 }
 matv() { python3 -c 'import json,sys; v=json.loads(sys.argv[1]).get(sys.argv[2]); print("" if v is None else v)' "$mat" "$1"; }
-
-# ── 유저 입력 정착 대기(운영자 260811 Q.172 "겹침 폐기 21% 손질") ──
-# 왜: 웜 러너는 R2 를 2초마다 폴링해 유저 턴을 **도착 2초 만에** 집고 곧장 20초짜리 생성을 시작한다. 사람은 말을 토막내 보내므로
-#   그 사이 다음 메시지가 도착하고, 「겹침 60% 규칙」(finish · exit 4)이 만들던 답을 통째로 버리고 처음부터 다시 만든다.
-#   실측(런 890 · 260811 12:02~12:25): 생성 19회 중 4회 폐기 = 21% · 버린 생성 시간 82초 = 전체 생성 시간의 22% ·
-#   폐기분도 k3 정가로 전액 재과금 · 그 턴 사용자 대기는 32초(중앙값)에서 41~54초로 튄다. 폐기 시점 겹침률은 16·17·19·36% =
-#   전부 생성 시작 3~8초 안에 다음 메시지가 도착했다는 뜻 = 「기다렸으면 한 번에 답할 수 있었다」.
-# 처방: 집자마자 쏘지 말고 **가장 최근 유저 턴이 SETTLE 초는 묵을 때까지** 기다렸다 다시 읽는다 = 연속 타이핑이 한 생성으로 합쳐진다.
-#   ⚠️ 핵심은 「나이(age) 기준」이지 「무조건 sleep」이 아니다 — 콜드 스타트는 도착→픽업이 이미 26초라 age ≥ SETTLE → **대기 0초**.
-#   느린 경로(콜드)엔 한 톨도 안 얹고, 대기가 붙는 건 웜 픽업(age ≈ 2초)뿐이며 그 비용은 최대 SETTLE-2 초다. 막는 손실은 폐기 1회당 생성 20초 + 재과금.
-# 상한: 새 메시지가 계속 오면 무한 연기되지 않게 3회(≈ SETTLE×3)에서 끊고 그대로 생성한다.
-# 회귀 노브: YETA_SETTLE=0 = 축 OFF = 종전 결 100%.
-settle_wait() {   # 소비/갱신 = 전역 mat(extract_mat 산출) — 종료 시 mat 은 최신 재-read 반영본(호출부가 NOPENDING/빈값 재판정)
-  [ "$SETTLE" -gt 0 ] 2>/dev/null || return 0
-  [ "$(matv mode)" = "invite" ] && return 0        # 초대 판정 = 유저 발화가 아니다(앵커 없음)
-  local _a _age _left _n=0
-  while [ "$_n" -lt 3 ]; do
-    _a="$(matv anchor_ts)"
-    case "$_a" in ''|*[!0-9]*) return 0 ;; esac    # 앵커 없음(자율 비트·오프닝) = 유저를 기다릴 이유 없음
-    _age=$(( ($(date +%s%3N) - _a) / 1000 ))
-    [ "$_age" -lt 0 ] && return 0                  # 시계 역전(스큐) = 판단 불가 = 즉시 진행
-    [ "$_age" -ge "$SETTLE" ] && return 0          # 이미 묵은 메시지(콜드 스타트 등) = 추가 지연 0
-    _left=$(( SETTLE - _age )); [ "$_left" -lt 1 ] && _left=1
-    sleep "$_left"
-    r2get >/dev/null 2>&1 || return 0              # 읽기 실패 = 손에 든 mat 으로 그대로 진행(fail-soft)
-    extract_mat
-    { [ "$mat" = "NOPENDING" ] || [ -z "$mat" ]; } && return 0   # 그 사이 상황 변화 = 호출부 가드가 판정
-    _n=$((_n + 1))
-  done
-  return 0
-}
 
 # ── 세션 반영 — fresh 재-read 후 답장을 ins 자리에 insert(끝-append 금지 = 후속 메시지 매몰 방지) ──
 # rc: 0=반영(대사) · 2=세션 교체(reset) 폐기 · 3=빈 대사(error 기록) · 그 외=실패
@@ -1227,18 +1171,8 @@ gen_out() {
   fi
   local _ftries="$INLINE_TRIES"; is_kimi "$MODEL" && _ftries=2   # kimi 프레임이탈 재생성 캡(평의회A ★4) — 종량제는 폐기분도 전액 재과금: 2회 소진 시 인캐릭터 탈출 폴백으로 조기 전환(전송 재시도는 종전 유지)
   EFF_ARGS=(); [ -n "$EFF" ] && EFF_ARGS=(--effort "$EFF")   # 빈값 = 플래그 생략(gate_judge SSOT 패턴)
-  # 캐시 접두 분리(260811) — 고정부(GEN_SYS_EXTRA = 캐릭터 블록)를 시스템 슬롯에 싣는다. 슬롯 불가 = stdin 선두 폴백(카드 증발 0 · 상단 sys_compose 주석).
-  local _sysx="${GEN_SYS_EXTRA:-}" _sys=()
-  if [ "${SYS_CARD:-1}" = "1" ] && sys_compose "$_sysx"; then
-    _sys=("${SYSA[@]}")                                        # 고정부 = 시스템 슬롯(턴 사이 불변 접두 = 캐시 히트 지점)
-  else
-    sys_compose "" && _sys=("${SYSA[@]}")                      # 슬롯엔 프레임만 = 종전 결
-    [ -n "$_sysx" ] && prompt="${_sysx}
-${prompt}"
-    _sysx=""
-  fi
-  # 책 빼기(260721) — kimi 종량제 턴 한정 시스템 슬롯 '교체'(CC 기저 정체성 미전송). 종전 `--system-prompt "$YSF"` 하드코딩은 고정부를 떨궈서 캐시 접두가 kimi 턴에만 사라졌다 → 합성된 본문을 그대로 끌고 교체 축만 바꾼다.
-  if is_kimi "$MODEL" && [ ${#_sys[@]} -eq 2 ] && [ "${_sys[0]}" = "--append-system-prompt" ]; then _sys=(--system-prompt "${_sys[1]}"); fi
+  local _sys=("${SYS_ARGS[@]}")
+  if is_kimi "$MODEL" && [ "${YETA_SYS:-1}" != "0" ]; then _sys=(--system-prompt "$YSF"); fi   # 책 빼기(260721) — kimi 종량제 턴 한정 시스템 슬롯 교체(상단 SYS_ARGS 주석 참조)
   fb_sys "${_sys[0]:-}"   # 관찰축 각인(Q.61) — 이 턴의 실제 모드를 이탈 리포트에 싣는다
   T0=$SECONDS; GEN_T0MS="$(date +%s%3N)"; OUT=""; TOK_I=0; TOK_O=0; TOK_CR=0; TOK_CW=0; rm -f "$_ml"   # 이 생성의 실측 토큰(METER_LAST) — finish가 답장 턴 tok으로 박제(뷰어 좌상단 미터 · 운영자 260709) · GEN_T0MS = 계기판 lat(픽업 w·첫문장 f) 기준점(260714)
   for attempt in $(seq 1 "$INLINE_TRIES"); do
@@ -1281,10 +1215,7 @@ ${prompt}"
     fi
     # system-prompt 플래그 거부 폴백(1회) — 주간 캐시된 구버전 CLI 가 --system-prompt/--append-system-prompt 를 모르면 하드다운 대신 프레임 드롭(가드는 유지 = L0 그물 존치)
     if [ ${#_sys[@]} -gt 0 ] && grep -qiE 'unknown option|unrecognized|--(append-)?system-prompt' "$_err" 2>/dev/null; then
-      echo "  ⚠️ system-prompt 플래그 거부 추정(CLI 버전 드리프트) — 프레임 빼고 재시도"
-      [ -n "$_sysx" ] && { prompt="${_sysx}
-${prompt}"; _sysx=""; }   # ⚠️ 고정부 회수(260811) — 슬롯에 실려 있던 캐릭터 블록을 stdin 선두로 되돌린다. 안 하면 이 재시도가 **카드 없이** 생성한다(정체성 증발 = L0 붕괴 직행)
-      _sys=(); fb_sys ""; is_kimi "$MODEL" || SYS_OFF=1; continue   # ⚠️ kimi 거부(--system-prompt) = 로컬만 드롭 — 전역 각인(SYS_OFF)까지 세우면 웜 후속 Claude 턴 프레임 무음 소실(평의회C 발견1)
+      echo "  ⚠️ system-prompt 플래그 거부 추정(CLI 버전 드리프트) — 프레임 빼고 재시도"; _sys=(); fb_sys ""; is_kimi "$MODEL" || SYS_ARGS=(); continue   # ⚠️ kimi 거부(--system-prompt) = 로컬만 드롭 — 전역 SYS_ARGS(--append 축)까지 비우면 웜 후속 Claude 턴 프레임 무음 소실(평의회C 발견1)
     fi
     if ! is_kimi "$MODEL" && claude_failover "$OUT$(cat "$_err" 2>/dev/null)"; then continue; fi   # 서브 미주입 = 자동 no-op(본업 보호) · kimi = 구독 체인 무관(260719)
     if [ "$attempt" -lt "$INLINE_TRIES" ] && is_transient "$OUT$(cat "$_err" 2>/dev/null)"; then
@@ -2107,9 +2038,6 @@ process_turn() {
   extract_mat
   [ "$mat" = "NOPENDING" ] && return 2
   [ -n "$mat" ] || { echo "::error::세션 파싱 실패(malformed) — state 미변경"; return 1; }
-  settle_wait   # 입력 정착 대기(260811) — 연속 타이핑을 한 생성으로 흡수 = 겹침 폐기 축소(콜드 경로엔 대기 0 · 상단 주석)
-  [ "$mat" = "NOPENDING" ] && return 2   # 대기 중 소진(타 경로 픽업·리셋) = 종전 NOPENDING 결
-  [ -n "$mat" ] || { echo "::error::세션 파싱 실패(malformed) — state 미변경"; return 1; }
   THREAD="$(matv thread)"   # v3 대상 스레드(extract_mat age 큐 확정) — finish·ptt·push·invite·barge까지 관통(러너감사②B · PERSONA와 별개 축)
   [[ "$THREAD" =~ ^[a-z0-9_-]{1,24}$ ]] || { echo "::error::스레드 id 없음 — 폐기"; return 1; }
   if [ "$(matv mode)" = "invite" ]; then invite_turn; return 0; fi   # 합석 초대 판정(260707) — 판정 후 웜 루프가 pending 즉답
@@ -2478,9 +2406,9 @@ $(cat /tmp/yeta_amb_now)
     fi
   fi
 
-  # 고정부(공통지침+세계관+카드 = CBLOCK)는 **시스템 슬롯**으로 나갔다(260811 캐시 접두 분리 — 아래 gen_out 호출의 GEN_SYS_EXTRA).
-  #   여기 stdin 에 남는 건 출력규칙 + 가변부 + 출력 계약뿐 = 턴마다 달라지는 부분만. 종전엔 이 둘이 한 덩어리라 캐시가 원리적으로 못 걸렸다.
-  prompt="${OUTPUT_RULES}
+  # 고정부(공통지침+카드+출력규칙 = 캐시 prefix) → 가변부 → 출력 계약(가변분+리마인더). stdin 전달(ARG_MAX · §📰).
+  prompt="${CBLOCK}
+${OUTPUT_RULES}
 ${POLICY_BLOCK}
 ${TUNE_BLOCK}
 ${STATE_BLOCK}
@@ -2518,7 +2446,7 @@ ${CONTRACT1}${GROUP_RULE}${ME_RULE}
     export YETA_STREAM_FIRST=/tmp/yeta_first_pub; rm -f /tmp/yeta_first_pub   # 계기판(260714) — 필터가 첫 문장 '성공' 발행 시각(epoch ms)을 남김 = lat.f 재료
     if [ "$PTT" = "1" ]; then export YETA_PTT_HEAD="/tmp/yeta_ptt_head"; else export YETA_PTT_HEAD=""; fi   # 헤드 TTS 선굽기(한수3) — PTT 턴만 · ⚠️일치 경로는 문자수 총량 불변(호출 +1)이나 불일치·재시도 시 헤드(≤200자) 이중과금 = el 30k캡 소진(평의회 비용 LOW — fail-soft·유계 감수)
   fi
-  if ! GEN_SYS_EXTRA="$CBLOCK" GEN_ALLOW_READ="$GEN_AR" gen_out "$prompt"; then   # GEN_SYS_EXTRA = 고정부(캐시 접두) — 호출 단위 env 라 초대 판정·보충 배치 경로엔 안 샌다(그쪽은 종전 결)
+  if ! GEN_ALLOW_READ="$GEN_AR" gen_out "$prompt"; then
     export METER_STREAM=""
     if [ "$GB" = "1" ]; then   # 자율 비트 실패 = 조용히 없던 일(운영자가 요청한 답이 아니다) — 예약만 취소하고 정상 종료: 에러 배너·자동재시도·이탈 연출·실패 푸시 전부 미발동(잡도 초록 유지 = 웜 루프 계속)
       echo "yeta: 자율 비트 생성 실패 — 예약 취소(무연출)"
