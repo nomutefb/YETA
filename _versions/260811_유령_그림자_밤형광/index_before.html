@@ -873,8 +873,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   /* 신당 강조 = 기도를 기다리는 죽은 주민이 있는 동안(운영자 260811) — 색·굵기는 위 .meet **동값** 계승(새 값 0) · .meet(붐빔)과는 다른 축이라 클래스만 분리 */
   .ymp-node.wait { stroke:var(--accent); stroke-width:1.6; }
   .ymp-name.wait { fill:var(--accent); }
-  .ymp-ghost { fill:var(--fg); pointer-events:none; animation:ymbob 1.05s ease-in-out infinite; filter:drop-shadow(0 2px 2px rgba(0,0,0,.5)); }   /* 그림자(운영자 260811 "뒤에 그림자 넣으면 되겠네") — 낮 지도는 밝아서 흰 실루엣이 배경에 먹힌다. 그림자 = 절대명령#1 raw 허용 축(토큰 없는 box-shadow 계열) */
-  .ymp-ghost.night { fill:var(--accent); filter:drop-shadow(0 2px 2px rgba(0,0,0,.5)) drop-shadow(0 0 3px rgba(var(--accent-rgb),.85)); }   /* 밤 = 형광(운영자 260811) — 색은 이 레포의 형광 정본 --accent 그대로(신설 0) · 발광은 같은 토큰 rgba로 한 겹 더 = 어두운 지도에서 스스로 빛나 보인다 */   /* 흰색(운영자 260811) — 유령이 라임이면 「탭할 것」으로 읽힌다(탭 표면은 아래 노드·라벨) · 밤 지도 위 흰 실루엣이 유령답기도 하다 · 둥실 = 워커 ymbob 정본 재사용(새 키프레임 0) */
+  .ymp-ghost { fill:var(--fg); pointer-events:none; animation:ymbob 1.05s ease-in-out infinite; }   /* 흰색(운영자 260811) — 유령이 라임이면 「탭할 것」으로 읽힌다(탭 표면은 아래 노드·라벨) · 밤 지도 위 흰 실루엣이 유령답기도 하다 · 둥실 = 워커 ymbob 정본 재사용(새 키프레임 0) */
   @media (prefers-reduced-motion:reduce) { .ymp-ghost { animation:none; } }   /* 모션 줄이기 = 표식은 남기고 둥실만 생략(.ycrowsit 판단 계승 — 이건 정보다) */
   .ymp-off { fill:rgba(var(--danger-rgb),.08); stroke:rgba(var(--danger-rgb),.55); stroke-dasharray:5 4; stroke-width:1.2; }
   .ymp-offtxt { fill:var(--danger); font-size:8px; font-weight:var(--fw-x); letter-spacing:.14em; }
@@ -2553,7 +2552,7 @@ async function ymPlaceAll() {   // 현재 시각 실위치 재판정 → 워커 
   for (const id of Object.keys(YMAPD.places)) { const el = document.getElementById('ymn-' + id); if (el) el.classList.toggle('meet', ((byPlace[id] || []).length) >= 2); }
   { const nw = yShrineWait(), sn = document.getElementById('ymn-' + YSHRINE), sl = document.getElementById('ymnl-' + YSHRINE), gh = document.getElementById('ymGhost');   // 죽은 사람이 기다리는 동안 = 신당 강조 + 유령 표식(운영자 260811) — 종전엔 지도 어디에도 「지금 빌러 갈 데가 있다」 신호가 없어서, 카드를 열어보기 전엔 죽음이 방치됐다
     if (sn) sn.classList.toggle('wait', nw > 0); if (sl) sl.classList.toggle('wait', nw > 0);   // 강조 = 노드 원 + 이름 라벨 둘 다(탭 표면과 같은 짝 · 작은 원만 물들면 폰에서 놓친다)
-    if (gh) { gh.style.display = nw > 0 ? '' : 'none'; gh.classList.toggle('night', !ymIsDay(h)); } }   // 기다리는 사람 0 = 표식 회수(신당이 늘 반짝이면 신호가 아니라 장식이 된다) · 밤 = 형광(운영자 260811 "밤에는 형광으로") — 판정은 부활 발광(ymRevGlow)과 **같은 식**(!ymIsDay(h) · 무음동 세계 시각)
+    if (gh) gh.style.display = nw > 0 ? '' : 'none'; }   // 기다리는 사람 0 = 표식 회수(신당이 늘 반짝이면 신호가 아니라 장식이 된다)
   ymZSort();   // 재판정 직후 즉시 정렬(reduce-motion = tick 부재 경로 포함)
 }
 function ymZonePt(zn, avoid) {   // 구역 내 랜덤 지점(균등 원판 — 건물·도로 비침범은 존 반경이 보장 = 실측 공터) + 같은 존 워커와 최소 12px 간격(운영자 260710 "항상 뭉쳐있어" — 실패 = 가장 먼 후보 폴백 = 존 포화 시에도 최선 산개)
