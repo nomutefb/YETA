@@ -664,36 +664,6 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: true, sess: sess || null });
   }
 
-  if (op === 'praybeg') {   // 신당 기도 **부탁 보내기**(운영자 260811 "당신은 죽었습니다 했을때, 신당 빌어주기 요청을 누군가에게 보내기 · 특정인에게 보내기 이거 작용했으면") — 유저 사망 중 유일하게 유저가 취할 수 있는 능동 행동.
-    // 종전 = 부탁 경로가 아예 없었다. 유저가 죽으면 챗 파이프가 멈추고(입력 차단) 살아날 길은 ⓐ yeta-nudge 크론이 **사망 60분 뒤** 제멋대로 뽑은 한 명이 빌어주거나 ⓑ 무음동 48h(현실 8h) 대기 — 둘 다 유저가 손댈 수 없다.
-    // 이 op = 그 크론을 **지금 · 내가 고른 사람으로** 당긴다. 새 부활 경로가 아니라 **기존 pray 모드의 트리거**일 뿐(러너 me_dead.pray 박제 → op revive 통과 = 종전 파이프 100% 재사용 · 새 상태 1개[beg]).
-    //   persona 비움 = 「아무나」(러너의 기존 가중 추첨: 기도 인연 > 성향 > 관계 > 마지막 상대) · persona 지정 = 「특정인」(그 사람이 간다).
-    //   ⚠️ 대상 검증 = **서버 단독**(뷰어는 표시만) — 만난 적 없는 사람·죽어 있는 사람은 나를 위해 빌러 갈 수 없다(러너 추첨 후보 조건과 같은 식).
-    const BEG_COOL_MS = 5 * 60e3;   // 부탁 재발신 간격 — 러너 dispatch 1회 = 쿼터 1회라 연타를 막는다(러너가 조용히 죽어도 5분 뒤 다시 부를 수 있다 = 영구 잠김 없음)
-    const pid = String(body.persona || '');
-    if (pid && !ID_RE.test(pid)) return json({ error: '누구한테 부탁할지 모르겠어' }, 400);
-    let wait = 0;
-    const { sess, abort } = await casPut(s => {
-      const md = s.me_dead;
-      if (!md) return { abort: { noop: 1 } };                                        // 안 죽었음 = 무변경(창 닫힘 직후 연타 멱등)
-      if (md.pray) return { abort: { noop: 1 } };                                    // 그새 누가 빌어줬음 = 부탁할 이유가 없다(화면만 갱신)
-      const bg = md.beg;
-      if (bg && Date.now() - (bg.at || 0) < BEG_COOL_MS) { wait = BEG_COOL_MS - (Date.now() - (bg.at || 0)); return { abort: { wait: 1 } }; }   // 아직 가는 중
-      if (pid) {   // 특정인 — 만난 적 있고(내 턴이 있는 방) 살아 있어야 간다
-        const th = TH(s, pid);
-        if (!th || !((th.turns || []).some(x => x && x.role === 'user'))) return { abort: { error: '만난 적 없는 사람이야 — 나를 위해 빌러 가지 않아' } };
-        if (DEAD_ON(s, pid)) return { abort: { error: '그 사람도 지금 죽어 있어 — 다른 사람에게 부탁해' } };
-      }   // 이름 표기는 뷰어 몫(yPersona) — 스레드엔 name 필드가 없다(mkTh 실측)
-      md.beg = { id: pid, at: Date.now(), n: Math.min(99, (bg && bg.n) || 0) + 1 };   // 러너(yeta_nudge.sh)가 소비: 60분 대기·추첨을 건너뛰고 이 사람으로 pray 모드 실행 후 지운다
-    });
-    if (abort && abort.wait) return json({ ok: false, wait: Math.ceil(wait / 1000) }, 429);   // 남은 초 = 뷰어가 문구를 그린다(문구 정본 = 뷰어)
-    if (abort && abort.error) return json(abort, 409);
-    if (abort) return json({ ok: true, noop: 1, sess: sess || null });
-    if (!env.GH_TOKEN) return json({ ok: true, queued: 1, sess: sess || null });   // 토큰 없음 = 표식만 남기고 다음 크론(30분)이 가져간다 = 무해 폴백
-    const bst = await dispatch(env, 'yeta-nudge.yml', {});   // 크론(30분 주기)을 기다리지 않고 그 자리에서 기동 — 실패해도 beg는 남아 다음 크론이 소비(부탁이 증발하지 않는다)
-    return json({ ok: true, sent: bst === 204 ? 1 : 0, sess: sess || null });
-  }
-
   if (op === 'pray') {   // 신당 기도 — **유저가 직접** 북동쪽 언덕 신당(성당)까지 찾아가 죽은 주민을 위해 비는 경로(운영자 260730 "신당에 가서 죽은사람한테 기도드릴 수 있는 걸 · 지도에 붙이던가").
     // 종전엔 비는 주체가 러너 <<PRAY>>(주민)뿐 = 유저는 죽음을 보고도 아무것도 못 하고 무음동 48h를 기다리는 수밖에 없었다.
     // 세션 변형 = 러너 pray_who 분기와 **한 식**(t를 now로 당김 · pray 플래그 제거 · by 박제 · note_pub 사건 1줄) = 기존 부활 파이프 그대로 재사용(새 상태·새 필드 0).
