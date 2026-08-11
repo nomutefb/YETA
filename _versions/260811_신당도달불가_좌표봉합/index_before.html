@@ -865,7 +865,6 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ymp-node.meet { stroke:var(--accent); stroke-width:1.6; }
   .ymp-off { fill:rgba(var(--danger-rgb),.08); stroke:rgba(var(--danger-rgb),.55); stroke-dasharray:5 4; stroke-width:1.2; }
   .ymp-offtxt { fill:var(--danger); font-size:8px; font-weight:var(--fw-x); letter-spacing:.14em; }
-  .ymp-off, .ymp-offtxt { pointer-events:none; }   /* 출입금지 = places.json 계약 그대로 "지도에 표시만"(동선·마주침·워커 제외) = 핸들러 0인 순수 장식. SVG 기본 visiblePainted라 탭을 삼켰고, 뒤에 그려지는 탓에 260811엔 성당(신당) 노드를 통째로 먹었다 — 장식 판이 진짜 탭 표면을 다시는 못 가리게 못 박는다(좌표가 또 엇나가도 신당은 열린다) */
   .ymp-walker { cursor:pointer; }   /* 페이드는 점프 순간에만 인라인 transition(평의회3·9 — base 상시 transition은 첫 오픈 전원 동시 페이드 = "다같이 등장" 재유발 + 점프 페이드가 얕은 펄스로 씹힘) */
   .ymp-walker .wimg { animation:ymbob 1.05s ease-in-out infinite; }
   .ymp-walker.unmet { cursor:default; }
@@ -2111,11 +2110,8 @@ const YIN_PLACES = { tea: 'tea_sunset' };   // 실내 뷰 개방 장소 → 배�
 const YMAP_SC = 5, YMAP_RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 // ── 맵 시각 레이어(운영자 260707 "자연스럽게 배치 · 차는 차도로 · 신호등 정지 · 건물 안이면 이름표") — map_night.png 좌표계(0~100) · 논리 SSOT(places.json)와 별개 축.
 //    건물 draw 위치(논리좌표는 중앙 뭉침이라 이미지와 불일치 → 실측 트레이스), 도로 링(회색길), 신호등, 실내/야외.
-const YMAP_POS = { radio:[50,14], office:[56,33], studio:[61,44], alley:[50,50], tea:[30,52], store:[50,63], dojo:[20,78], market:[35,71], gym:[11,60], park:[46,84], school:[65,75], cathedral:[72,30], offlimits:[82,37] };   // cathedral = 부활 성당(운영자 260714 · places.json 동기 — 북동 언덕 공터) · offlimits = 펜스 친 재개발 중단 터(260811 신설 — 아래 v8 실측 주석)
-const YMAP_ZONE = { alley: { x: 48, y: 46.5, r: 3 }, park: { x: 52, y: 88, r: 3.5 }, market: { x: 32, y: 69, r: 2 }, cathedral: { x: 72, y: 30, r: 1.8 } };   // v7 재실측(260717 성당 원판 재생성 — 광장·공원·시장 중심 이동 반영 · cathedral = 성당 앞 프런티지 옆 포장지)
-// v8 실측(260811 · 신당 도달 불가 봉합) — 종전 cathedral (65,34)·offlimits(맵 미등재 → places.json 논리좌표 (66,34) 대체) 는 **같은 자리**였고, 출입금지 판이 뒤에 그려져(자식 4 vs 28) 성당 노드를 통째로 덮었다.
-//   실측: elementFromPoint(성당 노드 중심) = .ymp-offtxt · 실탭 → 신당 시트 안 열림 = "신당 갈 방법이 없음"(운영자 260811)의 정체. map_night.png 1024² 격자 트레이스로 둘을 제자리에 돌려놓는다 —
-//   성당 = 예배당 앞뜰(부활 직후 주민이 서는 자리 · 문 바로 아래 포장지) · 출입금지 = 실제 철망 펜스+바리케이드 테이프가 쳐진 남동쪽 공터. 새 값·새 부품 0 = 좌표 정정뿐.
+const YMAP_POS = { radio:[50,14], office:[56,33], studio:[61,44], alley:[50,50], tea:[30,52], store:[50,63], dojo:[20,78], market:[35,71], gym:[11,60], park:[46,84], school:[65,75], cathedral:[65,30] };   // cathedral = 부활 성당(운영자 260714 · places.json 동기 — 북동 언덕 공터)
+const YMAP_ZONE = { alley: { x: 48, y: 46.5, r: 3 }, park: { x: 52, y: 88, r: 3.5 }, market: { x: 32, y: 69, r: 2 }, cathedral: { x: 65, y: 34, r: 1.8 } };   // v7 재실측(260717 성당 원판 재생성 — 광장·공원·시장 중심 이동 반영 · cathedral = 성당 앞 프런티지 옆 포장지)
 const YMAP_INDOOR = new Set(['tea','studio','office','radio','gym','dojo','school','store']);
 // 도로 중심선 v5(운영자 260716 "픽셀 단위로 길을 쪼개고 레이어를 분리" — 재실측 방법 3탄 확정: ① 노면 흰 표시(점선·횡단보도) 블롭 검출 ② 격자 오버레이 육안 트레이스(사분면 확대) ③ 흰 표시 픽셀의 수직 오프셋 중앙값으로 c값 스냅. v4의 u1(한옥 관통)·d3·br(9단위 오차)·유령 도로(강물 오인) 전면 정정 + 수직로 V1/V2 신설). 전 도로 = 직선 y=±0.5x+c(2:1 아이소메트릭) 또는 수직(x=c). 정점 [x,y,f]: 's' = 광장 정지선(신호등 짝). ※ 'h' 은폐 플래그 폐지 — 건물 가림은 아래 도로 마스크가 픽셀 단위로 대체.
 // 픽셀 도로 마스크(v5 핵심): assets/yeta_map/road_mask_{night,day}.png = 아스팔트 픽셀만 백색인 레이어. #ymCars 그룹에 SVG mask로 적용 → 차는 도로 픽셀 위에서만 렌더 = 건물 투과 구조적 불가 + 건물·나무가 도로를 덮는 픽셀은 마스크 구멍 = 차가 그 뒤로 자연히 숨음(z 분리).
