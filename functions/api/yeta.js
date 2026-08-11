@@ -144,6 +144,16 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: true, chars: await r.json(), world, ready: !!env.YETA_R2 });
   }
 
+  // 장소 SSOT(지도·동선·근처·원거리 판정 공용) — 로스터와 같은 결로 R2 가드보다 앞(레포 raw · 셋업 전에도 지도가 그려진다).
+  // 260812: 종전엔 **뷰어가 raw.githubusercontent.com 을 직접** 때렸다. 외부 도메인이 늦으면 대화 열기가 그 요청에 묶여 「불러오는 중…」에서 멈췄고(399차),
+  //   상한(2.5s)으로 멈춤은 막았지만 의존 자체는 남아 있었다. 여기로 옮기면 뷰어는 **자기 도메인 1홉**만 타고, 깃허브 왕복은 엣지가 캐시해 흡수한다.
+  if (op === 'places') {
+    const r = await fetch(`https://raw.githubusercontent.com/${REPO}/main/apps/yeta/places.json`,
+      { headers: { 'user-agent': 'nomute-viewer' }, cf: { cacheTtl: 300, cacheEverything: true } });   // 300s = draw 로스터 대조와 동일 결(장소표는 커밋으로만 바뀐다)
+    if (!r.ok) return json({ error: `장소 로드 실패(${r.status})` }, 502);
+    return json({ ok: true, data: await r.json() });   // data = places.json 원문 그대로(뷰어 YMAPD) — 안쪽에 places/routine/tuning 키가 그대로 들어온다
+  }
+
   if (op === 'vapikey') {   // 보이스톡(브라우저 실시간 통화 · Vapi Web SDK) 공개키 — PUBLIC key = 클라이언트 설계상 공개 가능 축.
     // ⚠️ 남용 가드는 Vapi 대시보드에서: 이 Public key 의 Origins 를 yeta.soong.kr 로 제한 권장(기본 All domains = 아무 사이트나 통화 과금 가능).
     if (!env.VAPI_PUBLIC_KEY) return json({ error: '보이스톡 미설정 — Pages env VAPI_PUBLIC_KEY 필요', setup: true }, 501);
@@ -682,7 +692,7 @@ export async function onRequestPost({ request, env }) {
       if (!s.me_dead) return { abort: { noop: 1 } };   // 이미 살아있음 = 무변경(중복 탭·재진입 멱등)
       const md = s.me_dead;
       if (!md.pray && Date.now() < (md.d || 0) + MEREV_MS - (md.cut || 0)) return { abort: { error: '아직 돌아갈 수 없어 — 누가 신당에서 빌어주거나, 무음동의 밤이 더 흘러야 해' } };   // cut = 성향 퀴즈로 당긴 만큼(뷰어 yMeRevAt과 같은 식)
-      s.me_revived = { d: md.d || 0, why: md.why || '', at: Date.now(), pray: md.pray || null };   // 직전 죽음 + 그 기도 = 부활 맥락으로 1세대 보존(러너가 다음 턴에 "돌아왔네" 결로 쓸 재료)
+      s.me_revived = { d: md.d || 0, why: md.why || '', mood: md.mood || '', at: Date.now(), pray: md.pray || null };   // 직전 죽음 + 그 기도 = 부활 맥락으로 1세대 보존. 260812: mood 추가 + **러너가 드디어 읽는다**(yeta_chat.sh me_revive_for) — 게임 속 하루 안이면 인물마다 첫 마디를 이걸로 연다. 종전엔 여기 남겨만 두고 소비처가 없었다(주석의 "쓸 재료"가 반쪽으로 방치)
       delete s.me_dead;
     });
     if (abort && abort.error) return json(abort, 409);
