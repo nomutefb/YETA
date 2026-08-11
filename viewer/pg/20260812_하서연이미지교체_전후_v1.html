@@ -153,7 +153,37 @@
       <tr><td class="v">check_refs 로스터 에셋 게이트</td><td class="v">✅ bg·avatar·mode 경로 37건 전원 실존</td></tr>
       <tr><td class="v">check_refs 전체</td><td class="v">✅ 통과(디자인 토큰·토큰 락 포함 · 차단 0)</td></tr>
     </table>
-    <p class="note">운영자가 준 2장으로 3자리를 채웠으므로 <b>기본 인트로와 조이가 같은 그림</b>이 된다(세로 전신 1장을 두 버킷에 넣음). 조이 전용 그림을 따로 두고 싶으면 <code>main/base/</code>에 다른 컷을 부어 <code>python3 shared/build_season_media.py</code>만 돌리면 된다.</p>
+    <p class="note">운영자가 준 2장으로 3자리를 채웠으므로 <b>기본 인트로와 조이가 같은 그림</b>이 된다(세로 전신 1장을 두 버킷에 넣음). → <b>⑦에서 해소</b>.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>⑦ 후속(399차) — 기본 인트로만 다른 컷으로 <span class="val">운영자 260812 "기본 인트로는 다른 컷으로 바꿔줘"</span></h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">전</span><span class="val">398차 상태 — 조이와 <b>같은 그림</b></span></p>
+        <div class="stg"><img src="20260812_하서연이미지교체_base_after.webp" alt="전 — 조이와 중복된 기본 인트로"></div>
+        <p class="note">해상은 좋지만 방에 들어가도, 기뻐해도 <b>같은 그림</b>이 뜬다 = 로테이션이 없는 것과 같다.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">후</span><span class="val">시트 F <b>BASE 칸</b> — 찻집 낮 · 턱 괴고 눈맞춤</span></p>
+        <div class="stg"><img src="20260812_하서연이미지교체_base_v2.webp" alt="후 — 시트 F BASE 칸(찻집 낮)"></div>
+        <p class="note">보드 시트가 <b>스스로 «BASE»라 라벨한 칸</b>이다(새로 고르지 않고 정본 라벨을 계승). 카드의 「능글맞은 국어교사 · 한쪽만 올라간 미소」가 그대로 나오는 컷 = 첫 페인트용.</p>
+      </div>
+    </div>
+    <p class="note">재단 = <code>python3 shared/cut_board_sheet.py viewer/assets/yeta_char/board/haeun_sheetF_p1.png --labels base,warm,joy,blue,tense,mad --ratio 9:16 --ext webp</code> — 격자 자동검출 3열×2행 = 6칸 실측 일치. 산출이 종전 파일과 <b>md5 동일</b>(<code>7610a23b…</code>) = 이 그림이 원래 그 BASE 칸이었음을 기계로 확인.</p>
+
+    <h2 style="margin-top:14px">⑦-1 대안 — 아직 아무 데도 안 쓴 <code>WARM</code> 칸</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg after">채택</span><span class="val">BASE 칸(낮 · 눈맞춤)</span></p>
+        <div class="stg"><img src="20260812_하서연이미지교체_base_v2.webp" alt="채택 — BASE 칸"></div>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg before">대안</span><span class="val">WARM 칸(밤 · 찻잔) — 시트에 있으나 <b>미사용</b></span></p>
+        <div class="stg"><img src="20260812_하서연이미지교체_base_alt_warm.webp" alt="대안 — WARM 칸(밤 찻잔)"></div>
+      </div>
+    </div>
+    <p class="note">시트 F 6칸 중 <b><code>warm</code>만 어느 버킷에도 안 실려 있다</b>(현 manifest = base 1 · joy 2 · blue 1 · tense 2 · mad 1). 이쪽이 낫다 하시면 파일 한 장 교체로 끝난다. ⚠ <b>해상 한계(정직 기록)</b>: 시트 원본이 1024×1536이라 한 칸의 상한이 <b>315×560</b>이다 — 조이(736×1316)보다 낮고, 무대(420×900)에선 확대 렌더다. 인트로도 고해상으로 가려면 <b>조이처럼 그 컷을 따로 올려주셔야</b> 한다(시트에서는 더 못 뽑는다).</p>
   </div>
 </div>
 </body>
