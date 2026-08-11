@@ -1193,6 +1193,36 @@ def check_lucy_killswitch():
     return rc
 
 
+def check_shrine_hop():
+    """신당 거리 짝 게이트(260811 Q.173): 게이트웨이 SHRINE_HOP(거처→성당 홉)은 places.json neighbors 그래프의 **파생값**이다.
+    동선표가 바뀌면 이 표가 침묵 실효해 「누가 빌러 오는가」 확률이 슬그머니 틀어진다 → BFS 재계산과 불일치면 커밋 차단."""
+    try:
+        import collections
+        places = json.load(open(os.path.join(ROOT, 'apps/yeta/places.json'), encoding='utf-8'))['places']
+        adj = collections.defaultdict(set)
+        for k, v in places.items():
+            for n in (v.get('neighbors') or []):
+                if n in places: adj[k].add(n); adj[n].add(k)   # 무방향 취급(성당→라디오국만 있고 역방향이 없다)
+        dist, q = {'cathedral': 0}, collections.deque(['cathedral'])
+        while q:
+            u = q.popleft()
+            for v in sorted(adj[u]):
+                if v not in dist: dist[v] = dist[u] + 1; q.append(v)
+        want = {h[5:]: dist[h] for h in places if h.startswith('home_') and h in dist}
+        src = open(os.path.join(ROOT, 'functions/api/yeta.js'), encoding='utf-8').read()
+        m = re.search(r'const SHRINE_HOP = \{([^}]*)\}', src)
+        if not m:
+            print('❌ 신당 거리 짝 게이트 — functions/api/yeta.js SHRINE_HOP 표 없음'); return 1
+        got = {k: int(v) for k, v in re.findall(r'(\w+)\s*:\s*(\d+)', m.group(1))}
+        if got != want:
+            miss = {k: (got.get(k), want.get(k)) for k in set(got) | set(want) if got.get(k) != want.get(k)}
+            print(f'❌ 신당 거리 짝 게이트 — places.json 동선 변경 감지: SHRINE_HOP 불일치 {miss} (현재값, 재계산값) → yeta.js SHRINE_HOP를 재계산값으로 갱신'); return 1
+        print(f'✅ 신당 거리 짝 게이트 — SHRINE_HOP {len(want)}인 = places.json BFS 재계산 일치(가까움 {min(want.values())} ↔ 멂 {max(want.values())}).')
+    except Exception as e:
+        print('⚠️ 신당 거리 짝 게이트 스킵:', e)
+    return 0
+
+
 def check_map_bg_pair():
     """지도 배경↔도로 좌표 짝 하드 게이트(운영자 260716 Q.08 평의회9 — "고쳐도 그대로" 반복 절단): map_*.png 재생성 시 YMAP_ROADS_TONE 좌표가 침묵 실효하던 구멍 봉합. 배경 sha1[:8] ≠ viewer YMAP_BG_SHA 토큰 = 커밋 차단 → 재실측(shared/yeta_map_trace.py) 후 토큰 갱신."""
     rc = 0
@@ -1435,6 +1465,11 @@ def main():
             rc = 1
     except Exception as e:
         print('⚠️ 지도 배경 짝 게이트 스킵:', e)
+    try:
+        if check_shrine_hop() != 0:   # 거처→성당 홉 짝(하드 — 동선표 변경이 「누가 빌러 오는가」 확률을 침묵 왜곡하는 것 차단 · Q.173)
+            rc = 1
+    except Exception as e:
+        print('⚠️ 신당 거리 짝 게이트 스킵:', e)
     try:
         if check_tune_chain() != 0:   # 16축 성향이 roster→프롬프트까지 도달(하드 — 260809 봉합 · 세션 tunes만 읽어 게이지 미조작 캐릭터는 16축 0바이트로 무증상 사망하던 축)
             rc = 1

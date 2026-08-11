@@ -39,31 +39,6 @@
 //      YETA_VOICE_SPEED(선택·기본 미설정=오버라이드 없음 — 바피 통화 말 속도 0.7~1.2 · 1 미만 = 느리게 · phone/vapikey 공용 · 260808).
 const REPO = 'muteno/yeta';
 const ID_RE = /^[a-z0-9_-]{1,24}$/;
-// ── 신당 「빌어줄 이」 후보·확률 SSOT(운영자 260811 "확률은 페르소나랑 친밀도 이런거에 다 영향받는거 알지? 거리 등") ──
-//   신당은 비는 자가 목숨을 거는 자리라(op pray 실패 = 사망) 대개 아무도 오지 않는다. 그 「올 확률」을 여기 **한 곳**에서만 계산한다 —
-//   소비처 = op praycands(선택 박스에 % 표시) + op praybeg(실제 굴림). 두 곳이 각자 계산하면 화면의 숫자와 실제 확률이 조용히 갈라진다.
-const SHRINE_HOP = { yun: 2, desk: 3, baek: 4, kopi: 4, lucy: 4, reze: 4, seyeun: 4, haeun: 5, sera: 5, von: 7 };   // 거처(home_*) → 성당 홉 · places.json neighbors BFS 실측(무방향) · 짝 검증 = shared/check_refs.py 「신당 거리 짝 게이트」
-const PRAY_P = w => Math.min(0.45, Math.max(0.08, 0.06 + 0.035 * w));   // 가중 → 올 확률(8~45%) · 「자주 실패」(운영자 260811)의 근거 = 목숨값
-function prayCands(s) {   // 만난 적 있고 · 살아 있는 사람만. 반환 = [{id, w, p}] 확률 내림차순
-  const out = [];
-  for (const [p, t] of Object.entries(s.threads || {})) {
-    if (p.startsWith('g')) continue;                                                    // 단톡 방 = 사람이 아님
-    const ut = (((t || {}).turns) || []).filter(x => x && x.role === 'user').length;
-    if (!ut) continue;                                                                  // 만난 적 없는 사람은 나를 위해 빌러 가지 않는다
-    const dv = (s.dead || {})[p];
-    if ((((dv && dv.t) || +dv || 0)) > Date.now()) continue;                             // 죽어 있는 사람은 못 빈다
-    const g = ((s.tunes || {})[p]) || [];
-    const ax = i => (Array.isArray(g) && typeof g[i] === 'number' ? g[i] : 5);           // 16축 미설정 = 중립 5(축 순서 = 뷰어 TUNE_AX·러너와 짝)
-    let w = 1;
-    w += 2.6 * Math.min(3, (((s.pray_bond || {})[p] || {}).n) || 0);                     // ① 은혜 = 내가 살려낸 적 있는 사람(최대 성분 · 3회 포화 = 한 사람 독점 차단)
-    w += 0.6 * Math.min(3, ut / 10);                                                     // ② 친밀도 = 내가 그 방에 쏟은 말 수(10마디 = 1점 · 3점 포화)
-    w += 0.14 * (ax(4) + ax(5) + ax(6) - ax(11));                                        // ③ 페르소나 = 친절도+온기+인내심−경계심(16축)
-    w += 0.35 * Math.max(0, 7 - (SHRINE_HOP[p] != null ? SHRINE_HOP[p] : 5));            // ④ 거리 = 거처가 성당에서 몇 홉(윤 2 = 가깝다 ↔ 폰 7 = 멀다 · 미등재 = 중앙값 5)
-    w = Math.max(0.05, w);
-    out.push({ id: p, w, p: PRAY_P(w) });
-  }
-  return out.sort((a, b) => b.p - a.p);
-}
 const KEY = 'sessions/main.json';
 const MAX_ROOM = 2;                 // 합석 정원(나 제외 캐릭터 수 · 운영자 260707 "한 명 정도는") — 3 확장은 실험 축
 const INVITE_TTL = 600000;          // 초대 pending 10분 — 러너 사망 시 스테일 마커가 다음 초대를 영구 차단하지 않게
@@ -689,17 +664,15 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: true, sess: sess || null });
   }
 
-  if (op === 'praybeg') {   // 신당 「비는 이를 찾기」(운영자 260811 "카카오택시 부르는것 처럼 · 혼령이 되어 나의 소생을 비는 이를 찾습니다") — 유저 사망 중 유일하게 유저가 취할 수 있는 능동 행동.
+  if (op === 'praybeg') {   // 신당 기도 **부탁 보내기**(운영자 260811 "당신은 죽었습니다 했을때, 신당 빌어주기 요청을 누군가에게 보내기 · 특정인에게 보내기 이거 작용했으면") — 유저 사망 중 유일하게 유저가 취할 수 있는 능동 행동.
     // 종전 = 부탁 경로가 아예 없었다. 유저가 죽으면 챗 파이프가 멈추고(입력 차단) 살아날 길은 ⓐ yeta-nudge 크론이 **사망 60분 뒤** 제멋대로 뽑은 한 명이 빌어주거나 ⓑ 무음동 48h(현실 8h) 대기 — 둘 다 유저가 손댈 수 없다.
-    // 260811 개정 = 그 크론을 기다리지 않고 **그 자리에서** 판정한다(택시 호출 UX). persona 비움 = 「찾기」(온다/안 온다부터 굴린다) · persona 지정 = 픽토그램 「나 살려줘」(그 사람은 온다).
-    //   ⚠️ 대상 검증·확률 = **서버 단독**(뷰어는 표시만) — 만난 적 없는 사람·죽어 있는 사람은 나를 위해 빌러 갈 수 없고, 클라 게이트만이면 새로고침 한 번에 뚫린다.
-    const BEG_COOL_MS = 5 * 60e3;   // 재호출 간격 — 실패해도 5분 뒤 다시 부를 수 있다(영구 잠김 없음) · **연타로 주민을 연쇄 사망시키는 것도 이 값이 막는다**(향불 실패 = 온 사람 사망이므로)
+    // 이 op = 그 크론을 **지금 · 내가 고른 사람으로** 당긴다. 새 부활 경로가 아니라 **기존 pray 모드의 트리거**일 뿐(러너 me_dead.pray 박제 → op revive 통과 = 종전 파이프 100% 재사용 · 새 상태 1개[beg]).
+    //   persona 비움 = 「아무나」(러너의 기존 가중 추첨: 기도 인연 > 성향 > 관계 > 마지막 상대) · persona 지정 = 「특정인」(그 사람이 간다).
+    //   ⚠️ 대상 검증 = **서버 단독**(뷰어는 표시만) — 만난 적 없는 사람·죽어 있는 사람은 나를 위해 빌러 갈 수 없다(러너 추첨 후보 조건과 같은 식).
+    const BEG_COOL_MS = 5 * 60e3;   // 부탁 재발신 간격 — 러너 dispatch 1회 = 쿼터 1회라 연타를 막는다(러너가 조용히 죽어도 5분 뒤 다시 부를 수 있다 = 영구 잠김 없음)
     const pid = String(body.persona || '');
     if (pid && !ID_RE.test(pid)) return json({ error: '누구한테 부탁할지 모르겠어' }, 400);
-    let wait = 0, res = {};
-    const NMS = await fetch(`https://raw.githubusercontent.com/${REPO}/main/apps/yeta/characters/roster.json`,   // 이름 = 사건문(note_pub)·dead.nm 박제용 — 표시는 뷰어 yPersona가 정본 · 실패해도 id로 굴러간다(fail-soft)
-      { headers: { 'user-agent': 'nomute-viewer' }, cf: { cacheTtl: 60, cacheEverything: true } })
-      .then(r => r.ok ? r.json() : []).then(j => Object.fromEntries((Array.isArray(j) ? j : []).map(c => [c.id, c.name || c.id]))).catch(() => ({}));
+    let wait = 0;
     const { sess, abort } = await casPut(s => {
       const md = s.me_dead;
       if (!md) return { abort: { noop: 1 } };                                        // 안 죽었음 = 무변경(창 닫힘 직후 연타 멱등)
@@ -711,107 +684,40 @@ export async function onRequestPost({ request, env }) {
         if (!th || !((th.turns || []).some(x => x && x.role === 'user'))) return { abort: { error: '만난 적 없는 사람이야 — 나를 위해 빌러 가지 않아' } };
         if (DEAD_ON(s, pid)) return { abort: { error: '그 사람도 지금 죽어 있어 — 다른 사람에게 부탁해' } };
       }   // 이름 표기는 뷰어 몫(yPersona) — 스레드엔 name 필드가 없다(mkTh 실측)
-      md.beg = { id: pid, at: Date.now(), n: Math.min(99, (bg && bg.n) || 0) + 1 };   // 호출 기록 = **재호출 쿨다운 스탬프**(260811 개정 — 판정이 아래에서 즉시 끝나므로 러너에게 넘기는 표식이 아니다) · 판정 성사 시엔 지운다
-      // ── 여기서부터 **그 자리 판정**(운영자 260811 "카카오택시 부르는것 처럼 · 혼령이 되어 나의 소생을 비는 이를 찾습니다") ──
-      //   러너를 기다리면 수 분이라 「호출 중」 UX가 성립하지 않는다. 그래서 ⓐ 누가 올지 ⓑ 그가 살아 돌아오는지를 **서버가 즉시** 굴린다(러너 자율 경로 60분 축은 그대로 병존).
-      //   ⓐ 온다/안 온다 — 신당은 목숨을 거는 자리라 대개 안 온다(운영자 "자주 실패" · 그 근거 = op pray와 같은 벌).
-      //     가중 = 은혜(pray_bond) > 친밀도(내가 쏟은 말 수) > 성향 16축(친절+온기+인내−경계) > **거리**(거처가 성당에서 몇 홉 · SHRINE_HOP) + 우연.
-      //     지목(픽토그램 「나 살려줘」)이면 ⓐ는 건너뛴다 = 그 사람은 온다(대신 ⓑ의 목숨값은 똑같이 치른다).
-      //   ⓑ 향불 — 유저가 대신 눌러주는 게 아니라(운영자 "봇이라고 가정할때 성공률이 50% 정도 되는 게임 · 나는 모르지만 자체적으로 돌리게") **서버가 50% 룰렛**.
-      //     실패 = 그 사람이 그 자리에서 죽는다(운영자 "향불을 피우다 구하러 온 00가 죽었습니다") = op pray 실패와 완전 대칭.
-      const cand = prayCands(s);                                                         // 후보·확률 = 모듈 상단 SSOT 한 곳(op praycands가 화면에 보여준 그 숫자 그대로)
-      if (!cand.length) { res = { none: 1 }; return; }                                     // 빌어줄 수 있는 사람이 아무도 없음(만난 사람 0 · 전원 사망)
-      let who = '';
-      if (pid) {                                                                           // 이름을 부른 경우(픽토그램 → 선택 박스 → 「나 살려줘」) = **그 사람의 확률로** 굴린다
-        const me = cand.find(c => c.id === pid);                                            //   부른다고 반드시 오지는 않는다 — 화면에 보여준 %가 곧 이 굴림(운영자 260811 "올 확률이 높은 순도 보여주고")
-        if (!me) return { abort: { error: '그 사람은 지금 갈 수 있는 상태가 아니야' } };
-        if (Math.random() >= me.p) { res = { came: 0, id: pid }; return; }
-        who = pid;
-      } else {                                                                             // 「찾기」 = 가중 룰렛으로 「고민할 사람」 한 명 → 그가 목숨을 걸지 말지 개인 확률로 굴린다
-        const tot = cand.reduce((a, c) => a + c.w, 0);
-        let r = Math.random() * tot;
-        for (const c of cand) { r -= c.w; if (r <= 0) { who = c.id; break; } }
-        if (!who) who = cand[cand.length - 1].id;
-        const me = cand.find(c => c.id === who);
-        if (Math.random() >= me.p) { res = { came: 0 }; return; }                            // 아무도 오지 않았다 → 뷰어가 「혼령이 스스로 향불을 사른다」로 잇는다
-      }
-      const nm2 = String(NMS[who] || who).slice(0, 40);                                    // 표기 이름은 뷰어(yPersona)가 정본 — 여기 값은 사건문·dead.nm 박제용
-      if (Math.random() < 0.5) {                                                           // ⓑ 향불 성공(50%) = 내가 돌아갈 수 있다
-        md.pray = { id: who, by: nm2 };                                                    // 기존 부활 파이프 그대로(op revive가 pray를 보고 통과 · txt는 러너가 채우면 표시)
-        delete md.beg;                                                                     // 판정이 끝났으니 러너 재실행분이 같은 죽음을 두 번 처리하지 않게
-        res = { came: 1, saved: 1, id: who, nm: nm2 };
-      } else {                                                                             // ⓑ 향불 실패 = **구하러 온 그 사람이 죽는다**(운영자 260811)
-        const dd = (s.dead = s.dead || {});
-        dd[who] = { d: Date.now(), t: Date.now() + 48 / 6 * 3600e3, pray: 1, nm: nm2, why: '나를 위해 신당에 올랐다가 향불을 놓쳤다' };   // 하한 = 무음동 48h(주민 사망 정본과 같은 값)
-        delete md.beg;
-        const ev2 = `[사건] 신당 — ${nm2}이(가) 죽은 사람을 되돌리려 향불을 사르다 불이 꺼져 그 자리에서 숨졌다`;
-        const np2 = String(s.note_pub || s.note || '').replace(/\s+$/, '');
-        if (!np2.includes(ev2)) s.note_pub = ((np2 ? np2 + '\n' : '') + ev2).slice(-600);
-        res = { came: 1, saved: 0, id: who, nm: nm2 };
-      }
+      md.beg = { id: pid, at: Date.now(), n: Math.min(99, (bg && bg.n) || 0) + 1 };   // 러너(yeta_nudge.sh)가 소비: 60분 대기·추첨을 건너뛰고 이 사람으로 pray 모드 실행 후 지운다
     });
     if (abort && abort.wait) return json({ ok: false, wait: Math.ceil(wait / 1000) }, 429);   // 남은 초 = 뷰어가 문구를 그린다(문구 정본 = 뷰어)
     if (abort && abort.error) return json(abort, 409);
     if (abort) return json({ ok: true, noop: 1, sess: sess || null });
-    if (res.saved) { if (env.GH_TOKEN) await dispatch(env, 'yeta-nudge.yml', {}).catch(() => 0); }   // 살아 돌아왔을 때만 러너 기동 = 그 장면의 대사(pray.txt)를 뒤늦게 채운다(실패해도 부활엔 지장 없음 = fail-soft)
-    return json({ ok: true, ...res, sess: sess || null });
-  }
-
-  if (op === 'praycands') {   // 「이름을 부를 수 있는 사람」 선택 박스 재료(운영자 260811 "올 확률이 높은 순도 보여주고") — 후보 + 각자의 **올 확률**을 확률 내림차순으로.
-    // 확률 계산은 prayCands 한 곳(모듈 상단) = op praybeg가 실제로 굴리는 그 값 그대로 → 화면의 %와 실제가 갈라지지 않는다. 이름 표기는 뷰어(yPersona) 몫.
-    const s = await readSess();
-    if (!s || !s.me_dead) return json({ ok: true, cands: [] });   // 안 죽었으면 부를 일이 없다
-    return json({ ok: true, cands: prayCands(s).map(c => ({ id: c.id, p: Math.round(c.p * 100) })) });
-  }
-
-  if (op === 'prayself') {   // 혼령 자가 향불(운영자 260811 "찾다가 실패하면 자체적으로 미니 게임해서 깨면 부활하게") — 아무도 오지 않았을 때 **내가 직접** 향불을 사른다.
-    // 이미 죽어 있으므로 실패해도 더 잃을 목숨이 없다(op pray의 사망 벌과 여기가 갈리는 지점) — 대신 재도전 쿨다운으로 무한 리롤을 막는다.
-    const SELF_COOL_MS = 3 * 60e3;
-    const win = body.res === 'win';
-    let wait = 0;
-    const { sess, abort } = await casPut(s => {
-      const md = s.me_dead;
-      if (!md) return { abort: { noop: 1 } };                                              // 안 죽었음 = 무변경
-      if (md.pray) return { abort: { noop: 1 } };                                          // 그새 누가 빌어줬음 = 이미 돌아갈 수 있다
-      const sf = md.self || {};
-      if ((sf.until || 0) > Date.now()) { wait = sf.until - Date.now(); return { abort: { wait: 1 } }; }
-      if (!win) { md.self = { until: Date.now() + SELF_COOL_MS }; return; }                // 실패 = 쿨다운만(혼령은 두 번 죽지 않는다)
-      md.pray = { id: '', by: '' };                                                        // 성공 = 기존 부활 게이트(op revive)가 보는 그 플래그 — 새 부활 경로를 만들지 않는다
-      delete md.self;
-    });
-    if (abort && abort.wait) return json({ ok: false, wait: Math.ceil(wait / 1000) }, 429);
-    if (abort) return json({ ok: true, noop: 1, sess: sess || null });
-    return json({ ok: true, won: win ? 1 : 0, sess: sess || null });
+    if (!env.GH_TOKEN) return json({ ok: true, queued: 1, sess: sess || null });   // 토큰 없음 = 표식만 남기고 다음 크론(30분)이 가져간다 = 무해 폴백
+    const bst = await dispatch(env, 'yeta-nudge.yml', {});   // 크론(30분 주기)을 기다리지 않고 그 자리에서 기동 — 실패해도 beg는 남아 다음 크론이 소비(부탁이 증발하지 않는다)
+    return json({ ok: true, sent: bst === 204 ? 1 : 0, sess: sess || null });
   }
 
   if (op === 'pray') {   // 신당 기도 — **유저가 직접** 북동쪽 언덕 신당(성당)까지 찾아가 죽은 주민을 위해 비는 경로(운영자 260730 "신당에 가서 죽은사람한테 기도드릴 수 있는 걸 · 지도에 붙이던가").
     // 종전엔 비는 주체가 러너 <<PRAY>>(주민)뿐 = 유저는 죽음을 보고도 아무것도 못 하고 무음동 48h를 기다리는 수밖에 없었다.
     // 세션 변형 = 러너 pray_who 분기와 **한 식**(t를 now로 당김 · pray 플래그 제거 · by 박제 · note_pub 사건 1줄) = 기존 부활 파이프 그대로 재사용(새 상태·새 필드 0).
-    // 게이트(운영자 260730 "미니 게임 만들어서 그 안에서 이겨야 · 난이도 좀 어렵게") — res='win' = 향불 3연속 성공 → 그 사람 부활.
-    // ⚠️ 벌칙 전면 개정(운영자 260811 "그 신당에서 비는거 … 그거를 빌다가 본인도 죽을 수 있다는 콘셉으로 넣자 · 실패하면 본인이 죽는거로 컨셉바꾸자"):
-    //   종전 = 3연속 실패 시 현실 24h 신당 잠금. 지금 = **향불을 놓치면 빈 사람이 그 자리에서 죽는다**(pray_fail 잠금 축 폐지).
-    //   이게 무음동의 규칙 한 줄이 된다 — 「비는 자가 목숨을 건다」. 그래서 주민이 나를 위해 빌러 오는 일이 드물고(op praybeg 찾기 실패율의 근거),
-    //   반대로 내가 주민을 위해 빌 때도 같은 값을 치른다(대칭 = 규칙이 한 방향으로만 가혹하지 않다).
-    //   ⚠️ 판정은 **서버 단독**(뷰어는 표시만) — 클라 게이트만이면 새로고침 한 번에 뚫린다.
+    // 게이트(운영자 260730 "미니 게임 만들어서 그 안에서 이겨야 · 난이도 좀 어렵게 · 3연속 실패 시 도전 불가 24시간 뒤 가능")
+    //   res='win' = 향불 3연속 성공 → 부활 · res='lose' = 실패 1건 적립. 3연속 실패 = 현실 24h 잠금(무음동 48h 하한 = 현실 8h보다 **길다** = 그땐 이미 스스로 돌아와 있다 — 운영자가 알고 고른 벌).
+    //   ⚠️ 잠금 판정은 **서버 단독**(뷰어는 표시만) — 클라 게이트만이면 새로고침 한 번에 뚫린다. 잠금은 사람 단위가 아니라 **유저 단위**(그 죽음만 못 비는 게 아니라 신당 자체가 닫힌다).
+    const PRAY_LOCK_MS = 24 * 3600e3, PRAY_FAIL_N = 3;
     const pid = String(body.persona || '');
     if (!ID_RE.test(pid)) return json({ error: '누구를 위해 빌지 모르겠어' }, 400);
     const win = body.res === 'win';
-    let nm = '', died = 0;
+    let nm = '', locked = 0, left = 0;
     const { sess, abort } = await casPut(s => {
-      if (s.me_dead) return { abort: { error: '너는 지금 빌 수 있는 몸이 아니야' } };   // 이미 죽어 있음 = 혼령 자가 향불(op prayself) 몫 — 죽은 사람이 남을 위해 빌 수는 없다
-      const v0 = (s.dead || {})[pid];
-      nm = String((v0 && v0.nm) || pid).slice(0, 40);
-      if (!win) {   // 향불이 꺼졌다 = **비러 간 내가 죽는다**(운영자 260811) — 벌은 잠금이 아니라 목숨
-        died = 1;
-        s.me_dead = { d: Date.now(), src: 'pray', why: `${nm}을(를) 되돌리려 신당에 올라 향불을 사르다 불이 꺼졌다. 무음동의 규칙대로, 빈 사람이 대신 갔다.` };
-        const evd = `[사건] 신당 — ${nm}을(를) 위해 빌던 사람이 향불을 놓쳐 그 자리에서 숨졌다(비는 자가 목숨을 거는 자리)`;
-        const npd = String(s.note_pub || s.note || '').replace(/\s+$/, '');
-        if (!npd.includes(evd)) s.note_pub = ((npd ? npd + '\n' : '') + evd).slice(-600);   // 마을 공용 기억 — 내 죽음도 주민들이 안다(부활 후 재회에서 '아무 일 없던 척' 차단)
-        return;   // 쓰기(사망 박제) 후 정상 반환 — abort 아님
+      const pf = (s.pray_fail = s.pray_fail || {});
+      if ((pf.until || 0) > Date.now()) { locked = pf.until; return { abort: { locked: pf.until } }; }   // 잠금 중 = 승패 무관 무변경(실패 적립도 안 한다 = 잠금 연장 루프 차단)
+      if (!win) {   // 실패 적립 — 3연속이면 그 자리에서 신당이 닫힌다(성공 1회 = pf.n 0으로 리셋 = '연속' 계약)
+        pf.n = (pf.n || 0) + 1;
+        if (pf.n >= PRAY_FAIL_N) { pf.until = Date.now() + PRAY_LOCK_MS; pf.n = 0; locked = pf.until; }
+        else left = PRAY_FAIL_N - pf.n;
+        return;   // 쓰기(실패 기록) 후 정상 반환 — abort 아님
       }
-      const v = v0;
+      const v = (s.dead || {})[pid];
       if (!v || typeof v !== 'object' || !v.pray) return { abort: { noop: 1 } };   // 죽은 적 없음 · 이미 돌아옴 · 이미 누가 빌어줌(러너 <<PRAY>>와 경합) = 무변경(연타 멱등)
-      delete s.pray_fail;   // 폐지된 잠금 축 잔재 청소(구세션 호환 — 남아 있어도 아무도 안 읽지만 죽은 필드를 끌고 다니지 않는다)
+      pf.n = 0;   // 성공 = 연속 실패 카운터 리셋
+      nm = String(v.nm || pid).slice(0, 40);
       const by = String((s.me || {}).call || '').trim().slice(0, 24) || '너를 아는 사람';   // 빌어준 사람 = 유저 호칭(op me) — 러너 [부활] 블록 `by`(≤40) · 뷰어 yPrayBy 표기 공용
       delete v.pray; v.t = Date.now(); v.by = by;   // 즉시 만료 = 부활 대기(뷰어 yRevPend = 성당 앞뜰 · 그 방의 다음 답이 엔트리를 소비하며 첫 마디)
       const bd = (s.pray_bond = s.pray_bond || {});   // 기도 인연(운영자 260730 "내가 빌었던 사람이 나를 위해 부활 빌어줄 확률이 높아지게 · 디비에 남아야 · 페르소나랑 섞여야 · 확률지표로") — 유저→주민 방향의 은혜 누적. 소비처 = yeta_nudge.sh pray 모드 화자 추첨 가중치.
@@ -820,9 +726,9 @@ export async function onRequestPost({ request, env }) {
       const np = String(s.note_pub || s.note || '').replace(/\s+$/, '');
       if (!np.includes(ev)) s.note_pub = ((np ? np + '\n' : '') + ev).slice(-600);
     });
-    if (abort && abort.error) return json(abort, 409);
+    if (abort && abort.locked) return json({ ok: false, locked: abort.locked }, 409);   // 잠금 = 뷰어가 남은 시간을 그린다(에러 문구는 뷰어 정본 — 서버는 ts만)
     if (abort) return json({ ok: true, noop: 1, sess: sess || null });   // noop = 화면만 새로고침(에러 아님 — 그새 딴 사람이 빌었어도 결과는 같다)
-    if (!win) return json({ ok: true, lost: 1, died, nm, sess: sess || null });   // died=1 = 이 응답이 곧 내 사망 통보(뷰어가 사망 국면으로 넘긴다)
+    if (!win) return json({ ok: true, lost: 1, locked, left, sess: sess || null });   // left = 잠기기까지 남은 기회
     return json({ ok: true, nm, sess: sess || null });
   }
 
