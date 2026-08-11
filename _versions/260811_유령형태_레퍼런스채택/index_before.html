@@ -2421,7 +2421,7 @@ function ymBuild(svg) {   // 정적 레이어 — 배경(낮/밤 = KST 시각 ·
   }
   { const zc = YMAP_ZONE[YSHRINE] || { x: (YMAP_POS[YSHRINE] || [72, 30])[0], y: (YMAP_POS[YSHRINE] || [72, 30])[1], r: 7 / YMAP_SC };   // 유령 = 신당 노드 **바로 위**(운영자 260811) — 앵커는 노드와 같은 좌표원에서 파생(성당이 또 옮겨져도 따라온다 · 388차 어긋남 재발 차단). 폴백 r = 소형 노드 반지름 7px(393차 재건에서 성당이 YMAP_ZONE을 떠나 소형 노드가 됐다)
     const gx = zc.x * YMAP_SC, gy = zc.y * YMAP_SC - zc.r * YMAP_SC - 15;
-    S.push(`<g id="ymGhost" class="ymp-ghost" style="display:none" aria-hidden="true"><g transform="translate(${gx - 9.4},${gy - 14}) scale(.78)">${YGHOST_INNER}</g></g>`); }   // scale .78 = 24×26 원도를 19×20으로(워커 스프라이트보다 작게 = 사람이 아니라 표식으로 읽히되 폰 실치수 ~14px 확보)
+    S.push(`<g id="ymGhost" class="ymp-ghost" style="display:none" aria-hidden="true"><g transform="translate(${gx - 9.4},${gy - 12}) scale(.78)">${YGHOST_INNER}</g></g>`); }   // scale .78 = 24×26 원도를 19×20으로(워커 스프라이트보다 작게 = 사람이 아니라 표식으로 읽히되 폰 실치수 ~14px 확보)
   S.push(`<g id="ymWalkers"></g><g id="ymTags"></g>`);   // #ymTags = 장소 핀 레이어(장소 앵커 고정 · 워커 배회와 독립)
   svg.innerHTML = S.join('');
   for (const pid of Object.keys(P)) {   // 장소 탭 = 그 자리 명단 시트(#yin) — 260811 재건: 개방 2곳(찻집·성당)만 눌리던 걸 지도 위 전 장소로. 노드 원 + 이름 라벨 + 핀 셋 다 탭 표면(작은 원만이면 폰에서 놓침 · 260725 계승)
@@ -4080,9 +4080,7 @@ const YCROW_SVG = '<svg viewBox="0 0 48 32" aria-hidden="true"><path d="M23.5 16
 const YCROWSIT_SVG = '<svg viewBox="0 0 36 34" aria-hidden="true"><path d="M9 21.6 1 27.4 10.6 25z"/><ellipse cx="16.6" cy="19.4" rx="8.8" ry="6.2" transform="rotate(-22 16.6 19.4)"/><path d="M12 15c3.4 2.9 7.6 5.1 11 5.6-3.8 2.2-8.6 1-11.9-1.8z"/><circle cx="25.4" cy="9.8" r="4.1"/><path d="M28.6 8.2 35.6 9.6 28.8 12z"/><path d="M15.2 24h1.7v6.6h-1.7zM18.8 24h1.7v6.6h-1.7z"/></svg>';   // 앉은 까마귀(난입 전조 전용 · 운영자 260730) — 꽁지·몸통·접은 날개·머리·부리·다리 6조각 조립(위 YCROW_SVG와 같은 결의 인라인 상수 · 아이콘 SSOT 무저촉). 고개를 든 자세 = "이쪽을 보고 있다"(카드 §겉모습) · 나는 실루엣을 정지시켜 두면 「앉아 있다」로 안 읽힌다(헤드리스 3자세 대조로 고름)
 // 유령(지도 신당 전용 · 운영자 260811 "누가 죽어있을때 신당 이 강조되고 위에 유령표시 나오게") — 위 YSKULL/YCROW와 **같은 인라인 상수 결**(nm-svg.js 공유 아이콘 아님 = SSOT 게이트 무저촉).
 //   조립 = 둥근 머리+몸통 한 덩어리에 아랫단 물결 3산(까마귀가 조각 6개로 실루엣을 만든 방식 그대로) · 눈 = currentColor 위 검정 저투명(해골 눈구멍 패턴 계승 = 색이 바뀌어도 눈이 따라온다).
-const YGHOST_INNER = '<path d="M12 1.6C6.26 1.6 1.6 6.26 1.6 12v8.4a2.6 2.6 0 0 0 5.2 0 2.6 2.6 0 0 0 5.2 0 2.6 2.6 0 0 0 5.2 0 2.6 2.6 0 0 0 5.2 0V12c0-5.74-4.66-10.4-10.4-10.4Z"/><ellipse cx="8.4" cy="11" rx="2.5" ry="3.3" fill="#000" fill-opacity=".55"/><ellipse cx="15.6" cy="11" rx="2.5" ry="3.3" fill="#000" fill-opacity=".55"/>';   // 유령(지도 신당 전용 · 운영자 260811 레퍼런스 이미지 채택) — 통통한 반원 돔 + **큰 타원 눈** + 아래 둥근 물결 4산.
-//   1차본(홀쭉한 몸 + 작은 눈 + 각진 물결)은 14px에서 눈이 점으로 뭉개져 「유령」으로 안 읽혔다. 눈을 rx2.5·ry3.3으로 키운 게 판독의 8할 —
-//   레퍼런스의 큼직한 구멍눈이 그 결이다. 물결 = 반지름 2.6 반원 4개(각진 지그재그보다 실루엣이 부드럽게 남는다) · 눈 = currentColor 위 검정 저투명(해골 눈구멍 패턴 계승).
+const YGHOST_INNER = '<path d="M12 1.8c-4.5 0-8.1 3.6-8.1 8.1v13.9c0 .95 1.1 1.42 1.78.76l1.9-1.86c.5-.49 1.3-.46 1.77.06l1.2 1.34c.53.6 1.47.6 2 0l1.2-1.34c.47-.52 1.27-.55 1.77-.06l1.9 1.86c.68.66 1.78.19 1.78-.76V9.9c0-4.5-3.6-8.1-8.1-8.1Z"/><ellipse cx="9" cy="9.6" rx="1.5" ry="2" fill="#000" fill-opacity=".55"/><ellipse cx="15" cy="9.6" rx="1.5" ry="2" fill="#000" fill-opacity=".55"/>';
 function yShrineWait() {   // 지금 신당의 기도를 기다리는 죽은 주민 수 — 판정 = ySnRender의 `wait`와 **같은 식**(죽어 있고 · 아직 아무도 안 빌어줌)
   const dd = ((YSESS || {}).dead) || {};
   return Object.keys(dd).filter(id => yPersona(id) && yDeadT(id) && yDead({ id }) && !yPrayed(id)).length;
