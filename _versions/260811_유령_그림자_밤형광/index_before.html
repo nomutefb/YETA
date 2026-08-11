@@ -873,8 +873,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   /* 신당 강조 = 기도를 기다리는 죽은 주민이 있는 동안(운영자 260811) — 색·굵기는 위 .meet **동값** 계승(새 값 0) · .meet(붐빔)과는 다른 축이라 클래스만 분리 */
   .ymp-node.wait { stroke:var(--accent); stroke-width:1.6; }
   .ymp-name.wait { fill:var(--accent); }
-  .ymp-ghost { fill:var(--fg); pointer-events:none; animation:ymbob 1.05s ease-in-out infinite; filter:drop-shadow(0 2px 2px rgba(0,0,0,.5)); }   /* 그림자(운영자 260811 "뒤에 그림자 넣으면 되겠네") — 낮 지도는 밝아서 흰 실루엣이 배경에 먹힌다. 그림자 = 절대명령#1 raw 허용 축(토큰 없는 box-shadow 계열) */
-  .ymp-ghost.night { fill:var(--accent); filter:drop-shadow(0 2px 2px rgba(0,0,0,.5)) drop-shadow(0 0 3px rgba(var(--accent-rgb),.85)); }   /* 밤 = 형광(운영자 260811) — 색은 이 레포의 형광 정본 --accent 그대로(신설 0) · 발광은 같은 토큰 rgba로 한 겹 더 = 어두운 지도에서 스스로 빛나 보인다 */   /* 흰색(운영자 260811) — 유령이 라임이면 「탭할 것」으로 읽힌다(탭 표면은 아래 노드·라벨) · 밤 지도 위 흰 실루엣이 유령답기도 하다 · 둥실 = 워커 ymbob 정본 재사용(새 키프레임 0) */
+  .ymp-ghost { fill:var(--fg); pointer-events:none; animation:ymbob 1.05s ease-in-out infinite; }   /* 흰색(운영자 260811) — 유령이 라임이면 「탭할 것」으로 읽힌다(탭 표면은 아래 노드·라벨) · 밤 지도 위 흰 실루엣이 유령답기도 하다 · 둥실 = 워커 ymbob 정본 재사용(새 키프레임 0) */
   @media (prefers-reduced-motion:reduce) { .ymp-ghost { animation:none; } }   /* 모션 줄이기 = 표식은 남기고 둥실만 생략(.ycrowsit 판단 계승 — 이건 정보다) */
   .ymp-off { fill:rgba(var(--danger-rgb),.08); stroke:rgba(var(--danger-rgb),.55); stroke-dasharray:5 4; stroke-width:1.2; }
   .ymp-offtxt { fill:var(--danger); font-size:8px; font-weight:var(--fw-x); letter-spacing:.14em; }
@@ -2553,7 +2552,7 @@ async function ymPlaceAll() {   // 현재 시각 실위치 재판정 → 워커 
   for (const id of Object.keys(YMAPD.places)) { const el = document.getElementById('ymn-' + id); if (el) el.classList.toggle('meet', ((byPlace[id] || []).length) >= 2); }
   { const nw = yShrineWait(), sn = document.getElementById('ymn-' + YSHRINE), sl = document.getElementById('ymnl-' + YSHRINE), gh = document.getElementById('ymGhost');   // 죽은 사람이 기다리는 동안 = 신당 강조 + 유령 표식(운영자 260811) — 종전엔 지도 어디에도 「지금 빌러 갈 데가 있다」 신호가 없어서, 카드를 열어보기 전엔 죽음이 방치됐다
     if (sn) sn.classList.toggle('wait', nw > 0); if (sl) sl.classList.toggle('wait', nw > 0);   // 강조 = 노드 원 + 이름 라벨 둘 다(탭 표면과 같은 짝 · 작은 원만 물들면 폰에서 놓친다)
-    if (gh) { gh.style.display = nw > 0 ? '' : 'none'; gh.classList.toggle('night', !ymIsDay(h)); } }   // 기다리는 사람 0 = 표식 회수(신당이 늘 반짝이면 신호가 아니라 장식이 된다) · 밤 = 형광(운영자 260811 "밤에는 형광으로") — 판정은 부활 발광(ymRevGlow)과 **같은 식**(!ymIsDay(h) · 무음동 세계 시각)
+    if (gh) gh.style.display = nw > 0 ? '' : 'none'; }   // 기다리는 사람 0 = 표식 회수(신당이 늘 반짝이면 신호가 아니라 장식이 된다)
   ymZSort();   // 재판정 직후 즉시 정렬(reduce-motion = tick 부재 경로 포함)
 }
 function ymZonePt(zn, avoid) {   // 구역 내 랜덤 지점(균등 원판 — 건물·도로 비침범은 존 반경이 보장 = 실측 공터) + 같은 존 워커와 최소 12px 간격(운영자 260710 "항상 뭉쳐있어" — 실패 = 가장 먼 후보 폴백 = 존 포화 시에도 최선 산개)
@@ -2761,11 +2760,11 @@ function ySsnHtml() {   // 시즌 표기 정본(대화·캐릭터 탭 공용 —
 const YME_MOODS = { warm: '따뜻함', tense: '긴장', blue: '가라앉음', joy: '신남', love: '설렘', shy: '수줍음', mad: '짜증', sulky: '삐짐' };   // 무대 무드(러너 <<MOOD>> 배경 축 · Y_MOODS와 짝 — 9감정 Q.29 + 260726 삐짐 독립)
 const YME_FEEL = { warm: ['🙂', '따뜻함'], joy: ['😄', '신남'], calm: ['😌', '평온'], tired: ['😪', '나른함'], think: ['🤔', '생각 많음'], hungry: ['🍜', '출출함'], love: ['🥰', '설렘'], tense: ['😰', '긴장'], blue: ['🌧️', '가라앉음'], night: ['🌙', '밤샘 각'] };   // 내 기분 세트(운영자 260709 "다양한 상황 + 이모지") — 로컬 표시 전용(무대 무드와 별개 축 · warm/tense/blue 키는 yLastMood 폴백 호환)
 function yMoodLog() { try { return JSON.parse(localStorage.getItem('yeta_me_moodlog') || '[]'); } catch { return []; } }   // 기분 지문 로그(운영자 260716 수렴 · 평의회 A안) — {ts, md, t:그때 현재 방} · 로컬 표시 전용(서버 미전송 = 무인증 주입면 0 유지) · yeta_ 접두 = 캐시 비우기 커버
+const YMAP_URL = 'https://raw.githubusercontent.com/muteno/yeta/main/apps/yeta/places.json';   // 장소 SSOT 주소 1곳(260812) — 지도 로더(yMapEnter)와 yMeMap이 각자 같은 URL을 박아두던 것 통합
 let _yMapP = null;   // 진행 중인 로드 1개 공유 — 대화 열기·지도·목록이 동시에 불러도 요청은 1회(상한에 걸려 먼저 빠져나와도 뒤에서 계속 돌아 다음 호출이 받는다)
 async function yMeMap(cap) {   // YMAPD 보장(지도 탭 미방문 대비 · 실패 = null 수용) · cap(ms) = 기다리는 상한. 안 주면 종전대로 끝까지 기다림(느긋한 지연 로드용)
   if (YMAPD) return YMAPD;
-  // 장소표 = 게이트웨이 op places 경유(260812 · 400차) — 종전 raw.githubusercontent.com 직접 호출 폐지. 뷰어는 자기 도메인 1홉만 타고, 깃허브 왕복·캐시는 서버가 진다(외부 도메인이 느린 순간 = 대화 열기가 묶이던 축 원천 제거 · 상한은 방어선으로 존치).
-  if (!_yMapP) _yMapP = yApi('places').then(j => { if (j && j.ok && j.data) { YMAPD = j.data; return j.data; } return null; }).catch(() => null).finally(() => { _yMapP = null; });
+  if (!_yMapP) _yMapP = fetch(YMAP_URL).then(r => r.json()).then(j => { YMAPD = j; return j; }).catch(() => null).finally(() => { _yMapP = null; });
   const p = _yMapP;
   if (cap) await Promise.race([p, new Promise(r => setTimeout(r, cap))]);   // 상한 = 화면이 이 요청에 묶이지 않게(260812 · Promise.race 상한 = yBargeWarm 선례 계승)
   else await p;
