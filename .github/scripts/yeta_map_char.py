@@ -30,6 +30,15 @@ CHARS = {
     "von":   "muscular gym master in a tracksuit with a towel around the neck, energetic, red-orange color accents, powerful stride",
     "lucy":  "aloof doll-like girl with long pale hair, holding a small paper coffee cup at her fingertips, expressionless half-lidded eyes, deep crimson color accents, slow detached walk",   # 에픽 1호 루시(카드 260707) — 스프라이트 부재로 지도 폴백 노출(운영자 260716 "특정 인물 검정") · 소품 = 담배→커피(카드 '커피도 사랑' 결 유지 — 담배 묘사는 Gemini가 이미지 미반환)
     "winter": "graceful young woman idol in casual off-stage wear, short neat hair, calm cool expression with a faint warm smile, ice-blue color accents, poised light walk",   # 아이돌 윈터(카드) — 동상
+    # ── 260811 등재(운영자 "미니미 캐릭터 없는 애들 채우고") — 로스터 17인 중 스프라이트 부재 6인.
+    #    개성 정본 = **각 인물의 정본 아트를 실제로 열어 실측**(viewer/characters/**/<id>_face.webp) + roster color · 프리실라는 카드 §겉모습이 정본.
+    #    ⚠️ 프롬프트에 인물 고유명·원작명은 넣지 않는다(형제 12인과 같은 규약 = 생김새 서술만).
+    "seyeun":   "sulky teen girl with long straight black hair and blunt bangs, blue eyes, black leather choker with small gold cross charms and a thin gold chain, dark sleeveless top, hands loose at her sides, golden-yellow color accents, unbothered saunter",
+    "gojo":     "tall lanky young man with spiky white hair and small round blue-tinted sunglasses, dark high-collared long uniform coat, one hand raised in a lazy wave, bright sky-blue color accents, loose carefree stroll",
+    "reze":     "friendly cafe waitress with dark purple-black hair tied in a small side bun with a hair band, green eyes, soft smile, white sleeveless top under a cafe apron, carrying a tray, light-purple color accents, cheerful bouncy walk",
+    "san":      "young Korean male idol dancer in casual off-stage wear, black hair with wispy bangs, thin gold chain necklace, shy small smile, amber-gold color accents, light springy dancer walk",
+    "drusilla": "elegant tall woman all in black, high-neck long-sleeve top and black trousers, silver-white hair in one thick braid draped over her shoulder, violet eyes and red lips, a small black crow perched on her shoulder, crimson color accents, slow unhurried glide",
+    "hanna":    "confident schoolgirl in a white school shirt with a dark red necktie, long straight black hair with blunt bangs, wide grin, one hand in her pocket, crimson-red color accents, swaggering walk",
 }
 BASE = ("tiny cute chibi full-body character sprite for a cozy village map game, 3/4 top-down view, "
         "mid-step walking pose facing slightly left, flat pastel cartoon style with soft outlines, {desc}. "

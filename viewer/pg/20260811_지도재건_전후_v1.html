@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>지도 재건 — 차량·도로·마스크·가림체 철거 + 이름표를 장소 핀으로 (393차)</title>
+<style>
+  /* 자기완결 1파일(스킬 §플그 규약) — `../tokens.css`를 링크하면 파일만 따로 열 때 토큰이 통째로 무효가 된다.
+     값 원본 = viewer/index.html :root(= viewer/tokens.css 거울). 아래는 그 사본. */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --accent:#CFFF40; --accent-rgb:207,255,64;
+    --think:#3EE0C8; --think-rgb:62,224,200; --danger:#ff5b4a; --danger-rgb:255,91,74; --arm:#ffb4a8;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+    --r-s:9px; --r-m:11px; --r-l:16px; --r-modal:22px; --r-pill:999px;
+    --sp-2:12px; --sp-3:18px; --btn:34px;
+    --fs-h2:15px; --fs-h3:14px; --fs-body:15px; --fs-label:13px; --fs-sm:12px; --fs-xs:11px; --fs-meta:8.25px;
+    --fw-x:800; --fw-b:700; --lh-base:1.6; --ease:cubic-bezier(.2,.7,.3,1);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .lead b { color:var(--fg-2); font-weight:var(--fw-b); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px; }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  @media (max-width:820px) { .pair { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .cap .val { font-size:var(--fs-xs); color:var(--fg-2); }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); }
+  td.v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); }
+  td.gone { color:var(--danger); }
+  td.keep { color:var(--fg-2); }
+  .shot { display:block; width:100%; height:auto; border-radius:var(--r-m); border:1px solid var(--glass-line); }
+  .zoom { position:relative; width:100%; aspect-ratio:1/1; overflow:hidden; border-radius:var(--r-m); border:1px solid var(--glass-line); }
+  .zoom img { position:absolute; width:300%; height:300%; image-rendering:auto; }
+  .z-tags img { left:-118%; top:-62%; }      /* 광장·상가 이름표 구역 확대(0-100 기준 ~x40-60 · y28-52) */
+  .z-off  img { left:-198%; top:-58%; }      /* 성당·펜스 공터 구역 확대(~x70-95 · y26-46) */
+</style>
+</head>
+<body>
+<div class="pg">
+
+  <h1>지도 재건 — 「생성 그림 위에 손으로 그린 좌표」 축 전면 철거</h1>
+  <p class="lead">
+    운영자 260811 <b>“이 개같은 지도 아예 싸그리 엎어버려, 관련된 코드도. 차량 통제 맨날 개선하는데 개선이 한번도 안 됨.”</b><br>
+    지목된 «차»는 배경 그림에 구워진 주차 차량이 아니라 <b>«이상하게 날아다니는 벌레같은 거»</b> = 도로를 벗어나 건물·언덕 위를 떠다니던
+    <code>.ymp-car</code> 캡슐 26대였다. 뿌리 = <b>배경이 생성 이미지인데 도로·마스크·가림체를 손으로 트레이싱</b>하는 구조 —
+    배경을 다시 구울 때마다 좌표가 침묵 실효해서 v4→v5→v7 재실측을 반복해도 수렴하지 못했다. 이번엔 고치지 않고 <b>축을 통째로 내렸다</b>.
+  </p>
+
+  <div class="sect">
+    <h2>1. 지도 전체 — 무음동 낮</h2>
+    <div class="pair">
+      <div>
+        <div class="cap"><span class="bdg before">BEFORE</span><span class="val">차 26 · 신호등 1 · 가림체 8 · 이름표 15장</span></div>
+        <img class="shot" src="20260811_지도재건_before.webp" alt="재건 전 지도 — ??? 이름표가 겹쳐 쌓이고 출입금지 상자가 성당 위에 얹혀 있다">
+      </div>
+      <div>
+        <div class="cap"><span class="bdg after">AFTER</span><span class="val">차 0 · 신호등 0 · 가림체 0 · 장소 핀 9개</span></div>
+        <img class="shot" src="20260811_지도재건_after.webp" alt="재건 후 지도 — 장소마다 핀 1개(N명)만 뜨고 출입금지는 실제 펜스 공터 위">
+      </div>
+    </div>
+    <p class="note">실브라우저 실측(playwright · <code>?qa=1#map</code> 딥링크 · 420×900 @2x · 세계시각 낮 고정). 두 컷 모두 같은 하니스·같은 로스터.</p>
+  </div>
+
+  <div class="sect">
+    <h2>2. 겹침 — 이름표 스택이 사라진 자리</h2>
+    <div class="pair">
+      <div>
+        <div class="cap"><span class="bdg before">BEFORE</span><span class="val">한 자리에 <code>???</code> 3~4장 수직 스택</span></div>
+        <div class="zoom z-tags"><img src="20260811_지도재건_before.webp" alt="이름표가 세로로 겹쳐 쌓인 모습"></div>
+      </div>
+      <div>
+        <div class="cap"><span class="bdg after">AFTER</span><span class="val">한 장소 = 핀 1개(<code>N명</code>)</span></div>
+        <div class="zoom z-tags"><img src="20260811_지도재건_after.webp" alt="장소당 핀 하나로 통합된 모습"></div>
+      </div>
+    </div>
+    <p class="note">
+      종전 = <b>사람 수만큼</b> 이름표(17장). 같은 자리에 여럿이면 <code>13px</code>씩 세로로 쌓아 올려서, 3명만 모여도 위 장소 라벨을 밟았다.<br>
+      재건 = <b>장소 수만큼</b> 핀(12장 · 재실자 0이면 미표시). <b>누가</b> 있는지는 핀을 탭해 명단으로 본다 — 시트는 기존 <code>#yin</code> 100% 계승(새 부품 0).
+    </p>
+  </div>
+
+  <div class="sect">
+    <h2>3. 출입금지 — 좌표계 오배치 정정</h2>
+    <div class="pair">
+      <div>
+        <div class="cap"><span class="bdg before">BEFORE</span><span class="val">성당 라벨 위에 얹힘</span></div>
+        <div class="zoom z-off"><img src="20260811_지도재건_before.webp" alt="출입금지 상자가 성당 언덕 위에 잘못 놓인 모습"></div>
+      </div>
+      <div>
+        <div class="cap"><span class="bdg after">AFTER</span><span class="val">실제 펜스 공터 위</span></div>
+        <div class="zoom z-off"><img src="20260811_지도재건_after.webp" alt="출입금지 상자가 그림 속 펜스 친 공사 공터 위로 이동한 모습"></div>
+      </div>
+    </div>
+    <p class="note">
+      원인 = <code>offlimits</code>가 <code>YMAP_POS</code>(그림 실측 좌표계)에 없어 <b>논리좌표</b>(<code>places.json</code> 66,34)로 폴백했고, 그 자리가 성당 언덕이었다.
+      격자 오버레이 실측 결과 그림 속 펜스 공터 = <code>x 71.8~95 · y 27.7~45.2</code> → 중심 <code>(83.5, 36)</code> 등재.
+    </p>
+  </div>
+
+  <div class="sect">
+    <h2>4. 무엇이 내려갔고 무엇이 남았나</h2>
+    <div class="grp">
+      <table>
+        <thead><tr><th style="width:32%">축</th><th style="width:34%">현물</th><th>처분</th></tr></thead>
+        <tbody>
+          <tr><td>도로 중심선</td><td class="v">YMAP_ROADS_TONE (12도로 × 2톤)</td><td class="gone">철거 — 배경 재생성마다 침묵 실효</td></tr>
+          <tr><td>차량</td><td class="v">yLaneOf · ymLanes · ymCarsBuild · 주행 루프</td><td class="gone">철거 — 왕복 26대 전량</td></tr>
+          <tr><td>픽셀 도로 마스크</td><td class="v">road_mask_{day,night}.png</td><td class="gone">파일 삭제</td></tr>
+          <tr><td>전경 가림체</td><td class="v">YMAP_FG · ymFgBuild (폴리곤 8 × 2톤)</td><td class="gone">철거</td></tr>
+          <tr><td>신호등</td><td class="v">ymRed · #ymLights · .ymp-light</td><td class="gone">철거 — 멈출 차가 없다</td></tr>
+          <tr><td>재실측 도구</td><td class="v">shared/yeta_map_trace.py (numpy·scipy·PIL)</td><td class="gone">파일 삭제</td></tr>
+          <tr><td>짝 게이트</td><td class="v">check_map_bg_pair · YMAP_BG_SHA · YMAP_FG_FP</td><td class="gone">철거 — 지킬 짝이 없어졌다</td></tr>
+          <tr><td>개별 이름표</td><td class="v">.ymp-tag × 사람 수(17)</td><td class="gone">장소 핀으로 통합</td></tr>
+          <tr><td>배경 그림</td><td class="v">map_{day,night}.png · 세계시각 스왑</td><td class="keep">유지</td></tr>
+          <tr><td>구역·건물 좌표</td><td class="v">YMAP_ZONE · YMAP_POS</td><td class="keep">유지</td></tr>
+          <tr><td>주민 스프라이트</td><td class="v">.ymp-walker · 구역 내 배회 · 산개</td><td class="keep">유지</td></tr>
+          <tr><td>동선 엔진</td><td class="v">ymRoutineOf · ymPlaceOf · ymTransitOf</td><td class="keep">유지(러너 등가 · 게이트 그대로)</td></tr>
+          <tr><td>실내 뷰·신당</td><td class="v">#yin · yInRender · ySnRender · 향불 링</td><td class="keep">유지 + 전 장소로 개방</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      배경 스왑 비용도 같이 내려갔다 — 종전엔 낮/밤이 바뀔 때 <b>도로 좌표·픽셀 마스크·가림체 3종을 동시 재생성</b>했지만,
+      지금 지도가 배경에서 읽는 값은 <b>0</b>이라 <code>href</code> 한 줄 교체로 끝난다. 배경을 다시 구워도 실효할 좌표가 없다.
+    </p>
+  </div>
+
+  <div class="sect">
+    <h2>5. 핀 = 기존 부품 계승(새 디자인 0)</h2>
+    <div class="grp">
+      <table>
+        <thead><tr><th style="width:26%">부품</th><th style="width:38%">정본 셀렉터·값</th><th>재건에서의 쓰임</th></tr></thead>
+        <tbody>
+          <tr><td>핀 필</td><td class="v">.ymp-tag rect — 30×13 rx6.5 · fill rgba(18,18,18,.8)</td><td>그대로. 개수만 17 → 장소당 1</td></tr>
+          <tr><td>핀 글자</td><td class="v">.ymp-tag text — 8px · var(--fw-b) · paint-order:stroke</td><td>그대로. 내용만 이름 → <code>N명</code></td></tr>
+          <tr><td>붐빔</td><td class="v">.ymp-tag.meet rect — stroke var(--accent)</td><td>그대로. 2명↑ 라임 링</td></tr>
+          <tr><td>미대면</td><td class="v">.ymp-tag.unmet text — fill var(--accent)</td><td>그대로. 그 자리 전원 미대면이면 강조색</td></tr>
+          <tr><td>명단 시트</td><td class="v">#yin · .yin-bg/.yin-ttl/.yin-look/.yin-empty</td><td>그대로. 씬 없는 장소는 <code>&lt;img&gt;</code> 한 줄만 생략</td></tr>
+          <tr><td>명단 행</td><td class="v">.ypick-row + .yp-col/.yp-name/.yp-tag</td><td>그대로(리스트 정본)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">새 색·px·blur·radius·컴포넌트 창작 0. <code>:root</code> 신규 토큰 0 — <code>design-tokens.lock</code> 54개 불변.</p>
+  </div>
+
+  <div class="sect">
+    <h2>6. 캐릭터도 떠 있었다 — 스프라이트는 「열린 바닥」에서만</h2>
+    <p class="note" style="margin:0 0 10px">
+      운영자 260811 <b>“그 안에서 캐릭터도 둥실둥실 떠다니는데 … 골목이나 이런 장애물 없는 부분 아니면 캐릭터가 안 보이고 그냥 그 위치 위에 표기만 있으면 됨
+      (<u>캐릭터가 건물 위에 떠다니게 하지 마라 ← 가 중점</u>)”</b><br>
+      배회 구획 4개를 그림 위에 실측으로 얹어 「사람이 서 있어도 말이 되는가」를 하나씩 봤다. 붉은 원 = 종전 구획.
+    </p>
+    <div class="grp">
+      <div class="pair" style="grid-template-columns:repeat(4,1fr)">
+        <div><div class="cap"><span class="bdg" style="color:var(--danger);border:1px solid rgba(var(--danger-rgb),.5)">철거</span><span class="val">market</span></div>
+          <img class="shot" src="20260811_지도재건_zone_market.webp" alt="시장 구획이 좌판 차양 지붕 위에 얹힌 실측"><p class="note">좌판 <b>차양 지붕 위</b></p></div>
+        <div><div class="cap"><span class="bdg" style="color:var(--danger);border:1px solid rgba(var(--danger-rgb),.5)">철거</span><span class="val">cathedral</span></div>
+          <img class="shot" src="20260811_지도재건_zone_cathedral.webp" alt="성당 구획이 도로와 벽돌 건물 모서리에 걸친 실측"><p class="note">도로 + <b>건물 모서리</b></p></div>
+        <div><div class="cap"><span class="bdg after">유지</span><span class="val">alley</span></div>
+          <img class="shot" src="20260811_지도재건_zone_alley.webp" alt="골목 구획이 광장 벤치를 물고 있는 실측"><p class="note">광장 포장 — 단 <b>벤치를 물고</b> 있어 이동</p></div>
+        <div><div class="cap"><span class="bdg after">유지</span><span class="val">park</span></div>
+          <img class="shot" src="20260811_지도재건_zone_park.webp" alt="놀이터 구획이 흙바닥 공터에 놓인 실측"><p class="note">놀이터 <b>흙바닥</b> — 장애물 0</p></div>
+      </div>
+    </div>
+    <p class="note">
+      처방 = <code>YMAP_ZONE</code>을 <b>「스프라이트가 실제로 발을 딛는 열린 바닥」만</b> 등재하는 표로 재정의.
+      여기 없는 장소는 스프라이트 미표시 = <b>핀 표기만</b>. 지붕·차양·도로·건물 모서리는 등재 금지 — 이 규칙을 주석으로 못 박아 다음 세션이 지붕 위에 구획을 다시 얹지 못하게 했다.<br>
+      <code>alley</code>는 종전 <code>(48, 46.5, r3)</code>이 광장 벤치를 정통으로 물어(가림체 철거로 벤치 위에 겹쳐 서 보임)
+      1u 격자 실측한 벤치 사이 열린 포장 <code>(47.5, 50, r2.5)</code>로 이동. <b>DOM 실측: 표시 스프라이트 = 골목 4 + 놀이터 3 = 7명, 그 밖 0명.</b>
+    </p>
+    <p class="note">
+      <b>남은 한계(정직 기록)</b>: 골목에 4명이 모이면 서로 겹쳐 보인다 — 스프라이트 폭 4.4u &gt; 광장 열린 폭 5u 라 원을 키우지 않는 한 못 푼다.
+      키우면 다시 벤치를 문다(= 운영자 규칙과 상충). 종전에도 같은 겹침이 있었고 이번 변경이 악화시킨 건 아니다.
+    </p>
+  </div>
+
+  <div class="sect">
+    <h2>7. 미니미 스프라이트 — 로스터 17인 전원 등재</h2>
+    <div class="grp">
+      <table>
+        <thead><tr><th style="width:18%">인물</th><th style="width:14%">종전</th><th>등재한 생김새(정본 = 각자의 얼굴 아트 실열람)</th></tr></thead>
+        <tbody>
+          <tr><td>서예은 <code>seyeun</code></td><td class="gone">스프라이트 없음</td><td>긴 생머리·일자 앞머리 · 파란 눈 · 금 십자 장식 검은 초커 + 가는 금 체인 · 어두운 민소매 / 노란 포인트</td></tr>
+          <tr><td>고죠 <code>gojo</code></td><td class="gone">스프라이트 없음</td><td>백발 스파이키 · 작은 원형 파란 선글라스 · 하이넥 롱코트 · 나른한 손인사 / 하늘색 포인트</td></tr>
+          <tr><td>레제 <code>reze</code></td><td class="gone">스프라이트 없음</td><td>흑보라 머리 옆 쪽머리 + 머리띠 · 초록 눈 · 흰 민소매 위 카페 앞치마 · 쟁반 / 연보라 포인트</td></tr>
+          <tr><td>최산 <code>san</code></td><td class="gone">스프라이트 없음</td><td>검은 머리 잔앞머리 · 가는 금 체인 · 수줍은 미소 · 무대 밖 캐주얼 / 앰버골드 포인트</td></tr>
+          <tr><td>프리실라 <code>drusilla</code></td><td class="gone">스프라이트 없음</td><td>은백 굵은 땋기 한 갈래 · 보랏빛 눈 · 붉은 입술 · 전신 검정 하이넥 · 어깨 위 까마귀 / 진홍 포인트 <b>(정본 = 카드 §겉모습)</b></td></tr>
+          <tr><td>도한나 <code>hanna</code></td><td class="gone">스프라이트 없음</td><td>긴 생머리·일자 앞머리 · 흰 교복 셔츠 + 진홍 넥타이 · 활짝 웃음 · 주머니에 손 / 진홍 포인트</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      종전 <code>yeta_map_char.py</code> <code>CHARS</code> = 11인만 등재 → 나머지 6인은 지도에서 <b>이니셜 실루엣 폴백</b>으로만 보였다(운영자 스샷의 「산」·「한」 색 덩어리).
+      등재 후 <b>로스터 17인 = CHARS 17인</b> 짝 일치. 프롬프트에 인물 고유명·원작명은 넣지 않는다(형제 11인과 같은 규약 = 생김새 서술만) · 멱등이라 실행분은 <b>없는 6장만</b>.
+    </p>
+    <div class="cap" style="margin-top:12px"><span class="bdg after">생성 결과</span><span class="val">서예은 · 고죠 · 레제 · 최산 · 프리실라 · 도한나</span></div>
+    <img class="shot" src="20260811_지도재건_미니미6.webp" alt="생성된 미니미 6장 — 순서대로 서예은·고죠·레제·최산·프리실라·도한나" style="background:#9aa0a6">
+    <p class="note">
+      정본 대조 실측: 서예은 <b>금 십자 초커</b>·노란 포인트 / 고죠 <b>원형 파란 선글라스</b>·백발 / 레제 <b>찻잔 쟁반</b>·옆 쪽머리·초록 눈 /
+      최산 <b>금 체인</b>·후드 / 프리실라 <b>어깨 위 까마귀</b>·은백 땋기·전신 검정 / 도한나 <b>교복 + 진홍 넥타이</b>. 크로마키 잔여 초록 0 · 투명 배경 정상.<br>
+      <b>부수 실측</b>: 스프라이트 404가 사라져 지도 JS 오류 <b>7건 → 1건</b>(남은 1건 = 외부 리소스 연결 실패 · 지도와 무관).
+    </p>
+  </div>
+
+  <div class="sect">
+    <h2>8 · 골목 겹침 — 스프라이트 22 → 18px + 목표점 시도 9 → 40회</h2>
+    <p class="note">
+      운영자 260811 <b>"스프라이트 축소로 골목 겹침 풀어줘"</b>. 축소를 먼저 재보니 <b>단독으론 부족</b>했다 —
+      원인이 크기가 아니라 <b>목표점 뽑기</b>였다. 골목 배치반경은 9.5px인데 4명이 12px씩 벌어지려면
+      정사각 배치(이론 상한 13.4px)에 가까워야 하고, 9회 랜덤은 그걸 거의 못 찾아 <b>93%가 폴백</b> = 산개가 사실상 꺼져 있었다.
+    </p>
+    <div class="cap"><span class="bdg after">실측</span><span class="val">같은 깊이대 가로겹침률 · 골목 4명 · 로스터 무작위 400조합</span></div>
+    <div class="grp">
+      <table>
+        <thead><tr><th style="width:34%">스프라이트 한 변</th><th style="width:33%">시도 9회 (종전)</th><th>시도 40회</th></tr></thead>
+        <tbody>
+          <tr><td>22px — 종전</td><td class="gone">21.9%</td><td>11.8%</td></tr>
+          <tr><td>20px</td><td>19.3%</td><td>8.1%</td></tr>
+          <tr><td>18px — 채택</td><td>15.4%</td><td class="keep">4.5%</td></tr>
+          <tr><td>16px</td><td>11.5%</td><td>2.0%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      세로로 어긋난 쌍은 아이소메트릭의 <b>정상 앞뒤 겹침</b>(painter 정렬)이라 지표에서 뺐다 — 그걸 세면 크기와 무관하게 늘 «겹침»으로 나온다.<br>
+      <b>18px 채택</b> = 겹침 21.9% → 4.5%(5배)를 크기 18% 감소로 산다. 16px면 2.0%까지 가지만 27% 감소인데,
+      이 지도는 <b>확대·이동이 없는 고정 뷰</b>(<code>viewBox</code> 고정 · <code>touch-action:manipulation</code>)라 더 줄이면 인물 식별이 무너진다.<br>
+      <b>조기채택은 남겼다</b> — 넓은 존(놀이터 r=3.5)은 지금도 바로 통과해 평균 반경비 0.75 → 0.76으로 무변.
+      조기채택을 빼고 «최원점»만 쓰면 0.90 = 다들 원 테두리에 달라붙는 부자연이 된다.
+    </p>
+    <div class="cap"><span class="bdg before">전</span><span class="val">22px · 9회 — 4명인데 2덩어리</span>
+      <span class="bdg after">후</span><span class="val">18px · 40회 — 4명이 각자</span></div>
+    <img class="shot" src="20260811_지도재건_골목겹침.webp" alt="골목 4명 전후 3판씩 — 위 22px·9회(쌍 최소간격 6.5~8.0px) / 아래 18px·40회(8.0~10.9px)">
+    <p class="note">
+      정상상태 실측(도달 후 각자 재타겟 — 초기 순차배치만 보면 1·2번이 거의 무제약이라 과소평가된다):
+      쌍 최소간격 <b>6.5~8.0px → 8.0~10.9px</b>. 스프라이트 실폭은 평균 11.6 → 9.5px로 내려가 간격 아래로 들어간다.<br>
+      <b>탭 면적은 안 줄였다</b> — 투명 히트렉트를 종전 22px로 남겨, 이미지 바깥 가장자리를 눌러도 그 사람이 열리는 것을 실클릭으로 확인(<code>히트렉트 가장자리 → gojo</code> · <code>이미지 중앙 → gojo</code>).
+      404 폴백 실루엣도 같은 배율로 묶어 혼자 옛 크기로 튀지 않게 했다.
+    </p>
+  </div>
+
+  <div class="sect">
+    <h2>9 · 이름표 원복 — §2·§5는 폐기됨</h2>
+    <p class="note">
+      운영자 260811 후속 <b>"지금 이렇게 보이는건 좋아. 이대로 이름 표기는 유지해도 됨"</b> ·
+      <b>"내가 첨부한 내용처럼 보이면 된다"</b>(첨부 = 사람마다 이름표가 세로로 쌓인 현행 화면).
+      → §2·§5의 「장소당 <code>N명</code> 핀 1장」은 <b>원복</b>했다. 한 자리에 여럿이면 이름표가 세로로 쌓이는 것도 그 화면 그대로 = <b>의도된 모습</b>이다.
+      아래 §1 컷이 원복 후 최종 화면(<code>tags 17 · 표시 15</code>).<br>
+      <b>원복해도 남는 것</b>: 차량·도로·마스크·가림체 철거(§4) · 출입금지 정정(§3) ·
+      <b>스프라이트는 열린 바닥에서만</b>(§6 — 시장·성당·학교·편집국은 이름표만, 캐릭터는 안 떠다닌다) ·
+      미니미 17인(§7) · 골목 겹침 수정(§8). 이름표 축 하나만 되돌렸다.<br>
+      <b>운영자가 지적한 「캐릭터가 안 보인다」</b> = main에 <code>char_san.png</code> 등 6장이 없어 이니셜 실루엣(「산」)으로 떨어진 것 — §7이 그 6장을 채운다.
+    </p>
+  </div>
+
+  <p class="note" style="margin-top:var(--sp-3)">
+    실측 하니스 = <code>tests/test_backstack.js</code> 관례 계승(자체 http 서버 + playwright 탐색 + <code>?qa=1</code> 딥링크 · API·places.json 스텁).
+    JS 오류 전후 동수(신규 0) · <code>python3 shared/check_refs.py</code> 전체 게이트 rc=0.
+  </p>
+
+</div>
+</body>
+</html>
