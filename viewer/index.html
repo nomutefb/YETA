@@ -2394,8 +2394,8 @@ function ymPlaceLoop() { clearTimeout(_ymapIv); _ymapIv = setTimeout(() => { ymP
 async function yMapEnter() {
   const svg = $('#ymapSvg'); if (!svg) return;
   if (!YMAPD) {
-    try { YMAPD = await fetch('https://raw.githubusercontent.com/muteno/yeta/main/apps/yeta/places.json').then(r => r.json()); }
-    catch { svg.innerHTML = `<text x="250" y="250" text-anchor="middle" class="ymp-name">지도를 못 불러왔어 — 잠시 후 다시</text>`; return; }
+    await yMeMap(12000);   // 지도는 이 데이터가 본체라 상한을 넉넉히(260812) — 그래도 무한 대기는 금지: 종전엔 응답이 안 오면 빈 지도로 영영 멈춰 안내 문구조차 못 떴다
+    if (!YMAPD) { svg.innerHTML = `<text x="250" y="250" text-anchor="middle" class="ymp-name">지도를 못 불러왔어 — 잠시 후 다시</text>`; return; }
   }
   if (!YCHARS.length) { const c = await yApi('chars').catch(() => null); if (c && c.ok) { YCHARS = c.chars || []; } }
   if (!YSESS) { const r = await yApi('get').catch(() => null); if (r && r.ok) YSESS = r.sess || {}; }   // 미대면(???) 판정 = 스레드 필요 — 지도 직행 시도 세션 선로드(실패 = 전원 ??? 안전측)
@@ -2702,8 +2702,14 @@ function ySsnHtml() {   // 시즌 표기 정본(대화·캐릭터 탭 공용 —
 const YME_MOODS = { warm: '따뜻함', tense: '긴장', blue: '가라앉음', joy: '신남', love: '설렘', shy: '수줍음', mad: '짜증', sulky: '삐짐' };   // 무대 무드(러너 <<MOOD>> 배경 축 · Y_MOODS와 짝 — 9감정 Q.29 + 260726 삐짐 독립)
 const YME_FEEL = { warm: ['🙂', '따뜻함'], joy: ['😄', '신남'], calm: ['😌', '평온'], tired: ['😪', '나른함'], think: ['🤔', '생각 많음'], hungry: ['🍜', '출출함'], love: ['🥰', '설렘'], tense: ['😰', '긴장'], blue: ['🌧️', '가라앉음'], night: ['🌙', '밤샘 각'] };   // 내 기분 세트(운영자 260709 "다양한 상황 + 이모지") — 로컬 표시 전용(무대 무드와 별개 축 · warm/tense/blue 키는 yLastMood 폴백 호환)
 function yMoodLog() { try { return JSON.parse(localStorage.getItem('yeta_me_moodlog') || '[]'); } catch { return []; } }   // 기분 지문 로그(운영자 260716 수렴 · 평의회 A안) — {ts, md, t:그때 현재 방} · 로컬 표시 전용(서버 미전송 = 무인증 주입면 0 유지) · yeta_ 접두 = 캐시 비우기 커버
-async function yMeMap() {   // YMAPD 보장(지도 탭 미방문 대비 · 맵 로더와 동일 raw URL · 실패 = null 수용)
-  if (!YMAPD) { try { YMAPD = await fetch('https://raw.githubusercontent.com/muteno/yeta/main/apps/yeta/places.json').then(r => r.json()); } catch {} }
+const YMAP_URL = 'https://raw.githubusercontent.com/muteno/yeta/main/apps/yeta/places.json';   // 장소 SSOT 주소 1곳(260812) — 지도 로더(yMapEnter)와 yMeMap이 각자 같은 URL을 박아두던 것 통합
+let _yMapP = null;   // 진행 중인 로드 1개 공유 — 대화 열기·지도·목록이 동시에 불러도 요청은 1회(상한에 걸려 먼저 빠져나와도 뒤에서 계속 돌아 다음 호출이 받는다)
+async function yMeMap(cap) {   // YMAPD 보장(지도 탭 미방문 대비 · 실패 = null 수용) · cap(ms) = 기다리는 상한. 안 주면 종전대로 끝까지 기다림(느긋한 지연 로드용)
+  if (YMAPD) return YMAPD;
+  if (!_yMapP) _yMapP = fetch(YMAP_URL).then(r => r.json()).then(j => { YMAPD = j; return j; }).catch(() => null).finally(() => { _yMapP = null; });
+  const p = _yMapP;
+  if (cap) await Promise.race([p, new Promise(r => setTimeout(r, cap))]);   // 상한 = 화면이 이 요청에 묶이지 않게(260812 · Promise.race 상한 = yBargeWarm 선례 계승)
+  else await p;
   return YMAPD;
 }
 async function yMeRow() {
@@ -3898,7 +3904,7 @@ async function yAway(c) {   // 떨어져 있음 판정 — 차단·전화 유도
   if (yRevPend(c && c.id)) return '';   // 부활 미답 = 원거리 유예(260714 — 성당에서 막 돌아온 첫 재회는 어디서든 닿는다 · 사망 24h 공백이 원거리 락으로 이어지는 겹잠금 차단)
   const turns = th.turns || [], last = turns.length ? (turns[turns.length - 1].ts || 0) : 0;
   if (!last || Date.now() - last < YAWAY_MS) return '';
-  if (!YMAPD) { try { await yMeMap(); } catch {} }
+  if (!YMAPD) { try { await yMeMap(2500); } catch {} }   // 상한 2.5s(260812) — 종전 무한 대기: 이 요청이 늦으면 대화방이 「불러오는 중…」에서 영영 안 열렸다(대화 열기 yEnterChat이 이 판정을 await 하므로 뒤의 draw·렌더가 통째로 묶임 · 첫 열기 = YMAPD 미로드 + 마지막 턴 2h+ 두 조건이 겹칠 때만이라 "처음 열 때만 안 됨"으로 보였다)
   if (!YMAPD) return '';   // 장소 SSOT 로드 실패 = 제한 안 걸음(안전측)
   const { d, h } = yWorldDH();   // 세계 시각(운영자 260716 지도 싱크)
   let there = ''; try { there = await ymPlaceOf(c.id, d, h); } catch {}
