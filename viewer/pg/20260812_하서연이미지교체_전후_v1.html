@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>하서연 이미지 교체 — 프사(정사각) · 기본 인트로 · 조이 — 전/후 비교 v1</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260805_한나얼빡_전후_v1.html 계승(재설계 0) · .stg = 20260730_잠금영상_폴백회복_전후_v1.html 계승 ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  @media (max-width:640px) { .pair { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .cap .val { font-size:var(--fs-xs); color:var(--fg-2); }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); }
+  td.v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); }
+  /* 원본 대조 — 정사각 1:1 · 중심 십자선(얼굴 중심이 프레임 중심인지 눈으로 확인) */
+  .face { position:relative; width:100%; max-width:340px; aspect-ratio:1/1; margin-inline:auto; border-radius:var(--r-m); overflow:hidden; border:1px solid var(--glass-line); box-shadow:var(--shadow-card); }
+  .face img { width:100%; height:100%; object-fit:cover; display:block; }
+  .face.cross::before, .face.cross::after { content:''; position:absolute; background:rgba(var(--accent-rgb),.55); }
+  .face.cross::before { left:50%; top:0; bottom:0; width:1px; }
+  .face.cross::after { top:50%; left:0; right:0; height:1px; }
+  /* 실사용 크기 열 — 앱이 실제로 그리는 지름(index.html 실측: .ymsg 32 · .yh-ava 34 · .ypick-row 58 · .ycd-card 104) */
+  .sizes { display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap; }
+  .sizes figure { margin:0; text-align:center; }
+  .sizes span.ava { display:block; border-radius:50%; background-size:cover; background-position:center; border:1px solid var(--glass-line); }
+  .sizes figcaption { font-size:var(--fs-meta); color:var(--mut); margin-top:5px; }
+  /* 무대 프레임 — yStage가 그리는 세로 무대 420×900 그대로(cover) · .stg 계승 */
+  .stg { position:relative; width:100%; max-width:300px; margin-inline:auto; aspect-ratio:420/900; border-radius:var(--r-m); border:1px solid var(--glass-line); overflow:hidden; background:#000; box-shadow:var(--shadow-card); }
+  .stg img { width:100%; height:100%; object-fit:cover; display:block; }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>하서연 이미지 교체 — 프사(정사각) · 기본 인트로 · 조이 (전/후)</h1>
+  <p class="lead">운영자 260812: <b>"프로필 사진을 정사각 비율의 이미지로 바꾸고 / 기본 인트로 이미지, 조이 이미지를 내가 준거로 변경해줘"</b>. 업로드분 2장(<code>viewer/characters/season/haeun/main/</code> 루트 착지)을 정본 3자리에 재단해 넣었다 — <b>정사각 얼빡 1장 → 프사</b>, <b>세로 전신 1장 → 기본 인트로(base) + 조이(joy)</b>. 새로 생성하지 않고 <b>운영자가 준 원본만</b> 잘랐다(과금 0).</p>
+
+  <div class="sect grp">
+    <h2>① 프사(<code>roster.avatar</code>) — 정사각 재단 · 얼굴 중심 = 프레임 중심</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">전</span><span class="val">512² · 눈·코·입만 남은 초근접 — 표정을 못 읽는다</span></p>
+        <div class="face cross"><img src="20260812_하서연이미지교체_프사_before.webp" alt="전 — 초근접 얼빡 프사"></div>
+        <p class="note">얼굴이 프레임보다 커서 <b>이마·턱·머리가 전부 잘렸다</b>. 34px 헤더 아바타로 줄면 살구색 면만 남는다.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">후</span><span class="val">512² · 운영자 업로드 얼빡(1391×1435)에서 1150² 재단</span></p>
+        <div class="face cross"><img src="20260812_하서연이미지교체_프사_after.webp" alt="후 — 웃는 얼굴이 담긴 정사각 프사"></div>
+        <p class="note">십자선 교차점이 <b>콧대에 얹힌다</b> — 원본 얼굴 중심(눈 중점과 입 사이 ≈ 765,735)을 크롭 중심으로 잡았기 때문. 원본이 1391×1435(비정사각)라 <b>정확한 1:1</b>이 되게 잘랐다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect grp">
+    <h2>② 실사용 크기 — 앱이 실제로 그리는 지름</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">전</span></p>
+        <div class="sizes">
+          <figure><span class="ava" style="width:32px;height:32px;background-image:url('20260812_하서연이미지교체_프사_before.webp')"></span><figcaption>32 버블</figcaption></figure>
+          <figure><span class="ava" style="width:34px;height:34px;background-image:url('20260812_하서연이미지교체_프사_before.webp')"></span><figcaption>34 헤더</figcaption></figure>
+          <figure><span class="ava" style="width:58px;height:58px;background-image:url('20260812_하서연이미지교체_프사_before.webp')"></span><figcaption>58 목록</figcaption></figure>
+          <figure><span class="ava" style="width:104px;height:104px;background-image:url('20260812_하서연이미지교체_프사_before.webp')"></span><figcaption>104 카드</figcaption></figure>
+        </div>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">후</span></p>
+        <div class="sizes">
+          <figure><span class="ava" style="width:32px;height:32px;background-image:url('20260812_하서연이미지교체_프사_after.webp')"></span><figcaption>32 버블</figcaption></figure>
+          <figure><span class="ava" style="width:34px;height:34px;background-image:url('20260812_하서연이미지교체_프사_after.webp')"></span><figcaption>34 헤더</figcaption></figure>
+          <figure><span class="ava" style="width:58px;height:58px;background-image:url('20260812_하서연이미지교체_프사_after.webp')"></span><figcaption>58 목록</figcaption></figure>
+          <figure><span class="ava" style="width:104px;height:104px;background-image:url('20260812_하서연이미지교체_프사_after.webp')"></span><figcaption>104 카드</figcaption></figure>
+        </div>
+      </div>
+    </div>
+    <p class="note">작은 지름에서 갈린다 — 전은 32~34px에서 <b>피부 면</b>이지만, 후는 감은 눈·웃는 입·손이 남아 <b>누구인지·어떤 결인지</b>가 읽힌다(실측 셀렉터 = <code>.ymsg .yava</code> 32 · <code>.yh-ava</code> 34 · <code>.ypick-row .yava</code> 58 · <code>.ycd-card .yintro-ava</code> 104).</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>③ 기본 인트로(<code>main/base/haeun_base.webp</code> = <code>roster.bg</code>) — 무대 420×900 cover</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">전</span><span class="val">315×560 · 찻집 창가 턱괸 컷</span></p>
+        <div class="stg"><img src="20260812_하서연이미지교체_base_before.webp" alt="전 — 찻집 창가 기본 인트로"></div>
+        <p class="note">무대(420×900)보다 <b>작은 원본</b>이라 확대되어 깔린다 — 실기기 2~3배 DPR에선 뭉갠 면이 그대로 보인다.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">후</span><span class="val">736×1316 · 운영자 업로드 전신(1028×1839) 원프레임</span></p>
+        <div class="stg"><img src="20260812_하서연이미지교체_base_after.webp" alt="후 — 복도에서 웃는 기본 인트로"></div>
+        <p class="note">가로 <b>315 → 736(2.3배)</b>. 무대 폭보다 커져 <b>축소 렌더</b>가 되고, 원본 프레임을 안 자르고 통째로 넣었다(무대 cover가 좌우를 알아서 먹는다).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect grp">
+    <h2>④ 조이(<code>main/joy/haeun_joy.webp</code>) — 같은 장면의 고해상 원본</h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">전</span><span class="val">315×560 · 시트 F 칸에서 자른 저해상</span></p>
+        <div class="stg"><img src="20260812_하서연이미지교체_joy_before.webp" alt="전 — 저해상 조이 컷"></div>
+        <p class="note">종전 조이는 <b>운영자가 새로 준 것과 같은 장면</b>을 캐릭터보드 시트에서 작게 자른 것이었다(≈0.03MP).</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">후</span><span class="val">736×1316 · 같은 장면의 원본 해상</span></p>
+        <div class="stg"><img src="20260812_하서연이미지교체_joy_after.webp" alt="후 — 고해상 조이 컷"></div>
+        <p class="note">장면·구도는 그대로고 <b>해상만 올랐다</b>(0.03MP → 0.97MP ≈ 5.5배 픽셀). 명찰 글자·서류 선·잔머리가 살아난다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect grp">
+    <h2>⑤ 규격·배선 — 무엇이 어디로 갔나</h2>
+    <table>
+      <tr><th>자리</th><th>정본 경로(불변)</th><th>전</th><th>후</th><th>원본</th></tr>
+      <tr><td>프사</td><td class="v">viewer/assets/yeta_char/av/haeun.webp</td><td class="v">512×512 · 30KB</td><td class="v">512×512 · 25KB</td><td class="v">05 55 13.jpg (1391×1435)</td></tr>
+      <tr><td>기본 인트로</td><td class="v">…/haeun/main/base/haeun_base.webp</td><td class="v">315×560 · 32KB</td><td class="v">736×1316 · 90KB</td><td class="v">05 54 46.jpg (1028×1839)</td></tr>
+      <tr><td>조이</td><td class="v">…/haeun/main/joy/haeun_joy.webp</td><td class="v">315×560 · 30KB</td><td class="v">736×1316 · 90KB</td><td class="v">05 54 46.jpg (1028×1839)</td></tr>
+    </table>
+    <p class="note"><b>경로는 한 글자도 안 바뀌었다</b> — <code>roster.json</code>의 <code>avatar</code>·<code>bg</code>도, <code>media.json</code>도 무접촉(파일 바이트만 교체 · 한나 얼빡 260805 선례 계승). 규격 선택 근거도 기틀 실측 = 프사 512²는 <code>av/*.webp</code> 12장 전원 값 · 736폭은 <code>characters/</code> 최다 규격(736×1308 계열 57장). 인코딩 <code>quality 82</code> = <code>shared/cut_board_sheet.py</code> 배포본 값 계승.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>⑥ 원본 보관 · 게이트</h2>
+    <table>
+      <tr><th>축</th><th>결과</th></tr>
+      <tr><td>업로드 원본 2장</td><td class="v">viewer/…/haeun/main/ → _소재/haeun_src_*.jpg (git mv · 삭제 아님 = D2 운영자 승인 사항)</td></tr>
+      <tr><td>왜 옮겼나</td><td>모드 루트 미분류 파일은 빌더가 <b>base 버킷으로 흡수</b>한다 — 1391×1435 얼빡이 그대로 채팅 배경에 깔렸을 자리(운영자 260726 「얼빡은 배경에 깔지마」)</td></tr>
+      <tr><td class="v">build_season_media.py</td><td class="v">OK haeun: media.json 최신 (base 1 · joy 2 · blue 1 · tense 2 · mad 1) — 재생성 diff 0</td></tr>
+      <tr><td class="v">check_refs 얼빡 배경 게이트</td><td class="v">✅ 배경 풀 347장 프사 0 · 정사각 미확인 0</td></tr>
+      <tr><td class="v">check_refs 로스터 에셋 게이트</td><td class="v">✅ bg·avatar·mode 경로 37건 전원 실존</td></tr>
+      <tr><td class="v">check_refs 전체</td><td class="v">✅ 통과(디자인 토큰·토큰 락 포함 · 차단 0)</td></tr>
+    </table>
+    <p class="note">운영자가 준 2장으로 3자리를 채웠으므로 <b>기본 인트로와 조이가 같은 그림</b>이 된다(세로 전신 1장을 두 버킷에 넣음). 조이 전용 그림을 따로 두고 싶으면 <code>main/base/</code>에 다른 컷을 부어 <code>python3 shared/build_season_media.py</code>만 돌리면 된다.</p>
+  </div>
+</div>
+</body>
+</html>

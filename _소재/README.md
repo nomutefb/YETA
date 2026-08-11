@@ -13,3 +13,5 @@
 | `Shared.zip` | 애니 이미지 10장(`.jfif`) | 미확인 — 어느 캐릭터용인지 미지정 |
 | `새 폴더.zip` | 이미지 55장(고죠 다수 · `cafe_gojo`·`in the street_*` 등) | 일부 반영 추정(`viewer/characters/season/gojo/` 39장 존재 · 파일명이 개명돼 1:1 대조 불가 = **미확인**) |
 | `bf6cedc9-9720-42e7-81a3-2a3e34b65d41.mp4` | 영상 1건(isom/avc1 · 1.5MB) | 미확인 — 용도 미지정 |
+| `haeun_src_face_1391x1435.jpg` | 하서연 얼빡(웃으며 입 가림) — 운영자 260812 업로드 | **반영됨** — 1150² 얼굴중심 재단 → `viewer/assets/yeta_char/av/haeun.webp`(512²) |
+| `haeun_src_joy_laugh_1028x1839.jpg` | 하서연 세로 전신(복도에서 웃음) — 운영자 260812 업로드 | **반영됨** — 736폭 축소 → `…/haeun/main/base/haeun_base.webp` + `…/main/joy/haeun_joy.webp` |
