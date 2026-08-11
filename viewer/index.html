@@ -866,7 +866,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   /* 신당 강조 = 기도를 기다리는 죽은 주민이 있는 동안(운영자 260811) — 색·굵기는 위 .meet **동값** 계승(새 값 0) · .meet(붐빔)과는 다른 축이라 클래스만 분리 */
   .ymp-node.wait { stroke:var(--accent); stroke-width:1.6; }
   .ymp-name.wait { fill:var(--accent); }
-  .ymp-ghost { fill:var(--accent); pointer-events:none; animation:ymbob 1.05s ease-in-out infinite; }   /* 둥실 = 워커 스프라이트 ymbob 정본 재사용(새 키프레임 0) */
+  .ymp-ghost { fill:var(--fg); pointer-events:none; animation:ymbob 1.05s ease-in-out infinite; }   /* 흰색(운영자 260811) — 유령이 라임이면 「탭할 것」으로 읽힌다(탭 표면은 아래 노드·라벨) · 밤 지도 위 흰 실루엣이 유령답기도 하다 · 둥실 = 워커 ymbob 정본 재사용(새 키프레임 0) */
   @media (prefers-reduced-motion:reduce) { .ymp-ghost { animation:none; } }   /* 모션 줄이기 = 표식은 남기고 둥실만 생략(.ycrowsit 판단 계승 — 이건 정보다) */
   .ymp-off { fill:rgba(var(--danger-rgb),.08); stroke:rgba(var(--danger-rgb),.55); stroke-dasharray:5 4; stroke-width:1.2; }
   .ymp-offtxt { fill:var(--danger); font-size:8px; font-weight:var(--fw-x); letter-spacing:.14em; }
@@ -900,7 +900,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ymd-cand { position:relative; display:flex; align-items:center; gap:10px; text-align:left; }
   .ymd-cand .yava { flex:none; }
   .ymd-cand-n { flex:1; }
-  .ymd-cand-p { flex:none; color:var(--accent); font-variant-numeric:tabular-nums; }   /* tabular = % 자릿수 세로 정렬(yeta-design 표 정렬 원칙) */
+  .ymd-cand-p { flex:none; color:var(--fg); font-variant-numeric:tabular-nums; }   /* 흰색(운영자 260811 "골드 레몬 색 쓴이유는 뭐야? 걍 흰색쓰셈") — 라임은 「지금 누를 것」 축인데 %는 읽는 값이라 강조축을 먹고 있었다 · tabular = % 자릿수 세로 정렬(yeta-design 표 정렬 원칙) */
   .ymd-cand.armed { border-color:rgba(var(--danger-rgb),.4); }
   .ymd-cand-say { position:absolute; right:12px; padding:2px 8px; border-radius:var(--r-pill); background:rgba(var(--danger-rgb),.14); border:1px solid rgba(var(--danger-rgb),.4); color:var(--arm); font-size:var(--fs-xs); font-weight:var(--fw-b); line-height:1.5; }
   #ymdbeg.ymb-busy .yexit-x { display:none; }   /* 찾는 중 = 닫기 픽토 숨김(누를 수 있는데 아무 일도 안 나는 버튼을 두지 않는다) */
