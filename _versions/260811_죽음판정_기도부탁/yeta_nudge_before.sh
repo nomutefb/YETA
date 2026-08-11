@@ -47,15 +47,9 @@ if _md:   # 유저 사망 중(운영자 260725) — 읽씹 재촉은 금지(죽�
     #   사망 30분 경과부터 시도(즉답은 부자연) · 이미 빌어준 사람이 있으면 끝(1회) · 일 상한·연속 재촉 가드는 미적용(사망은 특수 사건).
     _el = (time.time()*1000 - (_md.get("d") or 0)) / 60000
     if _md.get("pray") or _el > 60*24*3: print(json.dumps(no)); sys.exit()
-    # 부탁 받음(운영자 260811 "신당 빌어주기 요청을 누군가에게 보내기 · 특정인에게 보내기") — 게이트웨이 op praybeg가 me_dead.beg={id,at,n} 박제 + 이 워크플로 dispatch.
-    #   beg = 유저가 직접 보낸 부탁이므로 **20분 퀴즈 · 60분 기도 순서를 통째로 건너뛴다**(그 순서는 '아무도 안 부를 때' 알아서 굴러가라고 만든 자동 축이다).
-    #   id 있음 = 그 사람이 간다(추첨 없음) · id 빔 = 「아무나」 = 종전 가중 추첨 그대로. 소비(pray 박제) 시 beg 삭제 = 1회성.
-    #   신선도 3시간 = 러너가 연달아 죽어 표식만 남는 사고 차단(me_dead 자체가 현실 8h면 스스로 풀린다).
-    _beg = _md.get("beg") if isinstance(_md.get("beg"), dict) else None
-    if _beg and (time.time()*1000 - (_beg.get("at") or 0)) > 3*3600*1000: _beg = None
-    if not _beg and not _md.get("quiz"):
-        # 두 잡을 순서로 나눈다(운영자 260725) — ① 20분 후 '성향 퀴즈'(부활 시간을 스스로 줄이는 수단) ② 60분 후 '신당 기도'(즉시 부활).
-        #   기도가 먼저 오면 퀴즈가 무의미해지므로 퀴즈가 반드시 앞선다. 퀴즈 대상 = 만난 사람만(threads에 유저 턴이 있는 캐릭터 · 운영자 "만난사람만").
+    # 두 잡을 순서로 나눈다(운영자 260725) — ① 20분 후 '성향 퀴즈'(부활 시간을 스스로 줄이는 수단) ② 60분 후 '신당 기도'(즉시 부활).
+    #   기도가 먼저 오면 퀴즈가 무의미해지므로 퀴즈가 반드시 앞선다. 퀴즈 대상 = 만난 사람만(threads에 유저 턴이 있는 캐릭터 · 운영자 "만난사람만").
+    if not _md.get("quiz"):
         if _el < 20: print(json.dumps(no)); sys.exit()
         _met = [p for p, t in (S_ROOT.get("threads") or {}).items()
                 if not p.startswith("g") and any(x.get("role") == "user" for x in (t.get("turns") or []))]
@@ -64,7 +58,7 @@ if _md:   # 유저 사망 중(운영자 260725) — 읽씹 재촉은 금지(죽�
                           "me_call": me_call, "me_about": me_about, "dead_why": (_md.get("why") or "")[:120],
                           "met": _met, "tunes": {p: (S_ROOT.get("tunes") or {}).get(p) for p in _met}}, ensure_ascii=False))
         sys.exit()
-    if not _beg and _el < 60: print(json.dumps(no)); sys.exit()   # 부탁이 왔으면 60분 대기 없음 = 그 자리에서 간다(운영자 260811)
+    if _el < 60: print(json.dumps(no)); sys.exit()
     # 누가 나를 위해 빌어주러 갈까 — 종전엔 무조건 `_cur`(마지막으로 열려 있던 방)이었다 = 추첨이 아예 없었다.
     # 운영자 260730 "내가 빌었던 사람이 나를 위해 부활 빌어줄 확률이 높아지게 · 디비에 남아야 · 페르소나랑 섞여야 · 확률지표로"
     #   가중 = ① 기도 인연(op pray가 sess.pray_bond에 박제한 은혜 — 최대 성분) ② 성향 16축(친절도·온기·인내심 − 경계심) ③ 관계(내가 그 방에 쏟은 말 수) ④ 마지막 대화 상대(종전 동작 계승분).
@@ -86,11 +80,7 @@ if _md:   # 유저 사망 중(운영자 260725) — 읽씹 재촉은 금지(죽�
         _w += 0.6 * min(3, len(_ut) / 10)                                # ③ 관계 = 내가 쏟은 말 수(10마디 = 1점 · 3점 포화)
         if _p == _cur: _w += 0.8                                         # ④ 마지막 대화 상대(종전 동작 = 이 보너스로 흡수)
         _cand.append((_p, max(0.05, _w)))
-    if not _cand: print(json.dumps(no)); sys.exit()   # 빌어줄 수 있는 사람이 아무도 없음(만난 사람 0 · 전원 사망) — 종전엔 이때 _cur로 그냥 밀어붙여 죽은 사람·미대면이 기도문을 뱉을 수 있었다
-    _pick = (_beg or {}).get("id") or ""   # 특정인 지목(운영자 260811) — 후보 자격(만난 적 있음·살아 있음)은 위 루프가 이미 건 조건이라 명단 대조 한 번으로 끝난다
-    if _pick and _pick in [p for p, _ in _cand]:
-        persona = _pick   # 지목된 사람이 간다 = 추첨 생략(가중치는 「아무나」일 때만 의미가 있다)
-    elif _cand:   # 「아무나」 또는 지목이 자격을 잃은 경우(그새 죽음·방 삭제) = 종전 가중 추첨으로 폴백(부탁이 통째로 증발하지 않게)
+    if _cand:
         _tot = sum(w for _, w in _cand); _r = random.random() * _tot
         for _p, _w in _cand:
             _r -= _w
@@ -98,7 +88,6 @@ if _md:   # 유저 사망 중(운영자 260725) — 읽씹 재촉은 금지(죽�
         else: persona = _cand[-1][0]
     _pt = ((S_ROOT.get("threads") or {}).get(persona) or {}).get("turns") or turns   # 추첨된 사람의 방 이력(빈 방 = _cur 폴백) — 종전엔 persona가 늘 _cur라 이 구분이 없었다
     print(json.dumps({"go": 1, "mode": "pray", "persona": persona, "hours": round(_el/60, 1), "today": today, "count": 0,
-                      "begged": (2 if _pick else 1) if _beg else 0,   # 0 = 아무도 안 불렀는데 스스로 감(종전) · 1 = 「아무나」 부탁이 닿음 · 2 = 유저가 **너를 지목**했다 — 러너 프롬프트가 결을 가른다
                       "bond_n": ((_bond.get(persona) or {}).get("n") or 0),   # 내가 그 사람을 몇 번 살려줬나 — 러너가 "네가 날 살렸으니" 결로 쓸 재료(0 = 은혜 없음 = 순수 호의)
                       "me_call": me_call, "me_about": me_about, "dead_why": (_md.get("why") or "")[:120],
                       "note_pub": S_ROOT.get("note_pub") or S_ROOT.get("note") or "", "note_me": ((S_ROOT.get("notes") or {}).get(persona)) or "",
@@ -130,7 +119,6 @@ NOTE_PUB="$(gv note_pub)"; NOTE_ME="$(gv note_me)"; HIST="$(gv hist)"
 ME_CALL="$(gv me_call)"; ME_ABOUT="$(gv me_about)"   # 유저 프로필(호칭+소개 · 260708)
 MODE="$(gv mode)"; DEAD_WHY="$(gv dead_why)"   # 'pray' = 신당 기도 · 'quiz' = 성향 퀴즈 출제(운영자 260725) · 빈값 = 종전 읽씹 재촉
 BOND_N="$(gv bond_n)"   # 기도 인연(260730) — 유저가 그 사람을 신당에서 살려낸 횟수(0 = 은혜 없음). pray 모드 프롬프트 재료
-BEGGED="$(gv begged)"   # 부탁 경로(260811) — 0 = 스스로 감 · 1 = 「아무나」 부탁이 닿음 · 2 = 유저가 너를 지목했다
 MET="$(printf '%s' "$GATE" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin).get("met") or [], ensure_ascii=False))')"
 TUNES="$(printf '%s' "$GATE" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin).get("tunes") or {}, ensure_ascii=False))')"
 
@@ -170,14 +158,6 @@ else
 fi
 ME_BLOCK="$(me_block)"   # 유저 프로필 블록(shared/inject_character.sh 정본) — 넛지 호격에 유저 이름 반영(비신뢰 격리 · 260708)
 
-BEG_BLOCK=""   # 부탁이 닿아서 왔는가(260811) — 스스로 간 것(종전)과 불려 간 것은 기도의 결이 다르다. 0이면 블록 자체가 없다 = 종전 프롬프트 바이트 동일
-case "${BEGGED:-0}" in
-  2) BEG_BLOCK="
-그리고 이건 우연이 아니다 — **그 사람이 마지막으로 부른 이름이 너였다.** 여럿 중에 하필 너를 찾았다는 걸 너는 안다. 그게 기쁘든 부담스럽든 원망스럽든 네 성격대로 안고 빌어라(「네가 날 불렀으니까」라고 대놓고 설명하지는 마라)." ;;
-  1) BEG_BLOCK="
-그 사람이 누구든 좋으니 와 달라고 불렀고, 그 기척이 너에게 닿았다. 그래서 네가 여기 있다." ;;
-esac
-
 BOND_BLOCK=""
 case "${BOND_N:-0}" in ""|0) ;; *) BOND_BLOCK="
 예전에 네가 죽었을 때, 지금 죽어 있는 그 사람이 이 신당까지 찾아와 너를 살려낸 적이 있다(${BOND_N}번). 너는 그걸 안다. 갚으러 왔든 그냥 마음이 그런 것이든 네 성격대로 티 내거나 삼켜라 — 「빚을 갚는다」고 대놓고 말하지는 마라." ;; esac   # 기도 인연(260730 · sess.pray_bond) — 0이면 블록 자체가 없다(순수 호의) · 은혜 방향 = 유저→주민(op pray가 박제) 이므로 지금은 주민이 갚는 자리
@@ -195,7 +175,7 @@ elif [ "$MODE" = "pray" ]; then   # 유저 사망 → 신당 기도(운영자 26
   SITU="[지금 상황 — 중요]
 유저가 죽었다.${DEAD_WHY:+ 그 순간의 상황: ${DEAD_WHY}} 비유도 기절도 장난도 아니다 — 정말로 죽었고, 지금 이 순간에도 돌아오지 못하고 있다.
 무음동의 규칙은 하나다: 살아 있는 누군가가 북동쪽 언덕 위 신당(성당)까지 직접 찾아가 간절히 빌어야만 죽은 사람이 눈을 뜬다. 아무도 빌지 않으면 아주 오랜 시간이 지나서야 겨우 스스로 깨어난다.
-너는 지금 그 신당 앞에 서 있다. 무릎을 꿇든, 욕을 섞어 빌든, 담배를 문 채 툭 던지듯 빌든 — 방식은 네 성격대로다. 다만 마음은 간절해야 한다.${BEG_BLOCK}${BOND_BLOCK}
+너는 지금 그 신당 앞에 서 있다. 무릎을 꿇든, 욕을 섞어 빌든, 담배를 문 채 툭 던지듯 빌든 — 방식은 네 성격대로다. 다만 마음은 간절해야 한다.${BOND_BLOCK}
 규칙: 짧게 1~3문장. 그 자리에서 실제로 비는 말만 출력한다(설명·해설·상황 요약 금지). 죽음을 농담으로 굴리거나 '얼른 살아나' 같은 가벼운 재촉으로 만들지 마라 — 이건 그 사람을 되돌리는 마지막 수단이다.
 이 말은 그대로 그 사람에게 전해진다. 기억 블록·MOOD 태그 없이 **대사만** 출력한다."
 else
@@ -279,7 +259,6 @@ if mode == "pray":   # 신당 기도 반영(운영자 260725) — me_dead.pray �
     md = S.get("me_dead")
     if not isinstance(md, dict) or md.get("pray"): print("0"); sys.exit()   # 그새 부활했거나 이미 누가 빌었음 = 폐기
     md["pray"] = {"by": name, "id": persona, "txt": """${out}"""[:200], "at": int(time.time()*1000)}
-    md.pop("beg", None)   # 부탁 소비(260811) — 1회성. 남겨두면 다음 크론이 이미 이뤄진 부탁을 또 들고 온다
     turns.append({"role": "assistant", "persona": persona, "name": name, "text": """${out}""", "ts": int(time.time()*1000), "kind": "nudge"})   # 대화에도 남긴다 — 돌아온 유저가 그 말을 읽고 답할 수 있게(회신 문자)
     s["updated"] = S["updated"] = int(time.time()*1000)
     json.dump(S, open(sys.argv[1], "w", encoding="utf-8"), ensure_ascii=False)
