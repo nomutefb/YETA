@@ -144,6 +144,16 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: true, chars: await r.json(), world, ready: !!env.YETA_R2 });
   }
 
+  // 장소 SSOT(지도·동선·근처·원거리 판정 공용) — 로스터와 같은 결로 R2 가드보다 앞(레포 raw · 셋업 전에도 지도가 그려진다).
+  // 260812: 종전엔 **뷰어가 raw.githubusercontent.com 을 직접** 때렸다. 외부 도메인이 늦으면 대화 열기가 그 요청에 묶여 「불러오는 중…」에서 멈췄고(399차),
+  //   상한(2.5s)으로 멈춤은 막았지만 의존 자체는 남아 있었다. 여기로 옮기면 뷰어는 **자기 도메인 1홉**만 타고, 깃허브 왕복은 엣지가 캐시해 흡수한다.
+  if (op === 'places') {
+    const r = await fetch(`https://raw.githubusercontent.com/${REPO}/main/apps/yeta/places.json`,
+      { headers: { 'user-agent': 'nomute-viewer' }, cf: { cacheTtl: 300, cacheEverything: true } });   // 300s = draw 로스터 대조와 동일 결(장소표는 커밋으로만 바뀐다)
+    if (!r.ok) return json({ error: `장소 로드 실패(${r.status})` }, 502);
+    return json({ ok: true, data: await r.json() });   // data = places.json 원문 그대로(뷰어 YMAPD) — 안쪽에 places/routine/tuning 키가 그대로 들어온다
+  }
+
   if (op === 'vapikey') {   // 보이스톡(브라우저 실시간 통화 · Vapi Web SDK) 공개키 — PUBLIC key = 클라이언트 설계상 공개 가능 축.
     // ⚠️ 남용 가드는 Vapi 대시보드에서: 이 Public key 의 Origins 를 yeta.soong.kr 로 제한 권장(기본 All domains = 아무 사이트나 통화 과금 가능).
     if (!env.VAPI_PUBLIC_KEY) return json({ error: '보이스톡 미설정 — Pages env VAPI_PUBLIC_KEY 필요', setup: true }, 501);
