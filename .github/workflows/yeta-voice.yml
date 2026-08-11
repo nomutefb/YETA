@@ -55,13 +55,16 @@ jobs:
 
       - name: roster 커밋 (rebase 재시도 = yeta-face 패턴)
         run: |
+          # 산출은 **디스패치한 그 ref**로(260812 평의회 — run#7 유실과 완전히 동일한 조건이 여기 남아 있었다:
+          #   origin/main 하드코딩 + checkout fetch-depth 기본 1(shallow) = 브랜치 dispatch 시 공통조상 없음 → rebase 5회 전패).
+          BR="${GITHUB_REF_NAME}"
           git config user.name "yeta-bot"
           git config user.email "bot@nomute.local"
           git add apps/yeta/characters/roster.json
           git commit -m "yeta: 페르소나 전용 음색(클론 보이스) roster 주입 — 프리미엄 승격" || { echo "커밋할 것 없음"; exit 0; }
           pushed=0
           for i in 1 2 3 4 5; do
-            if git fetch origin main && git rebase origin/main && git push origin HEAD:main; then pushed=1; break; fi
+            if git fetch origin "$BR" && git rebase "origin/$BR" && git push origin "HEAD:$BR"; then pushed=1; break; fi
             git rebase --abort 2>/dev/null || true; sleep $((i*3))
           done
-          [ "$pushed" = 1 ] || { echo "::error::push 5회 실패"; exit 1; }
+          [ "$pushed" = 1 ] || { echo "::error::push 5회 실패 — ${BR} 전진 과다 · 생성물 소실 방지 = 아래 아티팩트에서 받아 수동 커밋"; exit 1; }
