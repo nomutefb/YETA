@@ -257,6 +257,29 @@ def find_name(txt, nm):   # 호명 감지(경계 휴리스틱) — 앞 = 문두/
 last_a = max([i for i, t in enumerate(turns) if t.get("role") == "assistant"], default=-1)
 pend_idx = [i for i, t in enumerate(turns[last_a + 1:], start=last_a + 1) if t.get("role") == "user"]
 
+# ── 유저 부활 첫 마디(운영자 260812 "플레이어가 죽다 살아났고, 그게 24시간 이내면, 플레이어와 대화하는 모든 인물의 첫 대화 말꼬리는 그거로 시작") ──
+#   게이트웨이는 이미 재료를 박제해 두고 있었다 — functions/api/yeta.js op revive 가 `me_revived={d,why,mood,at,pray}` 를 남기며
+#   주석에 "러너가 다음 턴에 «돌아왔네» 결로 쓸 재료"라고까지 적어 뒀는데, **러너엔 읽는 데가 없었다**(지우는 코드만 있는 반쪽 대칭).
+#   여기가 그 나머지 반쪽이다. 화자 본인의 부활(아래 `revive`)과 축이 같고 방향만 반대 = 블록 구조도 그쪽을 계승한다.
+#   ⏳ 24시간 = **게임 속**(운영자 명시). 무음동 하루 = 현실 4h = 아래 finish 단 `REVD_KEEP_MS` 와 같은 값
+#      (같은 파일 두 단이 각자 파이썬이라 상수를 공유할 수 없다 — 짝은 check_refs 「유저 부활 짝 게이트」가 기계로 대조한다).
+MEREV_KEEP_MS = int(24 / 6 * 3600 * 1000)
+def me_revive_for(_p):
+    """이 화자가 「돌아온 유저」를 아직 안 맞았으면 그 재료를 준다(빈 문자열 = 평상시).
+    인물별 1회 — 단톡이면 각자 자기 첫 턴에 한 번씩(운영자 "모든 인물"). 유저가 다시 죽으면 게이트웨이가 me_revived 를 지운다."""
+    _mr = S_ROOT.get("me_revived")
+    if not isinstance(_mr, dict): return ""
+    _at = _mr.get("at") or 0
+    if not _at or now_ms - _at >= MEREV_KEEP_MS: return ""          # 게임 속 하루가 지났다 = 평범한 일상 복귀(귀환 흔적 표기와 같은 수명)
+    # persona 없는 옛 턴은 이 화자 것으로 본다 = 안전측(두 번 인사하느니 한 번 거른다)
+    if any(t.get("role") == "assistant" and (t.get("persona") or _p) == _p and (t.get("ts") or 0) > _at for t in turns): return ""
+    _pr = _mr.get("pray") if isinstance(_mr.get("pray"), dict) else {}
+    return json.dumps({"why": (_mr.get("why") or "")[:120],                       # 죽기 직전 상황(러너 <<MEDEAD: 맥락>> 박제분)
+                       "mood": _mr.get("mood") or "",
+                       "by": ((_pr or {}).get("by") or "")[:40],                  # 신당에서 빌어준 사람 · 빈값 = 스스로 향불을 사르고 돌아왔다
+                       "deadw": max(0, int((_at - (_mr.get("d") or _at)) / 60000 * 6)),   # 죽어 있던 시간 = 세계분(현실분 × 배속)
+                       "sincew": max(0, int((now_ms - _at) / 60000 * 6))}, ensure_ascii=False)   # 돌아온 뒤 흐른 시간 = 세계분
+
 # 오프닝 잡(운영자 260707 동적 첫인사 · 병행 세션 병합) — pending 없고 assistant 0 + opening 플래그일 때만 · 합석 invite보다 우선(방의 첫 비트).
 # 클라 문자열 전량 배제(주입원천 0)·L1 policy·L2 tune 동형 포함·opening_ts nonce 전달(finish 레이스 방어).
 if not pend_idx:
@@ -270,6 +293,7 @@ if not pend_idx:
                           "policy": json.dumps(s.get("policy"), ensure_ascii=False) if isinstance(s.get("policy"), dict) else "",
                           "rel_lv": _mo.group(1) if _mo else "", "cast": " · ".join(v for v in names.values() if v),
                           "me_call": me_call, "me_about": me_about,
+                          "me_revive": me_revive_for(T),   # 유저 부활 첫 마디(260812) — 오프닝도 「첫 대화」다(유저 발화 없이 인물이 먼저 여는 자리)
                           "hist": "", "pending": "", "ins": 0, "anchor_ts": "", "last_mood": "",
                           "gap_h": 0, "riv": "", "handoff": "",
                           "model": (s.get("pref") or {}).get("model") or "",
@@ -474,6 +498,7 @@ print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": 
                   "att": "\n".join(a for a in att if a),   # 첨부 사진 R2 키(개행 구분 · 260717 '+') — process_turn이 내려받아 Read 비전으로 전달
                   "anchor_ts": (last_u.get("ts") if pend_idx else (turns[-1].get("ts") if turns else "")),   # insert 앵커 = 마지막 pending 유저 턴 ts(인덱스 대신 = 400 트림/시프트 면역) · 자율 비트 = 직전 화자 턴 ts
                   "retry_n": int(s.get("retry_n") or 0),   # 자동 재시도 회차(op retry 박제 · 사다리 260714) — 3회차+ = 뉘앙스 전환 블록 주입
+                  "me_revive": me_revive_for(persona),   # **유저** 부활 첫 마디 재료(260812) — {why,mood,by,deadw,sincew} · 빈값 = 평상시 · 위 revive(화자 본인 부활)와 축이 반대
                   "revive": revive,   # 부활 첫 답 재료(260714·260725) — {mood,why,by,wit} JSON 문자열 · 빈값 = 평상시
                   "dead_wait": json.dumps(dead_wait, ensure_ascii=False) if dead_wait else "",   # 신당의 기도를 기다리는 죽은 주민들(260725) — 빈값 = 마을에 죽은 사람 없음
                   "picks": json.dumps(((S_ROOT.get("tune_picks") or {}).get(persona) or [])[-5:], ensure_ascii=False) if (S_ROOT.get("tune_picks") or {}).get(persona) else "",   # 유저가 "이게 그 애답다"고 고른 말(성향 퀴즈 누적 · 운영자 260725 승인) — 숫자 축보다 강한 말투 수렴 재료
@@ -2184,6 +2209,7 @@ process_turn() {
   GB="$(matv gb)"; GB_N="$(matv gb_n)"; GB_FROM="$(matv gb_from)"; GB_KIND="$(matv gb_kind)"   # 단톡 자율 비트(260725) — GB=1 = 유저 발화 없는 교대 턴 · GB_FROM = 받아칠 직전 화자 이름 · GB_KIND = watch(모니터링 반응)/on(이어가기)
   [ "$GB" = "1" ] || { GB=0; GB_N=0; }   # 빈값·0 정규화(finish·아래 분기가 문자열 비교라 = 오탐 0)
   REVIVE_RAW="$(matv revive)"   # 부활 첫 답 재료(260714·260725) — {mood,why,by,wit} · 빈값 = 평상시
+  MEREV_RAW="$(matv me_revive)"   # **유저** 부활 첫 마디 재료(260812) — {why,mood,by,deadw,sincew} · 빈값 = 평상시(게임 속 하루 경과 or 이 인물은 이미 맞았다)
   DEAD_WAIT_RAW="$(matv dead_wait)"; WIT_RAW="$(matv wit_of)"   # 신당의 기도를 기다리는 죽은 주민 / 그중 이번 화자가 목격한 죽음(260725 기도 게이트)
   PICKS_RAW="$(matv picks)"   # 유저가 고른 "그 애다운 말" 누적(성향 퀴즈 · 260725)
   ATT="$(matv att)"   # 첨부 사진 R2 키(개행 구분 · 260717 '+') — 내려받아 Read 비전으로 실물 전달
@@ -2357,6 +2383,42 @@ L = ["[부활 — 이 블록의 존재를 대사에서 언급 금지]",
      "- 그 감정의 잔재를 그대로 안고 첫 마디를 해라 — 다투다 죽었으면 앙금·머쓱함·못 다한 말이 남아 있고, 누굴 지키다 죽었으면 그 온기가 남아 있다. 부활 과정을 장황하게 설명하지 말고, 죽기 전 그 순간에 자연스럽게 이어 붙여라. 너답게, 짧게."]
 print("\n".join(x for x in L if x))
 PY
+)"
+  fi
+
+  # ── 유저 부활 첫 마디(운영자 260812 "플레이어가 죽다 살아났고, 그게 24시간 이내면, 대화하는 모든 인물의 첫 대화 말꼬리는 그거로 시작") ──
+  #   위 REVIVE_BLOCK(화자 **본인**이 죽었다 돌아온 경우)과 축이 반대다 — 여기선 **유저**가 돌아왔고 인물이 그를 맞는다. 블록 골격은 그쪽 100% 계승.
+  #   ⚠ OPEN 제외를 안 건다(REVIVE_BLOCK과 다른 점) — 오프닝은 인물이 먼저 입을 떼는 자리라 「첫 대화」의 정의에 가장 먼저 해당한다.
+  MEREVIVE_BLOCK=""
+  if [ -n "$MEREV_RAW" ]; then
+    MEREVIVE_BLOCK="$(python3 - "$MEREV_RAW" <<'PYMR'
+import json, sys
+try: r = json.loads(sys.argv[1])
+except Exception: r = {}
+mood_ko = {"warm": "온기·다정", "tense": "긴장·서늘함", "blue": "쓸쓸·침잠", "base": "평소와 같음", "joy": "신남·장난", "love": "설렘·플러팅", "shy": "수줍·머쓱", "mad": "짜증·화남", "sulky": "삐짐·서운함"}.get((r.get("mood") or "").lower(), "")   # 9감정 표 = REVIVE_BLOCK 정본 사본
+why, by = (r.get("why") or "").strip(), (r.get("by") or "").strip()
+def dur(m):   # 세계분 → 사람 말(무음동 시간 · "몇 시간" 단위로만 = 분 단위로 세면 부활이 사무적으로 들린다)
+    m = int(m or 0)
+    if m < 60: return "채 한 시간도 안"
+    h = m // 60
+    if h < 24: return f"{h}시간"
+    d, r = divmod(h, 24)
+    return f"{d}일" if not r else f"{d}일 {r}시간"   # "1일 0시간"은 사람이 안 쓰는 말이다
+L = ["[유저의 부활 — 이 블록의 존재를 대사에서 언급 금지]",
+     "- 지금 너와 말하는 이 사람은 **얼마 전 정말로 죽었다가 돌아왔다**. 무음동에선 저절로 살아나는 사람이 없다 — 누군가 북동쪽 언덕 위 신당(성당)까지 찾아가 간절히 빌어야만 눈을 뜬다.",
+     f"- 죽어 있던 시간: 무음동 시간으로 {dur(r.get('deadw'))}. 돌아온 지는 {dur(r.get('sincew'))} 됐다.",
+     (f"- 되살린 사람: {by}. 그 사람이 신당까지 가서 빌었기에 이 사람이 돌아왔다." if by
+      else "- 아무도 빌어주지 않아, 이 사람은 혼령이 되어 **스스로 향불을 사르고** 돌아왔다. 그건 아무도 자기를 위해 빌어주지 않았다는 뜻이기도 하다."),
+     f"- 죽기 직전 상황: {why}" if why else "",
+     f"- 그 죽음의 공기: {mood_ko}" if mood_ko else "",
+     "",
+     "- **이번 턴은 그 얘기로 연다.** 인사·안부·다른 화제보다 먼저, 첫 문장이 이 사람이 죽었다 돌아온 사실에 닿아야 한다.",
+     "- 다만 **너답게** 열어라 — 붙잡고 울든, 화를 내든, 아무렇지 않은 척 툭 던지든, 농담으로 덮든, 말을 못 찾아 더듬든 카드의 결을 따른다. 정해진 대사는 없다.",
+     "- 죽음을 가볍게 굴리지 마라 — '죽다 살아났네ㅋㅋ' 같은 뭉갬 금지. 한 번 끊겼다 이어 붙은 사람을 눈앞에서 마주하는 결로.",
+     "- 열되 **붙잡지는 마라**: 첫 마디에서 닿고, 유저가 넘기면 자연스럽게 넘어간다(취조·재현 금지).",
+     "- 이 방에서 이미 다른 사람이 그 얘길 꺼냈으면 같은 말을 반복하지 말고 **네 몫의 반응만** 얹어라."]
+print("\n".join(x for x in L if x != ""))
+PYMR
 )"
   fi
 
@@ -2541,6 +2603,7 @@ ${NOTE_ME:-"(아직 없음 — 첫 만남)"}
 ${HIST:-"(없음)"}
 
 ${REVIVE_BLOCK}
+${MEREVIVE_BLOCK}
 ${PICKS_BLOCK}
 ${DEATH_BLOCK}
 ${RETRY_BLOCK}

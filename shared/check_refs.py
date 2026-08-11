@@ -998,6 +998,31 @@ def check_root_clean():
     return 0   # WARN-only
 
 
+def check_me_revive():
+    """유저 부활 짝 게이트(운영자 260812 "죽다 살아났고 그게 24시간 이내면 모든 인물의 첫 대화가 그걸로 시작").
+    「게임 속 하루」가 yeta_chat.sh 안에 **두 번** 산다 — mat 단(MEREV_KEEP_MS · 블록을 넣을지 결정)과 finish 단(REVD_KEEP_MS · 귀환 흔적 수명).
+    한 파일 두 단이 각자 파이썬 힙이라 상수를 못 나눈다. 어긋나면 조용히 갈린다: 흔적은 지워졌는데 인물은 계속 부활 얘기로 열거나(길게 잡힌 쪽),
+    아직 흔적이 뜨는데 아무도 안 알아보거나(짧게 잡힌 쪽). 둘 다 「돈 안 드는 대신 눈으로만 잡히는」 종류라 기계로 묶는다.
+    + 소비처 실존 확인 — 게이트웨이가 me_revived 를 남겨도 러너가 안 읽으면 기능이 통째로 없는 것과 같다(260812 이전이 정확히 그 상태였다)."""
+    try:
+        src = open(os.path.join(ROOT, '.github/scripts/yeta_chat.sh'), encoding='utf-8').read()
+        vals = {k: v for k, v in re.findall(r'(MEREV_KEEP_MS|REVD_KEEP_MS) = int\(([^)]+)\)', src)}
+        if len(vals) != 2:
+            print('❌ 유저 부활 짝 게이트 — 상수 2점 중 %d점만 검출(이름이 바뀌었으면 게이트도 같이 수정): %s' % (len(vals), ', '.join(vals) or '없음')); return 1
+        if len(set(v.replace(' ', '') for v in vals.values())) != 1:
+            print('❌ 유저 부활 짝 게이트 — 「게임 속 하루」 두 단 불일치: ' + ' · '.join(f'{k}=int({v})' for k, v in vals.items())); return 1
+        miss = [n for n in ('me_revive_for', 'MEREVIVE_BLOCK', '${MEREVIVE_BLOCK}') if n not in src]
+        if miss:
+            print('❌ 유저 부활 짝 게이트 — 소비처 끊김(게이트웨이가 me_revived 를 남겨도 프롬프트에 안 닿는다): ' + ' · '.join(miss)); return 1
+        if 'me_revived' not in open(os.path.join(ROOT, 'functions/api/yeta.js'), encoding='utf-8').read():
+            print('❌ 유저 부활 짝 게이트 — 게이트웨이 op revive 가 me_revived 를 안 남긴다(재료 원천 소실)'); return 1
+        print('✅ 유저 부활 짝 게이트 — 「게임 속 하루」 두 단 일치(int(%s)) · 원천(op revive) → 재료(me_revive_for) → 프롬프트(MEREVIVE_BLOCK) 배선 생존.'
+              % next(iter(vals.values())).replace(' ', ''))
+    except Exception as e:
+        print('⚠️ 유저 부활 짝 게이트 스킵:', e)
+    return 0
+
+
 def check_world_rate():
     """무음동 세계율 폴백·기본 4점 짝 하드 게이트(운영자 260716 Q.08 평의회 · 260728 L1 노브 개편).
     배속이 L1 설정값이 된 뒤(운영자 260728 「설정값에서 조정 · L1급」) 대조 대상이 '공식 안의 리터럴'에서 **폴백 상수 + 정책 기본값**으로 바뀌었다 —
@@ -1432,6 +1457,8 @@ def main():
     except Exception as e:
         print('⚠️ 메뉴킷 신선도 게이트 스킵:', e)
     try:
+        if check_me_revive() != 0:   # 유저 부활 첫 마디 — 「게임 속 하루」 두 단 짝 + 원천→재료→프롬프트 배선 생존(260812)
+            rc = 1
         if check_world_rate() != 0:   # 무음동 세계율 6배 3점 짝(하드 게이트 — 한쪽만 수정 = 지도·대화 시간축 재분열 · Q.08 평의회)
             rc = 1
     except Exception as e:

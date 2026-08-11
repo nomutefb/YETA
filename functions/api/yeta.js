@@ -692,7 +692,7 @@ export async function onRequestPost({ request, env }) {
       if (!s.me_dead) return { abort: { noop: 1 } };   // 이미 살아있음 = 무변경(중복 탭·재진입 멱등)
       const md = s.me_dead;
       if (!md.pray && Date.now() < (md.d || 0) + MEREV_MS - (md.cut || 0)) return { abort: { error: '아직 돌아갈 수 없어 — 누가 신당에서 빌어주거나, 무음동의 밤이 더 흘러야 해' } };   // cut = 성향 퀴즈로 당긴 만큼(뷰어 yMeRevAt과 같은 식)
-      s.me_revived = { d: md.d || 0, why: md.why || '', at: Date.now(), pray: md.pray || null };   // 직전 죽음 + 그 기도 = 부활 맥락으로 1세대 보존(러너가 다음 턴에 "돌아왔네" 결로 쓸 재료)
+      s.me_revived = { d: md.d || 0, why: md.why || '', mood: md.mood || '', at: Date.now(), pray: md.pray || null };   // 직전 죽음 + 그 기도 = 부활 맥락으로 1세대 보존. 260812: mood 추가 + **러너가 드디어 읽는다**(yeta_chat.sh me_revive_for) — 게임 속 하루 안이면 인물마다 첫 마디를 이걸로 연다. 종전엔 여기 남겨만 두고 소비처가 없었다(주석의 "쓸 재료"가 반쪽으로 방치)
       delete s.me_dead;
     });
     if (abort && abort.error) return json(abort, 409);

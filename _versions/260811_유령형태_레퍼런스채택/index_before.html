@@ -829,14 +829,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ymap-head i { font-style:normal; font-size:var(--fs-xs); color:var(--mut); }
   .ymap-frame { border:1px solid var(--glass-line); border-radius:var(--r-l); background:var(--glass); overflow:hidden;
     backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
-  /* 확대(운영자 260811 "지도 확대하는 모션 pc든 모바일이든 · 단 지금의 크기 안에서 지도만 확대되는거") — 커지는 건 이 <svg> 하나뿐이고,
-     넘치는 부분은 위 .ymap-frame 이 이미 갖고 있던 overflow:hidden 이 자른다 = 프레임·레이아웃 1px도 안 변한다.
-     touch-action pan-y = 브라우저 핀치줌을 꺼서 우리가 받되(안 끄면 앱 전체가 확대된다) 세로 스크롤은 남긴다 = 원래 크기일 때 조작감 종전 동일.
-     ⚠️ will-change:transform 은 일부러 안 건다 — 레이어를 1배로 굳혀두면 확대했을 때 이름표 글씨가 뭉갠 채로 남는다(브라우저가 배율마다 다시 그리게 둔다). */
-  .ymap-frame svg { display:block; width:100%; height:auto; touch-action:pan-y; transform-origin:0 0; }
-  .ymap-frame.ymz svg { touch-action:none; }        /* 확대 중 = 한 손가락도 지도 끌기(패닝) */
-  .ymap-frame.ymz { cursor:grab; }
-  .ymap-frame.ymz.grabbing { cursor:grabbing; }
+  .ymap-frame svg { display:block; width:100%; height:auto; touch-action:manipulation; }
   .ymap-cap { font-size:var(--fs-xs); color:var(--mut); padding:0 4px; line-height:1.6; }
   /* ── 실내 뷰(운영자 260725 "무음 시범 하나") — 지도에서 장소 탭 = 그 안으로 들어감. 표면 크롬 = `.yeta-pick` **클래스 자체를 같이 입혀** 100% 계승(값 복제 0) · 여기선 위치·크기·내부 부품만 ── */
   .yin { top:0; left:0; right:0; bottom:0; margin:auto; height:fit-content; width:min(330px,90%); max-height:min(74dvh,540px); z-index:9; transform-origin:center; }   /* 중앙 = inset0+margin:auto(transform 미사용 — `.yeta-pick` 등장 애니(msgUnfold)가 transform 축을 쓰므로 충돌 회피) */
@@ -1542,7 +1535,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
     <div class="ymapp" id="ymapp">   <!-- 지도 탭(운영자 260707) — 위치 SSOT = apps/yeta/places.json(raw) · 워커 탭 = 그 캐릭터와 대화 -->
       <div class="ymap-head"><b>무음동</b><i id="ymapClock"></i></div>
       <div class="ymap-frame"><svg id="ymapSvg" viewBox="0 0 500 500" aria-label="무음동 지도"></svg></div>
-      <div class="ymap-cap">지금 이 시각의 동네 — 쪼만한 주민을 탭하면 바로 대화. 장소를 탭하면 <b>그 안</b>으로 들어간다(지금 그 자리에 있는 사람 명단). <span style="color:var(--accent)">라임 링</span> = 지금 붐비는 곳. 언덕 위 <b>성당</b>은 신당 — 죽은 사람을 위해 빌 수 있는 자리. 지도는 <b>휠·두 손가락</b>으로 확대(두 번 탭 = 원래대로).</div>
+      <div class="ymap-cap">지금 이 시각의 동네 — 쪼만한 주민을 탭하면 바로 대화. 장소를 탭하면 <b>지금 그 자리에 있는 사람 명단</b>. <span style="color:var(--accent)">라임 링</span> = 지금 붐비는 곳. 찻집 <b>무음</b>은 안으로 들어가진다. 언덕 위 <b>성당</b>은 신당 — 죽은 사람을 위해 빌 수 있는 자리.</div>
       <div class="yeta-pick yin" id="yin" hidden></div>   <!-- 실내 뷰 시트(운영자 260725 시범) — 표면 = .yeta-pick 정본 크롬 그대로 · 내용 = yInRender -->
     </div>
     <div class="ycd" id="ycdetail" aria-modal="true" role="dialog">   <!-- 캐릭터 세부 디테일 → [대화 시작](운영자 260706) -->
@@ -2155,12 +2148,8 @@ ySwipeBind(document.getElementById('ymain'), dir => {   // 메인 좌우 스와�
 //    워커 10인 = 현재 KST 실위치 + 어슬렁 · 차량 = 엣지(길) 순회 · 전부 rAF + style.transform(합성만 = 60fps · 운영자 260707) · 탭 이탈 = 루프 정지.
 let YMAPD = null, _ymapRaf = 0, _ymapIv = 0, _ymapWalkers = [], _ymapLast = 0;
 let _ymapAt = {}, _yinOpen = '';   // 실내 뷰(운영자 260725 "무음 시범 하나") — _ymapAt = 장소별 재실자(ymPlaceAll 캐시 공유) · _yinOpen = 열린 장소 id
-const YSHRINE = 'cathedral', YSN_SCENE = 'place_cathedral';   // 신당(운영자 260730) = 지도 성당 노드 = 죽은 주민에게 비는 자리. 씬 = **전용 성당 컷**(260811 장소 시트 12칸 중 하나) — 종전 대역이던 'moon_stairs'(달빛 계단)를 예고대로 이 한 값만 교체해 회수.
-// ── 실내 뷰 배경 씬(운영자 260811 "한 컷에 여러 분할로 소스 뽑아서 잘라서 넣어줘") — 지도에서 탭되는 **공개 장소 전부**. 종전엔 찻집 하나뿐이라(260725 시범) 나머지 10곳은 명단만 떴다.
-//   값 = `assets/yeta_bg/var_<씬>.webp` 의 씬 이름. place_* 12칸 = 프롬프트 1개·도화지 1장(2×6)에서 잘라낸 것 = 팔레트·광원·붓이 한 벌(낱장 12회로 뽑으면 12개의 딴 밤이 된다).
-//   생성·자르기 정본 = `.github/scripts/yeta_bg_var.py`(PLACE_CUTS · 수동 dispatch `yeta-bg-var`) · 커터 = `shared/cut_board_sheet.py`. 확장은 여전히 이 표에 한 줄.
-//   ⚠️ cathedral 은 여기 없다 — 성당 탭은 실내 뷰가 아니라 신당(ySnRender)으로 갈라지므로 그 컷은 위 YSN_SCENE 이 쓴다(여기 적으면 죽은 설정).
-const YIN_PLACES = { tea: 'place_tea', alley: 'place_alley', store: 'place_store', market: 'place_market', park: 'place_park', school: 'place_school', dojo: 'place_dojo', gym: 'place_gym', studio: 'place_studio', office: 'place_office', radio: 'place_radio' };
+const YSHRINE = 'cathedral', YSN_SCENE = 'moon_stairs';   // 신당(운영자 260730) = 지도 성당 노드 = 죽은 주민에게 비는 자리. 씬 = 기존 자산 재사용(언덕으로 오르는 달빛 계단 — 전용 성당 씬 미생성 · 생기면 이 한 값만 교체)
+const YIN_PLACES = { tea: 'tea_sunset' };   // 실내 뷰 개방 장소 → 배경 씬(assets/yeta_bg/var_*.webp · Y_PLACE_POOL의 tea 매핑과 동일 정본값 계승). ⚠️ 시범 = 찻집 '무음' 하나만(운영자 260725) — 확장 = 이 표에 {장소id: 씬} 한 줄 추가로 끝(코드 무수정).
 const YMAP_SC = 5, YMAP_RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 // 스프라이트 한 변(SVG 단위) — 운영자 260811 "스프라이트 축소로 골목 겹침 풀어줘". 22 → 18.
 // PNG는 알파 타이트(세로 320 고정)라 meet 실폭 = 원본비 × 이 값. 22일 때 8.0~15.2px(평균 11.6) · 18이면 6.5~12.4px(평균 9.5).
@@ -2249,7 +2238,7 @@ async function ymTransitOf(cid, dateStr, hour, minute) {   // 지금 '가는 중
   if (prev && prev !== cur && into < T.transitMin) return { from: prev, to: cur, p: Math.round(into / T.transitMin * 1000) / 1000 };
   return { from: cur, to: cur, p: 1 };
 }
-function yMapLeave() { if (_ymapRaf) cancelAnimationFrame(_ymapRaf); _ymapRaf = 0; if (_ymapIv) clearTimeout(_ymapIv); _ymapIv = 0;   /* 타이머 = 자기 재예약 setTimeout(Q.144 · 종전 setInterval) */ if (_yinOpen) navBack('yin'); ymzReset(); }   // 실내 뷰도 동반 회수(탭 이탈에 시트 잔류 금지 · 260725 · 260804 레이어 경유) · 확대도 원래대로(확대된 채 나갔다 들어오면 주민 대부분이 프레임 밖 = '아무도 없는 동네'로 보인다)
+function yMapLeave() { if (_ymapRaf) cancelAnimationFrame(_ymapRaf); _ymapRaf = 0; if (_ymapIv) clearTimeout(_ymapIv); _ymapIv = 0;   /* 타이머 = 자기 재예약 setTimeout(Q.144 · 종전 setInterval) */ if (_yinOpen) navBack('yin'); }   // 실내 뷰도 동반 회수(탭 이탈에 시트 잔류 금지 · 260725 · 260804 레이어 경유)
 // ── 실내 뷰(운영자 260725 "무음 시범 하나") — 지도에서 장소를 탭하면 그 안으로 '들어간다'. 3D 모델 0개: 기존 배경 씬 1장 + 그 시각 재실자(ymPlaceAll 캐시) 재활용.
 //   부품 계승 = 표면 `.yeta-pick` · 행 `.ypick-row`+`.yp-col/.yp-name/.yp-tag`(리스트 정본) · 아바타 `yAva` · 진입 `openYeta`(워커 탭과 동일) — 신규 부품 창작 0. 확장 = YIN_PLACES 표에 한 줄.
 function yInRender(pl) {
@@ -2265,11 +2254,8 @@ function yInRender(pl) {
     + `<div class="yin-ttl"><b>${esc(info.name || '')}</b><i>지금 ${here.length}명</i></div>`
     + (info.look ? `<div class="yin-look">${esc(String(info.look).split(' — ')[0])}</div>` : '')
     + (rows || `<div class="yin-empty">지금은 아무도 없다.</div>`);
-  yInBgFix(box); box.hidden = false;
+  box.hidden = false;
 }
-// 씬 파일이 아직 없을 때(시트 미발사·칸 하나 누락·오타) 깨진 이미지 아이콘이 시트 머리에 박히는 것 차단 — 그냥 없앤다 = 씬 없던 종전 모습으로 정상 강등.
-// 처방 = 지도 스프라이트 404 폴백(w.spr 'error' once)과 같은 결 · 인라인 onerror는 이 파일에 전례 0이라 리스너로.
-function yInBgFix(box) { const b = box.querySelector('.yin-bg'); if (b) b.addEventListener('error', () => b.remove(), { once: true }); }
 // ── 신당(운영자 260730 "신당에 가서 죽은사람 한테 기도드릴 수 있는 걸 · 지도에 붙이던가") — 지도 성당 탭 = 실내 뷰와 **같은 시트**(#yin · .yin-* 부품 100% 계승 · 신규 부품 0).
 //   종전엔 비는 주체가 러너 <<PRAY>>(주민)뿐 = 유저는 누가 죽어도 무음동 48h를 기다리는 것 말고 할 수 있는 게 없었다. 여기서 [빌어주기] = op pray(러너 기도와 한 식) = 그 자리에서 돌아온다.
 function ySnRender() {
@@ -2288,7 +2274,7 @@ function ySnRender() {
     + (info.look ? `<div class="yin-look">${esc(String(info.look).split(' — ')[0])}</div>` : '')
     + (rows || `<div class="yin-empty">지금 무음동엔 죽은 사람이 없다.</div>`)
     + `<div class="yinv-note">빌려면 <b>향불 세 번</b>을 연속으로 맞혀야 해 — <span class="ysng-lock">한 번이라도 빗나가면 그 자리에서 <b>네가 죽는다</b>.</span><br>무음동의 신당은 비는 자가 목숨을 거는 자리야.</div>`;   // 힌트 = 초대 팝업 .yinv-note 결 계승 · 벌칙 개정(운영자 260811 "실패하면 본인이 죽는거로 컨셉바꾸자") — 종전 「3연속 실패 = 하루 잠금」 문구 폐기
-  yInBgFix(box); box.hidden = false;
+  box.hidden = false;
 }
 // ── 향불 타이밍 링(운영자 260730 "미니 게임 만들어서 그 안에서 이겨야 · 난이도 조금 어렵게 · 3연속 실패 시 도전 불가 24시간 뒤 가능")
 //   규칙 = 도는 표식이 향불 자리(강조색 호)를 지날 때 탭. **3연속** 성공해야 기도가 닿는다. 한 번이라도 빗나가면 그 도전은 거기서 끝(실패 1건).
@@ -2405,49 +2391,6 @@ function ymNextEdgeMs() {   // 다음 재판정 시각까지 현실 ms — 버�
   return Math.max(1500, Math.min(120000, wmin / rate * 60000));          // 하한 1.5s(폭주 방지) · 상한 2분(배속 1배에서도 시계·낮밤이 안 굳게)
 }
 function ymPlaceLoop() { clearTimeout(_ymapIv); _ymapIv = setTimeout(() => { ymPlaceAll().finally(ymPlaceLoop); }, ymNextEdgeMs()); }   // 자기 재예약 타이머 1개(setInterval 폐지) — yMapLeave가 clearTimeout으로 함께 회수(핸들 축 공유)
-// ── 지도 확대(운영자 260811 "지도 확대하는 모션 pc든 모바일이든 적용 · 단 지금의 크기 안에서 지도만 확대되는거") ──
-//   프레임은 안 건드린다 = 탭 레이아웃 불변. 커지는 건 프레임 안의 <svg> 하나뿐(넘치면 프레임이 자른다).
-//   ⚠️ viewBox를 줄이는 흔한 방법을 안 쓴 이유: viewBox는 레이아웃 속성이라 만질 때마다 지도 전체가 다시 그려진다 —
-//      워커 17명이 매 프레임 style.transform으로 도는 옆에서 그걸 하면 둘이 같은 프레임을 놓고 싸운다.
-//      이 지도의 규약이 "전부 rAF + style.transform(합성만 = 60fps · 운영자 260707)"이므로 확대도 같은 축으로 붙인다.
-const YMZ = { k: 1, x: 0, y: 0, pinch: 0 }, YMZ_MAX = 4, YMZ_DBL = 2.2;   // k = 배율(1 = 종전과 완전 동일) · x,y = 프레임 좌상단 기준 이동(px) · 4배 = 골목 4명이 각각 집히는 배율(실측 스프라이트 18 → 72)
-function ymzApply() {
-  const svg = $('#ymapSvg'), fr = svg && svg.parentElement; if (!fr) return;
-  const w = fr.clientWidth, h = fr.clientHeight;   // 확대 전 실치수 = 프레임 안치수(svg가 여백 없이 꽉 참) · transform은 레이아웃을 안 바꾸므로 배율과 무관하게 고정값
-  YMZ.x = Math.min(0, Math.max(w - w * YMZ.k, YMZ.x));   // 가장자리 물림 — 프레임 안에 빈 자리가 생기지 않게(지도 밖 허공을 못 보게)
-  YMZ.y = Math.min(0, Math.max(h - h * YMZ.k, YMZ.y));
-  svg.style.transform = YMZ.k === 1 ? '' : `translate(${YMZ.x}px,${YMZ.y}px) scale(${YMZ.k})`;   // 1배 = 속성 자체를 비운다(합성 레이어도 회수 = 종전과 완전히 같은 상태)
-  fr.classList.toggle('ymz', YMZ.k > 1);
-}
-function ymzTo(k, ax, ay) {   // ax,ay = 프레임 안에서 붙잡아 둘 지점(커서 · 두 손가락 한가운데). 그 지점이 손 밑에 그대로 남아야 '내가 미는' 확대가 된다(중앙 고정 확대는 딴 데가 나온다)
-  const k2 = Math.max(1, Math.min(YMZ_MAX, k)), r = k2 / YMZ.k;
-  YMZ.x = ax - (ax - YMZ.x) * r; YMZ.y = ay - (ay - YMZ.y) * r; YMZ.k = k2;
-  ymzApply();
-}
-function ymzReset() { YMZ.k = 1; YMZ.x = YMZ.y = 0; YMZ.pinch = 0; ymzApply(); }
-function ymzD(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
-function ymzInit() {
-  const svg = $('#ymapSvg'), fr = svg && svg.parentElement; if (!fr || fr._ymz) return; fr._ymz = 1;   // 리스너는 프레임 1개에 한 벌(탭 재진입마다 겹쳐 붙지 않게)
-  const at = e => { const r = fr.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
-  fr.addEventListener('wheel', e => { e.preventDefault(); const [x, y] = at(e); ymzTo(YMZ.k * Math.exp(-e.deltaY / 1000), x, y); }, { passive: false });   // PC = 커서 아래를 붙잡고 휠(지도 관례) · /1000 = 휠 한 칸(deltaY 120)에 12.7% = 1배→4배까지 12칸(실측 교정: 종전 /420은 한 칸 33% = 4칸 만에 최대까지 튀었다) · 트랙패드 잔delta도 매끄럽게
-  fr.addEventListener('dblclick', e => { e.preventDefault(); const [x, y] = at(e); if (YMZ.k > 1) ymzReset(); else ymzTo(YMZ_DBL, x, y); });   // 두 번 탭 = 확대 ↔ 원래대로(모바일도 같은 이벤트로 온다)
-  let px = 0, py = 0, moved = 0, drag = 0;
-  fr.addEventListener('pointerdown', e => { if (YMZ.k <= 1 || YMZ.pinch) return; drag = 1; moved = 0; px = e.clientX; py = e.clientY; try { fr.setPointerCapture(e.pointerId); } catch {} fr.classList.add('grabbing'); });   // 끌기 = 확대 중일 때만(1배에선 세로 스크롤 우선 = 종전 조작 유지)
-  fr.addEventListener('pointermove', e => { if (!drag) return; const dx = e.clientX - px, dy = e.clientY - py; px = e.clientX; py = e.clientY; moved += Math.abs(dx) + Math.abs(dy); YMZ.x += dx; YMZ.y += dy; ymzApply(); });
-  const up = () => { drag = 0; fr.classList.remove('grabbing'); };
-  fr.addEventListener('pointerup', up); fr.addEventListener('pointercancel', up);
-  fr.addEventListener('click', e => { if (moved > 8) { e.stopPropagation(); e.preventDefault(); moved = 0; } }, true);   // 끌고 손을 뗀 자리에 있던 주민·장소가 열리던 것 차단(끌기 ≠ 탭) — 캡처 단계 = 스프라이트·노드 리스너보다 먼저
-  let d0 = 0, k0 = 1;
-  fr.addEventListener('touchstart', e => { if (e.touches.length !== 2) return; YMZ.pinch = 1; drag = 0; d0 = ymzD(e.touches); k0 = YMZ.k; }, { passive: true });   // 모바일 = 두 손가락 사이 거리비 = 배율
-  fr.addEventListener('touchmove', e => {
-    if (e.touches.length !== 2 || !d0) return;
-    e.preventDefault();   // 두 손가락 세로 끌기가 탭 패널 스크롤로 새는 것 차단(pan-y가 열어둔 축)
-    const r = fr.getBoundingClientRect(), t = e.touches;
-    ymzTo(k0 * ymzD(t) / d0, (t[0].clientX + t[1].clientX) / 2 - r.left, (t[0].clientY + t[1].clientY) / 2 - r.top);
-  }, { passive: false });
-  const tend = e => { if (e.touches.length < 2) { d0 = 0; setTimeout(() => { YMZ.pinch = 0; }, 60); } };   // 60ms = 손가락 하나가 먼저 떨어질 때 남은 하나가 곧장 패닝으로 넘어가 지도가 튀는 것 방지
-  fr.addEventListener('touchend', tend); fr.addEventListener('touchcancel', tend);
-}
 async function yMapEnter() {
   const svg = $('#ymapSvg'); if (!svg) return;
   if (!YMAPD) {
@@ -2457,7 +2400,6 @@ async function yMapEnter() {
   if (!YCHARS.length) { const c = await yApi('chars').catch(() => null); if (c && c.ok) { YCHARS = c.chars || []; } }
   if (!YSESS) { const r = await yApi('get').catch(() => null); if (r && r.ok) YSESS = r.sess || {}; }   // 미대면(???) 판정 = 스레드 필요 — 지도 직행 시도 세션 선로드(실패 = 전원 ??? 안전측)
   ymBuild(svg);
-  ymzInit();   // 확대 조작 배선(프레임 1개에 한 벌 · 재진입해도 겹쳐 붙지 않는다)
   await ymPlaceAll();
   yMapLeave();
   ymPlaceLoop();   // 실시간 위치 = **값이 바뀌는 순간에만** 재판정(운영자 260730 Q.144) — 종전 1분 폴링은 20분에 한 번 바뀌는 값을 20번 계산했다(19번이 헛일)
@@ -2479,7 +2421,7 @@ function ymBuild(svg) {   // 정적 레이어 — 배경(낮/밤 = KST 시각 ·
   }
   { const zc = YMAP_ZONE[YSHRINE] || { x: (YMAP_POS[YSHRINE] || [72, 30])[0], y: (YMAP_POS[YSHRINE] || [72, 30])[1], r: 7 / YMAP_SC };   // 유령 = 신당 노드 **바로 위**(운영자 260811) — 앵커는 노드와 같은 좌표원에서 파생(성당이 또 옮겨져도 따라온다 · 388차 어긋남 재발 차단). 폴백 r = 소형 노드 반지름 7px(393차 재건에서 성당이 YMAP_ZONE을 떠나 소형 노드가 됐다)
     const gx = zc.x * YMAP_SC, gy = zc.y * YMAP_SC - zc.r * YMAP_SC - 15;
-    S.push(`<g id="ymGhost" class="ymp-ghost" style="display:none" aria-hidden="true"><g transform="translate(${gx - 9.4},${gy - 14}) scale(.78)">${YGHOST_INNER}</g></g>`); }   // scale .78 = 24×26 원도를 19×20으로(워커 스프라이트보다 작게 = 사람이 아니라 표식으로 읽히되 폰 실치수 ~14px 확보)
+    S.push(`<g id="ymGhost" class="ymp-ghost" style="display:none" aria-hidden="true"><g transform="translate(${gx - 9.4},${gy - 12}) scale(.78)">${YGHOST_INNER}</g></g>`); }   // scale .78 = 24×26 원도를 19×20으로(워커 스프라이트보다 작게 = 사람이 아니라 표식으로 읽히되 폰 실치수 ~14px 확보)
   S.push(`<g id="ymWalkers"></g><g id="ymTags"></g>`);   // #ymTags = 장소 핀 레이어(장소 앵커 고정 · 워커 배회와 독립)
   svg.innerHTML = S.join('');
   for (const pid of Object.keys(P)) {   // 장소 탭 = 그 자리 명단 시트(#yin) — 260811 재건: 개방 2곳(찻집·성당)만 눌리던 걸 지도 위 전 장소로. 노드 원 + 이름 라벨 + 핀 셋 다 탭 표면(작은 원만이면 폰에서 놓침 · 260725 계승)
@@ -2760,11 +2702,11 @@ function ySsnHtml() {   // 시즌 표기 정본(대화·캐릭터 탭 공용 —
 const YME_MOODS = { warm: '따뜻함', tense: '긴장', blue: '가라앉음', joy: '신남', love: '설렘', shy: '수줍음', mad: '짜증', sulky: '삐짐' };   // 무대 무드(러너 <<MOOD>> 배경 축 · Y_MOODS와 짝 — 9감정 Q.29 + 260726 삐짐 독립)
 const YME_FEEL = { warm: ['🙂', '따뜻함'], joy: ['😄', '신남'], calm: ['😌', '평온'], tired: ['😪', '나른함'], think: ['🤔', '생각 많음'], hungry: ['🍜', '출출함'], love: ['🥰', '설렘'], tense: ['😰', '긴장'], blue: ['🌧️', '가라앉음'], night: ['🌙', '밤샘 각'] };   // 내 기분 세트(운영자 260709 "다양한 상황 + 이모지") — 로컬 표시 전용(무대 무드와 별개 축 · warm/tense/blue 키는 yLastMood 폴백 호환)
 function yMoodLog() { try { return JSON.parse(localStorage.getItem('yeta_me_moodlog') || '[]'); } catch { return []; } }   // 기분 지문 로그(운영자 260716 수렴 · 평의회 A안) — {ts, md, t:그때 현재 방} · 로컬 표시 전용(서버 미전송 = 무인증 주입면 0 유지) · yeta_ 접두 = 캐시 비우기 커버
+const YMAP_URL = 'https://raw.githubusercontent.com/muteno/yeta/main/apps/yeta/places.json';   // 장소 SSOT 주소 1곳(260812) — 지도 로더(yMapEnter)와 yMeMap이 각자 같은 URL을 박아두던 것 통합
 let _yMapP = null;   // 진행 중인 로드 1개 공유 — 대화 열기·지도·목록이 동시에 불러도 요청은 1회(상한에 걸려 먼저 빠져나와도 뒤에서 계속 돌아 다음 호출이 받는다)
 async function yMeMap(cap) {   // YMAPD 보장(지도 탭 미방문 대비 · 실패 = null 수용) · cap(ms) = 기다리는 상한. 안 주면 종전대로 끝까지 기다림(느긋한 지연 로드용)
   if (YMAPD) return YMAPD;
-  // 장소표 = 게이트웨이 op places 경유(260812 · 400차) — 종전 raw.githubusercontent.com 직접 호출 폐지. 뷰어는 자기 도메인 1홉만 타고, 깃허브 왕복·캐시는 서버가 진다(외부 도메인이 느린 순간 = 대화 열기가 묶이던 축 원천 제거 · 상한은 방어선으로 존치).
-  if (!_yMapP) _yMapP = yApi('places').then(j => { if (j && j.ok && j.data) { YMAPD = j.data; return j.data; } return null; }).catch(() => null).finally(() => { _yMapP = null; });
+  if (!_yMapP) _yMapP = fetch(YMAP_URL).then(r => r.json()).then(j => { YMAPD = j; return j; }).catch(() => null).finally(() => { _yMapP = null; });
   const p = _yMapP;
   if (cap) await Promise.race([p, new Promise(r => setTimeout(r, cap))]);   // 상한 = 화면이 이 요청에 묶이지 않게(260812 · Promise.race 상한 = yBargeWarm 선례 계승)
   else await p;
@@ -4137,10 +4079,8 @@ const YSKULL_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6
 const YCROW_SVG = '<svg viewBox="0 0 48 32" aria-hidden="true"><path d="M23.5 16.6c-3.6-4.9-5.9-9.2-6.9-12.9 3 2.2 6.6 6.2 10.8 12z"/><path d="M20.6 21.4c-5.1 1.3-9.2 3.4-12.4 6.3 4.2-.4 8.8-1.8 13.9-4.2z"/><ellipse cx="23.5" cy="20" rx="12.4" ry="4.1" transform="rotate(-13 23.5 20)"/><circle cx="35.4" cy="13.9" r="3.5"/><path d="M38.2 12.1 46.6 9.9 38.6 15.4z"/><path d="M13.2 22.6 2.4 26.9l11.4.6z"/></svg>';   // 까마귀(난입 퇴장 전용 · 운영자 260730 "까마귀 그거 ㄱㄱ") — 위 YSKULL_SVG와 같은 인라인 상수 결(nm-svg.js 공유 아이콘 아님 = SSOT 게이트 무저촉) · 눈 = currentColor 위 검정 저투명(해골 눈구멍 패턴 계승)
 const YCROWSIT_SVG = '<svg viewBox="0 0 36 34" aria-hidden="true"><path d="M9 21.6 1 27.4 10.6 25z"/><ellipse cx="16.6" cy="19.4" rx="8.8" ry="6.2" transform="rotate(-22 16.6 19.4)"/><path d="M12 15c3.4 2.9 7.6 5.1 11 5.6-3.8 2.2-8.6 1-11.9-1.8z"/><circle cx="25.4" cy="9.8" r="4.1"/><path d="M28.6 8.2 35.6 9.6 28.8 12z"/><path d="M15.2 24h1.7v6.6h-1.7zM18.8 24h1.7v6.6h-1.7z"/></svg>';   // 앉은 까마귀(난입 전조 전용 · 운영자 260730) — 꽁지·몸통·접은 날개·머리·부리·다리 6조각 조립(위 YCROW_SVG와 같은 결의 인라인 상수 · 아이콘 SSOT 무저촉). 고개를 든 자세 = "이쪽을 보고 있다"(카드 §겉모습) · 나는 실루엣을 정지시켜 두면 「앉아 있다」로 안 읽힌다(헤드리스 3자세 대조로 고름)
 // 유령(지도 신당 전용 · 운영자 260811 "누가 죽어있을때 신당 이 강조되고 위에 유령표시 나오게") — 위 YSKULL/YCROW와 **같은 인라인 상수 결**(nm-svg.js 공유 아이콘 아님 = SSOT 게이트 무저촉).
-//   조립 = 반원 돔 + 아랫단 둥근 물결 4산(까마귀가 조각 6개로 실루엣을 만든 방식 그대로) · 눈 = currentColor 위 검정 저투명(해골 눈구멍 패턴 계승 = 색이 바뀌어도 눈이 따라온다).
-const YGHOST_INNER = '<path d="M12 1.6C6.26 1.6 1.6 6.26 1.6 12v8.4a2.6 2.6 0 0 0 5.2 0 2.6 2.6 0 0 0 5.2 0 2.6 2.6 0 0 0 5.2 0 2.6 2.6 0 0 0 5.2 0V12c0-5.74-4.66-10.4-10.4-10.4Z"/><ellipse cx="8.4" cy="11" rx="2.5" ry="3.3" fill="#000" fill-opacity=".55"/><ellipse cx="15.6" cy="11" rx="2.5" ry="3.3" fill="#000" fill-opacity=".55"/>';   // 유령(지도 신당 전용 · 운영자 260811 레퍼런스 이미지 채택) — 통통한 반원 돔 + **큰 타원 눈** + 아래 둥근 물결 4산.
-//   1차본(홀쭉한 몸 + 작은 눈 + 각진 물결)은 14px에서 눈이 점으로 뭉개져 「유령」으로 안 읽혔다. 눈을 rx2.5·ry3.3으로 키운 게 판독의 8할 —
-//   레퍼런스의 큼직한 구멍눈이 그 결이다. 물결 = 반지름 2.6 반원 4개(각진 지그재그보다 실루엣이 부드럽게 남는다) · 눈 = currentColor 위 검정 저투명(해골 눈구멍 패턴 계승).
+//   조립 = 둥근 머리+몸통 한 덩어리에 아랫단 물결 3산(까마귀가 조각 6개로 실루엣을 만든 방식 그대로) · 눈 = currentColor 위 검정 저투명(해골 눈구멍 패턴 계승 = 색이 바뀌어도 눈이 따라온다).
+const YGHOST_INNER = '<path d="M12 1.8c-4.5 0-8.1 3.6-8.1 8.1v13.9c0 .95 1.1 1.42 1.78.76l1.9-1.86c.5-.49 1.3-.46 1.77.06l1.2 1.34c.53.6 1.47.6 2 0l1.2-1.34c.47-.52 1.27-.55 1.77-.06l1.9 1.86c.68.66 1.78.19 1.78-.76V9.9c0-4.5-3.6-8.1-8.1-8.1Z"/><ellipse cx="9" cy="9.6" rx="1.5" ry="2" fill="#000" fill-opacity=".55"/><ellipse cx="15" cy="9.6" rx="1.5" ry="2" fill="#000" fill-opacity=".55"/>';
 function yShrineWait() {   // 지금 신당의 기도를 기다리는 죽은 주민 수 — 판정 = ySnRender의 `wait`와 **같은 식**(죽어 있고 · 아직 아무도 안 빌어줌)
   const dd = ((YSESS || {}).dead) || {};
   return Object.keys(dd).filter(id => yPersona(id) && yDeadT(id) && yDead({ id }) && !yPrayed(id)).length;
