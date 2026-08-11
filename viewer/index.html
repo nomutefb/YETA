@@ -898,6 +898,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   .ymd-cand-p { flex:none; color:var(--accent); font-variant-numeric:tabular-nums; }   /* tabular = % 자릿수 세로 정렬(yeta-design 표 정렬 원칙) */
   .ymd-cand.armed { border-color:rgba(var(--danger-rgb),.4); }
   .ymd-cand-say { position:absolute; right:12px; padding:2px 8px; border-radius:var(--r-pill); background:rgba(var(--danger-rgb),.14); border:1px solid rgba(var(--danger-rgb),.4); color:var(--arm); font-size:var(--fs-xs); font-weight:var(--fw-b); line-height:1.5; }
+  #ymdbeg.ymb-busy .yexit-x { display:none; }   /* 찾는 중 = 닫기 픽토 숨김(누를 수 있는데 아무 일도 안 나는 버튼을 두지 않는다) */
   .ymd-stagger > button { animation:ypickIn .42s cubic-bezier(.22,.61,.36,1) both; }
   .ymd-stagger > button:nth-child(1){animation-delay:.02s} .ymd-stagger > button:nth-child(2){animation-delay:.06s}
   .ymd-stagger > button:nth-child(3){animation-delay:.1s} .ymd-stagger > button:nth-child(4){animation-delay:.14s}
@@ -1945,7 +1946,10 @@ document.addEventListener('DOMContentLoaded', () => {   // 팝업 바인딩 — 
   const mb = document.getElementById('ymdbeg');   // 부탁 대상 고르기(260811) — 닫힘 계약 = #ymdquiz 100% 계승(X·바깥클릭 = 이 창만 접음 · 사망 창은 상주)
   if (mb) {
     mb.addEventListener('click', e => {
-      if (e.target.closest('#ymbX') || !e.target.closest('.yexit-card')) { ySnGameStop(); mb.hidden = true; return; }   // 닫기 = 향불 rAF도 동반 회수(시트 닫힘에 루프 잔류 금지 · yInClose 관례 계승)
+      if (e.target.closest('#ymbX') || !e.target.closest('.yexit-card')) {
+        if (mb.classList.contains('ymb-busy')) return;   // 찾는 중 = 닫기 무시(결과 증발 + 쿨다운 소모 차단)
+        ySnGameStop(); mb.hidden = true; return;         // 닫기 = 향불 rAF도 동반 회수(시트 닫힘에 루프 잔류 금지 · yInClose 관례 계승)
+      }
       const b = e.target.closest('[data-mb]'); if (!b) return;
       const k = b.dataset.mb;
       if (k === 'x') { mb.hidden = true; yMeDeadPaint(); return; }
@@ -5348,6 +5352,7 @@ async function yMdKinOpen() {
   if (!box || !T || !B || !O) return;
   T.textContent = '이름을 부른다'; B.innerHTML = `누가 와줄지 헤아리는 중…<span class="ytdots ymd-seek"><i></i><i></i><i></i></span>`; B.hidden = false; O.innerHTML = ''; box.hidden = false;
   const r = await yApi('praycands').catch(() => null);
+  if (box.hidden) return;   // 헤아리는 중에 닫았으면 그리지 않는다(이쪽은 읽기 전용 op라 봉인까지는 불필요 — 닫힘만 존중)
   const cs = ((r && r.cands) || []).filter(c => yPersona(c.id));
   if (!cs.length) { T.textContent = '부를 이름이 없다'; B.textContent = '아직 아무도 만나지 못했거나, 아는 사람이 전부 죽어 있다.'; O.innerHTML = `<button type="button" class="yexit-btn yes" data-mb="x">닫는다</button>`; return; }
   B.innerHTML = `한 사람만 부를 수 있다. <b>%</b>는 그 사람이 목숨을 걸고 와줄 확률 — 친밀도·성향·신당까지의 거리로 갈린다.`;
@@ -5364,6 +5369,7 @@ function yMdBegOpen(id) {
   B.innerHTML = `${nm ? `${esc(nm)}${yJosa(nm, '이', '가')} 들어줄까 — ` : ''}나의 소생을 비는 이를 찾습니다…<span class="ytdots ymd-seek"><i></i><i></i><i></i></span>`;   // 점 3개 = 타이핑 정본(.ytdots) 계승 = 새 부품 0
   B.hidden = false;
   O.innerHTML = '';
+  box.classList.add('ymb-busy');   // 찾는 중 = 닫기 봉인 — 여기서 닫으면 서버는 이미 굴렸는데(주민이 죽었을 수도 있다) 결과를 못 보고 쿨다운만 소모된다
   box.hidden = false;
   yMdBegSend(id);
 }
@@ -5374,7 +5380,7 @@ async function yMdBegSend(id) {
   if (r && r.sess) YSESS = r.sess;
   const T = document.getElementById('ymbT'), B = document.getElementById('ymbB'), O = document.getElementById('ymbOpts');
   const close = `<button type="button" class="yexit-btn yes" data-mb="x">닫는다</button>`;
-  const fin = (title, body, btns) => { if (!T || !B || !O) return; T.textContent = title; B.innerHTML = body; O.innerHTML = btns; yMeDeadPaint(); };
+  const fin = (title, body, btns) => { const bx = document.getElementById('ymdbeg'); if (bx) bx.classList.remove('ymb-busy'); if (!T || !B || !O) return; T.textContent = title; B.innerHTML = body; O.innerHTML = btns; yMeDeadPaint(); };   // 결과가 떴으면 닫기 해제
   if (!r || (!r.ok && !r.wait)) { fin('닿지 않았다', '무음동이 대답하지 않는다 — 잠시 뒤에 다시 불러봐.', close); return; }
   if (r.wait) { fin('아직은 아니다', `방금 부른 소리가 아직 언덕을 넘는 중이야 — <b>${Math.ceil(r.wait / 60)}분</b> 뒤에 다시 부를 수 있어.`, close); return; }
   if (r.error) { fin('부를 수 없다', esc(r.error), close); return; }
