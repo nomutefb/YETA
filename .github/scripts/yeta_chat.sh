@@ -36,8 +36,8 @@ PREWARM_WAIT="${YETA_PREWARM_WAIT:-180}"   # 프리웜 런(첫 턴이 NOPENDING)
 WARM_POLL="${YETA_WARM_POLL:-2}"   # 웜 픽업 지연 평균 2.5s→1s(대화 속도 260713) — R2 GET 300s/2s=150회/창 = Class B 무료 티어에 무시량
 SESSION_MAX="${YETA_SESSION_MAX:-3300}"  # 55분(잡 timeout 60분보다 낮게 = mid-turn 킬 차단 · 아이데이션③)
 PER_TURN_BUDGET="${YETA_TURN_BUDGET:-300}"   # 새 턴 시작 전 필요한 잔여 예산(claude 240 + finish 여유 · env = 테스트 노브)
-SETTLE="${YETA_SETTLE:-4}"   # 유저 입력 정착 대기 초(260811 Q.172) — 겹침 폐기 21%의 뿌리 처방 · 0 = 축 OFF(종전 결) · 상세 = 아래 settle_wait 주석
-case "$SETTLE" in ''|*[!0-9]*) SETTLE=4 ;; esac   # 정수 강제(오타 env = 기본값 · 아래 산술·sleep 이 셸 에러 없이 돌게 · GB_BEATS 선례)
+SETTLE="${YETA_SETTLE:-0}"   # 유저 입력 정착 대기 초 — ⚠️ 기본 **0(OFF)**. 260811 Q.172 에서 4로 켰다가 같은 날 실측으로 되돌린 축(사유 = 아래 settle_wait 주석)
+case "$SETTLE" in ''|*[!0-9]*) SETTLE=0 ;; esac   # 정수 강제(오타 env = 기본값 · 아래 산술·sleep 이 셸 에러 없이 돌게 · GB_BEATS 선례)
 # ── 단톡 대화 이어가기(운영자 260725 "단톡이면 자기들끼리 얘기를 이어나가야") — 두 축 ──
 #   ① 대본 교대: 한 호출 안에서 [이름] 프리픽스로 두 사람이 번갈아 GB_LINES줄까지(종전 = 동행 1줄·"대체로 생략" = 유저에게만 답하고 끝나던 뿌리) · 비용 = 같은 1호출.
 #   ② 자율 비트: 답장 뒤 유저가 조용하면 상대가 받아치는 턴을 GB_BEATS회까지 스스로 발사(finish가 s.gb 예약 → extract_mat이 픽 · 유저 메시지 도착 = pending 우선 = 자동 중단).
@@ -492,8 +492,43 @@ print(json.dumps({"mode": "chat", "thread": T, "note_pub": note_pub, "note_me": 
                  ensure_ascii=False))
 PY
 )"
+  _MVOK=0   # mat 갱신 = 전개 캐시 무효(아래 mat_load/matv 계약) — 이 한 줄이 없으면 다음 턴이 지난 턴 값을 읽는다
 }
-matv() { python3 -c 'import json,sys; v=json.loads(sys.argv[1]).get(sys.argv[2]); print("" if v is None else v)' "$mat" "$1"; }
+# ── mat 1회 전개(운영자 260811 "지연을 더 줄여보자 · 답이 느리면 몰입도가 확 줄어") ──
+# 왜: matv 는 호출마다 python3 를 **새로 띄운다**. 실측 = process_turn 한 턴에 55회 · `python3 -c` 30회 = 778ms
+#   → 턴당 약 1.4초가 **답 생성이 시작되기도 전에** 통째로 날아간다(웜 턴의 생성 전 구간 실측 4~5초 중 3분의 1).
+#   첫 글자가 뜨는 시각이 곧 몰입도라, 이 구간은 생성 시간보다 체감이 직접적이다. mat 은 턴 중 안 바뀌므로 한 번만 파싱하면 된다.
+# 계약: extract_mat 이 mat 을 새로 만들 때마다 캐시 무효(_MVOK=0) · mat_load 가 1회 전개해 _MVOK=1 ·
+#   **캐시가 없으면 matv 는 종전 python 경로로 폴백** = 호출처(초대 판정·보충 배치·settle 등) 전부 동작 불변. 전개 실패도 폴백 = fail-soft.
+# 가드: 셸 변수명으로 못 쓰는 키는 건너뛴다(주입 차단 — 그 키는 폴백 경로가 받는다) · 값은 shlex.quote = 개행·따옴표·$·백틱 안전.
+mat_load() {   # $mat(JSON) → _MV_<key> 전개 · rc0 = 캐시 유효
+  local _e _n
+  _MVOK=0
+  _e="$(python3 -c '
+import json, re, shlex, sys
+try: d = json.loads(sys.argv[1])
+except Exception: sys.exit(1)
+if not isinstance(d, dict): sys.exit(1)
+ok = re.compile(r"\A[A-Za-z_][A-Za-z0-9_]*\Z")
+out = []
+for k, v in d.items():
+    if not ok.match(k): continue
+    out.append("_MV_" + k + "=" + shlex.quote("" if v is None else str(v)))
+sys.stdout.write("\n".join(out))
+' "$mat" 2>/dev/null)" || return 1
+  for _n in ${!_MV_@}; do unset "$_n"; done   # 지난 턴 잔재 제거 — 이번 mat 에 없는 키가 옛 값을 반환하는 것 차단
+  eval "$_e" || return 1
+  _MVOK=1
+  return 0
+}
+matv() {
+  # ⚠️ 키가 셸 변수명 규격이 아니면(한글·하이픈·숫자시작) 캐시를 건너뛰고 python 폴백으로 보낸다 —
+  #    안 그러면 mat_load 가 건너뛴 그 키를 캐시가 **빈값으로** 답해버린다(실측으로 잡은 구멍 · bash 도 invalid variable name 을 뱉는다).
+  if [ "${_MVOK:-0}" = "1" ]; then
+    case "$1" in ''|*[!A-Za-z0-9_]*|[0-9]*) ;; *) local _n="_MV_$1"; printf '%s' "${!_n-}"; return 0 ;; esac
+  fi
+  python3 -c 'import json,sys; v=json.loads(sys.argv[1]).get(sys.argv[2]); print("" if v is None else v)' "$mat" "$1"
+}
 
 # ── 유저 입력 정착 대기(운영자 260811 Q.172 "겹침 폐기 21% 손질") ──
 # 왜: 웜 러너는 R2 를 2초마다 폴링해 유저 턴을 **도착 2초 만에** 집고 곧장 20초짜리 생성을 시작한다. 사람은 말을 토막내 보내므로
@@ -505,7 +540,14 @@ matv() { python3 -c 'import json,sys; v=json.loads(sys.argv[1]).get(sys.argv[2])
 #   ⚠️ 핵심은 「나이(age) 기준」이지 「무조건 sleep」이 아니다 — 콜드 스타트는 도착→픽업이 이미 26초라 age ≥ SETTLE → **대기 0초**.
 #   느린 경로(콜드)엔 한 톨도 안 얹고, 대기가 붙는 건 웜 픽업(age ≈ 2초)뿐이며 그 비용은 최대 SETTLE-2 초다. 막는 손실은 폐기 1회당 생성 20초 + 재과금.
 # 상한: 새 메시지가 계속 오면 무한 연기되지 않게 3회(≈ SETTLE×3)에서 끊고 그대로 생성한다.
-# 회귀 노브: YETA_SETTLE=0 = 축 OFF = 종전 결 100%.
+# ⚠️⚠️ 같은 날 실측으로 **기본 OFF(SETTLE=0)** 전환 — 위 처방의 전제가 틀렸다(운영자 260811 "답이 느리면 몰입도가 확 줄어").
+#   전제였던 「생성 시작 3~8초 내 도착」은 **생성 시작 기준**이지 **앞 메시지 기준**이 아니었다. anchor_ts 정의(extract_mat = 마지막 pending 유저 턴)로
+#   런 890 의 실제 메시지 간격을 재구성하면 폐기를 부른 4건의 **앞 메시지→뒷 메시지 간격 = 약 5초 · 27초 · 6.5초 · 11초**다.
+#   즉 대부분은 「빠른 연타」가 아니라 **답을 기다리다가 한 마디 더 보낸 것**이고, 어떤 정착 창으로도 못 덮는다(27초짜리를 덮으려면 27초를 기다려야 한다).
+#   SETTLE=4 가 실제로 잡는 건 4건 중 0~1건인데, 비용은 **웜 턴마다 첫 글자가 2~3초 늦어지는 것**(픽업 age ≈ 1~2초라 SETTLE-age 만큼 순수 대기)이다.
+#   운영자 우선순위 = 첫 글자 속도 → 이득이 불확실한 2~3초를 100% 턴에 물리는 쪽이 손해. 코드·노브·픽스처는 남기되 기본을 0으로 둔다(YETA_SETTLE=6 등으로 언제든 재점화).
+#   ⇒ 겹침 폐기 21% 는 이 축으로는 못 푼다. 남은 실효 수단 = 「60% 임계 인하」(운영자 260717 ⑨⑩ 승인 수치 = 임의 변경 금지 · 별도 승인 필요).
+# 회귀 노브: YETA_SETTLE=<초> = 재점화 · 0(기본) = 축 OFF = 종전 결 100%.
 settle_wait() {   # 소비/갱신 = 전역 mat(extract_mat 산출) — 종료 시 mat 은 최신 재-read 반영본(호출부가 NOPENDING/빈값 재판정)
   [ "$SETTLE" -gt 0 ] 2>/dev/null || return 0
   [ "$(matv mode)" = "invite" ] && return 0        # 초대 판정 = 유저 발화가 아니다(앵커 없음)
@@ -2107,9 +2149,11 @@ process_turn() {
   extract_mat
   [ "$mat" = "NOPENDING" ] && return 2
   [ -n "$mat" ] || { echo "::error::세션 파싱 실패(malformed) — state 미변경"; return 1; }
-  settle_wait   # 입력 정착 대기(260811) — 연속 타이핑을 한 생성으로 흡수 = 겹침 폐기 축소(콜드 경로엔 대기 0 · 상단 주석)
+  mat_load   # mat 1회 전개(260811) — 아래 matv 55회가 python 스폰 없이 셸 조회로 떨어진다(턴당 ~1.4초 절감 · 전부 생성 시작 '전' 구간)
+  settle_wait   # 입력 정착 대기(260811) — 기본 OFF(YETA_SETTLE=0 · 실측으로 무효 판정 · 상단 주석)
   [ "$mat" = "NOPENDING" ] && return 2   # 대기 중 소진(타 경로 픽업·리셋) = 종전 NOPENDING 결
   [ -n "$mat" ] || { echo "::error::세션 파싱 실패(malformed) — state 미변경"; return 1; }
+  [ "${_MVOK:-0}" = "1" ] || mat_load   # settle 이 재-read 했으면 캐시가 무효다 → 다시 전개(대기 0이면 이 줄은 no-op)
   THREAD="$(matv thread)"   # v3 대상 스레드(extract_mat age 큐 확정) — finish·ptt·push·invite·barge까지 관통(러너감사②B · PERSONA와 별개 축)
   [[ "$THREAD" =~ ^[a-z0-9_-]{1,24}$ ]] || { echo "::error::스레드 id 없음 — 폐기"; return 1; }
   if [ "$(matv mode)" = "invite" ]; then invite_turn; return 0; fi   # 합석 초대 판정(260707) — 판정 후 웜 루프가 pending 즉답
