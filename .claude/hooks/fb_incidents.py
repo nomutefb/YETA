@@ -8,7 +8,7 @@ import urllib.request
 
 try:
     req = urllib.request.Request(
-        "https://api.github.com/repos/muteno/YETA/issues?labels=yeta-frame-break&state=open&per_page=5",
+        "https://api.github.com/repos/nomutefb/YETA/issues?labels=yeta-frame-break&state=open&per_page=5",
         headers={"accept": "application/vnd.github+json", "user-agent": "yeta-fb-hook"},
     )
     with urllib.request.urlopen(req, timeout=4) as r:

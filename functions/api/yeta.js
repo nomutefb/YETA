@@ -37,7 +37,7 @@
 //      YETA_PHONE_MAX_PER_DAY(선택·기본 3 — 실전화 분당 과금 가드 **폴백**: 260808부터 실값은 L1 토글 phonecap 이 정하고, 이 env 는 정책 문서를 못 읽을 때만 쓰인다) ·
 //      YETA_KIMI_MAX_USD_PER_DAY(선택·기본 2 — 키미 종량제 일일 실비 방파제 USD · 0=무제한 · Q.40)
 //      YETA_VOICE_SPEED(선택·기본 미설정=오버라이드 없음 — 바피 통화 말 속도 0.7~1.2 · 1 미만 = 느리게 · phone/vapikey 공용 · 260808).
-const REPO = 'muteno/yeta';
+const REPO = 'nomutefb/YETA';
 const ID_RE = /^[a-z0-9_-]{1,24}$/;
 // ── 신당 「빌어줄 이」 후보·확률 SSOT(운영자 260811 "확률은 페르소나랑 친밀도 이런거에 다 영향받는거 알지? 거리 등") ──
 //   신당은 비는 자가 목숨을 거는 자리라(op pray 실패 = 사망) 대개 아무도 오지 않는다. 그 「올 확률」을 여기 **한 곳**에서만 계산한다 —
