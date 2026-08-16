@@ -1,7 +1,7 @@
 name: yeta-kimi-selftest
 
 # KIMI 연결 자가진단 v3(260720 신설 → 260721 확장) — 챗 러너(gen_out) 동일 레시피로 실호출 + usage 실측.
-#   ① 시크릿 KIMI_CODE_MUTE 존재 ② 실호출(--tools "" 신레시피 = 책빼기 반영) ③ effort(low) 수용 판정
+#   ① 시크릿 KIMI_CODE_OAUTH_TOKEN_EMS1130G 존재 ② 실호출(--tools "" 신레시피 = 책빼기 반영) ③ effort(low) 수용 판정
 #   ④ 턴당 입력 실측(신레시피 기준 — 260721 K3 구레시피 실측: 한 단어에 18,678tok = 도구 스키마가 본체)
 #   ⑤ 캐시 히트 실측 = 동일 프롬프트 재발사(260721 K3 실측: 히트 7,168tok = 문샷 자동 캐시 /anthropic 게이트 작동 확인)
 #   실패 시 = stderr 꼬리 + stdout(JSON 에러 본문) 머리 둘 다 출력(K2.5 260721 1차 실패가 본문 미포집으로 원인불명이던 구멍 봉합).
@@ -28,12 +28,12 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code
       - name: KIMI 실호출(챗 경로 동일 레시피 + usage 실측)
         env:
-          KIMI_API_KEY: ${{ secrets.KIMI_CODE_MUTE }}
+          KIMI_API_KEY: ${{ secrets.KIMI_CODE_OAUTH_TOKEN_EMS1130G }}
           KIMI_BASE_URL: ${{ vars.KIMI_BASE_URL || '' }}
           MODEL: ${{ inputs.model || 'k3' }}
         run: |
-          [ -n "$KIMI_API_KEY" ] || { echo "::error::FAIL① 레포 Actions 시크릿 KIMI_CODE_MUTE 미등재 — Settings → Secrets and variables → Actions 에 정확히 이 이름으로"; exit 1; }
-          echo "① 시크릿 KIMI_CODE_MUTE OK(존재) · 대상 모델 = $MODEL"
+          [ -n "$KIMI_API_KEY" ] || { echo "::error::FAIL① 레포 Actions 시크릿 KIMI_CODE_OAUTH_TOKEN_EMS1130G 미등재 — Settings → Secrets and variables → Actions 에 정확히 이 이름으로"; exit 1; }
+          echo "① 시크릿 KIMI_CODE_OAUTH_TOKEN_EMS1130G OK(존재) · 대상 모델 = $MODEL"
           # ①-B raw HTTP 프로브(260730 신설) — CLI는 5xx/429를 조용히 재시도하다 timeout(rc=124)으로만 죽어 stderr가 빈다(실측).
           #   원인(401 키 · 404 엔드포인트·모델 · 429 쿼터 · 200 정상)을 CLI 이전에 HTTP 코드로 갈라낸다. 후보 URL 2종 = 슬래시 유무 결정 근거.
           probe() {

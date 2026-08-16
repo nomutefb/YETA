@@ -18,8 +18,8 @@ import urllib.error
 import urllib.request
 
 # ⚠️ 이식 시 여기만 그 레포의 계정명·순서(순환)로 교체. 워크플로 env 매핑 순서와 반드시 동일.
-#   yeta 4계정 폴오버 체인(CLAUDE.md §🔑 · yeta-chat.yml env 매핑과 정합) = MUTENO→NOMUTEFB→EMS1130G→MUTENONA.
-CHAIN = ["MUTENO", "NOMUTEFB", "EMS1130G", "MUTENONA"]
+#   yeta 4계정 폴오버 체인(CLAUDE.md §🔑 · yeta-chat.yml env 매핑과 정합) = MUTENO→NOMUTEFB→EMS1130G→EMS1130M.
+CHAIN = ["MUTENO", "NOMUTEFB", "EMS1130G", "EMS1130M"]
 THRESHOLD = int(os.environ.get("PROMOTE_THRESHOLD", "2") or "2")   # 활성 계정 쿼터 몇 회 누적 시 승격
 API = "https://api.github.com"
 

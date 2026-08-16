@@ -23,7 +23,7 @@
       "allow": [
         "kimi-k2.5"
       ],
-      "축": "키미 대화 축(yeta_chat.sh `KIMI_MODEL` · 게이트웨이 화이트리스트 · 뷰어 다이얼 3번째) — 키 = 러너 시크릿 KIMI_CODE_MUTE · **260730 전환**: 종량제(platform.kimi.ai `kimi-k3` @ api.moonshot.ai/anthropic) → Kimi Code 구독(`k3` @ api.kimi.com/coding/) · family에 구독 ID군(k3·k3-256k·kimi-for-coding[-highspeed]) 편입 · k2.5 = 구 종량제 저가축(260721 /anthropic 404 실측 = 뷰어 미노출·배선만 · 구독 엔드포인트엔 미서빙)"
+      "축": "키미 대화 축(yeta_chat.sh `KIMI_MODEL` · 게이트웨이 화이트리스트 · 뷰어 다이얼 3번째) — 키 = 러너 시크릿 KIMI_CODE_OAUTH_TOKEN_EMS1130G · **260730 전환**: 종량제(platform.kimi.ai `kimi-k3` @ api.moonshot.ai/anthropic) → Kimi Code 구독(`k3` @ api.kimi.com/coding/) · family에 구독 ID군(k3·k3-256k·kimi-for-coding[-highspeed]) 편입 · k2.5 = 구 종량제 저가축(260721 /anthropic 404 실측 = 뷰어 미노출·배선만 · 구독 엔드포인트엔 미서빙)"
     },
     "openai_image": {
       "id": "gpt-image-2",

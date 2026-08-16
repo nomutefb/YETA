@@ -70,13 +70,13 @@ jobs:
       - name: 캐릭터 답장 생성 (claude -p · 세션 R2)
         id: chat
         env:
-          # 인증 = 구독 OAuth 4계정 폴오버 체인(운영자 260704: yeta 독립 레포 · 로테이션 3계정 + MUTENONA 고정 꼬리·챗 안정성 우선).
-          #   체인 MUTENO→NOMUTEFB→EMS1130G→MUTENONA · claude_failover 가 쿼터 한도 시 1단계씩 전환(nomute 방식 동일).
+          # 인증 = 구독 OAuth 4계정 폴오버 체인(운영자 260704: yeta 독립 레포 · 로테이션 3계정 + EMS1130M 고정 꼬리·챗 안정성 우선).
+          #   체인 MUTENO→NOMUTEFB→EMS1130G→EMS1130M · claude_failover 가 쿼터 한도 시 1단계씩 전환(nomute 방식 동일).
           #   ⚠️ Claude 구독 계정은 nomute와 공유 = yeta 사용분이 nomute 뉴스 쿼터에도 반영(운영자 감수).
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets[format('CLAUDE_CODE_OAUTH_TOKEN_{0}', vars.ACTIVE_ACCOUNT || 'MUTENO')] }}
-          CLAUDE_CODE_OAUTH_TOKEN_ALT: ${{ (vars.ACTIVE_ACCOUNT || 'MUTENO') == 'NOMUTEFB' && secrets.CLAUDE_CODE_OAUTH_TOKEN_EMS1130G || secrets.CLAUDE_CODE_OAUTH_TOKEN_NOMUTEFB }}   # 서브1(체인 MUTENO→NOMUTEFB→EMS1130G→MUTENONA)
+          CLAUDE_CODE_OAUTH_TOKEN_ALT: ${{ (vars.ACTIVE_ACCOUNT || 'MUTENO') == 'NOMUTEFB' && secrets.CLAUDE_CODE_OAUTH_TOKEN_EMS1130G || secrets.CLAUDE_CODE_OAUTH_TOKEN_NOMUTEFB }}   # 서브1(체인 MUTENO→NOMUTEFB→EMS1130G→EMS1130M)
           CLAUDE_CODE_OAUTH_TOKEN_ALT2: ${{ (vars.ACTIVE_ACCOUNT || 'MUTENO') == 'MUTENO' && secrets.CLAUDE_CODE_OAUTH_TOKEN_EMS1130G || secrets.CLAUDE_CODE_OAUTH_TOKEN_MUTENO }}   # 서브2(체인 3번째)
-          CLAUDE_CODE_OAUTH_TOKEN_ALT3: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_MUTENONA }}   # 서브3 폴오버(체인 실꼬리 = 항상 MUTENONA · 앞 3계정 소진 후)
+          CLAUDE_CODE_OAUTH_TOKEN_ALT3: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_EMS1130M }}   # 서브3 폴오버(체인 실꼬리 = 항상 EMS1130M · 앞 3계정 소진 후)
           ACTIVE_ACCOUNT: ${{ vars.ACTIVE_ACCOUNT || 'MUTENO' }}
           # 세션 저장 = R2 비공개 버킷(YETA_R2_BUCKET 시크릿 — 공개 버킷 R2_BUCKET 과 별도). 계정 키는 기존 R2 시크릿 재사용.
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
@@ -89,10 +89,10 @@ jobs:
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
           # 무전기(PTT) 답장 음성 — ⚠️유료 TTS·ptt 턴에서만 발동(yeta_tts.py — 클론 el: 우선·OpenAI 폴백 · 없으면 텍스트만)
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY_nomute || secrets.OPENAI_API_KEY }}
-          # KIMI-K3(운영자 260719 "KIMI_CODE_MUTE 키로 대화 연결" · 260730 Kimi Code 구독 전환) — 다이얼 k3 턴만 gen_out이
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # KIMI-K3(운영자 260719 "KIMI_CODE_OAUTH_TOKEN_EMS1130G 키로 대화 연결" · 260730 Kimi Code 구독 전환) — 다이얼 k3 턴만 gen_out이
           #   Anthropic 호환 게이트로 국소 리라우트(서브셸 주입 = 클로드 구독 OAuth·폴오버 체인 무오염 · 아래 unset ANTHROPIC_* 과 무충돌)
-          KIMI_API_KEY: ${{ secrets.KIMI_CODE_MUTE }}
+          KIMI_API_KEY: ${{ secrets.KIMI_CODE_OAUTH_TOKEN_EMS1130G }}
           # 엔드포인트 노브 — 미설정이면 스크립트 기본 https://api.kimi.com/coding/(구독). 구 종량제 회귀 = vars에 https://api.moonshot.ai/anthropic + 모델 ID 되돌림.
           KIMI_BASE_URL: ${{ vars.KIMI_BASE_URL || '' }}
           # YETA_SAFE 기본 ON(스크립트) = 런타임 CLAUDE.md 미주입(개발 세션 전용 · 운영자 260704) · 회귀 = YETA_SAFE: '0'
@@ -141,6 +141,6 @@ jobs:
       - name: 활성 계정 자동 승격(쿼터 누적 시 · GH_VARS_TOKEN 없으면 no-op)
         if: ${{ always() }}
         env:
-          GH_VARS_TOKEN: ${{ secrets.GH_VARS_TOKEN }}
+          GH_VARS_TOKEN: ${{ secrets.GH_TOKEN }}
           ACTIVE_ACCOUNT: ${{ vars.ACTIVE_ACCOUNT || 'MUTENO' }}
         run: python3 shared/account_failover.py

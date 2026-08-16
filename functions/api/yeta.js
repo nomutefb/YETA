@@ -71,7 +71,7 @@ const RD_MAX = 1;                   // 리퍼 자동 재발사 상한(운영자 
 const FREEZE_MAX_MS = 10800000;   // 난입 정지 안전벨트(260728) — 현실 3시간. 넘기면 난입자를 강제 퇴장시키고 세계 시계를 재개(방치로 앱이 영구히 잠기는 것 차단 · 0으로 두면 무제한)
 const EXPIRE_MS = 86400000;         // 대화 휘발 TTL(운영자 260716 Q.06) — 무음동 6일 = 현실 24h(세계 시계 6배 가속: 실제 4h=하루 → 6일이 현실 하루와 정확히 맞아떨어져 7일[28h] 대신 채택)
 const josa = (s, a, b) => { const c = String(s || '').charCodeAt(String(s || '').length - 1); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 > 0 ? a : b; };   // 받침 → 을/은, 무받침 → 를/는
-const MODELS = new Set(['claude-opus-5', 'claude-sonnet-5', 'k3', 'kimi-k2.5']);   // §기틀 정확 ID — 집합 확장은 운영자 확인(k3 = 260719 · kimi-k2.5 = 260721 승인이나 문샷 /anthropic 게이트 404 실측 = 뷰어 미노출·배선 대기[Q.33] · 둘 다 러너 시크릿 KIMI_CODE_MUTE 경유)
+const MODELS = new Set(['claude-opus-5', 'claude-sonnet-5', 'k3', 'kimi-k2.5']);   // §기틀 정확 ID — 집합 확장은 운영자 확인(k3 = 260719 · kimi-k2.5 = 260721 승인이나 문샷 /anthropic 게이트 404 실측 = 뷰어 미노출·배선 대기[Q.33] · 둘 다 러너 시크릿 KIMI_CODE_OAUTH_TOKEN_EMS1130G 경유)
 const EFFORTS = new Set(['', 'low', 'medium', 'high', 'max']);           // '' = --effort 생략(CLI 기본)
 // ── 키미(문샷 종량제 = 유일 실과금 다이얼) 일일 실비 방파제(운영자 260723 Q.40 "대화비용 급증 원인해결") — 유료 축 = 일 상한 규범(ring/phone/meface 동형)의 채팅 편입 ──
 //   근거 실측(260723): 문샷 자동 캐시가 실사용 메시지 간격에선 미적중(누적 26턴 i=396,518/cr=64,000 = 히트율 16% · 당일 cr=0) → 고정 몸통 ~15k tok이 매턴 정가($3/M) 재과금 ≈ $0.05/턴.

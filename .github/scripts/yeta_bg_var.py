@@ -8,7 +8,7 @@ OpenAI Images API(gpt-image) → `viewer/assets/yeta_bg/var_<slug>.png` 커밋(g
 """
 import base64, json, os, shutil, subprocess, sys, time, urllib.request
 
-KEY = os.environ.get("OPENAI_API_KEY", "") or os.environ.get("OPENAI_API_KEY_nomute", "")
+KEY = os.environ.get("OPENAI_API_KEY", "")
 MODEL = (os.environ.get("OPENAI_IMAGE_MODEL") or "gpt-image-2").strip()
 API = "https://api.openai.com/v1/images/generations"
 FORCE = os.environ.get("FORCE", "") == "1"

@@ -67,11 +67,11 @@ jobs:
 
       - name: 전화 생성 (첫마디 claude -p + TTS + 세션 R2)
         env:
-          # 인증 = 구독 OAuth 4계정 폴오버 체인(yeta-chat.yml 동형 · 체인 MUTENO→NOMUTEFB→EMS1130G→MUTENONA)
+          # 인증 = 구독 OAuth 4계정 폴오버 체인(yeta-chat.yml 동형 · 체인 MUTENO→NOMUTEFB→EMS1130G→EMS1130M)
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets[format('CLAUDE_CODE_OAUTH_TOKEN_{0}', vars.ACTIVE_ACCOUNT || 'MUTENO')] }}
           CLAUDE_CODE_OAUTH_TOKEN_ALT: ${{ (vars.ACTIVE_ACCOUNT || 'MUTENO') == 'NOMUTEFB' && secrets.CLAUDE_CODE_OAUTH_TOKEN_EMS1130G || secrets.CLAUDE_CODE_OAUTH_TOKEN_NOMUTEFB }}
           CLAUDE_CODE_OAUTH_TOKEN_ALT2: ${{ (vars.ACTIVE_ACCOUNT || 'MUTENO') == 'MUTENO' && secrets.CLAUDE_CODE_OAUTH_TOKEN_EMS1130G || secrets.CLAUDE_CODE_OAUTH_TOKEN_MUTENO }}
-          CLAUDE_CODE_OAUTH_TOKEN_ALT3: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_MUTENONA }}   # 서브3 폴오버(체인 실꼬리 = 항상 MUTENONA · 앞 3계정 소진 후)
+          CLAUDE_CODE_OAUTH_TOKEN_ALT3: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN_EMS1130M }}   # 서브3 폴오버(체인 실꼬리 = 항상 EMS1130M · 앞 3계정 소진 후)
           ACTIVE_ACCOUNT: ${{ vars.ACTIVE_ACCOUNT || 'MUTENO' }}
           YETA_SYS: '2'   # 운영자 260723 — 시스템 슬롯 교체(CC 기저 텍스트 미전송 = 쿼터 절감 · yeta-chat.yml Q.35 동형 · 롤백 = 이 줄 제거[append 복귀])
           # 세션·음성 = R2 비공개 버킷(YETA_R2_BUCKET — 공개 R2_BUCKET 과 별도)
@@ -82,7 +82,7 @@ jobs:
           # TTS SSOT = yeta_tts.py — 클론 보이스(el:·프리미엄) 우선 → OpenAI 프리셋 폴백(⚠️둘 다 유료 · 없으면 무음 전화)
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           ELEVENLABS_TTS_MODEL: ${{ vars.ELEVENLABS_TTS_MODEL }}   # 선택 — 기본 eleven_multilingual_v2(음색 보존)·저지연은 eleven_flash_v2_5
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY_nomute || secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_TTS_MODEL: ${{ vars.OPENAI_TTS_MODEL }}   # 선택 — 미설정이면 스크립트 기본(gpt-4o-mini-tts)
           # 전화 알림 웹푸시(구독자 없으면 no-op)
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}

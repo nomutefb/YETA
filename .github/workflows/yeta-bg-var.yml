@@ -40,7 +40,6 @@ jobs:
       - name: 배경 배리에이션 생성
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_API_KEY_nomute: ${{ secrets.OPENAI_API_KEY_nomute }}
           OPENAI_IMAGE_MODEL: ${{ vars.OPENAI_IMAGE_MODEL }}
           FORCE: ${{ inputs.force }}
         run: python3 .github/scripts/yeta_bg_var.py

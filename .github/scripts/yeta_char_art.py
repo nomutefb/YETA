@@ -15,7 +15,7 @@ OpenAI Images API(gpt-image) → `viewer/assets/yeta_char/<id>.png`(+webp 768w) 
 """
 import base64, json, os, re, shutil, subprocess, sys, time, urllib.request
 
-KEY = os.environ.get("OPENAI_API_KEY", "") or os.environ.get("OPENAI_API_KEY_nomute", "")
+KEY = os.environ.get("OPENAI_API_KEY", "")
 MODEL = (os.environ.get("OPENAI_IMAGE_MODEL") or "gpt-image-2").strip()
 API = "https://api.openai.com/v1/images/generations"
 FORCE = os.environ.get("FORCE", "") == "1"

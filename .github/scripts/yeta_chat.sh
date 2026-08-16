@@ -5,7 +5,7 @@
 #   초대 판정 = extract_mat mode=invite(sess.invite → ACCEPT/DECLINE — 거절도 콘텐츠) · 난입 = barge_check(생성 0회 · sys 합류만 · 일 1 상한 · 결정적 시드).
 # 다이얼 = 마지막 pending 유저 턴의 {model,effort}(턴별 박제 · 화이트리스트 재강제 · effort 거부 시 1회 폴백).
 # 웜 = 답장 후 WARM_WAIT 동안 R2 폴 대기 → 후속 메시지 같은 런 즉답(러너 재부팅 생략 = 30초 목표의 본체).
-# 규율: opus 기본 + effort low 기본(30초 컷) · 도구 0 · turns 1 · stdin · 폴오버 SSOT(4계정 체인 MUTENO→NOMUTEFB→EMS1130G→MUTENONA · 로테이션 3 + MUTENONA 고정 꼬리 · 운영자 260704).
+# 규율: opus 기본 + effort low 기본(30초 컷) · 도구 0 · turns 1 · stdin · 폴오버 SSOT(4계정 체인 MUTENO→NOMUTEFB→EMS1130G→EMS1130M · 로테이션 3 + EMS1130M 고정 꼬리 · 운영자 260704).
 set -uo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
@@ -17,7 +17,7 @@ CHAR="${YETA_CHAR:?세션 id 필요(env YETA_CHAR — 단일 스레드 = main)}"
 DEFAULT_MODEL="claude-opus-5"   # D1 = 세션급(운영자 확정)
 DEFAULT_EFF="low"                 # 30초 컷 — effort 미지정은 CLI 기본(high)로 돌아 느림 → 기본 low(아이데이션①)
 # KIMI-K3(운영자 260719 도입 · 260730 구독 전환) = 키미 Anthropic 호환 게이트 경유 — 다이얼 k3 턴만 gen_out이 BASE_URL·키를 서브셸 국소 주입(클로드 구독 OAuth·폴오버 체인 무오염).
-#   env: KIMI_API_KEY(= 레포 시크릿 KIMI_CODE_MUTE · yeta-chat.yml) · KIMI_BASE_URL(선택 노브 · 기본 https://api.kimi.com/coding/).
+#   env: KIMI_API_KEY(= 레포 시크릿 KIMI_CODE_OAUTH_TOKEN_EMS1130G · yeta-chat.yml) · KIMI_BASE_URL(선택 노브 · 기본 https://api.kimi.com/coding/).
 #   ⚠️ 엔드포인트↔키↔모델ID는 3점 세트 — Kimi Code 구독 = api.kimi.com/coding/ + 구독 콘솔 키 + `k3`(Moderato 이상) · 구 종량제 = api.moonshot.ai/anthropic + platform.kimi.ai 키 + 구 문샷 ID. 섞으면 401/404.
 KIMI_MODEL="k3"
 KIMI25_MODEL="kimi-k2.5"          # KIMI-2.5(운영자 260721 저가축 승인 · 입력 $0.6/출력 $3 = K3의 1/5) — ⚠️ 260721 실측: 문샷 /anthropic 게이트 404(미서빙 · 과금 0) → 뷰어 다이얼 미노출·백엔드 배선만 대기(문샷이 게이트에 열면 뷰어 12단만 재개방 = Q.33)
@@ -27,7 +27,7 @@ case "${YETA_SAFE:-1}" in 1|true|on) SAFE="--safe-mode" ;; esac   # 기본 ON �
 export CLAUDE_BARE=0              # 방어 명시 — 공유 기본값이 미래에 ON 회귀해도 챗은 불가(평의회①)
 export DISABLE_AUTOUPDATER=1 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1   # 자동 로드 컷(운영자 260723 "자동 로드되는 것들 다 제외") — CLI 자동업데이트 확인·텔레메트리 등 비필수 트래픽 OFF(런당 지연·잡음 제거 · 생성 무영향 · 미지원 CLI = 무해 no-op)
 RECENT_TURNS="${YETA_RECENT_TURNS:-10}"   # 12→10(260724 토큰 소폭 절감) — 8은 과소(평의회 260714: 버블 분할 1.4/답장로 실질 창 축소 회귀 보정으로 8→12했던 이력)라 8 대신 10으로 절충(기억 대부분 유지 · 규칙·세계 무손상 · env YETA_RECENT_TURNS로 즉시 원복)
-INLINE_TRIES=4   # 4계정 폴오버 체인 깊이(서브3 MUTENONA까지 실호출) + 일시 과부하 흡수 — 4계정 확장 3→4(챗 안정성: 앞 3계정 쿼터 시 MUTENONA 실도달)
+INLINE_TRIES=4   # 4계정 폴오버 체인 깊이(서브3 EMS1130M까지 실호출) + 일시 과부하 흡수 — 4계정 확장 3→4(챗 안정성: 앞 3계정 쿼터 시 EMS1130M 실도달)
 WARM_WAIT="${YETA_WARM_WAIT:-600}"   # 260809 180→600 복원(Q.165 답장 지연 분석): 260804 축소(600→180)의 근거였던 「웜 런 점유 = 큐 3분+ 대기」(#813·#816)는
                                      #   웜 런이 보충 배치를 **동기로** 돌리며 폴을 못 하던 시절 얘기다 — 260806 refill_bg 백그라운드화로 그 원인이 소멸했고(폴 상시 유지 = 살아 있는 웜 런이 2s 폴로 즉답),
                                      #   남은 180s는 콜드만 늘리는 역효과였다: 대화 간격이 3분만 넘으면 매 교환이 콜드 스타트(고정비 28~45s · 260809 실측 = 생성 10s짜리 답이 38s).
@@ -2235,7 +2235,7 @@ ${_afl}위 경로의 사진을 Read 도구로 직접 열어 실제 내용을 확
     fi
   fi
   case "$RAW_MODEL" in claude-opus-5|claude-sonnet-5|"$KIMI_MODEL"|"$KIMI25_MODEL") MODEL="$RAW_MODEL" ;; *) MODEL="$DEFAULT_MODEL" ;; esac   # 화이트리스트 재강제(방어 심층 · 아이데이션④ · kimi 패밀리 = 운영자 260719/260721)
-  if is_kimi "$MODEL" && [ -z "${KIMI_API_KEY:-}" ]; then finish error "KIMI 키가 러너에 없어 — 레포 Actions 시크릿 KIMI_CODE_MUTE 확인 후 다시 보내줘"; return 1; fi   # 유저가 명시 선택한 축 = 조용한 폴백 대신 사유 표면화
+  if is_kimi "$MODEL" && [ -z "${KIMI_API_KEY:-}" ]; then finish error "KIMI 키가 러너에 없어 — 레포 Actions 시크릿 KIMI_CODE_OAUTH_TOKEN_EMS1130G 확인 후 다시 보내줘"; return 1; fi   # 유저가 명시 선택한 축 = 조용한 폴백 대신 사유 표면화
   case "$RAW_EFF" in low|medium|high|max) EFF="$RAW_EFF" ;; "") EFF="" ;; *) EFF="$DEFAULT_EFF" ;; esac
   [[ "$PERSONA" =~ ^[a-z0-9_-]{1,24}$ ]] || { finish error "페르소나가 비어 있어 — 🎲 다시 뽑아줘"; return 1; }
   CARD="apps/yeta/characters/${PERSONA}.md"

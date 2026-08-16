@@ -14,7 +14,7 @@
 """
 import base64, json, mimetypes, os, re, shutil, subprocess, sys, time, urllib.request, uuid
 
-KEY = os.environ.get("OPENAI_API_KEY", "") or os.environ.get("OPENAI_API_KEY_nomute", "")
+KEY = os.environ.get("OPENAI_API_KEY", "")
 MODEL = (os.environ.get("OPENAI_IMAGE_MODEL") or "gpt-image-2").strip()
 API_GEN = "https://api.openai.com/v1/images/generations"
 API_EDIT = "https://api.openai.com/v1/images/edits"

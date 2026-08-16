@@ -35,7 +35,7 @@ jobs:
 
       - name: 프로필 이미지 생성 + 세션 주입
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY_nomute || secrets.OPENAI_API_KEY }}   # yeta-face.yml 동일 폴백 체인
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}   # yeta-face.yml 동일 폴백 체인
           OPENAI_IMAGE_MODEL: ${{ vars.OPENAI_IMAGE_MODEL }}   # 선택 — 미설정 = 스크립트 기본(gpt-image-2)
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}                  # 공개 버킷(≠ YETA_R2_BUCKET 비공개 세션)
