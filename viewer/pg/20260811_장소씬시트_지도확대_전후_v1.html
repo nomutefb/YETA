@@ -126,13 +126,13 @@
     <h2>§2. 장소를 탭하면 나오는 그림 — 종전엔 <span style="color:var(--danger)">찻집 한 곳뿐</span>이었다</h2>
     <div class="pair">
       <div>
-        <div class="cap"><span class="bdg before">BEFORE</span><span class="val">시장·놀이터·학교… 10곳 = 그림 없이 명단만</span></div>
+        <div class="cap"><span class="bdg before">BEFORE</span><span class="val">시장·놀이터·공터… 10곳 = 그림 없이 명단만</span></div>
         <div class="yin">
           <div class="noimg">— 씬 없음 (<code>YIN_PLACES</code>에 없는 장소) —</div>
           <div class="yin-ttl"><b>시장</b><i>지금 3명</i></div>
           <div class="yin-look">색색 천막 노점이 줄지은 재래시장 골목</div>
           <div class="ypick-row"><span class="av"></span><span class="yp-col"><span class="yp-name">최산</span><span class="yp-tag">무음동 골목의 해결사</span></span></div>
-          <div class="ypick-row"><span class="av"></span><span class="yp-col"><span class="yp-name">하서연</span><span class="yp-tag">낮에는 선생, 밤에는…</span></span></div>
+          <div class="ypick-row"><span class="av"></span><span class="yp-col"><span class="yp-name">하서연</span><span class="yp-tag">낮에는 연습, 밤에는…</span></span></div>
         </div>
       </div>
       <div>
@@ -143,7 +143,7 @@
           <div class="yin-ttl"><b>시장</b><i>지금 3명</i></div>
           <div class="yin-look">색색 천막 노점이 줄지은 재래시장 골목</div>
           <div class="ypick-row"><span class="av"></span><span class="yp-col"><span class="yp-name">최산</span><span class="yp-tag">무음동 골목의 해결사</span></span></div>
-          <div class="ypick-row"><span class="av"></span><span class="yp-col"><span class="yp-name">하서연</span><span class="yp-tag">낮에는 선생, 밤에는…</span></span></div>
+          <div class="ypick-row"><span class="av"></span><span class="yp-col"><span class="yp-name">하서연</span><span class="yp-tag">낮에는 연습, 밤에는…</span></span></div>
         </div>
       </div>
     </div>
@@ -194,7 +194,7 @@
 
 <script>
 // ══════════ 지도 그리기(도해용 최소판 — 배경 + 이름표 몇 개 · 실제 지도는 viewer/index.html ymBuild) ══════════
-const TAGS = [['찻집', 30, 52], ['골목', 50, 50], ['편의점', 50, 63], ['시장', 35, 71], ['놀이터', 46, 84], ['학교', 65, 75], ['성당', 72, 30], ['라디오', 50, 14]];
+const TAGS = [['찻집', 30, 52], ['골목', 50, 50], ['편의점', 50, 63], ['시장', 35, 71], ['놀이터', 46, 84], ['공터', 65, 75], ['성당', 72, 30], ['라디오', 50, 14]];
 function paint(sel) {
   const svg = document.querySelector(sel + ' svg');
   svg.innerHTML = `<image href="../assets/yeta_map/map_night.png" x="0" y="0" width="500" height="500" preserveAspectRatio="xMidYMid slice"/>`
@@ -259,7 +259,7 @@ addEventListener('resize', size); addEventListener('load', size); size();
 const CUTS = [
   ['tea', '찻집 무음', 'tea_sunset', 'YIN_PLACES'], ['alley', '골목', '—', 'YIN_PLACES'],
   ['store', '편의점', '—', 'YIN_PLACES'], ['market', '시장', '—', 'YIN_PLACES'],
-  ['park', '놀이터', '—', 'YIN_PLACES'], ['school', '학교', '—', 'YIN_PLACES'],
+  ['park', '놀이터', '—', 'YIN_PLACES'], [ '공터', '—', 'YIN_PLACES'],
   ['dojo', '검도장 월광', '—', 'YIN_PLACES'], ['gym', '체육관 강철', '—', 'YIN_PLACES'],
   ['studio', '지하 연습실', '—', 'YIN_PLACES'], ['office', '3층 편집국', '—', 'YIN_PLACES'],
   ['radio', '라디오국', '—', 'YIN_PLACES'], ['cathedral', '성당(신당)', 'moon_stairs', 'YSN_SCENE'],

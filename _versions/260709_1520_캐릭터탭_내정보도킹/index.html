@@ -1357,14 +1357,14 @@ let YMAPD = null, _ymapRaf = 0, _ymapIv = 0, _ymapWalkers = [], _ymapCars = [], 
 const YMAP_SC = 5, YMAP_RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 // ── 맵 시각 레이어(운영자 260707 "자연스럽게 배치 · 차는 차도로 · 신호등 정지 · 건물 안이면 이름표") — map_night.png 좌표계(0~100) · 논리 SSOT(places.json)와 별개 축.
 //    건물 draw 위치(논리좌표는 중앙 뭉침이라 이미지와 불일치 → 실측 트레이스), 도로 링(회색길), 신호등, 실내/야외.
-const YMAP_POS = { radio:[50,14], office:[56,33], studio:[61,44], alley:[50,50], tea:[30,52], store:[50,63], dojo:[20,78], market:[35,71], gym:[11,60], park:[46,84], school:[65,75] };
+const YMAP_POS = { radio:[50,14], office:[56,33], studio:[61,44], alley:[50,50], tea:[30,52], store:[50,63], dojo:[20,78], market:[35,71], gym:[11,60], park:[46,84], lot:[65,75] };
 const YMAP_SPOT = { alley:[50,50], park:[46,84], market:[35,71] };   // 야외 지상 스팟(오프로드 · 캐릭터 안착) — 나머지 = 실내 이름표
-const YMAP_INDOOR = new Set(['tea','studio','office','radio','gym','dojo','school','store']);
+const YMAP_INDOOR = new Set(['tea','studio','office','radio','gym','dojo','store']);
 // 차선(운영자 260709 손그림 고정 트레이스 · 0~100 지도 좌표) — 구 도로 링(폐곡선 순환) 폐지. dir 1 = 상행(윗방향 · 한국식 우측차선 = 파란 그림·파란 차) / -1 = 하행(빨간 그림·다크레드 차).
 // 정점 [x, y, f]: f='s' = 광장 정지선(빨간불 대기) · f='h' = 이 정점→다음 정점 구간이 건물 뒤(레이어 가림 = 페이드 숨김 · 단일 래스터 지도라 실제 z 분할 대신 은폐 연출). 좌표·가림 구간 = 근사 트레이스 — 운영자 검수로 정점만 교정하면 됨.
 const YMAP_LANES = [
   { dir: 1,  pts: [[-4,74],[11,67],[22,62],[33,58],[40,55],[47,52,'s'],[53,45],[57,37],[59,30],[55,22],[46,15,'h'],[40,4],[36,-6]] },     // 상행① 좌하 진입 → 광장(정지선) → 데스 앞 → 라디오 언덕 뒤(h) → 상단 퇴장
-  { dir: 1,  pts: [[106,88],[88,80],[75,74],[66,67],[58,60],[54,54],[56,44],[61,38],[68,30],[76,22],[86,12],[96,2]] },                    // 상행② 우하 진입 → 학교 우측 → 지하연습실 → 우상 퇴장
+  { dir: 1,  pts: [[106,88],[88,80],[75,74],[66,67],[58,60],[54,54],[56,44],[61,38],[68,30],[76,22],[86,12],[96,2]] },                    // 상행② 우하 진입 → 공터 우측 → 지하연습실 → 우상 퇴장
   { dir: -1, pts: [[38,-6],[42,10],[38,22],[34,33],[30,44],[27,52,'h'],[24,61],[20,70],[17,80],[13,92],[10,106]] },                       // 하행① 상단 진입 → 찻집 뒤(h) → 검도장 → 하단 퇴장
   { dir: -1, pts: [[82,-6],[74,12],[66,24],[61,34],[57,44],[54,55,'s'],[57,64,'h'],[52,72],[46,80],[43,92],[41,106]] }                    // 하행② 우상 진입 → 광장 옆(정지선) → 편의점 뒤(h) → 놀이터 → 하단 퇴장
 ];
@@ -2377,8 +2377,7 @@ const Y_PLACE_POOL = {   // 장소 id(places.json) → 실존 씬(assets/yeta_bg
   office: [{s:'persona_desk',t:['any']}],
   radio: [{s:'radio_neon',t:['any']}],
   store: [{s:'cvs_dawn',t:['any']},{s:'laundromat',t:['night']}],
-  school: [{s:'persona_haeun',t:['any']}],
-  park: [{s:'playground_3am',t:['any']}],
+    park: [{s:'playground_3am',t:['any']}],
   dojo: [{s:'persona_ryu',t:['any']}],
   market: [{s:'market_close',t:['any']}],
   gym: [{s:'persona_von',t:['any']}],

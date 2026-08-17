@@ -12,7 +12,7 @@
 9:16 마감: `--ratio 9:16`이면 잘라낸 칸을 그 비율로 **중앙 크롭**한다(무대 `yStage` 세로 규격 계승 · 좌우/상하만 깎는다).
 
 사용:
-  python3 shared/cut_board_sheet.py viewer/assets/yeta_char/board/ilzin_sheetE_p1.png \
+  python3 shared/cut_board_sheet.py viewer/assets/yeta_char/board/haeun_sheetF_p1.png \
       --labels GUM,NOPE,CASUAL,KISS,SCRATCH,KICK --out /tmp/cut --ratio 9:16
   python3 shared/cut_board_sheet.py <시트> --dry-run     # 자르지 않고 검출된 칸 좌표만 출력
 """

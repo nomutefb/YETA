@@ -20,7 +20,7 @@ REF_NIGHT = os.environ.get("REF_NIGHT", "").strip() == "1"   # 1 = 밤 그림을
 REF_SELF = os.environ.get("REF_SELF", "").strip() == "1"     # 1 = 자기 자신(기존 같은 톤 그림)을 참조로 동봉 — 배치 유지 + LAYOUT 신규 요소(성당 등)만 추가(운영자 260717 "기존 이미지 보고 다시 뽑아")
 
 # 동네 골격(places.json 좌표·look 특색의 언어화 · 골목 50,50 중심 — places.json look 필드와 수동 동기)
-# v2(운영자 260707 "산 아님 — 중소도시·힙한 도시") · v3(운영자 260707 "상가 밀집 전경 · 출입금지 지대 · 학교 · 건물마다 특색 · 도로에 차").
+# v2(운영자 260707 "산 아님 — 중소도시·힙한 도시") · v3(운영자 260707 "상가 밀집 전경 · 출입금지 지대 · 건물마다 특색 · 도로에 차").
 LAYOUT = (
     "Neighborhood layout (top of image = north): "
     "at the very center, a small crossroads plaza with street lamps and benches (the Alley - the neighborhood hotspot). "
@@ -29,7 +29,6 @@ LAYOUT = (
     "Further north on a low rise, a small radio station with a tall steel antenna tower and a blinking red light. "
     "East of the plaza, a stairway entrance going down to a basement practice studio, marked by a small neon arrow. "
     "South zone (daily-life belt): a 24h convenience store with a lime-green neon sign, "
-    "a clear 3-story school with a wide schoolyard, assembly podium and flagpole in its own corner of the neighborhood, "
     "a little playground with swings and a slide, "
     "a traditional swordsmanship dojo with tiled roof, wooden porch and walled courtyard squeezed between buildings to the southwest, "
     "a lively open-air market street with rows of colorful awning stalls, and a boxy gym building with a boxing-glove sign. "

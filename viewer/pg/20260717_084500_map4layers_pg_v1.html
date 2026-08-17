@@ -120,8 +120,8 @@ input[type=range] { flex:1; accent-color:var(--accent); }
 <script>
 // ── 실측 데이터 ──────────────────────────────────────────────
 // 장소 앵커 = viewer/index.html YMAP_POS 정본 그대로(0~100)
-const POS = { radio:[50,14], office:[56,33], studio:[61,44], alley:[50,50], tea:[30,52], store:[50,63], dojo:[20,78], market:[35,71], gym:[11,60], park:[46,84], school:[65,75], cathedral:[65,30] };
-const POS_NM = { radio:'방송국', office:'편집국', studio:'스튜디오', alley:'광장', tea:'찻집 무음', store:'편의점', dojo:'도장', market:'시장', gym:'체육관', park:'공원', school:'학교', cathedral:'성당' };
+const POS = { radio:[50,14], office:[56,33], studio:[61,44], alley:[50,50], tea:[30,52], store:[50,63], dojo:[20,78], market:[35,71], gym:[11,60], park:[46,84], cathedral:[65,30] };
+const POS_NM = { radio:'방송국', office:'편집국', studio:'스튜디오', alley:'광장', tea:'찻집 무음', store:'편의점', dojo:'도장', market:'시장', gym:'체육관', park:'공원', lot:'공터', cathedral:'성당' };
 // 건물 인벤토리(야간판 육안 실측 추정 ±2 · bbox=[x0,y0,x1,y1]% · base=발끝 y · shots=밤낮 굽기 수 · 성당=파이프 보유 0)
 const BLDG = [
   { id:'radio',  nm:'방송국+철탑',        box:[42,3,56,19],  base:19, shots:2, on:true },
@@ -135,7 +135,7 @@ const BLDG = [
   { id:'store',  nm:'편의점 2M',          box:[40,57,59,68], base:68, shots:2, on:true },
   { id:'stripE', nm:'상가 스트립 동측(묶음)',box:[65,48,100,72],base:72, shots:2, on:true },
   { id:'market', nm:'시장 천막(묶음)',     box:[27,66,46,78], base:78, shots:2, on:true },
-  { id:'school', nm:'학교(시계탑)',        box:[52,68,82,86], base:86, shots:2, on:true },
+  { id: nm:'공터(시계탑)',        box:[52,68,82,86], base:86, shots:2, on:true },
   { id:'dojo',   nm:'도장(한옥)',          box:[14,74,33,88], base:88, shots:2, on:true },
   { id:'play',   nm:'공원 놀이기구(소품)', box:[42,84,64,97], base:97, shots:2, on:false },
 ];

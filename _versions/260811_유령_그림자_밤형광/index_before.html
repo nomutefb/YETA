@@ -514,7 +514,7 @@ body { background:var(--yeta-bg,#121212); color:var(--fg); font-family:var(--app
   #ycdCard.ydead .ycd-tag, #ycdCard.ydead .ycd-quote, #yetaProfPop.ydead .ycd-tag, #yetaProfPop.ydead .ycd-quote, #yetaProfPop.ydead .ypp-think { filter:grayscale(1); }   /* 프로필 글자축도 채색 소거(라임 직업·터콰이즈 생각만 살아 튀던 것) — 밝기·크기는 그대로 = 목록 .ylist-mid와 동일 처방 */
   #yetaProfPop .ypp-desc, #yetaPdc .ypp-desc, #ycdCard .ypp-desc { font-size:var(--fs-xs); color:var(--fg-2); line-height:var(--lh-base); max-width:32ch; text-wrap:pretty; }   /* #ycdCard·#yetaPdc = 사망 각주(260725) — 같은 부속설명 컴포넌트 계승 */
   #yetaProfPop .ycd-quote { max-width:30ch; }
-  #yetaProfPop .yintro-ava { flex:none; }   /* ⚠ 프사 찌부 봉합(260809 실측) — 카드는 세로 flex + `max-height:min(60dvh,420px)`인데 프사에 shrink 방지가 없어, 소개가 긴 인물(도한나)에선 넘치는 만큼을 **프사가 대신 줄어** 흡수했다(88px → 38px, [내보내기] 한 줄이 더 붙자 7px = 실선). `flex:none`이면 프사는 제 크기를 지키고 넘침은 표면 정본의 `overflow-y:auto`가 받는다(스크롤 = `.ypd-fit` 선례와 같은 처방 · 새 값 0) */
+  #yetaProfPop .yintro-ava { flex:none; }   /* ⚠ 프사 찌부 봉합(260809 실측) — 카드는 세로 flex + `max-height:min(60dvh,420px)`인데 프사에 shrink 방지가 없어, 소개가 긴 인물에선 넘치는 만큼을 **프사가 대신 줄어** 흡수했다(88px → 38px, [내보내기] 한 줄이 더 붙자 7px = 실선). `flex:none`이면 프사는 제 크기를 지키고 넘침은 표면 정본의 `overflow-y:auto`가 받는다(스크롤 = `.ypd-fit` 선례와 같은 처방 · 새 값 0) */
   /* ── 챗 액티브 v2(운영자 260712 전후비교 확정 · 시안 = docs/reports/260712_프로필뱃지챗_전후비교_플레이그라운드.html) — 이름부 풀다운 시트 · 근처 인물 스택 · 초대 2차 팝업 ── */
   .yeta-who { touch-action:none; user-select:none; -webkit-user-select:none; cursor:pointer; }   /* 풀다운 드래그 축 캡처(헤더 = 비스크롤 면 · 트리거 = 드래그+탭 선택값) */
   .yeta-who .yw-chev { width:14px; height:14px; transform:rotate(var(--chev-r,0deg)) scale(var(--chev-s,1)); transition:transform .28s var(--ease), color .2s var(--ease); }   /* 풀다운 어포던스 · rotate/scale 변수 분리 = 열림 회전 + 눌림 축소 조합(운영자 260712) */
@@ -2160,7 +2160,7 @@ const YSHRINE = 'cathedral', YSN_SCENE = 'place_cathedral';   // 신당(운영�
 //   값 = `assets/yeta_bg/var_<씬>.webp` 의 씬 이름. place_* 12칸 = 프롬프트 1개·도화지 1장(2×6)에서 잘라낸 것 = 팔레트·광원·붓이 한 벌(낱장 12회로 뽑으면 12개의 딴 밤이 된다).
 //   생성·자르기 정본 = `.github/scripts/yeta_bg_var.py`(PLACE_CUTS · 수동 dispatch `yeta-bg-var`) · 커터 = `shared/cut_board_sheet.py`. 확장은 여전히 이 표에 한 줄.
 //   ⚠️ cathedral 은 여기 없다 — 성당 탭은 실내 뷰가 아니라 신당(ySnRender)으로 갈라지므로 그 컷은 위 YSN_SCENE 이 쓴다(여기 적으면 죽은 설정).
-const YIN_PLACES = { tea: 'place_tea', alley: 'place_alley', store: 'place_store', market: 'place_market', park: 'place_park', school: 'place_school', dojo: 'place_dojo', gym: 'place_gym', studio: 'place_studio', office: 'place_office', radio: 'place_radio' };
+const YIN_PLACES = { tea: 'place_tea', alley: 'place_alley', store: 'place_store', market: 'place_market', park: 'place_park', dojo: 'place_dojo', gym: 'place_gym', studio: 'place_studio', office: 'place_office', radio: 'place_radio' };
 const YMAP_SC = 5, YMAP_RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 // 스프라이트 한 변(SVG 단위) — 운영자 260811 "스프라이트 축소로 골목 겹침 풀어줘". 22 → 18.
 // PNG는 알파 타이트(세로 320 고정)라 meet 실폭 = 원본비 × 이 값. 22일 때 8.0~15.2px(평균 11.6) · 18이면 6.5~12.4px(평균 9.5).
@@ -2172,7 +2172,7 @@ const YMAP_SC = 5, YMAP_RM = () => matchMedia('(prefers-reduced-motion: reduce)'
 const YMAP_SPR = 18, YMAP_HIT = 22;
 // ── 맵 시각 레이어(운영자 260707 "자연스럽게 배치 · 차는 차도로 · 신호등 정지 · 건물 안이면 이름표") — map_night.png 좌표계(0~100) · 논리 SSOT(places.json)와 별개 축.
 //    건물 draw 위치(논리좌표는 중앙 뭉침이라 이미지와 불일치 → 실측 트레이스), 도로 링(회색길), 신호등, 실내/야외.
-const YMAP_POS = { radio:[50,14], office:[56,33], studio:[61,44], alley:[50,50], tea:[30,52], store:[50,63], dojo:[20,78], market:[35,71], gym:[11,60], park:[46,84], school:[65,75], cathedral:[72,30], offlimits:[82,37] };   // cathedral = 부활 성당(운영자 260714 · places.json 동기) · offlimits = 펜스 친 재개발 중단 터(260811 신설 — 아래 v8 실측 주석)
+const YMAP_POS = { radio:[50,14], office:[56,33], studio:[61,44], alley:[50,50], tea:[30,52], store:[50,63], dojo:[20,78], market:[35,71], gym:[11,60], park:[46,84], cathedral:[72,30], offlimits:[82,37] };   // cathedral = 부활 성당(운영자 260714 · places.json 동기) · offlimits = 펜스 친 재개발 중단 터(260811 신설 — 아래 v8 실측 주석)
 // v8 실측(260811 · #598 신당 도달 불가 봉합) — 종전 cathedral (65,34)·offlimits(맵 미등재 → places.json 논리좌표 (66,34) 대체) 는 **같은 자리**였고, 출입금지 판이 뒤에 그려져(자식 4 vs 28) 성당 노드를 통째로 덮었다.
 //   실측: elementFromPoint(성당 노드 중심) = .ymp-offtxt · 실탭 → 신당 시트 안 열림 = "신당 갈 방법이 없음"(운영자 260811)의 정체. map_night.png 1024² 격자 트레이스로 둘을 제자리에 돌려놓는다 —
 //   성당 = 예배당 앞뜰(부활 직후 주민이 서는 자리 · 문 바로 아래 포장지) · 출입금지 = 실제 철망 펜스+바리케이드 테이프가 쳐진 남동쪽 공터. 새 값·새 부품 0 = 좌표 정정뿐.
@@ -2185,7 +2185,7 @@ const YMAP_POS = { radio:[50,14], office:[56,33], studio:[61,44], alley:[50,50],
 //      운영자 지시는 "안 보이고 표기만"이 기본값이기 때문. #598이 고치려던 신당 도달은 노드/라벨 탭 축이라 구획 없이도 그대로 산다(성당 = 이름표 + 노드 탭).
 //    alley = 종전 (48,46.5,r3)이 광장 **벤치를 정통으로 물고** 있었다(가림체 철거로 벤치 위에 겹쳐 서 보임) → 1u 격자 실측한 벤치 사이 열린 포장(x 45~50 · y 47.5~52.5)으로 이동.
 const YMAP_ZONE = { alley: { x: 47.5, y: 50, r: 2.5 }, park: { x: 52, y: 88, r: 3.5 } };   // park = 놀이터 흙바닥(그네·미끄럼틀 바깥 · 실측 확인 = 원 안 장애물 0)
-const YMAP_INDOOR = new Set(['tea','studio','office','radio','gym','dojo','school','store']);
+const YMAP_INDOOR = new Set(['tea','studio','office','radio','gym','dojo','store']);
 function ymZSort(svg) {   // painter's y-정렬 — 화면 아래(발끝 y 큼) 워커가 앞. 순서가 바뀐 때만 재배치(걷기 bob 애니메이션 리셋 최소화)
   const wg = (svg || document).querySelector('#ymWalkers'); if (!wg) return;
   const items = [];
@@ -4314,8 +4314,7 @@ const Y_PLACE_POOL = {   // 장소 id(places.json) → 실존 씬(assets/yeta_bg
   office: [{s:'persona_desk',t:['any']}],
   radio: [{s:'radio_neon',t:['any']}],
   store: [{s:'cvs_dawn',t:['any']},{s:'laundromat',t:['night']}],
-  school: [{s:'persona_haeun',t:['any']}],
-  park: [{s:'playground_3am',t:['any']}],
+    park: [{s:'playground_3am',t:['any']}],
   dojo: [{s:'persona_ryu',t:['any']}],
   market: [{s:'market_close',t:['any']}],
   gym: [{s:'persona_von',t:['any']}],

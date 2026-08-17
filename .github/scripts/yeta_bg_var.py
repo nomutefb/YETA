@@ -56,7 +56,7 @@ SCENES = [
     ("missing_flyer", "a utility pole layered with missing-person and missing-cat flyers fluttering in night wind, tape peeling, one flyer glowing oddly"),
     ("thin_boundary", "the dead end of the alley where the air itself ripples like heat haze at 3am, a faint cold blue glow seeping through, a single traffic cone as a warning"),
     # ── 페르소나 고유 무대(운영자 260707 "대화 시작 = 캐릭터 고유 이미지 · 없으면 하나씩 뽑아") — bg 중복 1인{하은=tea(무디와 공유)} 전용 씬 ──
-    ("persona_haeun",  "the tree-lined street in front of a small Korean neighborhood school at dusk just after the teachers left, one classroom window still warmly lit, ginkgo trees over the gate, a chalk-dusted tote bag resting on the low wall, playful yet tender after-work air"),
+    ("persona_haeun",  "the stairway down to a basement dance practice room at dusk just after practice ended, one mirror-walled window still warmly lit, a canvas tote bag resting on the stair rail, a towel over the door handle, playful yet tender after-work air"),
     # ── 나머지 8인 고유 대화-시작 배경(운영자 260707 "각각에 어울리는 고유 배경 하나씩 다 · 대화 시작하면 나올 수 있는거") — no people·시그니처 장소 + 카드 포인트색 저광 ──
     ("persona_mudi",   "the interior of a centuries-old 24-hour teahouse at deep night, no people, a worn wooden counter with a single cup releasing luminous jade-green steam curling into glowing wisps, rows of aged tea jars, warm amber paper lanterns, a timeless hush, faint mint-green glow"),
     ("persona_sera",   "the innermost underground dance-practice room at 4am, no people, a mirrored wall and a single heavy door faintly outlined in incandescent hot-pink light, a towel and water bottles on the floor, cool fluorescent haze with a pink awakened shimmer, a distant looming spire barely visible in a dark window"),
@@ -91,7 +91,6 @@ PLACE_CUTS = [
     ("store",     "the 24-hour convenience store, its lime-green neon sign burning all night, cold white interior light washing onto the pavement, stacked crates by the door"),
     ("market",    "the traditional market lane, rows of colourful canvas awnings over shuttered stalls, bare bulbs strung overhead, crates and folded tarpaulins"),
     ("park",      "the neighbourhood playground — swings, a slide and a sandpit under one tall lamp, the swings perfectly still"),
-    ("school",    "the three-storey school seen from its yard — a running ground, a low reviewing platform and a flagpole, a single corridor window still lit"),
     ("dojo",      "the kendo dojo 'Wolgwang' inside its tiled-wall courtyard — a wooden veranda and polished floor, moonlight striping the boards, a sword rack in the shadow"),
     ("gym",       "the boxing gym 'Gangcheol' — a boxy building with a wide roller shutter half lowered, a painted boxing-glove signboard, one bare lamp over the door"),
     ("studio",    "the basement practice-room entrance — a neon arrow above a narrow stairwell going down, a handrail, light rising from below the steps"),

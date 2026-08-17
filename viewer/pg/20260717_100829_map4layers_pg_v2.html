@@ -85,7 +85,7 @@ input[type=range] { flex:1; accent-color:var(--accent); }
         <button class="tg" id="tDay">낮</button>
         <button class="tg tq on" id="tRoll">🎲 랜덤 재배치</button>
       </div>
-      <p class="note">주민 12명이 장소 12곳에 무작위 입장. <b>실내</b>(찻집·편의점·학교…) = 본편 규약대로 스프라이트 없이 <b>건물 위 이름표 스택</b> · <b>야외</b>(광장·공원·시장·성당 앞) = 색 원판 스프라이트로 배회 위치.</p>
+      <p class="note">주민 12명이 장소 12곳에 무작위 입장. <b>실내</b>(찻집·편의점·공터…) = 본편 규약대로 스프라이트 없이 <b>건물 위 이름표 스택</b> · <b>야외</b>(광장·공원·시장·성당 앞) = 색 원판 스프라이트로 배회 위치.</p>
     </div>
 
     <div class="card">
@@ -121,10 +121,10 @@ input[type=range] { flex:1; accent-color:var(--accent); }
 <script>
 // ── 정본 계승 데이터 ──────────────────────────────────────────
 // 장소 앵커·야외 존·실내 집합 = viewer/index.html 정본 그대로
-const POS = { radio:[50,14], office:[56,33], studio:[61,44], alley:[50,50], tea:[30,52], store:[50,63], dojo:[20,78], market:[35,71], gym:[11,60], park:[46,84], school:[65,75], cathedral:[65,30] };
-const POS_NM = { radio:'방송국', office:'편집국', studio:'스튜디오', alley:'광장', tea:'찻집 무음', store:'편의점', dojo:'도장', market:'시장', gym:'체육관', park:'공원', school:'학교', cathedral:'성당' };
+const POS = { radio:[50,14], office:[56,33], studio:[61,44], alley:[50,50], tea:[30,52], store:[50,63], dojo:[20,78], market:[35,71], gym:[11,60], park:[46,84], cathedral:[65,30] };
+const POS_NM = { radio:'방송국', office:'편집국', studio:'스튜디오', alley:'광장', tea:'찻집 무음', store:'편의점', dojo:'도장', market:'시장', gym:'체육관', park:'공원', lot:'공터', cathedral:'성당' };
 const ZONE = { alley:{ x:48, y:46.5, r:3 }, park:{ x:52, y:88, r:3.5 }, market:{ x:32, y:69, r:2 }, cathedral:{ x:65, y:34, r:1.8 } };
-const INDOOR = new Set(['tea','studio','office','radio','gym','dojo','school','store']);
+const INDOOR = new Set(['tea','studio','office','radio','gym','dojo','store']);
 // 도로 = YMAP_ROADS_TONE v7 verbatim(viewer/index.html · 260717 재실측)
 const ROADS = {
   night: { tl:[[20,5],[30,0]], tlL:[[0,22],[36,4]], nw:[[0,24],[37.5,42.75,'s']], pne:[[50,40.5],[88,21.5]], tr:[[67,1.3],[100,17.8]], seL:[[45,46.9],[100,74.4]], tea:[[14,51.9],[86,87.9]], mkt:[[11,75.6],[59.8,100]], bl:[[0,83],[34,100]], br:[[70,99.5],[100,84.5]], u1:[[0,76],[11,70.5]], V1:[[12.3,54],[12.3,100]], V2:[[17.5,0],[17.5,10]] },
@@ -152,7 +152,7 @@ const BLDG = [
   { id:'store', nm:'편의점 2M', box:[40,57,59,68], base:68, shots:2, on:true },
   { id:'stripE', nm:'상가 스트립 동측(묶음)', box:[65,48,100,72], base:72, shots:2, on:true },
   { id:'market', nm:'시장 천막(묶음)', box:[27,66,46,78], base:78, shots:2, on:true },
-  { id:'school', nm:'학교(시계탑)', box:[52,68,82,86], base:86, shots:2, on:true },
+  { id: nm:'공터(시계탑)', box:[52,68,82,86], base:86, shots:2, on:true },
   { id:'dojo', nm:'도장(한옥)', box:[14,74,33,88], base:88, shots:2, on:true },
   { id:'play', nm:'공원 놀이기구(소품)', box:[42,84,64,97], base:97, shots:2, on:false },
 ];

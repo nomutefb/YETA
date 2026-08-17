@@ -58,7 +58,7 @@ function serve() {
   });
 }
 
-// ── 세션 재료 — A방(6턴)에서 대화 후 B방(42턴 · 절단본 캐시)으로 전환(운영자 260809 실사용 = 한나↔루시 왕복) ──
+// ── 세션 재료 — A방(6턴)에서 대화 후 B방(42턴 · 절단본 캐시)으로 전환(운영자 260809 실사용 = 두 방 왕복) ──
 const A = 'winter', B = 'lucy';
 function mk(n, who) { const t0 = Date.now() - n * 60000, a = []; for (let i = 0; i < n; i++) a.push(i % 2 === 0 ? { role: 'user', text: `내 말 ${who} ${i}`, ts: t0 + i * 60000 } : { role: 'assistant', persona: who, text: `${who} 답 ${i}`, ts: t0 + i * 60000 }); return a; }
 const FA = mk(6, A), FB = mk(42, B);
