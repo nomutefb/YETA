@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>인물 이미지 감정선 매칭 — 무대 배경 17장 · 얼빡 7장 — 전/후 비교 v1</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
+     레이아웃·표면 CSS = 20260812_하서연이미지교체_전후_v1.html 계승(재설계 0) · .trio 격자 = 20260811_장소씬시트_지도확대_전후_v1.html `.steps` 선언 계승 ── */
+  :root {
+    --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
+    --bg:#161716; --line:rgba(255,255,255,.08);
+    --accent:#CFFF40; --accent-rgb:207,255,64;
+    --glass:rgba(255,255,255,.005); --glass-2:rgba(255,255,255,0); --glass-line:rgba(255,255,255,.08);
+    --shadow-card:0 24px 60px rgba(0,0,0,.42);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:Pretendard,-apple-system,system-ui,sans-serif; -webkit-font-smoothing:antialiased; line-height:var(--lh-base); }
+  .pg { padding:var(--sp-3); max-width:1180px; margin-inline:auto; }
+  h1 { font-size:var(--fs-h2); font-weight:var(--fw-x); margin:0 0 6px; letter-spacing:.02em; }
+  .lead { font-size:var(--fs-sm); color:var(--mut); margin:0 0 var(--sp-3); }
+  .sect { margin-bottom:var(--sp-3); }
+  .sect > h2 { font-size:var(--fs-label); font-weight:var(--fw-b); margin:0 0 8px; color:var(--fg-2); }
+  .note { font-size:var(--fs-xs); color:var(--mut); margin:8px 0 0; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); color:var(--accent); }
+  .grp { background:var(--glass); border:1px solid var(--glass-line); border-radius:var(--r-m); padding:12px 14px;
+    backdrop-filter:blur(var(--blur-m)); -webkit-backdrop-filter:blur(var(--blur-m)); }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); align-items:start; }
+  @media (max-width:640px) { .pair { grid-template-columns:1fr; } }
+  .cap { display:flex; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+  .bdg { font-size:var(--fs-meta); font-weight:var(--fw-x); letter-spacing:.1em; padding:2px 7px; border-radius:var(--r-pill); white-space:nowrap; }
+  .bdg.before { color:var(--fg-2); border:1px solid var(--glass-line); }
+  .bdg.after { color:var(--bg); background:var(--accent); }
+  .cap .val { font-size:var(--fs-xs); color:var(--fg-2); }
+  table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--glass-line); vertical-align:top; }
+  th { color:var(--mut); font-weight:var(--fw-b); font-size:var(--fs-xs); }
+  td.v { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:var(--fs-xs); }
+  /* 원본 대조 — 정사각 1:1 · 중심 십자선(얼굴 중심이 프레임 중심인지 눈으로 확인) */
+  .face { position:relative; width:100%; max-width:340px; aspect-ratio:1/1; margin-inline:auto; border-radius:var(--r-m); overflow:hidden; border:1px solid var(--glass-line); box-shadow:var(--shadow-card); }
+  .face img { width:100%; height:100%; object-fit:cover; display:block; }
+  /* 실사용 크기 열 — 앱이 실제로 그리는 지름(index.html 실측: .ymsg 32 · .yh-ava 34 · .ypick-row 58 · .ycd-card 104) */
+  .sizes { display:flex; align-items:flex-end; gap:14px; flex-wrap:wrap; }
+  .sizes figure { margin:0; text-align:center; }
+  .sizes span.ava { display:block; border-radius:50%; background-size:cover; background-position:center; border:1px solid var(--glass-line); }
+  .sizes figcaption { font-size:var(--fs-meta); color:var(--mut); margin-top:5px; }
+  /* 무대 프레임 — yStage가 그리는 세로 무대 420×900 그대로(cover) · .stg 계승 */
+  .stg { position:relative; width:100%; max-width:300px; margin-inline:auto; aspect-ratio:420/900; border-radius:var(--r-m); border:1px solid var(--glass-line); overflow:hidden; background:#000; box-shadow:var(--shadow-card); }
+  .stg img { width:100%; height:100%; object-fit:cover; display:block; }
+  /* 3열 격자 — `.steps` 선언 계승(같은 값·같은 관용) */
+  .trio { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  @media (max-width:820px) { .trio { grid-template-columns:1fr; } }
+  .trio figure { margin:0; }
+  .trio figcaption { font-size:var(--fs-meta); color:var(--mut); margin-top:6px; text-align:center; }
+  .trio figcaption b { color:var(--accent); font-weight:var(--fw-x); letter-spacing:.08em; }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>인물 이미지 감정선 매칭 — 무대 배경 17장 · 얼빡 7장 (전/후)</h1>
+  <p class="lead">운영자 260817: <b>"yeta 최상위 리포지토리에 있는 인물들의 이미지를, 이미지가 다르더라도, 각 폴더의 인물들의 감정선에 맞춰서 일단 넣어줄래? 매칭해서 넣어야해"</b>. 루트 업로드 <code>Desktop (2).zip</code>(+<code>.z01</code> 분할) 27장을 열어 <b>세로 9:16 장소 씬 17장 → 인물 7인의 감정 버킷</b>에, <b>정사각 얼빡 7장 → 각 인물 폴더의 프사 슬롯</b>에 넣었다. 새로 생성한 그림 0장(과금 0) · 새 색·토큰·컴포넌트 0.</p>
+
+  <div class="sect grp">
+    <h2>① 매칭 근거 — 추측이 아니라 레포 실측 2축</h2>
+    <table>
+      <tr><th>축</th><th>정본</th><th>읽은 것</th></tr>
+      <tr><td><b>장소 → 인물</b></td><td class="v">.github/scripts/yeta_bg_var.py</td>
+        <td>페르소나 고유 무대 프롬프트(<code>persona_&lt;id&gt;</code>)가 인물마다 장소를 못박아 둔다 — 찻집=무디 · 경계골목=백 · 검도장=류 · 복싱장=본 · 지하연습실=세라 · 3층 편집국=조지 로이스 · 심야 라디오부스=윤.</td></tr>
+      <tr><td><b>파일명 접미 → 감정</b></td><td class="v">shared/build_season_media.py</td>
+        <td>운영자가 파일명에 <code>_warm</code>·<code>_blue</code>·<code>_tense</code>를 직접 달아 올렸다(무접미 = <code>base</code>). 얼빡 판정이 이미 「<b>파일명 = 정본</b>(운영자가 명명한다)」 축이라 같은 규약으로 읽었다.</td></tr>
+    </table>
+    <p class="note">감정 버킷 9종(<code>base/warm/joy/love/shy/blue/tense/mad/sulky</code>) = 뷰어 <code>Y_MOODS</code>·러너 <code>&lt;&lt;MOOD&gt;&gt;</code> 화이트리스트와 짝인 불변 계약 — 신설 0. 사람 없는 장소 씬을 감정 버킷에 두는 것은 <b>무디 3장 선례</b>(<code>media.json</code> 주석 = 주방→base · 뒷문→tense · 새벽 지붕→blue) 계승.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>② 백 — 골목 <span style="color:var(--mut);font-weight:400">(무접미 → base · <code>_tense</code> → tense)</span></h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">전</span><span class="val">총 6장 · base 1 / warm 1 / joy 1 / blue 1 / tense 1 / mad 1</span></p>
+        <p class="note">여섯 버킷이 <b>전부 1장</b> — 로테이션 <code>pool[n%len]</code>이 한 칸이라 같은 국면이면 매번 같은 그림이었다.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">후</span><span class="val">총 8장 · base <b>2</b> / tense <b>2</b></span></p>
+        <div class="trio">
+          <figure><div class="stg"><img src="../characters/season/baek/main/base/baek_alley.webp" alt="백 base — 등불 켜진 젖은 골목"></div><figcaption><b>BASE</b> baek_alley</figcaption></figure>
+          <figure><div class="stg"><img src="../characters/season/baek/main/tense/baek_alley_tense.webp" alt="백 tense — 셔터 내린 어두운 골목"></div><figcaption><b>TENSE</b> baek_alley_tense</figcaption></figure>
+        </div>
+      </div>
+    </div>
+    <p class="note">같은 골목의 두 얼굴 — 등불·식당 간판이 살아 있는 쪽이 base, 셔터가 내려가고 푸른 기가 덮은 쪽이 tense(= 표정 없는 서늘·압박). <b>미채택 후보</b>: 서예은도 「골목의 노란 애」라 골목 소유가 겹친다 — 백을 고른 근거는 <code>persona_baek</code>이 골목 그 자체라는 것 + 백이 6장으로 더 마른 쪽이라는 것. 서예은 쪽이 맞으면 파일 2장 이동 + 빌더 재실행이면 끝난다.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>③ 윤 — 심야 라디오 부스 <span style="color:var(--mut);font-weight:400">(<code>_warm</code>·<code>_blue</code>·<code>_tense</code> 3톤 세트)</span></h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">전</span><span class="val">총 6장 · 여섯 버킷 각 1장</span></p>
+        <p class="note">백과 같은 상태 — 버킷마다 한 칸.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">후</span><span class="val">총 9장 · warm <b>2</b> / blue <b>2</b> / tense <b>2</b></span></p>
+        <div class="trio">
+          <figure><div class="stg"><img src="../characters/season/yun/main/warm/yun_radio_warm.webp" alt="윤 warm — ON AIR 켜진 따뜻한 부스"></div><figcaption><b>WARM</b> yun_radio_warm</figcaption></figure>
+          <figure><div class="stg"><img src="../characters/season/yun/main/blue/yun_radio_blue.webp" alt="윤 blue — 비 내리는 창의 주파수 부스"></div><figcaption><b>BLUE</b> yun_radio_blue</figcaption></figure>
+          <figure><div class="stg"><img src="../characters/season/yun/main/tense/yun_radio_tense.webp" alt="윤 tense — 골목에서 본 어두운 부스 창"></div><figcaption><b>TENSE</b> yun_radio_tense</figcaption></figure>
+        </div>
+      </div>
+    </div>
+    <p class="note">한 부스를 안(따뜻한 전구·머그 = warm) / 창밖 비(주파수 간판 = blue) / 골목 밖 원경(꺼진 거리 = tense)으로 갈랐다 — <b>「산 자와 건너간 자 양쪽의 사연을 받는 DJ」</b>의 세 결. 업로드 <code>photo_…18-54-34.jpg</code>는 <code>yeta_bg_radio_tense.png</code>와 <b>같은 그림의 텔레그램 압축본</b>(16×16 그레이 MAE 0.48 · 실측)이라 고해상 PNG만 남기고 뺐다.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>④ 세라 — 지하 연습실 <span style="color:var(--mut);font-weight:400">(무접미·<code>_warm</code>·<code>_blue</code>)</span></h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">전</span><span class="val">총 16장 · base 3 / warm 2 / blue 4</span></p>
+        <p class="note">전부 인물 컷 — 장소 씬은 0장이었다.</p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">후</span><span class="val">총 19장 · base <b>4</b> / warm <b>3</b> / blue <b>5</b></span></p>
+        <div class="trio">
+          <figure><div class="stg"><img src="../characters/season/sera/main/base/sera_studio.webp" alt="세라 base — 거울벽 연습실"></div><figcaption><b>BASE</b> sera_studio</figcaption></figure>
+          <figure><div class="stg"><img src="../characters/season/sera/main/warm/sera_studio_warm.webp" alt="세라 warm — 전구줄 켠 연습실"></div><figcaption><b>WARM</b> sera_studio_warm</figcaption></figure>
+          <figure><div class="stg"><img src="../characters/season/sera/main/blue/sera_studio_blue.webp" alt="세라 blue — 식은 형광등 아래 흩어진 물병"></div><figcaption><b>BLUE</b> sera_studio_blue</figcaption></figure>
+        </div>
+      </div>
+    </div>
+    <p class="note"><code>persona_sera</code>의 「새벽 4시 지하 연습실 · 거울벽 · 수건과 물병」과 세 장이 그대로 겹친다. 온기가 든 쪽(전구줄)이 warm, 형광등만 남고 물병이 널브러진 쪽이 blue.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>⑤ 조지 로이스 — 3층 편집국 <span style="color:var(--mut);font-weight:400">(4장 · 라벨 2 + 눈으로 판정 2)</span></h2>
+    <div class="pair">
+      <div>
+        <p class="cap"><span class="bdg before">전</span><span class="val">총 32장 · base 10 / warm 5 / blue 3 / tense 4</span></p>
+      </div>
+      <div>
+        <p class="cap"><span class="bdg after">후</span><span class="val">총 36장 · base <b>11</b> / warm <b>6</b> / blue <b>4</b> / tense <b>5</b></span></p>
+      </div>
+    </div>
+    <div class="trio" style="margin-top:10px">
+      <figure><div class="stg"><img src="../characters/season/desk/main/base/desk_office.webp" alt="조지 로이스 base — 코르크보드와 스탠드 켠 책상"></div><figcaption><b>BASE</b> desk_office</figcaption></figure>
+      <figure><div class="stg"><img src="../characters/season/desk/main/warm/desk_office_warm.webp" alt="조지 로이스 warm — 전구줄 걸린 편집 책상"></div><figcaption><b>WARM</b> desk_office_warm</figcaption></figure>
+      <figure><div class="stg"><img src="../characters/season/desk/main/tense/desk_office_tense.webp" alt="조지 로이스 tense — 식은 파란 편집국"></div><figcaption><b>TENSE</b> desk_office_tense</figcaption></figure>
+    </div>
+    <div class="trio" style="margin-top:10px">
+      <figure><div class="stg"><img src="../characters/season/desk/main/blue/desk_office_blue.webp" alt="조지 로이스 blue — 비 흐르는 창의 사무실"></div><figcaption><b>BLUE</b> desk_office_blue</figcaption></figure>
+    </div>
+    <p class="note">앞 둘은 운영자 라벨(<code>yeta_bg_office</code>·<code>yeta_bg_office_warm</code>) 그대로. 뒤 둘은 라벨 없는 텔레그램 업로드라 <b>세라·윤에 쓴 것과 같은 톤 축</b>으로 갈랐다 — 비가 창을 타고 흐르면 blue, 비 없이 형광·모니터만 식어 있으면 tense. <b>이 2장이 이번 작업에서 유일하게 「내가 판정한」 자리</b>다(나머지 15장은 운영자 라벨 그대로).</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>⑥ 류 · 본 · 무디 — 검도장 / 복싱장 / 찻집</h2>
+    <div class="trio">
+      <figure><div class="stg"><img src="../characters/season/ryu/main/warm/ryu_dojo_warm.webp" alt="류 warm — 전구 켠 도장 툇마루"></div><figcaption><b>류 WARM</b> ryu_dojo_warm · 19→21장</figcaption></figure>
+      <figure><div class="stg"><img src="../characters/season/ryu/main/blue/ryu_dojo_blue.webp" alt="류 blue — 비 내리는 도장 마루"></div><figcaption><b>류 BLUE</b> ryu_dojo_blue</figcaption></figure>
+      <figure><div class="stg"><img src="../characters/season/mudi/main/base/mudi_tea.webp" alt="무디 base — 찻집 카운터의 김 나는 잔"></div><figcaption><b>무디 BASE</b> mudi_tea · 17→18장</figcaption></figure>
+    </div>
+    <div class="trio" style="margin-top:10px">
+      <figure><div class="stg"><img src="../characters/season/von/main/base/von_gym.webp" alt="본 base — 식은 복싱장"></div><figcaption><b>본 BASE</b> von_gym · 20→22장</figcaption></figure>
+      <figure><div class="stg"><img src="../characters/season/von/main/warm/von_gym_warm.webp" alt="본 warm — 전구 켠 복싱장"></div><figcaption><b>본 WARM</b> von_gym_warm</figcaption></figure>
+    </div>
+    <p class="note">무디의 찻집 컷은 <b>카운터에 잔 하나를 밀어둔</b> 그림 — 카드 한 줄 「말 대신 잔을 미는 사람」과 같은 동작이라 기존 주방·뒷문·지붕 3장 옆 base에 붙였다. 카피도 찻집 사람이지만 <code>persona_kopi</code>는 「노트북 놓인 구석 자리」라 이 카운터 컷과 다르다 — 그래서 무디.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>⑦ 얼빡 7장 — 감정 버킷이 아니라 <b>각 인물 폴더의 프사 슬롯</b>으로</h2>
+    <div class="trio">
+      <figure><div class="face"><img src="../characters/season/mudi/mudi_face01.webp" alt="무디 얼빡 — 찻잔 든 앞치마"></div><figcaption>mudi_face01 · <b>신설</b></figcaption></figure>
+      <figure><div class="face"><img src="../characters/season/ryu/ryu_face01.webp" alt="류 얼빡 — 부채 든 달밤"></div><figcaption>ryu_face01 · <b>신설</b></figcaption></figure>
+      <figure><div class="face"><img src="../characters/season/von/von_face01.webp" alt="본 얼빡 — 수건 두른 체육관"></div><figcaption>von_face01 · <b>신설</b></figcaption></figure>
+    </div>
+    <div class="trio" style="margin-top:10px">
+      <figure><div class="face"><img src="../characters/season/baek/baek_face02.webp" alt="백 얼빡 — 비 오는 골목의 정장"></div><figcaption>baek_face02</figcaption></figure>
+      <figure><div class="face"><img src="../characters/season/desk/desk_face02.webp" alt="조지 로이스 얼빡 — 안경과 편집국"></div><figcaption>desk_face02</figcaption></figure>
+      <figure><div class="face"><img src="../characters/season/haeun/haeun_face02.webp" alt="하서연 얼빡 — 찻잔 든 창가"></div><figcaption>haeun_face02</figcaption></figure>
+    </div>
+    <div class="trio" style="margin-top:10px">
+      <figure><div class="face"><img src="../characters/season/lucy/lucy_face02.webp" alt="루시 얼빡 — 푸른 머리와 오드아이"></div><figcaption>lucy_face02</figcaption></figure>
+    </div>
+    <p class="note"><b>감정 버킷에 안 넣은 이유</b>: 운영자 260726 「얼빡은 배경에 깔지마」가 이 레포의 하드 게이트다 — 1024² 정사각을 420×900 세로 무대에 <code>cover</code>로 깔면 얼굴만 확대·잘린다. 게다가 빌더 <code>is_face()</code>가 파일명에 <code>face</code>가 있으면 배경 풀에서 <b>자동 제외</b>하므로 감정 폴더에 넣어도 아무 일이 일어나지 않는다(조용한 누락). 그래서 <code>check_refs</code>가 명시한 처방 자리 = <b>캐릭터 루트 <code>&lt;id&gt;_face*</code></b>에 넣었다. 무디·류·본은 시즌 폴더에 얼빡이 <b>아예 없던</b> 자리라 신설이다.</p>
+    <p class="note"><b>배선은 안 건드렸다</b> — <code>roster.json</code>의 <code>avatar</code>는 그대로다(현재 프사 = <code>assets/yeta_char/av/&lt;id&gt;.webp</code> 등). 아래는 이 그림들이 <b>프사로 승격될 경우</b> 앱이 실제로 그리는 지름 미리보기다. 승격 여부 = 운영자 판단.</p>
+    <div class="sizes" style="margin-top:10px">
+      <figure><span class="ava" style="width:32px;height:32px;background-image:url('../characters/season/mudi/mudi_face01.webp')"></span><figcaption>32 버블</figcaption></figure>
+      <figure><span class="ava" style="width:34px;height:34px;background-image:url('../characters/season/ryu/ryu_face01.webp')"></span><figcaption>34 헤더</figcaption></figure>
+      <figure><span class="ava" style="width:58px;height:58px;background-image:url('../characters/season/von/von_face01.webp')"></span><figcaption>58 목록</figcaption></figure>
+      <figure><span class="ava" style="width:104px;height:104px;background-image:url('../characters/season/baek/baek_face02.webp')"></span><figcaption>104 카드</figcaption></figure>
+    </div>
+  </div>
+
+  <div class="sect grp">
+    <h2>⑧ 안 넣은 3건 — 물어야 하는 자리</h2>
+    <table>
+      <tr><th>파일</th><th>왜 멈췄나</th><th>운영자 판단</th></tr>
+      <tr><td class="v">yeta_face_gaeul.png</td>
+        <td>「가을」은 260731에 <b>레포에서 삭제된 캐릭터</b>다(<code>viewer/characters/season/gaeul/</code> 없음 · 로스터 17인에 없음). 넣을 폴더가 존재하지 않는다.</td>
+        <td>가을 복귀 / 다른 인물의 프사로 전용 / 보류 — 셋 중 어느 쪽?</td></tr>
+      <tr><td class="v">photo_…18-54-33.jpg</td>
+        <td>1024² 얼빡인데 <b>누구인지 모르겠다</b>(마젠타 네온 · 높은 포니테일 · 가죽). 기존 세라(백발)·한나(단발 흑발)·서예은(흑발+금)·루시(청발) 어느 얼굴과도 안 맞는다.</td>
+        <td>누구의 얼빡인가?</td></tr>
+      <tr><td class="v">photo_…18-54-34.jpg</td>
+        <td><code>yeta_bg_radio_tense.png</code>와 <b>같은 그림</b>(텔레그램 압축본 · 714×1280 vs 768×1376 · MAE 0.48). 둘 다 넣으면 로테이션에 같은 장면이 두 번 걸린다.</td>
+        <td>고해상 PNG만 남김(기본) — 이견 있으면 알려주세요.</td></tr>
+    </table>
+    <p class="note">원본 27장 전량은 <code>_소재/Desktop (2).zip</code>(+<code>.z01</code>)에 그대로 있다 — 루트 청결 게이트 안내대로 <code>_소재/</code>로 옮겼고, 언제든 다시 꺼낼 수 있다.</p>
+  </div>
+
+  <div class="sect grp">
+    <h2>⑨ 기계 검증</h2>
+    <table>
+      <tr><th>게이트</th><th>결과</th></tr>
+      <tr><td>PNG/JPG → WebP 변환(ffmpeg libwebp · 씬 q85 · 얼빡 q90)</td><td class="v">21.0MB → 2.6MB (24장)</td></tr>
+      <tr><td><code>python3 shared/build_season_media.py</code></td><td class="v">7인 manifest 재생성(baek·desk·mudi·ryu·sera·von·yun) · 나머지 diff 0</td></tr>
+      <tr><td>얼빡 배경 게이트</td><td class="v">배경 풀 364장 · 프사 0 · 정사각 미확인 0</td></tr>
+      <tr><td>로스터 에셋 게이트</td><td class="v">bg·avatar·mode 경로 37건 전원 실존</td></tr>
+      <tr><td><code>python3 shared/check_refs.py</code></td><td class="v">rc=0 (루트 청결만 비차단 WARN = 무관한 mp4 1건)</td></tr>
+    </table>
+  </div>
+</div>
+</body>
+</html>

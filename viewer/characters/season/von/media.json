@@ -4,9 +4,11 @@
   "characters/season/von/main/base/von_01.jpg",
   "characters/season/von/main/base/von_02.jpg",
   "characters/season/von/main/base/von_base.webp",
-  "characters/season/von/main/base/von_base2.webp"
+  "characters/season/von/main/base/von_base2.webp",
+  "characters/season/von/main/base/von_gym.webp"
  ],
  "warm": [
+  "characters/season/von/main/warm/von_gym_warm.webp",
   "characters/season/von/main/warm/von_warm.webp",
   "characters/season/von/main/warm/von_warm2.webp"
  ],

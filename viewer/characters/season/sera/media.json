@@ -3,11 +3,13 @@
  "base": [
   "characters/season/sera/main/base/sera_k02.jpg",
   "characters/season/sera/main/base/sera_k03.jpg",
+  "characters/season/sera/main/base/sera_studio.webp",
   "characters/season/sera/main/base/sera_v06.jpg"
  ],
  "warm": [
   "characters/season/sera/main/warm/sera_k04.jpg",
-  "characters/season/sera/main/warm/sera_k05.jpg"
+  "characters/season/sera/main/warm/sera_k05.jpg",
+  "characters/season/sera/main/warm/sera_studio_warm.webp"
  ],
  "joy": [
   "characters/season/sera/main/joy/sera_k06.jpg"
@@ -20,6 +22,7 @@
   "characters/season/sera/main/blue/sera_k08.jpg",
   "characters/season/sera/main/blue/sera_k09.jpg",
   "characters/season/sera/main/blue/sera_k10.jpg",
+  "characters/season/sera/main/blue/sera_studio_blue.webp",
   "characters/season/sera/main/blue/sera_v08.jpg"
  ],
  "tense": [

@@ -4,15 +4,18 @@
   "characters/season/yun/main/base/yun_base.webp"
  ],
  "warm": [
+  "characters/season/yun/main/warm/yun_radio_warm.webp",
   "characters/season/yun/main/warm/yun_warm.webp"
  ],
  "joy": [
   "characters/season/yun/main/joy/yun_joy.webp"
  ],
  "blue": [
-  "characters/season/yun/main/blue/yun_blue.webp"
+  "characters/season/yun/main/blue/yun_blue.webp",
+  "characters/season/yun/main/blue/yun_radio_blue.webp"
  ],
  "tense": [
+  "characters/season/yun/main/tense/yun_radio_tense.webp",
   "characters/season/yun/main/tense/yun_tense.webp"
  ],
  "mad": [

@@ -5,6 +5,7 @@
   "characters/season/ryu/main/base/ryu_base2.webp"
  ],
  "warm": [
+  "characters/season/ryu/main/warm/ryu_dojo_warm.webp",
   "characters/season/ryu/main/warm/ryu_warm.webp",
   "characters/season/ryu/main/warm/ryu_warm2.webp"
  ],
@@ -22,7 +23,8 @@
  ],
  "blue": [
   "characters/season/ryu/main/blue/ryu_blue.webp",
-  "characters/season/ryu/main/blue/ryu_blue2.webp"
+  "characters/season/ryu/main/blue/ryu_blue2.webp",
+  "characters/season/ryu/main/blue/ryu_dojo_blue.webp"
  ],
  "tense": [
   "characters/season/ryu/main/tense/ryu_01.jpg",
