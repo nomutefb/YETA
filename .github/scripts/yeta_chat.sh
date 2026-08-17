@@ -1281,7 +1281,8 @@ ${line}")"
 
 # ── 생성 공용(본답장 + 초대 판정) — $1=prompt · env MODEL/EFF/SAFE/PERSONA · OUT/GEN_S 설정 · rc 0=성공 ──
 gen_out() {
-  local prompt="$1" inline_delay=15 attempt rc=1 _eff_dropped=0 _fb_n=0 _fb_rules=""
+  local prompt="$1" inline_delay=15 attempt rc=1 _eff_dropped=0 _fb_n=0 _fb_rules="" _vfb=0   # _vfb = 벤더 축(키미) → 클로드 전환을 이 생성에서 이미 썼나(1회 한정)
+  VENDOR_FB=0   # 이 생성이 벤더 폴백을 탔나(호출부 관측용 · 답장 캡션·계측은 METER_MODEL 이 실제 모델로 기록)
   local _err="${GEN_ERR:-/tmp/yeta.err}" _ml="${GEN_METER_LAST:-/tmp/yeta_meter_last.json}"   # 임시경로 노브(260806 refill_bg 격리) — 백그라운드 보충이 본답장 err·계측 파일을 덮지 않게 서브셸이 전용본 지정 · 미설정 = 종전 경로(전 호출처 무변경)
   FRAME_BREAK=0   # 이 생성이 프레임이탈(콘텐츠 거절) 소진으로 실패했는지 — 인캐릭터 이탈 폴백 스위치(260714)
   local _dis="Write,Edit,NotebookEdit,Bash,Task,WebFetch,WebSearch,Read,Glob,Grep" _mt=1
@@ -1357,6 +1358,19 @@ ${prompt}"; _sysx=""; }   # ⚠️ 고정부 회수(260811) — 슬롯에 실려
     if [ "$attempt" -lt "$INLINE_TRIES" ] && is_transient "$OUT$(cat "$_err" 2>/dev/null)"; then
       echo "  ⏳ 일시 과부하(${attempt}/${INLINE_TRIES}) — ${inline_delay}s 후 재시도"
       sleep "$inline_delay"; inline_delay=$((inline_delay * 2)); continue
+    fi
+    # ── 벤더 축 죽음 = 클로드로 갈아타 답장(운영자 260817 "키미가 막혔으니 키미 쓰지 마세요 이지랄하면 진짜 화난다") ──
+    # 왜: 260817 키미 키 만료(401)로 **유저 메시지마다 대화가 통째로 정지**했다. 사람에게 「다이얼 내리세요」를 시키는 건 처방이 아니다 —
+    #   한쪽 벤더가 죽으면 남은 축으로 답이 나가야 대화가 이어진다(이 레포의 fail-soft 계보 = 정적 greeting 폴백·인캐릭터 탈출 폴백·재시도 사다리와 같은 결).
+    # 계승: 「키미 못 쓰면 DEFAULT_MODEL」은 이미 기틀에 있는 형태다(초대 판정 경로 = 이 파일 상단 `case "$RAW_MODEL" … KIMI … DEFAULT_MODEL`). 새 정책 창작이 아니라 본답장 경로로 넓힌 것.
+    # 안전: ① MODEL 은 매 턴 세션에서 재도출되므로(process_turn) 이 치환은 **이 턴 한정** — 다음 턴은 유저 다이얼 그대로 다시 키미를 시도한다(운영자 선택 무시 아님).
+    #       ② 1회만(_vfb) — 클로드도 죽으면 종전 실패 경로(사유 표면화)로 간다. ③ 조용히 넘기지 않는다 = 러너 로그에 사유(위 claude_meter 줄)와 함께 전환을 남긴다.
+    #       ④ 계정 폴오버 체인은 그대로 살아난다(전환 후 MODEL 이 클로드라 위 claude_failover 가 다시 유효).
+    # 비용: 클로드 = 구독 정액 축이라 이 전환은 종량제 추가 과금이 아니다(키미 종량제 실비는 오히려 미발생). 롤백 = 이 블록 제거.
+    if is_kimi "$MODEL" && [ "$_vfb" = 0 ] && [ "$attempt" -lt "$INLINE_TRIES" ]; then
+      _vfb=1; MODEL="$DEFAULT_MODEL"; _ftries="$INLINE_TRIES"; VENDOR_FB=1
+      echo "  🔀 키미 축 사용 불가 — ${DEFAULT_MODEL} 로 갈아타 재생성(대화 유지 · 사유는 바로 위 claude_meter 줄)"
+      continue
     fi
     break
   done
@@ -2235,7 +2249,13 @@ ${_afl}위 경로의 사진을 Read 도구로 직접 열어 실제 내용을 확
     fi
   fi
   case "$RAW_MODEL" in claude-opus-5|claude-sonnet-5|"$KIMI_MODEL"|"$KIMI25_MODEL") MODEL="$RAW_MODEL" ;; *) MODEL="$DEFAULT_MODEL" ;; esac   # 화이트리스트 재강제(방어 심층 · 아이데이션④ · kimi 패밀리 = 운영자 260719/260721)
-  if is_kimi "$MODEL" && [ -z "${KIMI_API_KEY:-}" ]; then finish error "KIMI 키가 러너에 없어 — 레포 Actions 시크릿 KIMI_CODE_OAUTH_TOKEN_EMS1130G 확인 후 다시 보내줘"; return 1; fi   # 유저가 명시 선택한 축 = 조용한 폴백 대신 사유 표면화
+  # 키미 키 부재 = 답장을 죽이지 않고 클로드로(운영자 260817) — 종전엔 여기서 `finish error` 로 끊었다(「유저가 명시 선택한 축이니 사유 표면화」).
+  #   그 결이 실제로 만든 결과는 **대화 정지**였다(키 만료 401 사고와 같은 체감). 사유는 러너 로그로 표면화하고, 유저에겐 답이 가게 한다 —
+  #   아래 gen_out 의 벤더 폴백과 같은 판단·같은 방향(그쪽은 「살아 있지만 죽은 키」, 이쪽은 「아예 없는 키」 = 미리 아는 경우라 왕복 1회를 아낀다).
+  if is_kimi "$MODEL" && [ -z "${KIMI_API_KEY:-}" ]; then
+    echo "  🔀 KIMI 키가 러너에 없다(시크릿 KIMI_CODE_OAUTH_TOKEN_EMS1130G) — ${DEFAULT_MODEL} 로 답장(대화 유지)"
+    MODEL="$DEFAULT_MODEL"; VENDOR_FB=1
+  fi
   case "$RAW_EFF" in low|medium|high|max) EFF="$RAW_EFF" ;; "") EFF="" ;; *) EFF="$DEFAULT_EFF" ;; esac
   [[ "$PERSONA" =~ ^[a-z0-9_-]{1,24}$ ]] || { finish error "페르소나가 비어 있어 — 🎲 다시 뽑아줘"; return 1; }
   CARD="apps/yeta/characters/${PERSONA}.md"
