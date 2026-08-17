@@ -292,16 +292,6 @@ SEASONS = {
                     "⚠ 출처 = 시트 F(캐릭터별 락 · docs/캐릭터보드_캐릭터별_보강.md §6)를 shared/cut_board_sheet.py로 자른 9:16 칸(버킷당 2장). "
                     "정본=viewer/characters/season/von/main/<감정>/."),
     },
-    "hanna": {
-        # 변신 모드 없음 = 단일 폴더(main) · mode_dir 미지정 → 시간대 필터 비활성
-        "modes": {"main": ["base"]},
-        "comment": ("시즌 감정 미디어 manifest(도한나) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). "
-                    "yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종(base/warm/joy/love/shy/blue/tense/mad/sulky · Q.29 + 260726 삐짐 독립) — "
-                    "사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. 변신 모드 없음. "
-                    "⚠ 출처 = 시트 E(9:16 상황 24칸 · docs/캐릭터보드_프롬프트_정본.md §2-E)를 shared/cut_board_sheet.py로 자른 것 — "
-                    "칸당 ~318×566 = 무대(420×900) 규격. 얼빡 hanna_face.webp는 캐릭터 루트라 배경 풀에서 자동 제외. "
-                    "정본=viewer/characters/season/hanna/main/<감정>/."),
-    },
     "drusilla": {
         # 고죠 흉내 = 변신 모드(gojo 폴더) · mode_dir 지정 → viewer 모드 게이트가 경로로 필터.
         # ⚠ 루시(도깨비)의 시간대 게이트와 축이 다르다 — 프리실라 mode는 roster mode.with=["gojo"](동석 게이트)라

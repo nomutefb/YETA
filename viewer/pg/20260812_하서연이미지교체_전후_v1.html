@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="../tokens.css">
 <style>
   /* ── 색 토큰 = viewer/index.html :root 계승(값 SSOT는 그쪽 · 여기는 시안 사본) · 구조 토큰 = ../tokens.css 링크
-     레이아웃·표면 CSS = 20260805_한나얼빡_전후_v1.html 계승(재설계 0) · .stg = 20260730_잠금영상_폴백회복_전후_v1.html 계승 ── */
+     레이아웃·표면 CSS = 선행 전후 페이지 계승(재설계 0) · .stg = 20260730_잠금영상_폴백회복_전후_v1.html 계승 ── */
   :root {
     --fg:#FFFFFF; --fg-rgb:255,255,255; --fg-2:#E7ECE7; --mut:#8B8F8A;
     --bg:#161716; --line:rgba(255,255,255,.08);
@@ -139,7 +139,7 @@
       <tr><td>기본 인트로</td><td class="v">…/haeun/main/base/haeun_base.webp</td><td class="v">315×560 · 32KB</td><td class="v">736×1316 · 90KB</td><td class="v">05 54 46.jpg (1028×1839)</td></tr>
       <tr><td>조이</td><td class="v">…/haeun/main/joy/haeun_joy.webp</td><td class="v">315×560 · 30KB</td><td class="v">736×1316 · 90KB</td><td class="v">05 54 46.jpg (1028×1839)</td></tr>
     </table>
-    <p class="note"><b>경로는 한 글자도 안 바뀌었다</b> — <code>roster.json</code>의 <code>avatar</code>·<code>bg</code>도, <code>media.json</code>도 무접촉(파일 바이트만 교체 · 한나 얼빡 260805 선례 계승). 규격 선택 근거도 기틀 실측 = 프사 512²는 <code>av/*.webp</code> 12장 전원 값 · 736폭은 <code>characters/</code> 최다 규격(736×1308 계열 57장). 인코딩 <code>quality 82</code> = <code>shared/cut_board_sheet.py</code> 배포본 값 계승.</p>
+    <p class="note"><b>경로는 한 글자도 안 바뀌었다</b> — <code>roster.json</code>의 <code>avatar</code>·<code>bg</code>도, <code>media.json</code>도 무접촉(파일 바이트만 교체 · 260805 얼빡 교체 선례 계승). 규격 선택 근거도 기틀 실측 = 프사 512²는 <code>av/*.webp</code> 12장 전원 값 · 736폭은 <code>characters/</code> 최다 규격(736×1308 계열 57장). 인코딩 <code>quality 82</code> = <code>shared/cut_board_sheet.py</code> 배포본 값 계승.</p>
   </div>
 
   <div class="sect grp">
@@ -167,7 +167,7 @@
       <div>
         <p class="cap"><span class="bdg after">후</span><span class="val">시트 F <b>BASE 칸</b> — 찻집 낮 · 턱 괴고 눈맞춤</span></p>
         <div class="stg"><img src="20260812_하서연이미지교체_base_v2.webp" alt="후 — 시트 F BASE 칸(찻집 낮)"></div>
-        <p class="note">보드 시트가 <b>스스로 «BASE»라 라벨한 칸</b>이다(새로 고르지 않고 정본 라벨을 계승). 카드의 「능글맞은 국어교사 · 한쪽만 올라간 미소」가 그대로 나오는 컷 = 첫 페인트용.</p>
+        <p class="note">보드 시트가 <b>스스로 «BASE»라 라벨한 칸</b>이다(새로 고르지 않고 정본 라벨을 계승). 카드의 「능글맞은 미소 · 한쪽만 올라간 입꼬리」가 그대로 나오는 컷 = 첫 페인트용.</p>
       </div>
     </div>
     <p class="note">재단 = <code>python3 shared/cut_board_sheet.py viewer/assets/yeta_char/board/haeun_sheetF_p1.png --labels base,warm,joy,blue,tense,mad --ratio 9:16 --ext webp</code> — 격자 자동검출 3열×2행 = 6칸 실측 일치. 산출이 종전 파일과 <b>md5 동일</b>(<code>7610a23b…</code>) = 이 그림이 원래 그 BASE 칸이었음을 기계로 확인.</p>

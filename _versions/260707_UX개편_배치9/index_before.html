@@ -1050,9 +1050,9 @@ let YMAPD = null, _ymapRaf = 0, _ymapIv = 0, _ymapWalkers = [], _ymapCars = [], 
 const YMAP_SC = 5, YMAP_RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 // ── 맵 시각 레이어(운영자 260707 "자연스럽게 배치 · 차는 차도로 · 신호등 정지 · 건물 안이면 이름표") — map_night.png 좌표계(0~100) · 논리 SSOT(places.json)와 별개 축.
 //    건물 draw 위치(논리좌표는 중앙 뭉침이라 이미지와 불일치 → 실측 트레이스), 도로 링(회색길), 신호등, 실내/야외.
-const YMAP_POS = { radio:[50,14], office:[56,33], studio:[61,44], alley:[50,50], tea:[30,52], store:[50,63], dojo:[20,78], market:[35,71], gym:[11,60], park:[46,84], school:[65,75] };
+const YMAP_POS = { radio:[50,14], office:[56,33], studio:[61,44], alley:[50,50], tea:[30,52], store:[50,63], dojo:[20,78], market:[35,71], gym:[11,60], park:[46,84], lot:[65,75] };
 const YMAP_SPOT = { alley:[50,50], park:[46,84], market:[35,71] };   // 야외 지상 스팟(오프로드 · 캐릭터 안착) — 나머지 = 실내 이름표
-const YMAP_INDOOR = new Set(['tea','studio','office','radio','gym','dojo','school','store']);
+const YMAP_INDOOR = new Set(['tea','studio','office','radio','gym','dojo','store']);
 const YMAP_RING = [[47,51],[50,50],[48,56],[46,65],[44,75],[43,83],[26,85],[14,86],[11,76],[12,67],[22,62],[33,58],[42,54]];   // 차량 도로 링(회색길 실측 · 폐곡선)
 const YMAP_PLAZA_I = 1;   // 링에서 광장(신호등) 정점 인덱스 — 여기서 red면 차량 정지
 const ymRed = now => Math.floor(now / 1000) % 12 < 5;   // 신호 주기 = red 5s / green 7s
@@ -1874,8 +1874,7 @@ const Y_PLACE_POOL = {   // 장소 id(places.json) → 실존 씬(assets/yeta_bg
   office: [{s:'persona_desk',t:['any']}],
   radio: [{s:'radio_neon',t:['any']}],
   store: [{s:'cvs_dawn',t:['any']},{s:'laundromat',t:['night']}],
-  school: [{s:'persona_haeun',t:['any']}],
-  park: [{s:'playground_3am',t:['any']}],
+    park: [{s:'playground_3am',t:['any']}],
   dojo: [{s:'persona_ryu',t:['any']}],
   market: [{s:'market_close',t:['any']}],
   gym: [{s:'persona_von',t:['any']}],

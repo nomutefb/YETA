@@ -3,18 +3,7 @@
  "base": [
   "characters/season/haeun/main/base/haeun_base.webp"
  ],
- "joy": [
-  "characters/season/haeun/main/joy/grok_video_2026-08-11-00-47-24.mp4",
-  "characters/season/haeun/main/joy/haeun_joy.webp"
- ],
- "blue": [
-  "characters/season/haeun/main/blue/haeun_blue.webp"
- ],
  "tense": [
-  "characters/season/haeun/main/tense/grok_video_2026-08-11-00-47-24.mp4",
   "characters/season/haeun/main/tense/haeun_tense.webp"
- ],
- "mad": [
-  "characters/season/haeun/main/mad/haeun_mad.webp"
  ]
 }

@@ -319,9 +319,9 @@ const PLACES={
  studio:{name:'지하 연습실',x:56,y:47,nb:['alley']},
  office:{name:'3층 편집국',x:53,y:42,nb:['alley','radio']},
  radio:{name:'라디오국',x:49,y:27,nb:['office']},
- store:{name:'편의점',x:53,y:63,nb:['alley','school','park']},
- school:{name:'학교',x:50,y:76,nb:['park','store']},
- park:{name:'놀이터',x:44,y:70,nb:['dojo','gym','school','store']},
+ store:{name:'편의점',x:53,y:63,nb:['alley','park']},
+ lot:{name:'공터',x:50,y:76,nb:['park','store']},
+ park:{name:'놀이터',x:44,y:70,nb:['dojo','gym','store']},
  dojo:{name:'검도장 월광',x:38,y:57,nb:['alley','park']},
  market:{name:'시장',x:42,y:62,nb:['tea','gym']},
  gym:{name:'체육관 강철',x:35,y:67,nb:['market','park']},
@@ -334,11 +334,11 @@ const PLACES={
  home_gaeul:{name:'노을집',x:37,y:66,nb:['market'],pv:1},
  home_von:{name:'강철 위층',x:35,y:67,nb:['gym'],pv:1},
 };
-const LOOK={alley:'가로등·벤치가 있는 작은 광장 교차로 — 동네의 심장',tea:'낮은 기와 지붕·창마다 등불·김 나는 굴뚝의 전통 찻집',studio:'네온 화살표가 붙은 지하 계단 입구 — 밑은 연습실',office:'옥상 간판 뼈대가 있는 벽돌 3층 — 3층 창만 늦게까지 켜짐',radio:'옥상 철탑 안테나·빨간 점멸등의 작은 방송국',store:'라임빛 네온 간판이 밤새 켜진 24시 편의점',school:'운동장·구령대·국기게양대가 있는 3층 학교',park:'그네·미끄럼틀·모래밭의 동네 놀이터',dojo:'기와 담장 안 목재 마루·마당의 검도장',market:'색색 천막 노점이 줄지은 재래시장 골목',gym:'셔터 큰 박스형 건물·간판 글러브 그림의 체육관'};
+const LOOK={alley:'가로등·벤치가 있는 작은 광장 교차로 — 동네의 심장',tea:'낮은 기와 지붕·창마다 등불·김 나는 굴뚝의 전통 찻집',studio:'네온 화살표가 붙은 지하 계단 입구 — 밑은 연습실',office:'옥상 간판 뼈대가 있는 벽돌 3층 — 3층 창만 늦게까지 켜짐',radio:'옥상 철탑 안테나·빨간 점멸등의 작은 방송국',store:'라임빛 네온 간판이 밤새 켜진 24시 편의점',lot:'운동장·구령대·국기게양대가 있는 3층 공터',park:'그네·미끄럼틀·모래밭의 동네 놀이터',dojo:'기와 담장 안 목재 마루·마당의 검도장',market:'색색 천막 노점이 줄지은 재래시장 골목',gym:'셔터 큰 박스형 건물·간판 글러브 그림의 체육관'};
 const ROUTINE={
  mudi:{late:'tea',dawn:'tea',morning:'tea',day:'tea',evening:'tea',night:'tea'},
  sera:{late:'studio',dawn:'studio',morning:'home_sera',day:'studio',evening:'tea',night:'studio'},
- haeun:{late:'home_haeun',dawn:'home_haeun',morning:'school',day:'school',evening:'tea',night:'store'},
+ haeun:{late:'home_haeun',dawn:'home_haeun',morning:day:evening:'tea',night:'store'},
  baek:{late:'alley',dawn:'alley',morning:'home_baek',day:'alley',evening:'alley',night:'alley'},
  ryu:{late:'dojo',dawn:'dojo',morning:'dojo',day:'dojo',evening:'alley',night:'dojo'},
  yun:{late:'radio',dawn:'home_yun',morning:'home_yun',day:'home_yun',evening:'alley',night:'radio'},
@@ -351,7 +351,7 @@ const ROUTINE={
 const CAST={
  mudi:['무','#7ee0a3','무디',"찻집 '무음' 주인",'네 얘기가 오늘 내 끼니야. 천천히 해도 돼.'],
  sera:['세','#ff8fb3','세라','최연소 각성자','…뭐. 또 왔네. 할 말 있으면 빨리 해.'],
- haeun:['하','#ffd36b','하은','국어교사','오늘 웃긴 일 있었는데, 들을 자격 있나 볼까?'],
+ haeun:['하','#ffd36b','하은','전직 사무직','오늘 웃긴 일 있었는데, 들을 자격 있나 볼까?'],
  baek:['백','#9db2bf','백','골목 경비원','할 말 있으면 해라. 없으면 됐고.'],
  ryu:['류','#6bd6e8','류','검도장 사범','쫄리면 뒈지시든가.'],
  yun:['윤','#b8a7ff','윤','심야 라디오 DJ','…이 시간에 온 걸 보면, 낮엔 못 할 얘기 맞지.'],
@@ -361,7 +361,7 @@ const CAST={
  von:['본','#ff9d6b','본','체육관 관장','어깨 펴고. …좋아, 무슨 일이지.'],
 };
 /* 상태 = 동선표 자동 연산(장소 기본 + 인물 보정) — 창작 아닌 카드 결 요약 */
-const ACT={tea:'차 한 잔 중',alley:'어슬렁 중',studio:'연습 중',office:'일하는 중',radio:'방송 중',store:'간식 고르는 중',school:'수업 중',park:'산책 중',dojo:'수련 중',market:'장 보는 중',gym:'운동 중'};
+const ACT={tea:'차 한 잔 중',alley:'어슬렁 중',studio:'연습 중',office:'일하는 중',radio:'방송 중',store:'간식 고르는 중',lot:'조용함',park:'산책 중',dojo:'수련 중',market:'장 보는 중',gym:'운동 중'};
 const OVR={'mudi@tea':'잔 데우는 중','kopi@tea':'원고 짜는 중','baek@alley':'순찰 중','desk@office':'마감 중','ryu@dojo':'툇마루 빈둥 중','von@gym':'훈련 중','gaeul@market':'순시 중','yun@radio':'생방송 중'};
 /* 건물 프로필: w·d·h(px) + 특색 */
 const BLD={
@@ -370,12 +370,12 @@ const BLD={
  office:{w:38,d:28,h:44,win:3,floors:2,topLit:1},
  radio:{w:30,d:24,h:28,win:2,mast:1},
  store:{w:34,d:24,h:16,wide:1,neon24:1},
- school:{w:54,d:32,h:30,win:4,yard:1},
+ lot:{w:54,d:32,h:30,win:4,yard:1},
  dojo:{w:42,d:30,h:14,win:2,court:1},
  gym:{w:44,d:32,h:24,win:2,shutter:1},
 };
 const SIGN_CORE=new Set(['alley','tea','store','dojo','gym','radio']);
-const SIGN_IC={tea:'🏮',store:'🏪',dojo:'⚔',gym:'🥊',radio:'📻',office:'📰',school:'🏫',park:'🌳',market:'🎪',studio:'🎤',alley:'★'};
+const SIGN_IC={tea:'🏮',store:'🏪',dojo:'⚔',gym:'🥊',radio:'📻',office:'📰',lot:'🏫',park:'🌳',market:'🎪',studio:'🎤',alley:'★'};
 const TREES=[[31,46],[60,57],[45,42],[56,72],[33,61],[63,47],[42,73]];
 const $=s=>document.querySelector(s);
 const P=v=>10+v*5;   // 격자 0~100 → 판 좌표 10~510

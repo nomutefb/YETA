@@ -2037,9 +2037,9 @@ const YIN_PLACES = { tea: 'tea_sunset' };   // 실내 뷰 개방 장소 → 배�
 const YMAP_SC = 5, YMAP_RM = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 // ── 맵 시각 레이어(운영자 260707 "자연스럽게 배치 · 차는 차도로 · 신호등 정지 · 건물 안이면 이름표") — map_night.png 좌표계(0~100) · 논리 SSOT(places.json)와 별개 축.
 //    건물 draw 위치(논리좌표는 중앙 뭉침이라 이미지와 불일치 → 실측 트레이스), 도로 링(회색길), 신호등, 실내/야외.
-const YMAP_POS = { radio:[50,14], office:[56,33], studio:[61,44], alley:[50,50], tea:[30,52], store:[50,63], dojo:[20,78], market:[35,71], gym:[11,60], park:[46,84], school:[65,75], cathedral:[65,30] };   // cathedral = 부활 성당(운영자 260714 · places.json 동기 — 북동 언덕 공터)
+const YMAP_POS = { radio:[50,14], office:[56,33], studio:[61,44], alley:[50,50], tea:[30,52], store:[50,63], dojo:[20,78], market:[35,71], gym:[11,60], park:[46,84], cathedral:[65,30] };   // cathedral = 부활 성당(운영자 260714 · places.json 동기 — 북동 언덕 공터)
 const YMAP_ZONE = { alley: { x: 48, y: 46.5, r: 3 }, park: { x: 52, y: 88, r: 3.5 }, market: { x: 32, y: 69, r: 2 }, cathedral: { x: 65, y: 34, r: 1.8 } };   // v7 재실측(260717 성당 원판 재생성 — 광장·공원·시장 중심 이동 반영 · cathedral = 성당 앞 프런티지 옆 포장지)
-const YMAP_INDOOR = new Set(['tea','studio','office','radio','gym','dojo','school','store']);
+const YMAP_INDOOR = new Set(['tea','studio','office','radio','gym','dojo','store']);
 // 도로 중심선 v5(운영자 260716 "픽셀 단위로 길을 쪼개고 레이어를 분리" — 재실측 방법 3탄 확정: ① 노면 흰 표시(점선·횡단보도) 블롭 검출 ② 격자 오버레이 육안 트레이스(사분면 확대) ③ 흰 표시 픽셀의 수직 오프셋 중앙값으로 c값 스냅. v4의 u1(한옥 관통)·d3·br(9단위 오차)·유령 도로(강물 오인) 전면 정정 + 수직로 V1/V2 신설). 전 도로 = 직선 y=±0.5x+c(2:1 아이소메트릭) 또는 수직(x=c). 정점 [x,y,f]: 's' = 광장 정지선(신호등 짝). ※ 'h' 은폐 플래그 폐지 — 건물 가림은 아래 도로 마스크가 픽셀 단위로 대체.
 // 픽셀 도로 마스크(v5 핵심): assets/yeta_map/road_mask_{night,day}.png = 아스팔트 픽셀만 백색인 레이어. #ymCars 그룹에 SVG mask로 적용 → 차는 도로 픽셀 위에서만 렌더 = 건물 투과 구조적 불가 + 건물·나무가 도로를 덮는 픽셀은 마스크 구멍 = 차가 그 뒤로 자연히 숨음(z 분리).
 // ⚠️ 배경(map_day/night.png)은 생성 이미지 — 재생성하면 이 좌표·마스크 전부 실효. 배경 교체 시 `python3 shared/yeta_map_trace.py`로 재실측(마스크 재생성 포함) + 아래 SHA 토큰 갱신.
@@ -2051,8 +2051,8 @@ const YMAP_ROADS_TONE = {   // 전부 톤별(밤/낮 = 서로 다른 생성 그�
     nw:  [[0,24],[37.5,42.75,'s']],      // 상가북로(↘): 좌변 → 상가 거리 → 광장 NW 정지선('s')
     pne: [[50,40.5],[88,21.5]],          // 광장NE-성당로(↗): 광장 NE → 지하연습실 → 성당 앞 → 다리(c=65.5 — 옛 u2 상단부는 성당 부지로 소멸 = 통합 재편)
     tr:  [[67,1.3],[100,17.8]],          // 우상로(↘): 상단 → 우변(c=-32.2)
-    seL: [[45,46.9],[100,74.4]],         // 광장남동로(↘): 광장 SW → 24시·학교 사이 → 우변(c=24.4)
-    tea: [[14,51.9],[86,87.9]],          // 홍차집남로(↘): 홍차집 서측 → 학교·공원 사이 → br 합류(c=44.9)
+    seL: [[45,46.9],[100,74.4]],         // 광장남동로(↘): 광장 SW → 24시·공터 사이 → 우변(c=24.4)
+    tea: [[14,51.9],[86,87.9]],          // 홍차집남로(↘): 홍차집 서측 → 공터·공원 사이 → br 합류(c=44.9)
     mkt: [[11,75.6],[59.8,100]],         // 시장남로(↘): V1 분기 → 한옥 아래 → 최하단(c=70.1)
     bl:  [[0,83],[34,100]],              // 좌하로(↘)
     br:  [[70,99.5],[100,84.5]],         // 우하로(↗ · c=134.5)
@@ -4039,8 +4039,7 @@ const Y_PLACE_POOL = {   // 장소 id(places.json) → 실존 씬(assets/yeta_bg
   office: [{s:'persona_desk',t:['any']}],
   radio: [{s:'radio_neon',t:['any']}],
   store: [{s:'cvs_dawn',t:['any']},{s:'laundromat',t:['night']}],
-  school: [{s:'persona_haeun',t:['any']}],
-  park: [{s:'playground_3am',t:['any']}],
+    park: [{s:'playground_3am',t:['any']}],
   dojo: [{s:'persona_ryu',t:['any']}],
   market: [{s:'market_close',t:['any']}],
   gym: [{s:'persona_von',t:['any']}],

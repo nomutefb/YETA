@@ -70,7 +70,7 @@ def main():
     ck(len(art.AV_BASE) == AV_BASE_LEN, "AV_BASE 길이 {} (실측 {})".format(AV_BASE_LEN, len(art.AV_BASE)))
     ck("just above the eyebrows" in art.AV_FRAME_TIGHT, "극단 크롭 어휘 = AV_FRAME_TIGHT 안")
     ck("just above the eyebrows" not in art.AV_STYLE, "톤 조각엔 크롭 어휘 없음")
-    os.environ["YETA_BOARD_SHEET"], os.environ["YETA_BOARD_SLUG"] = "FACE", "ilzin"
+    os.environ["YETA_BOARD_SHEET"], os.environ["YETA_BOARD_SLUG"] = "FACE", "haeun"
     board = load("yeta_char_board")
     fp = board.build_face()
     ck(art.AV_STYLE in fp, "sheet=FACE = 톤(AV_STYLE) 계승")

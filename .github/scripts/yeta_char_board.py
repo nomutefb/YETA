@@ -19,7 +19,7 @@ MODEL = (os.environ.get("OPENAI_IMAGE_MODEL") or "gpt-image-2").strip()
 API_GEN = "https://api.openai.com/v1/images/generations"
 API_EDIT = "https://api.openai.com/v1/images/edits"
 FORCE = os.environ.get("FORCE", "") == "1"
-SHEET = (os.environ.get("YETA_BOARD_SHEET") or "A").strip().upper()      # FACE = 얼빡 프사 1장(1:1 · AV_BASE 정본 임포트) · A = 감정 9칸(3×3 · 앱 정합) · B = 감정 20칸(5×4) · C = 포즈 12칸(4×3 · 표정 고정) · D = 일진 상황 9칸(3×3) · E = 9:16 상황 6칸(3×2 · 칸 목록에서 6칸씩 · n장) · F = E와 같되 옷·헤어 자유(LOCK_CORE) · CELL = 개별 칸 1장씩(9:16 크롭)
+SHEET = (os.environ.get("YETA_BOARD_SHEET") or "A").strip().upper()      # FACE = 얼빡 프사 1장(1:1 · AV_BASE 정본 임포트) · A = 감정 9칸(3×3 · 앱 정합) · B = 감정 20칸(5×4) · C = 포즈 12칸(4×3 · 표정 고정) · D = 상황 9칸(3×3) · E = 9:16 상황 6칸(3×2 · 칸 목록에서 6칸씩 · n장) · F = E와 같되 옷·헤어 자유(LOCK_CORE) · CELL = 개별 칸 1장씩(9:16 크롭)
 SLUG = re.sub(r"[^0-9A-Za-z_-]", "", (os.environ.get("YETA_BOARD_SLUG") or "board")) or "board"
 REF = (os.environ.get("YETA_BOARD_REF") or "").strip()                   # 레퍼런스 이미지 경로(있으면 edits 경로 = 동일성 앵커)
 # 프롬프트 정본은 2벌로 나뉜다(운영자 260803 다캐릭터 보강) — 공용 판 + 캐릭터별 락·칸 판.
@@ -85,7 +85,7 @@ def build_prompt(sheet):
 def build_sheet_grid(group, sheet):
     """6칸 시트(E·F) 조립 — 템플릿 1벌 + 칸 목록 6개(§3-1·§3-2).
 
-    E = `{LOCK}`(교복 고정 판) · F = `{LOCK_CORE}`(의상·헤어 자유 · 얼굴·비례 고정 판 · 운영자 260803).
+    E = `{LOCK}`(의상 고정 판) · F = `{LOCK_CORE}`(의상·헤어 자유 · 얼굴·비례 고정 판 · 운영자 260803).
     4번째 필드는 시트에 따라 뜻이 갈린다 — E에선 **락 예외**, F에선 **그 칸의 옷·머리**(문구에 WARDROBE: 가 붙어 온다).
     """
     body = spec_block("SHEET_%s" % sheet)

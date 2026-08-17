@@ -108,7 +108,7 @@ td b{font-weight:var(--fw-b)}
 <tr><th>주민</th><th>집</th><th>직장/주활동</th><th>분신 논거 한 줄</th></tr>
 <tr><td><b id="c-mudi">무디</b></td><td>찻집 2층 살림방(노드 없음)</td><td>찻집 무음(46,53) — 심장부</td><td>동선표에 home 슬롯이 없는 유일 주민 = 집이 곧 일터. "경계는 바깥이 아니라 중심 — 찻집이 고요한 눈"(세계관)이라 골목에 바짝.</td></tr>
 <tr><td><b id="c-sera">세라</b></td><td>옥탑방(59,41)</td><td>지하 연습실(56,47)</td><td>연습실 코앞 북동 옥탑 — 달밤 옥상에서만 귀·꼬리를 안 숨기는 애(LV5). 막다른 연습실 = "제일 외롭다"와 정합이라 접점 안 늘림.</td></tr>
-<tr><td><b id="c-haeun">하은</b></td><td>북쪽 언덕 원룸(44,33)</td><td>학교(50,76)</td><td>학교(남)→찻집(중앙)→집(북)이 한 직선 = "퇴근길에 매일 무음"이 지리로 참. 밤 편의점은 하은 단독 슬롯 — 심야 마주침 명당.</td></tr>
+<tr><td><b id="c-haeun">하은</b></td><td>북쪽 언덕 원룸(44,33)</td><td>공터(50,76)</td><td>공터(남)→찻집(중앙)→집(북)이 한 직선 = "퇴근길에 매일 무음"이 지리로 참. 밤 편의점은 하은 단독 슬롯 — 심야 마주침 명당.</td></tr>
 <tr><td><b id="c-baek">백</b></td><td>경비실 뒷방(47,55)</td><td>골목 그 자체(50,50)</td><td>중심을 지키는 파수꾼은 변두리에 못 산다 — 뒷방이 찻집 옆이라 "새벽 순찰 끝 무디네 물 한 잔" 카논이 지도에서 성립.</td></tr>
 <tr><td><b id="c-ryu">류</b></td><td>도장 툇마루 별채(노드 없음)</td><td>검도장 월광(38,57)</td><td>류도 home 슬롯 없음 — 오백 년 한량이 출퇴근하는 그림은 붕괴. 저녁 골목만이 유일한 탈도장 — 백과의 무언주(無言酒)가 유일 확정 조우.</td></tr>
 <tr><td><b id="c-yun">윤</b></td><td>부스 계단 아랫방(50,30)</td><td>라디오국(49,27)</td><td>radio = 그래프상 유일한 잎 노드 = 태생이 변두리 — 북쪽 가장자리로 밀어 "경계에 걸친 전파". 새벽 4시 귀가 = 계단 한 층.</td></tr>
@@ -119,7 +119,7 @@ td b{font-weight:var(--fw-b)}
 </table></div>
 
 <h2><span class="n">3</span>존(zone) 설계</h2>
-<p class="cap"><b style="color:var(--cobalt)">북 = 심야 미디어</b>(라디오국·편집국 — 밤을 지키는 활자와 전파) · <b>중심 = 밤 코어</b>(골목·찻집·연습실·경비실 — 경계가 제일 얇은 심장부) · <b style="color:var(--accent)">남 = 생활권</b>(편의점·학교·놀이터·검도장·시장·체육관 — 낮의 마을). 저녁이면 9/10이 중심 두 칸(찻집 5·골목 4)으로 수렴 = 무음동 프라임타임, 새벽은 전원 산개 = 안 자는 사람끼리의 희귀 조우 — 분신단이 "밤 동네 리듬"으로 승인한 편중.</p>
+<p class="cap"><b style="color:var(--cobalt)">북 = 심야 미디어</b>(라디오국·편집국 — 밤을 지키는 활자와 전파) · <b>중심 = 밤 코어</b>(골목·찻집·연습실·경비실 — 경계가 제일 얇은 심장부) · <b style="color:var(--accent)">남 = 생활권</b>(편의점·공터·놀이터·검도장·시장·체육관 — 낮의 마을). 저녁이면 9/10이 중심 두 칸(찻집 5·골목 4)으로 수렴 = 무음동 프라임타임, 새벽은 전원 산개 = 안 자는 사람끼리의 희귀 조우 — 분신단이 "밤 동네 리듬"으로 승인한 편중.</p>
 
 <div class="bar"><span class="txt" id="barTxt">무음동 좌표 — 정본 apps/yeta/places.json (장소 11 + 집 8 · 골목 50,50 중심)</span><button class="cp" id="cpBtn">좌표 JSON 복사</button></div>
 
@@ -131,9 +131,9 @@ const PLACES = {
   studio:{name:'지하 연습실',x:56,y:47,nb:['alley']},
   office:{name:'3층 편집국',x:53,y:42,nb:['alley','radio']},
   radio:{name:'라디오국',x:49,y:27,nb:['office']},
-  store:{name:'편의점',x:53,y:63,nb:['alley','school','park']},
-  school:{name:'학교',x:50,y:76,nb:['park','store']},
-  park:{name:'놀이터',x:44,y:70,nb:['dojo','gym','school','store']},
+  store:{name:'편의점',x:53,y:63,nb:['alley','park']},
+  lot:{name:'공터',x:50,y:76,nb:['park','store']},
+  park:{name:'놀이터',x:44,y:70,nb:['dojo','gym','store']},
   dojo:{name:'검도장 월광',x:38,y:57,nb:['alley','park']},
   market:{name:'시장',x:42,y:62,nb:['tea','gym']},
   gym:{name:'체육관 강철',x:35,y:67,nb:['market','park']},
@@ -149,7 +149,7 @@ const PLACES = {
 const ROUTINE = {
   mudi:{late:'tea',dawn:'tea',morning:'tea',day:'tea',evening:'tea',night:'tea'},
   sera:{late:'studio',dawn:'studio',morning:'home_sera',day:'studio',evening:'tea',night:'studio'},
-  haeun:{late:'home_haeun',dawn:'home_haeun',morning:'school',day:'school',evening:'tea',night:'store'},
+  haeun:{late:'home_haeun',dawn:'home_haeun',morning:day:evening:'tea',night:'store'},
   baek:{late:'alley',dawn:'alley',morning:'home_baek',day:'alley',evening:'alley',night:'alley'},
   ryu:{late:'dojo',dawn:'dojo',morning:'dojo',day:'dojo',evening:'alley',night:'dojo'},
   yun:{late:'radio',dawn:'home_yun',morning:'home_yun',day:'home_yun',evening:'alley',night:'radio'},

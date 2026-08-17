@@ -272,7 +272,7 @@ td.ok{color:#9be09b;white-space:nowrap}
 
 <script>
 /* ── 캐스트(roster.json 실값) ── */
-const CAST={sera:{n:'세라',i:'세',c:'#ff8fb3',t:'지하 연습실의 최연소 각성자'},mudi:{n:'무디',i:'무',c:'#7ee0a3',t:"찻집 '무음'의 주인"},haeun:{n:'하은',i:'하',c:'#ffd36b',t:'퇴근길의 능글맞은 국어교사'},baek:{n:'백',i:'백',c:'#9db2bf',t:'골목의 과묵한 파수꾼'},ryu:{n:'류',i:'류',c:'#6bd6e8',t:"검도장 '월광'의 한량 사범"},yun:{n:'윤',i:'윤',c:'#b8a7ff',t:"심야 라디오 '주파수' DJ"}};
+const CAST={sera:{n:'세라',i:'세',c:'#ff8fb3',t:'지하 연습실의 최연소 각성자'},mudi:{n:'무디',i:'무',c:'#7ee0a3',t:"찻집 '무음'의 주인"},haeun:{n:'하은',i:'하',c:'#ffd36b',t:'퇴근길의 능글맞은 전직 사무직'},baek:{n:'백',i:'백',c:'#9db2bf',t:'골목의 과묵한 파수꾼'},ryu:{n:'류',i:'류',c:'#6bd6e8',t:"검도장 '월광'의 한량 사범"},yun:{n:'윤',i:'윤',c:'#b8a7ff',t:"심야 라디오 '주파수' DJ"}};
 const $=s=>document.querySelector(s);
 const av=(id,cls)=>`<span class="av ${cls||''}" style="background:${CAST[id].c}">${CAST[id].i}</span>`;
 const mlog=$('#mlog'),sheet=$('#msheet');
@@ -327,7 +327,7 @@ c:{note:`<b>C · 난입 → 내보내기</b> — 초대의 대칭(캐릭터가 �
 <li><span class="k">연출</span>: 등장 sys 2박(문 소리 → enter_line) → 첫 대사 → 헤더 합류.</li>
 <li><span class="k">거절권(유저)</span>: 난입 직후에만 <b>원탭 [내보내기] pill</b> — 다음 내 메시지 후 자동 소멸이라 로그가 안 지저분해짐. 말로 내보내는 건 언제나 가능.</li>
 <li><span class="k">퇴장도 연출</span>: 쫓겨나도 세계관 안에서(\`다음을 기약하며\`) — 기능이 아니라 장면.</li></ul>`,
-steps:[[0,()=>{header(['sera']);mlog.innerHTML='';me('하은쌤은 요즘 뭐 하나 몰라');ai('sera','몰라. 어제도 옆 반에서 시끄럽던데.');}],
+steps:[[0,()=>{header(['sera']);mlog.innerHTML='';me('하은 씨은 요즘 뭐 하나 몰라');ai('sera','몰라. 어제도 옆 반에서 시끄럽던데.');}],
 [1100,()=>sys('덜컥 — 문이 열린다')],
 [900,()=>sys('하은이 가방을 흔들며 문을 밀고 들어온다','ent')],
 [900,()=>{header(['sera','haeun'],'단톡 · 2명');ai('haeun','어? 지금 내 얘기 했지~ 귀가 간지럽더라. 나도 유자차.');}],
