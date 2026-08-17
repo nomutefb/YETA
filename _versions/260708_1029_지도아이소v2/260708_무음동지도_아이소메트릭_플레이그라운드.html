@@ -329,12 +329,12 @@ const PLACES={
  home_haeun:{name:'하은의 집',x:44,y:33,nb:['tea'],pv:1},
  home_baek:{name:'경비실 뒷방',x:47,y:55,nb:['alley'],pv:1},
  home_yun:{name:'계단 아랫방',x:50,y:30,nb:['radio'],pv:1},
- home_desk:{name:'삼교의 방',x:58,y:36,nb:['office'],pv:1},
+ home_desk:{name:'붉은 펜의 방',x:58,y:36,nb:['office'],pv:1},
  home_kopi:{name:'카피 옥탑',x:52,y:56,nb:['alley'],pv:1},
  home_gaeul:{name:'노을집',x:37,y:66,nb:['market'],pv:1},
  home_von:{name:'강철 위층',x:35,y:67,nb:['gym'],pv:1},
 };
-const LOOK={alley:'가로등·벤치가 있는 작은 광장 교차로 — 동네의 심장',tea:'낮은 기와 지붕·창마다 등불·김 나는 굴뚝의 전통 찻집',studio:'네온 화살표가 붙은 지하 계단 입구 — 밑은 연습실',office:'옥상 간판 뼈대가 있는 벽돌 3층 — 3층 창만 늦게까지 켜짐',radio:'옥상 철탑 안테나·빨간 점멸등의 작은 방송국',store:'라임빛 네온 간판이 밤새 켜진 24시 편의점',lot:'운동장·구령대·국기게양대가 있는 3층 공터',park:'그네·미끄럼틀·모래밭의 동네 놀이터',dojo:'기와 담장 안 목재 마루·마당의 검도장',market:'색색 천막 노점이 줄지은 재래시장 골목',gym:'셔터 큰 박스형 건물·간판 글러브 그림의 체육관'};
+const LOOK={alley:'가로등·벤치가 있는 작은 광장 교차로 — 동네의 심장',tea:'낮은 기와 지붕·창마다 등불·김 나는 굴뚝의 전통 찻집',studio:'네온 화살표가 붙은 지하 계단 입구 — 밑은 연습실',office:'옥상 간판 뼈대가 있는 벽돌 3층 — 3층 창만 늦게까지 켜짐',radio:'옥상 철탑 안테나·빨간 점멸등의 작은 방송국',store:'라임빛 네온 간판이 밤새 켜진 24시 편의점',lot:'철제 펜스를 두른 너른 공터',park:'그네·미끄럼틀·모래밭의 동네 놀이터',dojo:'기와 담장 안 목재 마루·마당의 검도장',market:'색색 천막 노점이 줄지은 재래시장 골목',gym:'셔터 큰 박스형 건물·간판 글러브 그림의 체육관'};
 const ROUTINE={
  mudi:{late:'tea',dawn:'tea',morning:'tea',day:'tea',evening:'tea',night:'tea'},
  sera:{late:'studio',dawn:'studio',morning:'home_sera',day:'studio',evening:'tea',night:'studio'},
@@ -375,7 +375,7 @@ const BLD={
  gym:{w:44,d:32,h:24,win:2,shutter:1},
 };
 const SIGN_CORE=new Set(['alley','tea','store','dojo','gym','radio']);
-const SIGN_IC={tea:'🏮',store:'🏪',dojo:'⚔',gym:'🥊',radio:'📻',office:'📰',lot:'🏫',park:'🌳',market:'🎪',studio:'🎤',alley:'★'};
+const SIGN_IC={tea:'🏮',store:'🏪',dojo:'⚔',gym:'🥊',radio:'📻',office:'📰',lot:'🧱',park:'🌳',market:'🎪',studio:'🎤',alley:'★'};
 const TREES=[[31,46],[60,57],[45,42],[56,72],[33,61],[63,47],[42,73]];
 const $=s=>document.querySelector(s);
 const P=v=>10+v*5;   // 격자 0~100 → 판 좌표 10~510

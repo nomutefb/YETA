@@ -63,7 +63,7 @@ AV_STYLE = ("perfectly square 1:1, one single original fictional character, "
            "large detailed eyes with clean eyeliner accents, calm even lighting, "
            "plain softly blurred background in one quiet tone (a faint hint of the character's own aura colour), "
            "NO lightning, NO sparks, NO glowing particles, NO magic effects, NO neon streaks, NO heavy rim light, "
-           "keep the described gender and apparent age exactly — the crop hides hair length and clothing, so read the description, not the framing, "   # 260725 run#1 실측: 세라(19세 여성)가 남성 얼굴로 나왔다 — 얼빡 크롭이 성별·나이 단서(포니테일·의상)를 지워 프롬프트 표류
+           "keep the described gender and apparent age exactly — the crop hides hair length and clothing, so read the description, not the framing, "   # 260725 run#1 실측: 세라(성인 여성)가 남성 얼굴로 나왔다 — 얼빡 크롭이 성별·나이 단서(포니테일·의상)를 지워 프롬프트 표류
            "no text, no caption, no watermark, no logo, no border. Character — ")
 AV_BASE = AV_FRAME_TIGHT + AV_STYLE   # 조립본 = 종전 AV_BASE 원문(순서·공백 무변)
 
