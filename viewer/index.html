@@ -5676,11 +5676,11 @@ let _yDeepGo = null;   // 딥링크 지연 발사(분신술 260709 cold — 잠�
 try { const _q = new URLSearchParams(location.search); if (_q.get('yeta')) { const _t = _q.get('t') || ''; const _go = () => openYeta(_t || undefined); setTimeout(() => { if (document.getElementById('ymain').classList.contains('unlocked')) _go(); else _yDeepGo = _go; }, 400); } } catch {}   // t = openYeta가 chars 로드 후 자체 검증 · 미언락 = 언락 완료에 큐잉   // 답장 웹푸시 딥링크(/?yeta=main — sw.js notificationclick)
 try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(function(){ try{ var ym=document.getElementById('ymain'); if(ym){ym.classList.remove('pin-mode');ym.classList.add('unlocked');} if(typeof setUnlocked==='function' && !unlocked) setUnlocked(false); var h=(location.hash||'').replace(/^#/,'').trim().toLowerCase(); var al={char:'char','캐릭터':'char',list:'list',chat:'list','대화':'list',map:'map','지도':'map',settings:'settings','설정':'settings'}; var t=al[h]; if(t && typeof yTab==='function') setTimeout(function(){ try{ yTab(t); }catch(e){} }, 500); }catch(e){} }, 2400); } } catch(e){}   // [QA] ?qa=1 = PIN 잠금 없이 진입 · #char|list|map|settings = 전 섹션 딥링크(운영자 260725 승인 · 라이브 공개 우회 · [E1] 실브라우저 현물 확인용)
 
-/* ═══ YETA 메인 PIN 게이트 (nomute lk- 이식 · SHA-256·5회=10분 잠금 · 260704 V1) ═══ */
+/* ═══ YETA 메인 PIN 게이트 (nomute lk- 이식 · 판정 = 서버 op auth 단독 · 260704 V1 · 누적 잠금 폐지 260817) ═══ */
 (function () {
   const ymain = $('#ymain'), slotsEl = $('#ymSlots'), padEl = $('#ymPad'), errEl = $('#ymErr'), accessBtn = $('#ymAccess'), nav = $('#ynav');
   // PIN 판정 = 서버 op auth 단일 경로(운영자 260706 권한 2계층 — 클라 해시 대조 폐지: 4자리 해시 박제 = 역산 = admin PIN 노출이라 admin은 Pages env, guest는 apps/yeta/users.json[깃 SSOT])
-  const YM_LEN = 4, YM_MAX = 5, YM_OUT_MS = 600000;
+  const YM_LEN = 4;   // 누적 잠금 상수(구 YM_MAX 5 · YM_OUT_MS 10분) 폐지 — 사유 전문 = 아래 「누적 잠금 폐지」 절
   let val = '', unlocked = false;
   const ymHash = async p => { const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(p + ':yeta')); return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join(''); };
   // 패턴 그리드(번호 숨김) — 3×3 점, 키패드 순서 1~9 매핑(방문 순서 = PIN 숫자열) · 서버 auth 무변경
@@ -5699,7 +5699,15 @@ try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(fun
     if (val.length) accessBtn.dataset.crack = String(val.length); else accessBtn.removeAttribute('data-crack'); };   // 자물쇠 크랙 = 입력 길이 동기(백스페이스 = 복구 · 운영자 260706 해킹 서사)
   const lockGlitch = () => { accessBtn.classList.remove('hitc'); void accessBtn.offsetWidth; accessBtn.classList.add('hitc'); };   // 입력·오류 순간 지지직 재트리거
   const flash = el => { if (!el) return; el.classList.add('hit'); setTimeout(() => el.classList.remove('hit'), 140); };
-  const outLeft = () => { try { const u = +localStorage.getItem('yeta_pin_until') || 0; return Math.max(0, u - Date.now()); } catch { return 0; } };
+  // ── 누적 잠금 폐지(운영자 260817 "누적 잠금을 아예 없애줘") ──
+  //   구동작: 오답마다 yeta_pin_fails 를 localStorage 에 +1 누적 → 5회 이상이면 yeta_pin_until 로 10분간 입력 차단.
+  //   결함(실측 260817): 카운터가 **언락 성공 때만** 지워진다 = 감쇠도 시간만료도 없는 평생 누적. 누적 5를 넘긴 브라우저는
+  //     그 뒤로 오답 1회마다 10분이 **새로 재무장**되고, 잠금 중엔 pointerdown 이 조기 return 이라 정답을 넣어도 점조차 안 켜졌다.
+  //     의도는 "5회 틀리면 10분"이었는데 실제로는 "한 번이라도 5회에 도달했으면 이후 영구히 1회당 10분"이 돼 있었다.
+  //   제거 근거 = 실보안 기여 0: 판정은 서버 op auth 단독이고 이 잠금은 localStorage 뿐이라 curl 직타·시크릿창·사이트데이터 삭제로
+  //     전부 우회된다(실측 — 게이트웨이 auth 는 속도제한이 없어 외부에서 무제한 시도 가능). 즉 공격자는 못 막고 운영자만 가뒀다.
+  //   ⚠️ 브루트포스 방어가 필요하면 클라가 아니라 **게이트웨이 op auth**(R2 시도 카운터 = op pinset 선례)에 달아야 한다 — 별건.
+  try { localStorage.removeItem('yeta_pin_fails'); localStorage.removeItem('yeta_pin_until'); } catch {}   // 옛 키 잔재 청소 = 이미 갇힌 브라우저도 이 배포 즉시 해제(마이그레이션 · 이후 두 키는 어디서도 읽지 않는다)
   // ── 무음동 세계 시계(운영자 260715) — 실제 시각과 분리, 6배 가속(실제 4h = 무음동 하루 · 자는 새벽도 겪게). 러너 state_block wmin과 동일 공식(epoch분×6 mod 1440) = 저장 없이 동기. ──
   const YWORLD_RATE = 6;   // 6배(1배=현실, 24배=1시간 하루) — 조정 노브
   window.YWORLD_RATE = YWORLD_RATE;   // 배율 노출(260725) — 사망 경과·잔여를 무음동 단위로 적는 yWDur이 참조 · 노브 SSOT 유지(밖에서 재선언 금지)
@@ -5788,27 +5796,24 @@ try { if (new URLSearchParams(location.search).get('qa')==='1') { setTimeout(fun
     if (seq !== patSeq || val !== attempt) return;   // 판정 대기 중 재입력 = 낡은 판정 폐기(동일 패턴 재입력도 세대 불일치로 차단 — 이중 실패 카운트·이중 언락 디스패치 방지)
     if (ar === null || (ar && ar.setup)) {   // 네트워크·서버 미설정 = 오답 아님 — 실패 카운트 없이 안내만
       errEl.className = 'lk-err'; errEl.textContent = '서버 연결 실패 — 잠시 후 다시';
-      clearTimeout(patT); patT = setTimeout(() => { if (!outLeft()) errEl.textContent = ''; patReset(); }, 1400); return;   // patT 추적 = 잔상 중 새 입력 시작(patReset)이 이 타이머를 회수 — 스테일 리셋이 새 입력을 지우던 것 차단(분신술 260709)
+      clearTimeout(patT); patT = setTimeout(() => { errEl.textContent = ''; patReset(); }, 1400); return;   // patT 추적 = 잔상 중 새 입력 시작(patReset)이 이 타이머를 회수 — 스테일 리셋이 새 입력을 지우던 것 차단(분신술 260709)   // 구 outLeft 가드 제거(잠금 폐지 = 남길 잠금 문구가 없다)
     }
     if (ar && ar.ok) {
       YROLE = ar.role === 'admin' ? 'admin' : 'guest'; _ypin = attempt;   // 역할·PIN = 메모리만(언락 미저장 규약과 동형)
-      try { localStorage.removeItem('yeta_pin_fails'); localStorage.removeItem('yeta_pin_until'); } catch {}   // 언락 기억 안 함 · 실패/잠금 카운터만 리셋
-      errEl.textContent = ''; errEl.className = 'lk-err';
+      errEl.textContent = ''; errEl.className = 'lk-err';   // 구 실패/잠금 카운터 리셋 삭제 — 카운터 자체가 없어졌다(언락 미기억 규약은 그대로)
       padEl.classList.add('ok'); slotsEl.classList.add('ok');   // 승인 = 선·노드 라임 강조 + 4원 파동 + 자물쇠 박살(crack4) 병행
       ymain.classList.add('bye'); document.dispatchEvent(new Event('yeta:dive'));   // 줌 다이브 + 매트릭스 코드 레인(운영자 260706)
       setTimeout(() => { ymain.classList.add('zap'); setTimeout(() => ymain.classList.remove('zap'), 310); }, 500);   // VHS 지지직 = 다이브 중반
       setTimeout(() => setUnlocked(true), 1000);   // 전환(1000ms · 운영자 확정)
     } else {
       padEl.classList.add('bad'); lockGlitch();   // 오답 = 선 붉게 + 자물쇠 지지직 → 1400ms 리셋에서 복구
-      let n = 0; try { n = (+localStorage.getItem('yeta_pin_fails') || 0) + 1; localStorage.setItem('yeta_pin_fails', String(n)); if (n >= YM_MAX) localStorage.setItem('yeta_pin_until', String(Date.now() + YM_OUT_MS)); } catch {}
-      slotsEl.classList.add('bad', 'shake'); errEl.className = 'lk-err'; errEl.textContent = n >= YM_MAX ? `PIN 오류 ${YM_MAX}회 — 10분 후 다시` : `패턴이 맞지 않아요 (${n}/${YM_MAX})`;
-      clearTimeout(patT); patT = setTimeout(() => { slotsEl.classList.remove('shake'); if (!outLeft()) errEl.textContent = ''; patReset(); }, 1400);   // patT 추적(위와 동일 — 오답 잔상 1400ms 중 이어 찍은 새 패턴 보호)
+      slotsEl.classList.add('bad', 'shake'); errEl.className = 'lk-err'; errEl.textContent = '패턴이 맞지 않아요';   // 카운터 폐지 = 「(n/5)」 꼬리·10분 문구 동반 삭제 · 문구 골격(.lk-err · --danger)은 그대로 계승(새 스타일 0)
+      clearTimeout(patT); patT = setTimeout(() => { slotsEl.classList.remove('shake'); errEl.textContent = ''; patReset(); }, 1400);   // patT 추적(위와 동일 — 오답 잔상 1400ms 중 이어 찍은 새 패턴 보호)
     }
   }
   padEl.addEventListener('pointerdown', e => {
     if (unlocked || !ymain.classList.contains('pin-mode')) return;   // pin-mode 게이트 = 비가시 조작 차단(평의회8)
-    if (outLeft()) { errEl.className = 'lk-err'; errEl.textContent = `PIN 오류 ${YM_MAX}회 — ${Math.ceil(outLeft() / 60000)}분 후 다시`; return; }
-    e.preventDefault(); try { padEl.setPointerCapture(e.pointerId); } catch {}
+    e.preventDefault(); try { padEl.setPointerCapture(e.pointerId); } catch {}   // 구 outLeft 조기 return 삭제(잠금 폐지) — 이 return 이 "정답인데 점조차 안 켜지던" 증상의 실지점이었다
     if (padEl.classList.contains('ok')) return;   // 승인 연출 중 = 입력 무시(연출 보호)
     if (val.length >= YM_LEN || padEl.classList.contains('bad')) patReset();   // 판정 중·오답 잔상 = 새 시작 — 탭 축적 중(1~3점)이면 유지·이어 찍기(운영자 260709 "버튼 하나하나 클릭해도 이어지게")
     drawing = true; const nd = patHit(patPt(e)); if (nd) patAdd(nd);
