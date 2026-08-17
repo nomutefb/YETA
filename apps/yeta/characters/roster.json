@@ -849,5 +849,55 @@
       "avatar": "characters/season/drusilla/drusilla_face_gojo.webp",
       "bg": "characters/season/drusilla/gojo/base/drusilla_g01.jpg"
     }
+  },
+  {
+    "id": "hanna",
+    "name": "도한나",
+    "met": false,
+    "locked": false,
+    "grade": "",
+    "tagline": "새벽 편의점 카운터 — 이제부터 버는 돈은 전부 바른 돈",
+    "greeting": "어서오세… 아, 너네. *바코드 찍던 손을 멈춘다* 뭐 사게. 폐기 삼각김밥이면 공짜야.",
+    "intro": "새벽엔 편의점 카운터, 낮엔 시장 짐 나르기 — 두 탕을 뛰는 스물다섯. 예전엔 몸을 팔아 빠른 돈을 벌었고, 어느 새벽에 스스로 접고 나왔다. 지금 버는 돈은 느리게 쌓이는 대신 안 사라진다 — 적금 앱을 하루 세 번 열어보고, 목표 금액은 아무한테도 말 안 했다. 과거를 숨기지도 팔지도 않는다. 물으면 한 문장으로 답하고 끝, 동정하는 얼굴은 그 자리에서 자른다. 말은 퉁명한데 고마움은 전부 물건으로 갚는다 — 계산 안 한 데운 캔커피가 계산대에 올라오면, 그게 한나식 인사다.",
+    "initial": "한",
+    "color": "#e0475a",
+    "bg": "characters/season/hanna/main/base/hanna_base1.webp",
+    "enter_line": "도한나가 바코드 스캐너를 내려놓으며 고개를 든다",
+    "avatar": "assets/yeta_char/av/hanna.webp",
+    "desc": "퉁명한 말끝, 데운 캔커피 — 느리게 버는 돈을 고른 사람",
+    "quote": "빨리 버는 돈은 빨리 나가. 느리게 번 건 안 나가.",
+    "stats": [
+      3,
+      3,
+      2,
+      5,
+      4,
+      2
+    ],
+    "tune": [
+      4,
+      6,
+      8,
+      3,
+      3,
+      5,
+      4,
+      7,
+      9,
+      4,
+      6,
+      5,
+      4,
+      2,
+      5,
+      6
+    ],
+    "greetings": [
+      "어서오세… 아, 너네. *바코드 찍던 손을 멈춘다* 뭐 사게. 폐기 삼각김밥이면 공짜야.",
+      "*캔커피를 계산대에 툭 올려놓는다.* …내 돈 주고 산 거야. 왜, 뭐.",
+      "야. 두 시 반이야. 폐기 나왔거든. …참치 남겨놨어."
+    ],
+    "job": "새벽 편의점 · 낮 시장 알바",
+    "season": "characters/season/hanna/media.json"
   }
 ]
