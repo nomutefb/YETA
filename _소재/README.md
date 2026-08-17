@@ -15,3 +15,4 @@
 | `bf6cedc9-9720-42e7-81a3-2a3e34b65d41.mp4` | 영상 1건(isom/avc1 · 1.5MB) | 미확인 — 용도 미지정 |
 | `haeun_src_face_1391x1435.jpg` | 하서연 얼빡(웃으며 입 가림) — 운영자 260812 업로드 | **반영됨** — 1150² 얼굴중심 재단 → `viewer/assets/yeta_char/av/haeun.webp`(512²) |
 | `haeun_src_joy_laugh_1028x1839.jpg` | 하서연 세로 전신(복도에서 웃음) — 운영자 260812 업로드 | **반영됨** — 736폭 축소 → `…/haeun/main/base/haeun_base.webp` + `…/main/joy/haeun_joy.webp` |
+| `Desktop (2).zip` + `Desktop (2).z01` | 분할 zip 27장 — 세로 9:16 장소 씬 19장(`yeta_bg_<장소>[_톤]`·`photo_*`) · 정사각 1024² 얼빡 8장(`yeta_face_<id>`) — 운영자 260817 업로드(루트 착지분을 여기로 이동) | **대부분 반영**(407차) — 씬 17장 → 7인 감정 버킷(백·윤·세라·조지 로이스·류·본·무디) · 얼빡 7장 → `…/season/<id>/<id>_face*.webp`. **미반영 3건** = `yeta_face_gaeul`(가을 = 260731 삭제 캐릭터라 폴더 없음) · `photo_…18-54-33`(정체 미확인 얼빡) · `photo_…18-54-34`(`yeta_bg_radio_tense`와 동일 그림의 저해상 압축본) |

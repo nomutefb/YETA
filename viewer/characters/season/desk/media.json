@@ -10,14 +10,16 @@
   "characters/season/desk/main/base/desk_19.jpg",
   "characters/season/desk/main/base/desk_23.jpg",
   "characters/season/desk/main/base/desk_n05.jpg",
-  "characters/season/desk/main/base/desk_n06.jpg"
+  "characters/season/desk/main/base/desk_n06.jpg",
+  "characters/season/desk/main/base/desk_office.webp"
  ],
  "warm": [
   "characters/season/desk/main/warm/desk_02.jpg",
   "characters/season/desk/main/warm/desk_10.jpg",
   "characters/season/desk/main/warm/desk_20.jpg",
   "characters/season/desk/main/warm/desk_28.jpg",
-  "characters/season/desk/main/warm/desk_n04.jpg"
+  "characters/season/desk/main/warm/desk_n04.jpg",
+  "characters/season/desk/main/warm/desk_office_warm.webp"
  ],
  "joy": [
   "characters/season/desk/main/joy/desk_27.jpg"
@@ -33,13 +35,15 @@
  "blue": [
   "characters/season/desk/main/blue/desk_03.jpg",
   "characters/season/desk/main/blue/desk_08.jpg",
-  "characters/season/desk/main/blue/desk_09.jpg"
+  "characters/season/desk/main/blue/desk_09.jpg",
+  "characters/season/desk/main/blue/desk_office_blue.webp"
  ],
  "tense": [
   "characters/season/desk/main/tense/desk_06.jpg",
   "characters/season/desk/main/tense/desk_11.jpg",
   "characters/season/desk/main/tense/desk_18.jpg",
-  "characters/season/desk/main/tense/desk_24.jpg"
+  "characters/season/desk/main/tense/desk_24.jpg",
+  "characters/season/desk/main/tense/desk_office_tense.webp"
  ],
  "mad": [
   "characters/season/desk/main/mad/desk_05.jpg",
