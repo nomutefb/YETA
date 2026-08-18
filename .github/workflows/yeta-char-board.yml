@@ -23,6 +23,10 @@ on:
         description: '여벌 테이크 수(기본 1 · 최대 4 · 2장째부터 _v2… · 고르는 건 운영자)'
         required: false
         default: ''
+      per:
+        description: 'E·F 시트 한 장의 칸 수(기본 6 · 16이면 4×4 = 1회 호출에 16칸 · 운영자 260817)'
+        required: false
+        default: ''
       force:
         description: '1 = 같은 이름이 있어도 재생성'
         required: false
@@ -57,6 +61,7 @@ jobs:
           YETA_BOARD_REF: ${{ inputs.ref }}
           YETA_BOARD_SLUG: ${{ inputs.slug }}
           YETA_BOARD_TAKES: ${{ inputs.takes }}
+          YETA_BOARD_PER: ${{ inputs.per }}
           FORCE: ${{ inputs.force }}
         run: python3 .github/scripts/yeta_char_board.py
 

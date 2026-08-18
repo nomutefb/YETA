@@ -1,0 +1,37 @@
+{
+ "_comment": "시즌 감정 미디어 manifest(도한나) — 기계 산출물(shared/build_season_media.py · 손편집 금지 · check_refs 게이트). yStage 답장수 n 결정적 로테이션 pool[n%len]. 버킷 = 감정 9종 — 사진 = main/<감정>/에 붓기만 · 미분류(main 루트) = base 흡수. ⚠ 출처 = 시트 F 16칸(캐릭터별 락 · docs/캐릭터보드_캐릭터별_보강.md §8 · per=16 = 1회 호출 16칸)를 shared/cut_board_sheet.py로 자른 9:16 칸. 정본=viewer/characters/season/hanna/main/<감정>/.",
+ "base": [
+  "characters/season/hanna/main/base/hanna_base1.webp",
+  "characters/season/hanna/main/base/hanna_base2.webp"
+ ],
+ "warm": [
+  "characters/season/hanna/main/warm/hanna_warm1.webp",
+  "characters/season/hanna/main/warm/hanna_warm2.webp"
+ ],
+ "joy": [
+  "characters/season/hanna/main/joy/hanna_joy1.webp",
+  "characters/season/hanna/main/joy/hanna_joy2.webp"
+ ],
+ "love": [
+  "characters/season/hanna/main/love/hanna_love1.webp",
+  "characters/season/hanna/main/love/hanna_love2.webp"
+ ],
+ "shy": [
+  "characters/season/hanna/main/shy/hanna_shy1.webp",
+  "characters/season/hanna/main/shy/hanna_shy2.webp"
+ ],
+ "blue": [
+  "characters/season/hanna/main/blue/hanna_blue1.webp",
+  "characters/season/hanna/main/blue/hanna_blue2.webp"
+ ],
+ "tense": [
+  "characters/season/hanna/main/tense/hanna_tense1.webp",
+  "characters/season/hanna/main/tense/hanna_tense2.webp"
+ ],
+ "mad": [
+  "characters/season/hanna/main/mad/hanna_mad1.webp"
+ ],
+ "sulky": [
+  "characters/season/hanna/main/sulky/hanna_sulky1.webp"
+ ]
+}

@@ -35,7 +35,10 @@ OUT = "viewer/assets/yeta_char/board"
 # gpt-image 허용 size 3종뿐이라 **칸이 9:16이어도 페이지는 1024x1536**이다(칸 비례는 프롬프트가, 최종 9:16은 자를 때 성립).
 SIZES = {"FACE": "1024x1024", "A": "1024x1536", "B": "1024x1024", "C": "1024x1024", "D": "1024x1536",
          "E": "1024x1536", "F": "1024x1536", "CELL": "1024x1536"}
-PER_SHEET = 6          # 시트 E 한 장에 들어가는 칸 수(정본 §2-E · 9:16 칸 상한)
+try:
+    PER_SHEET = max(1, min(20, int(os.environ.get("YETA_BOARD_PER") or "6")))   # 시트 E·F 한 장의 칸 수(기본 6 · 운영자 260817 "1회 호출에 16" = per=16 → 4×4)
+except ValueError:
+    PER_SHEET = 6
 CROP_916 = "crop=trunc(ih*9/16/2)*2:ih"   # 개별 칸 전용 — 1024×1536 → 864×1536 = 정확히 9:16(좌우만 깎는다)
 
 

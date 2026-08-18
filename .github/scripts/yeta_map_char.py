@@ -34,6 +34,7 @@ CHARS = {
     #    개성 정본 = **각 인물의 정본 아트를 실제로 열어 실측**(viewer/characters/**/<id>_face.webp) + roster color · 프리실라는 카드 §겉모습이 정본.
     #    ⚠️ 프롬프트에 인물 고유명·원작명은 넣지 않는다(형제 12인과 같은 규약 = 생김새 서술만).
     "seyeun":   "sulky woman with long straight black hair and blunt bangs, blue eyes, black leather choker with small gold cross charms and a thin gold chain, dark sleeveless top, hands loose at her sides, golden-yellow color accents, unbothered saunter",
+    "hanna":    "tired-eyed adult woman with black shoulder-length hair in a low messy ponytail, grey oversized hoodie with a dark-red store apron, a canned coffee in one hand, flat unimpressed expression, crimson-red color accents, steady practical stride",
     "gojo":     "tall lanky man with spiky white hair and small round blue-tinted sunglasses, dark high-collared long coat, one hand raised in a lazy wave, bright sky-blue color accents, loose carefree stroll",
     "reze":     "friendly cafe waitress with dark purple-black hair tied in a small side bun with a hair band, green eyes, soft smile, white sleeveless top under a cafe apron, carrying a tray, light-purple color accents, cheerful bouncy walk",
     "san":      "Korean male idol dancer in casual off-stage wear, black hair with wispy bangs, thin gold chain necklace, shy small smile, amber-gold color accents, light springy dancer walk",
